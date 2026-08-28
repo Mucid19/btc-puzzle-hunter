@@ -504,7 +504,7 @@
         <div class="range-bar-left">
             <span class="range-bar-label">🎯 Aralık:</span>
             <select id="rangeSelect" class="range-select" onchange="onRangeSelectChange()">
-                <option value="0-100" selected>🌟 Tüm Aralık (%0 - %100) [Varsayılan]</option>
+                <option value="auto" selected>🔄 Oto Aralık (Rastgele %3 Zıplamalı) [Varsayılan]</option>
                 <option value="20-35">🎯 Altın Bölge (%20 - %35) [Puzzle 66]</option>
                 <option value="25-45">🔥 Sıcak Bölge (%25 - %45) [41 Bulmaca]</option>
                 <option disabled>──────── %3'lük Dilimler ────────</option>
@@ -607,15 +607,28 @@ let autoAlgoStepCounter = 0; // 'RANDOM', 'HYBRID'
 let isCircularMode = true;
 
 // ============================================================
-// 🎯 TEK SATIR OTOMATİK ARALIK (%3 VE ÖZEL DİLİMLER)
+// 🎯 DİNAMİK OTOMATİK ARALIK (%3 ZIPLAMA & ÖZEL DİLİMLER)
 // ============================================================
-let sliceModeActive = false;
+let sliceModeActive = true; // Varsayılan: Oto Aralık aktif
+let isRangeAuto = true;
 let sliceStartPct = 0;
-let sliceEndPct = 100;
+let sliceEndPct = 3;
 let sliceTargetId = null;
 let sliceAttempts = 0;
+let autoRangeStepCounter = 0;
+
+// Tüm olası %3'lük dilim listesi
+const SLICE_3PCT_LIST = [];
+for (let i = 0; i < 99; i += 3) {
+    let s = i;
+    let e = i + 3;
+    if (e > 100 || s === 96) e = 100;
+    SLICE_3PCT_LIST.push([s, e]);
+    if (e === 100) break;
+}
 
 function onRangeSelectChange() {
+    if (isRunning) return;
     const sel = document.getElementById('rangeSelect');
     const customBox = document.getElementById('customRangeBox');
     const val = sel.value;
@@ -628,6 +641,14 @@ function onRangeSelectChange() {
         customBox.style.display = 'none';
     }
 
+    if (val === 'auto') {
+        isRangeAuto = true;
+        sliceModeActive = true;
+        pickNextRandomSlice();
+        return;
+    }
+
+    isRangeAuto = false;
     const parts = val.split('-');
     const start = parseFloat(parts[0]);
     const end = parseFloat(parts[1]);
@@ -635,7 +656,15 @@ function onRangeSelectChange() {
     applyAutoRange(start, end);
 }
 
+function pickNextRandomSlice() {
+    const randomPair = SLICE_3PCT_LIST[Math.floor(Math.random() * SLICE_3PCT_LIST.length)];
+    sliceStartPct = randomPair[0];
+    sliceEndPct = randomPair[1];
+}
+
 function onCustomRangeInput() {
+    if (isRunning) return;
+    isRangeAuto = false;
     const start = parseFloat(document.getElementById('customStart').value) || 0;
     const end = parseFloat(document.getElementById('customEnd').value) || 100;
     applyAutoRange(start, end);
@@ -646,33 +675,21 @@ function applyAutoRange(startPct, endPct) {
         return;
     }
 
-    if (startPct === 0 && endPct === 100) {
-        // Varsayılan Tam Aralık
-        sliceModeActive = false;
-        sliceStartPct = 0;
-        sliceEndPct = 100;
-                        return;
-    }
+    sliceModeActive = true;
+    sliceStartPct = startPct;
+    sliceEndPct = endPct;
 
     const target = isCircularMode ? (unsolvedList[0] || currentTarget) : currentTarget;
     if (!target) return;
 
-    sliceModeActive = true;
-    sliceStartPct = startPct;
-    sliceEndPct = endPct;
     sliceTargetId = target.id;
-
     const rangeStart = BigInt(target.start);
     const rangeEnd = BigInt(target.end);
     const totalRange = rangeEnd - rangeStart;
 
-    const sliceStartKey = rangeStart + (totalRange * BigInt(Math.floor(startPct * 1000)) / 100000n);
-    const sliceEndKey = rangeStart + (totalRange * BigInt(Math.floor(endPct * 1000)) / 100000n);
-
-    window._sliceStartKey = sliceStartKey;
-    window._sliceEndKey = sliceEndKey;
-
-        }
+    window._sliceStartKey = rangeStart + (totalRange * BigInt(Math.floor(startPct * 1000)) / 100000n);
+    window._sliceEndKey = rangeStart + (totalRange * BigInt(Math.floor(endPct * 1000)) / 100000n);
+}
 
 let circularIndex = 0;
 let unsolvedList = [];
@@ -1647,6 +1664,13 @@ function huntBatch() {
 
             // 🎯 OTOMATİK ARALIK DİLİMİ (%3 veya özel aralık)
             if (sliceModeActive) {
+                if (isRangeAuto) {
+                    autoRangeStepCounter++;
+                    // Her 30 denemede bir otomatik olarak farklı rastgele bir %3'lük dilime zıpla
+                    if (autoRangeStepCounter % 30 === 0) {
+                        pickNextRandomSlice();
+                    }
+                }
                 const rangeStart = activeTarget.origStart || activeTarget.start;
                 const rangeEnd = activeTarget.origEnd || activeTarget.end;
                 const totalRange = rangeEnd - rangeStart;
@@ -1770,7 +1794,10 @@ function huntBatch() {
             document.getElementById('statAttempts').innerText = attempts.toLocaleString();
             if (activeTarget) {
                 document.getElementById('logTarget').innerHTML = `Puzzle #${activeTarget.id} -> ${activeTarget.addr} <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>`;
-                document.getElementById('logRange').innerText = `0x${activeTarget.start.toString(16)} - 0x${activeTarget.end.toString(16)}`;
+                const rangeText = isRangeAuto 
+                    ? `0x${activeTarget.start.toString(16)} - 0x${activeTarget.end.toString(16)} (Oto: %${sliceStartPct}-%${sliceEndPct})`
+                    : `0x${activeTarget.start.toString(16)} - 0x${activeTarget.end.toString(16)}`;
+                document.getElementById('logRange').innerText = rangeText;
             }
             if (selectedAlgorithm === 'AUTO') {
                 const algoNames = {
