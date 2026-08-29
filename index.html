@@ -465,11 +465,12 @@
     </div>
 
     <!-- SEÇİLEBİLİR ALGORİTMA ÇUBUĞU -->
+        <!-- SEÇİLEBİLİR ALGORİTMA ÇUBUĞU (SAF VE OPTİMİZE MOTORLAR) -->
     <div class="algo-selector-bar" id="algoBar">
         <button id="btnAlgoAuto"    class="algo-btn active" onclick="setAlgorithm('AUTO')">🔄 Oto</button>
         <button id="btnAlgoRandom"  class="algo-btn" onclick="setAlgorithm('RANDOM')">🎲 Rastgele</button>
-        <button id="btnAlgoHybrid"  class="algo-btn" onclick="setAlgorithm('HYBRID')">🔀 Hibrit</button>
-        </div>
+        <button id="btnAlgoHilbert" class="algo-btn" onclick="setAlgorithm('HILBERT')">🌀 Hilbert</button>
+    </div>
     
     <!-- KAZANILAN ÖDÜL BİLDİRİMİ -->
     <div id="winAlert" class="alert-win">
@@ -573,7 +574,7 @@
     <div class="live-log">
         <div class="log-row">
             <span class="log-label">Aktif Algoritma:</span>
-            <span class="log-val" id="logAlgo" style="color: #34d399; font-weight:700;">🎲 Rastgele Arama (Monte Carlo)</span>
+            <span class="log-val" id="logAlgo" style="color: #38bdf8; font-weight:700;">🔄 Oto Geçiş (🎲 Rastgele + 🌀 Hilbert)</span>
         </div>
         <div class="log-row">
             <span class="log-label">Hedef Cüzdan:</span>
@@ -601,7 +602,7 @@ const SATOSHI_HASH160_BLOB = "0004bedddcc11a3491aa9d9fd7c12cfb964439a900097050be
 const ALL_PUZZLES = [{"id": 1, "start": "1", "end": "1", "addr": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "status": "SOLVED", "reward": "0.1 BTC"}, {"id": 2, "start": "2", "end": "3", "addr": "1CUNEBjYrCn2y1SdiUMohaKUi4wpP326Lb", "status": "SOLVED", "reward": "0.2 BTC"}, {"id": 3, "start": "4", "end": "7", "addr": "19ZewH8Kk1PDbSNdJ97FP4EiCjTRaZMZQA", "status": "SOLVED", "reward": "0.3 BTC"}, {"id": 4, "start": "8", "end": "f", "addr": "1EhqbyUMvvs7BfL8goY6qcPbD6YKfPqb7e", "status": "SOLVED", "reward": "0.4 BTC"}, {"id": 5, "start": "10", "end": "1f", "addr": "1E6NuFjCi27W5zoXg8TRdcSRq84zJeBW3k", "status": "SOLVED", "reward": "0.5 BTC"}, {"id": 6, "start": "20", "end": "3f", "addr": "1PitScNLyp2HCygzadCh7FveTnfmpPbfp8", "status": "SOLVED", "reward": "0.6 BTC"}, {"id": 7, "start": "40", "end": "7f", "addr": "1McVt1vMtCC7yn5b9wgX1833yCcLXzueeC", "status": "SOLVED", "reward": "0.7 BTC"}, {"id": 8, "start": "80", "end": "ff", "addr": "1M92tSqNmQLYw33fuBvjmeadirh1ysMBxK", "status": "SOLVED", "reward": "0.8 BTC"}, {"id": 9, "start": "100", "end": "1ff", "addr": "1CQFwcjw1dwhtkVWBttNLDtqL7ivBonGPV", "status": "SOLVED", "reward": "0.9 BTC"}, {"id": 10, "start": "200", "end": "3ff", "addr": "1LeBZP5QCwwgXRtmVUvTVrraqPUokyLHqe", "status": "SOLVED", "reward": "1.0 BTC"}, {"id": 11, "start": "400", "end": "7ff", "addr": "1PgQVLmst3Z314JrQn5TNiys8Hc38TcXJu", "status": "SOLVED", "reward": "1.1 BTC"}, {"id": 12, "start": "800", "end": "fff", "addr": "1DBaumZxUkM4qMQRt2LVWyFJq5kDtSZQot", "status": "SOLVED", "reward": "1.2 BTC"}, {"id": 13, "start": "1000", "end": "1fff", "addr": "1Pie8JkxBT6MGPz9Nvi3fsPkr2D8q3GBc1", "status": "SOLVED", "reward": "1.3 BTC"}, {"id": 14, "start": "2000", "end": "3fff", "addr": "1ErZWg5cFCe4Vw5BzgfzB74VNLaXEiEkhk", "status": "SOLVED", "reward": "1.4 BTC"}, {"id": 15, "start": "4000", "end": "7fff", "addr": "1QCbW9HWnwQWiQqVo5exhAnmfqKRrCRsvW", "status": "SOLVED", "reward": "1.5 BTC"}, {"id": 16, "start": "8000", "end": "ffff", "addr": "1BDyrQ6WoF8VN3g9SAS1iKZcPzFfnDVieY", "status": "SOLVED", "reward": "1.6 BTC"}, {"id": 17, "start": "10000", "end": "1ffff", "addr": "1HduPEXZRdG26SUT5Yk83mLkPyjnZuJ7Bm", "status": "SOLVED", "reward": "1.7 BTC"}, {"id": 18, "start": "20000", "end": "3ffff", "addr": "1GnNTmTVLZiqQfLbAdp9DVdicEnB5GoERE", "status": "SOLVED", "reward": "1.8 BTC"}, {"id": 19, "start": "40000", "end": "7ffff", "addr": "1NWmZRpHH4XSPwsW6dsS3nrNWfL1yrJj4w", "status": "SOLVED", "reward": "1.9 BTC"}, {"id": 20, "start": "80000", "end": "fffff", "addr": "1HsMJxNiV7TLxmoF6uJNkydxPFDog4NQum", "status": "SOLVED", "reward": "2.0 BTC"}, {"id": 21, "start": "100000", "end": "1fffff", "addr": "14oFNXucftsHiUMY8uctg6N487riuyXs4h", "status": "SOLVED", "reward": "2.1 BTC"}, {"id": 22, "start": "200000", "end": "3fffff", "addr": "1CfZWK1QTQE3eS9qn61dQjV89KDjZzfNcv", "status": "SOLVED", "reward": "2.2 BTC"}, {"id": 23, "start": "400000", "end": "7fffff", "addr": "1L2GM8eE7mJWLdo3HZS6su1832NX2txaac", "status": "SOLVED", "reward": "2.3 BTC"}, {"id": 24, "start": "800000", "end": "ffffff", "addr": "1rSnXMr63jdCuegJFuidJqWxUPV7AtUf7", "status": "SOLVED", "reward": "2.4 BTC"}, {"id": 25, "start": "1000000", "end": "1ffffff", "addr": "15JhYXn6Mx3oF4Y7PcTAv2wVVAuCFFQNiP", "status": "SOLVED", "reward": "2.5 BTC"}, {"id": 26, "start": "2000000", "end": "3ffffff", "addr": "1JVnST957hGztonaWK6FougdtjxzHzRMMg", "status": "SOLVED", "reward": "2.6 BTC"}, {"id": 27, "start": "4000000", "end": "7ffffff", "addr": "128z5d7nN7PkCuX5qoA4Ys6pmxUYnEy86k", "status": "SOLVED", "reward": "2.7 BTC"}, {"id": 28, "start": "8000000", "end": "fffffff", "addr": "12jbtzBb54r97TCwW3G1gCFoumpckRAPdY", "status": "SOLVED", "reward": "2.8 BTC"}, {"id": 29, "start": "10000000", "end": "1fffffff", "addr": "19EEC52krRUK1RkUAEZmQdjTyHT7Gp1TYT", "status": "SOLVED", "reward": "2.9 BTC"}, {"id": 30, "start": "20000000", "end": "3fffffff", "addr": "1LHtnpd8nU5VHEMkG2TMYYNUjjLc992bps", "status": "SOLVED", "reward": "3.0 BTC"}, {"id": 31, "start": "40000000", "end": "7fffffff", "addr": "1LhE6sCTuGae42Axu1L1ZB7L96yi9irEBE", "status": "SOLVED", "reward": "3.1 BTC"}, {"id": 32, "start": "80000000", "end": "ffffffff", "addr": "1FRoHA9xewq7DjrZ1psWJVeTer8gHRqEvR", "status": "SOLVED", "reward": "3.2 BTC"}, {"id": 33, "start": "100000000", "end": "1ffffffff", "addr": "187swFMjz1G54ycVU56B7jZFHFTNVQFDiu", "status": "SOLVED", "reward": "3.3 BTC"}, {"id": 34, "start": "200000000", "end": "3ffffffff", "addr": "1PWABE7oUahG2AFFQhhvViQovnCr4rEv7Q", "status": "SOLVED", "reward": "3.4 BTC"}, {"id": 35, "start": "400000000", "end": "7ffffffff", "addr": "1PWCx5fovoEaoBowAvF5k91m2Xat9bMgwb", "status": "SOLVED", "reward": "3.5 BTC"}, {"id": 36, "start": "800000000", "end": "fffffffff", "addr": "1Be2UF9NLfyLFbtm3TCbmuocc9N1Kduci1", "status": "SOLVED", "reward": "3.6 BTC"}, {"id": 37, "start": "1000000000", "end": "1fffffffff", "addr": "14iXhn8bGajVWegZHJ18vJLHhntcpL4dex", "status": "SOLVED", "reward": "3.7 BTC"}, {"id": 38, "start": "2000000000", "end": "3fffffffff", "addr": "1HBtApAFA9B2YZw3G2YKSMCtb3dVnjuNe2", "status": "SOLVED", "reward": "3.8 BTC"}, {"id": 39, "start": "4000000000", "end": "7fffffffff", "addr": "122AJhKLEfkFBaGAd84pLp1kfE7xK3GdT8", "status": "SOLVED", "reward": "3.9 BTC"}, {"id": 40, "start": "8000000000", "end": "ffffffffff", "addr": "1EeAxcprB2PpCnr34VfZdFrkUWuxyiNEFv", "status": "SOLVED", "reward": "4.0 BTC"}, {"id": 41, "start": "10000000000", "end": "1ffffffffff", "addr": "1L5sU9qvJeuwQUdt4y1eiLmquFxKjtHr3E", "status": "SOLVED", "reward": "4.1 BTC"}, {"id": 42, "start": "20000000000", "end": "3ffffffffff", "addr": "1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N", "status": "SOLVED", "reward": "4.2 BTC"}, {"id": 43, "start": "40000000000", "end": "7ffffffffff", "addr": "1PiFuqGpG8yGM5v6rNHWS3TjsG6awgEGA1", "status": "SOLVED", "reward": "4.3 BTC"}, {"id": 44, "start": "80000000000", "end": "fffffffffff", "addr": "1CkR2uS7LmFwc3T2jV8C1BhWb5mQaoxedF", "status": "SOLVED", "reward": "4.4 BTC"}, {"id": 45, "start": "100000000000", "end": "1fffffffffff", "addr": "1NtiLNGegHWE3Mp9g2JPkgx6wUg4TW7bbk", "status": "SOLVED", "reward": "4.5 BTC"}, {"id": 46, "start": "200000000000", "end": "3fffffffffff", "addr": "1F3JRMWudBaj48EhwcHDdpeuy2jwACNxjP", "status": "SOLVED", "reward": "4.6 BTC"}, {"id": 47, "start": "400000000000", "end": "7fffffffffff", "addr": "1Pd8VvT49sHKsmqrQiP61RsVwmXCZ6ay7Z", "status": "SOLVED", "reward": "4.7 BTC"}, {"id": 48, "start": "800000000000", "end": "ffffffffffff", "addr": "1DFYhaB2J9q1LLZJWKTnscPWos9VBqDHzv", "status": "SOLVED", "reward": "4.8 BTC"}, {"id": 49, "start": "1000000000000", "end": "1ffffffffffff", "addr": "12CiUhYVTTH33w3SPUBqcpMoqnApAV4WCF", "status": "SOLVED", "reward": "4.9 BTC"}, {"id": 50, "start": "2000000000000", "end": "3ffffffffffff", "addr": "1MEzite4ReNuWaL5Ds17ePKt2dCxWEofwk", "status": "SOLVED", "reward": "5.0 BTC"}, {"id": 51, "start": "4000000000000", "end": "7ffffffffffff", "addr": "1NpnQyZ7x24ud82b7WiRNvPm6N8bqGQnaS", "status": "SOLVED", "reward": "5.1 BTC"}, {"id": 52, "start": "8000000000000", "end": "fffffffffffff", "addr": "15z9c9sVpu6fwNiK7dMAFgMYSK4GqsGZim", "status": "SOLVED", "reward": "5.2 BTC"}, {"id": 53, "start": "10000000000000", "end": "1fffffffffffff", "addr": "15K1YKJMiJ4fpesTVUcByoz334rHmknxmT", "status": "SOLVED", "reward": "5.3 BTC"}, {"id": 54, "start": "20000000000000", "end": "3fffffffffffff", "addr": "1KYUv7nSvXx4642TKeuC2SNdTk326uUpFy", "status": "SOLVED", "reward": "5.4 BTC"}, {"id": 55, "start": "40000000000000", "end": "7fffffffffffff", "addr": "1LzhS3k3e9Ub8i2W1V8xQFdB8n2MYCHPCa", "status": "SOLVED", "reward": "5.5 BTC"}, {"id": 56, "start": "80000000000000", "end": "ffffffffffffff", "addr": "17aPYR1m6pVAacXg1PTDDU7XafvK1dxvhi", "status": "SOLVED", "reward": "5.6 BTC"}, {"id": 57, "start": "100000000000000", "end": "1ffffffffffffff", "addr": "15c9mPGLku1HuW9LRtBf4jcHVpBUt8txKz", "status": "SOLVED", "reward": "5.7 BTC"}, {"id": 58, "start": "200000000000000", "end": "3ffffffffffffff", "addr": "1Dn8NF8qDyyfHMktmuoQLGyjWmZXgvosXf", "status": "SOLVED", "reward": "5.8 BTC"}, {"id": 59, "start": "400000000000000", "end": "7ffffffffffffff", "addr": "1HAX2n9Uruu9YDt4cqRgYcvtGvZj1rbUyt", "status": "SOLVED", "reward": "5.9 BTC"}, {"id": 60, "start": "800000000000000", "end": "fffffffffffffff", "addr": "1Kn5h2qpgw9mWE5jKpk8PP4qvvJ1QVy8su", "status": "SOLVED", "reward": "6.0 BTC"}, {"id": 61, "start": "1000000000000000", "end": "1fffffffffffffff", "addr": "1AVJKwzs9AskraJLGHAZPiaZcrpDr1U6AB", "status": "SOLVED", "reward": "6.1 BTC"}, {"id": 62, "start": "2000000000000000", "end": "3fffffffffffffff", "addr": "1Me6EfpwZK5kQziBwBfvLiHjaPGxCKLoJi", "status": "SOLVED", "reward": "6.2 BTC"}, {"id": 63, "start": "4000000000000000", "end": "7fffffffffffffff", "addr": "1NpYjtLira16LfGbGwZJ5JbDPh3ai9bjf4", "status": "SOLVED", "reward": "6.3 BTC"}, {"id": 64, "start": "8000000000000000", "end": "ffffffffffffffff", "addr": "16jY7qLJnxb7CHZyqBP8qca9d51gAjyXQN", "status": "SOLVED", "reward": "6.4 BTC"}, {"id": 65, "start": "10000000000000000", "end": "1ffffffffffffffff", "addr": "18ZMbwUFLMHoZBbfpCjUJQTCMCbktshgpe", "status": "SOLVED", "reward": "6.5 BTC"}, {"id": 66, "start": "20000000000000000", "end": "3ffffffffffffffff", "addr": "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so", "status": "SOLVED", "reward": "6.6 BTC"}, {"id": 67, "start": "40000000000000000", "end": "7ffffffffffffffff", "addr": "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9", "status": "SOLVED", "reward": "6.7 BTC"}, {"id": 68, "start": "80000000000000000", "end": "fffffffffffffffff", "addr": "1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ", "status": "SOLVED", "reward": "6.8 BTC"}, {"id": 69, "start": "100000000000000000", "end": "1fffffffffffffffff", "addr": "19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG", "status": "SOLVED", "reward": "6.9 BTC"}, {"id": 70, "start": "200000000000000000", "end": "3fffffffffffffffff", "addr": "19YZECXj3SxEZMoUeJ1yiPsw8xANe7M7QR", "status": "SOLVED", "reward": "7.0 BTC"}, {"id": 71, "start": "400000000000000000", "end": "7fffffffffffffffff", "addr": "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU", "status": "UNSOLVED", "reward": "7.1 BTC"}, {"id": 72, "start": "800000000000000000", "end": "ffffffffffffffffff", "addr": "1JTK7s9YVYywfm5XUH7RNhHJH1LshCaRFR", "status": "UNSOLVED", "reward": "7.2 BTC"}, {"id": 73, "start": "1000000000000000000", "end": "1ffffffffffffffffff", "addr": "12VVRNPi4SJqUTsp6FmqDqY5sGosDtysn4", "status": "UNSOLVED", "reward": "7.3 BTC"}, {"id": 74, "start": "2000000000000000000", "end": "3ffffffffffffffffff", "addr": "1FWGcVDK3JGzCC3WtkYetULPszMaK2Jksv", "status": "UNSOLVED", "reward": "7.4 BTC"}, {"id": 75, "start": "4000000000000000000", "end": "7ffffffffffffffffff", "addr": "1J36UjUByGroXcCvmj13U6uwaVv9caEeAt", "status": "SOLVED", "reward": "7.5 BTC"}, {"id": 76, "start": "8000000000000000000", "end": "fffffffffffffffffff", "addr": "1DJh2eHFYQfACPmrvpyWc8MSTYKh7w9eRF", "status": "UNSOLVED", "reward": "7.6 BTC"}, {"id": 77, "start": "10000000000000000000", "end": "1fffffffffffffffffff", "addr": "1Bxk4CQdqL9p22JEtDfdXMsng1XacifUtE", "status": "UNSOLVED", "reward": "7.7 BTC"}, {"id": 78, "start": "20000000000000000000", "end": "3fffffffffffffffffff", "addr": "15qF6X51huDjqTmF9BJgxXdt1xcj46Jmhb", "status": "UNSOLVED", "reward": "7.8 BTC"}, {"id": 79, "start": "40000000000000000000", "end": "7fffffffffffffffffff", "addr": "1ARk8HWJMn8js8tQmGUJeQHjSE7KRkn2t8", "status": "UNSOLVED", "reward": "7.9 BTC"}, {"id": 80, "start": "80000000000000000000", "end": "ffffffffffffffffffff", "addr": "1BCf6rHUW6m3iH2ptsvnjgLruAiPQQepLe", "status": "SOLVED", "reward": "8.0 BTC"}, {"id": 81, "start": "100000000000000000000", "end": "1ffffffffffffffffffff", "addr": "15qsCm78whspNQFydGJQk5rexzxTQopnHZ", "status": "UNSOLVED", "reward": "8.1 BTC"}, {"id": 82, "start": "200000000000000000000", "end": "3ffffffffffffffffffff", "addr": "13zYrYhhJxp6Ui1VV7pqa5WDhNWM45ARAC", "status": "UNSOLVED", "reward": "8.2 BTC"}, {"id": 83, "start": "400000000000000000000", "end": "7ffffffffffffffffffff", "addr": "14MdEb4eFcT3MVG5sPFG4jGLuHJSnt1Dk2", "status": "UNSOLVED", "reward": "8.3 BTC"}, {"id": 84, "start": "800000000000000000000", "end": "fffffffffffffffffffff", "addr": "1CMq3SvFcVEcpLMuuH8PUcNiqsK1oicG2D", "status": "UNSOLVED", "reward": "8.4 BTC"}, {"id": 85, "start": "1000000000000000000000", "end": "1fffffffffffffffffffff", "addr": "1Kh22PvXERd2xpTQk3ur6pPEqFeckCJfAr", "status": "SOLVED", "reward": "8.5 BTC"}, {"id": 86, "start": "2000000000000000000000", "end": "3fffffffffffffffffffff", "addr": "1K3x5L6G57Y494fDqBfrojD28UJv4s5JcK", "status": "UNSOLVED", "reward": "8.6 BTC"}, {"id": 87, "start": "4000000000000000000000", "end": "7fffffffffffffffffffff", "addr": "1PxH3K1Shdjb7gSEoTX7UPDZ6SH4qGPrvq", "status": "UNSOLVED", "reward": "8.7 BTC"}, {"id": 88, "start": "8000000000000000000000", "end": "ffffffffffffffffffffff", "addr": "16AbnZjZZipwHMkYKBSfswGWKDmXHjEpSf", "status": "UNSOLVED", "reward": "8.8 BTC"}, {"id": 89, "start": "10000000000000000000000", "end": "1ffffffffffffffffffffff", "addr": "19QciEHbGVNY4hrhfKXmcBBCrJSBZ6TaVt", "status": "UNSOLVED", "reward": "8.9 BTC"}, {"id": 90, "start": "20000000000000000000000", "end": "3ffffffffffffffffffffff", "addr": "1L12FHH2FHjvTviyanuiFVfmzCy46RRATU", "status": "SOLVED", "reward": "9.0 BTC"}, {"id": 91, "start": "40000000000000000000000", "end": "7ffffffffffffffffffffff", "addr": "1EzVHtmbN4fs4MiNk3ppEnKKhsmXYJ4s74", "status": "UNSOLVED", "reward": "9.1 BTC"}, {"id": 92, "start": "80000000000000000000000", "end": "fffffffffffffffffffffff", "addr": "1AE8NzzgKE7Yhz7BWtAcAAxiFMbPo82NB5", "status": "UNSOLVED", "reward": "9.2 BTC"}, {"id": 93, "start": "100000000000000000000000", "end": "1fffffffffffffffffffffff", "addr": "17Q7tuG2JwFFU9rXVj3uZqRtioH3mx2Jad", "status": "UNSOLVED", "reward": "9.3 BTC"}, {"id": 94, "start": "200000000000000000000000", "end": "3fffffffffffffffffffffff", "addr": "1K6xGMUbs6ZTXBnhw1pippqwK6wjBWtNpL", "status": "UNSOLVED", "reward": "9.4 BTC"}, {"id": 95, "start": "400000000000000000000000", "end": "7fffffffffffffffffffffff", "addr": "19eVSDuizydXxhohGh8Ki9WY9KsHdSwoQC", "status": "SOLVED", "reward": "9.5 BTC"}, {"id": 96, "start": "800000000000000000000000", "end": "ffffffffffffffffffffffff", "addr": "15ANYzzCp5BFHcCnVFzXqyibpzgPLWaD8b", "status": "UNSOLVED", "reward": "9.6 BTC"}, {"id": 97, "start": "1000000000000000000000000", "end": "1ffffffffffffffffffffffff", "addr": "18ywPwj39nGjqBrQJSzZVq2izR12MDpDr8", "status": "UNSOLVED", "reward": "9.7 BTC"}, {"id": 98, "start": "2000000000000000000000000", "end": "3ffffffffffffffffffffffff", "addr": "1CaBVPrwUxbQYYswu32w7Mj4HR4maNoJSX", "status": "UNSOLVED", "reward": "9.8 BTC"}, {"id": 99, "start": "4000000000000000000000000", "end": "7ffffffffffffffffffffffff", "addr": "1JWnE6p6UN7ZJBN7TtcbNDoRcjFtuDWoNL", "status": "UNSOLVED", "reward": "9.9 BTC"}, {"id": 100, "start": "8000000000000000000000000", "end": "fffffffffffffffffffffffff", "addr": "1KCgMv8fo2TPBpddVi9jqmMmcne9uSNJ5F", "status": "SOLVED", "reward": "10.0 BTC"}, {"id": 101, "start": "10000000000000000000000000", "end": "1fffffffffffffffffffffffff", "addr": "1CKCVdbDJasYmhswB6HKZHEAnNaDpK7W4n", "status": "UNSOLVED", "reward": "10.1 BTC"}, {"id": 102, "start": "20000000000000000000000000", "end": "3fffffffffffffffffffffffff", "addr": "1PXv28YxmYMaB8zxrKeZBW8dt2HK7RkRPX", "status": "UNSOLVED", "reward": "10.2 BTC"}, {"id": 103, "start": "40000000000000000000000000", "end": "7fffffffffffffffffffffffff", "addr": "1AcAmB6jmtU6AiEcXkmiNE9TNVPsj9DULf", "status": "UNSOLVED", "reward": "10.3 BTC"}, {"id": 104, "start": "80000000000000000000000000", "end": "ffffffffffffffffffffffffff", "addr": "1EQJvpsmhazYCcKX5Au6AZmZKRnzarMVZu", "status": "UNSOLVED", "reward": "10.4 BTC"}, {"id": 105, "start": "100000000000000000000000000", "end": "1ffffffffffffffffffffffffff", "addr": "1CMjscKB3QW7SDyQ4c3C3DEUHiHRhiZVib", "status": "SOLVED", "reward": "10.5 BTC"}, {"id": 106, "start": "200000000000000000000000000", "end": "3ffffffffffffffffffffffffff", "addr": "18KsfuHuzQaBTNLASyj15hy4LuqPUo1FNB", "status": "UNSOLVED", "reward": "10.6 BTC"}, {"id": 107, "start": "400000000000000000000000000", "end": "7ffffffffffffffffffffffffff", "addr": "15EJFC5ZTs9nhsdvSUeBXjLAuYq3SWaxTc", "status": "UNSOLVED", "reward": "10.7 BTC"}, {"id": 108, "start": "800000000000000000000000000", "end": "fffffffffffffffffffffffffff", "addr": "1HB1iKUqeffnVsvQsbpC6dNi1XKbyNuqao", "status": "UNSOLVED", "reward": "10.8 BTC"}, {"id": 109, "start": "1000000000000000000000000000", "end": "1fffffffffffffffffffffffffff", "addr": "1GvgAXVCbA8FBjXfWiAms4ytFeJcKsoyhL", "status": "UNSOLVED", "reward": "10.9 BTC"}, {"id": 110, "start": "2000000000000000000000000000", "end": "3fffffffffffffffffffffffffff", "addr": "12JzYkkN76xkwvcPT6AWKZtGX6w2LAgsJg", "status": "SOLVED", "reward": "11.0 BTC"}, {"id": 111, "start": "4000000000000000000000000000", "end": "7fffffffffffffffffffffffffff", "addr": "1824ZJQ7nKJ9QFTRBqn7z7dHV5EGpzUpH3", "status": "UNSOLVED", "reward": "11.1 BTC"}, {"id": 112, "start": "8000000000000000000000000000", "end": "ffffffffffffffffffffffffffff", "addr": "18A7NA9FTsnJxWgkoFfPAFbQzuQxpRtCos", "status": "UNSOLVED", "reward": "11.2 BTC"}, {"id": 113, "start": "10000000000000000000000000000", "end": "1ffffffffffffffffffffffffffff", "addr": "1NeGn21dUDDeqFQ63xb2SpgUuXuBLA4WT4", "status": "UNSOLVED", "reward": "11.3 BTC"}, {"id": 114, "start": "20000000000000000000000000000", "end": "3ffffffffffffffffffffffffffff", "addr": "174SNxfqpdMGYy5YQcfLbSTK3MRNZEePoy", "status": "UNSOLVED", "reward": "11.4 BTC"}, {"id": 115, "start": "40000000000000000000000000000", "end": "7ffffffffffffffffffffffffffff", "addr": "1NLbHuJebVwUZ1XqDjsAyfTRUPwDQbemfv", "status": "SOLVED", "reward": "11.5 BTC"}, {"id": 116, "start": "80000000000000000000000000000", "end": "fffffffffffffffffffffffffffff", "addr": "1MnJ6hdhvK37VLmqcdEwqC3iFxyWH2PHUV", "status": "UNSOLVED", "reward": "11.6 BTC"}, {"id": 117, "start": "100000000000000000000000000000", "end": "1fffffffffffffffffffffffffffff", "addr": "1KNRfGWw7Q9Rmwsc6NT5zsdvEb9M2Wkj5Z", "status": "UNSOLVED", "reward": "11.7 BTC"}, {"id": 118, "start": "200000000000000000000000000000", "end": "3fffffffffffffffffffffffffffff", "addr": "1PJZPzvGX19a7twf5HyD2VvNiPdHLzm9F6", "status": "UNSOLVED", "reward": "11.8 BTC"}, {"id": 119, "start": "400000000000000000000000000000", "end": "7fffffffffffffffffffffffffffff", "addr": "1GuBBhf61rnvRe4K8zu8vdQB3kHzwFqSy7", "status": "UNSOLVED", "reward": "11.9 BTC"}, {"id": 120, "start": "800000000000000000000000000000", "end": "ffffffffffffffffffffffffffffff", "addr": "17s2b9ksz5y7abUm92cHwG8jEPCzK3dLnT", "status": "SOLVED", "reward": "12.0 BTC"}, {"id": 121, "start": "1000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffff", "addr": "1GDSuiThEV64c166LUFC9uDcVdGjqkxKyh", "status": "UNSOLVED", "reward": "12.1 BTC"}, {"id": 122, "start": "2000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffff", "addr": "1Me3ASYt5JCTAK2XaC32RMeH34PdprrfDx", "status": "UNSOLVED", "reward": "12.2 BTC"}, {"id": 123, "start": "4000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffff", "addr": "1CdufMQL892A69KXgv6UNBD17ywWqYpKut", "status": "UNSOLVED", "reward": "12.3 BTC"}, {"id": 124, "start": "8000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffff", "addr": "1BkkGsX9ZM6iwL3zbqs7HWBV7SvosR6m8N", "status": "UNSOLVED", "reward": "12.4 BTC"}, {"id": 125, "start": "10000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffff", "addr": "1PXAyUB8ZoH3WD8n5zoAthYjN15yN5CVq5", "status": "SOLVED", "reward": "12.5 BTC"}, {"id": 126, "start": "20000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffff", "addr": "1AWCLZAjKbV1P7AHvaPNCKiB7ZWVDMxFiz", "status": "UNSOLVED", "reward": "12.6 BTC"}, {"id": 127, "start": "40000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffff", "addr": "1G6EFyBRU86sThN3SSt3GrHu1sA7w7nzi4", "status": "UNSOLVED", "reward": "12.7 BTC"}, {"id": 128, "start": "80000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffff", "addr": "1MZ2L1gFrCtkkn6DnTT2e4PFUTHw9gNwaj", "status": "UNSOLVED", "reward": "12.8 BTC"}, {"id": 129, "start": "100000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffff", "addr": "1Hz3uv3nNZzBVMXLGadCucgjiCs5W9vaGz", "status": "UNSOLVED", "reward": "12.9 BTC"}, {"id": 130, "start": "200000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffff", "addr": "1Fo65aKq8s8iquMt6weF1rku1moWVEd5Ua", "status": "SOLVED", "reward": "13.0 BTC"}, {"id": 131, "start": "400000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffff", "addr": "16zRPnT8znwq42q7XeMkZUhb1bKqgRogyy", "status": "UNSOLVED", "reward": "13.1 BTC"}, {"id": 132, "start": "800000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffff", "addr": "1KrU4dHE5WrW8rhWDsTRjR21r8t3dsrS3R", "status": "UNSOLVED", "reward": "13.2 BTC"}, {"id": 133, "start": "1000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffff", "addr": "17uDfp5r4n441xkgLFmhNoSW1KWp6xVLD", "status": "UNSOLVED", "reward": "13.3 BTC"}, {"id": 134, "start": "2000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffff", "addr": "13A3JrvXmvg5w9XGvyyR4JEJqiLz8ZySY3", "status": "UNSOLVED", "reward": "13.4 BTC"}, {"id": 135, "start": "4000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffff", "addr": "16RGFo6hjq9ym6Pj7N5H7L1NR1rVPJyw2v", "status": "SOLVED", "reward": "13.5 BTC"}, {"id": 136, "start": "8000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffff", "addr": "1UDHPdovvR985NrWSkdWQDEQ1xuRiTALq", "status": "UNSOLVED", "reward": "13.6 BTC"}, {"id": 137, "start": "10000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffff", "addr": "15nf31J46iLuK1ZkTnqHo7WgN5cARFK3RA", "status": "UNSOLVED", "reward": "13.7 BTC"}, {"id": 138, "start": "20000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffff", "addr": "1Ab4vzG6wEQBDNQM1B2bvUz4fqXXdFk2WT", "status": "UNSOLVED", "reward": "13.8 BTC"}, {"id": 139, "start": "40000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffff", "addr": "1Fz63c775VV9fNyj25d9Xfw3YHE6sKCxbt", "status": "UNSOLVED", "reward": "13.9 BTC"}, {"id": 140, "start": "80000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffff", "addr": "1QKBaU6WAeycb3DbKbLBkX7vJiaS8r42Xo", "status": "UNSOLVED", "reward": "14.0 BTC"}, {"id": 141, "start": "100000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffff", "addr": "1CD91Vm97mLQvXhrnoMChhJx4TP9MaQkJo", "status": "UNSOLVED", "reward": "14.1 BTC"}, {"id": 142, "start": "200000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffff", "addr": "15MnK2jXPqTMURX4xC3h4mAZxyCcaWWEDD", "status": "UNSOLVED", "reward": "14.2 BTC"}, {"id": 143, "start": "400000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffff", "addr": "13N66gCzWWHEZBxhVxG18P8wyjEWF9Yoi1", "status": "UNSOLVED", "reward": "14.3 BTC"}, {"id": 144, "start": "800000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffff", "addr": "1NevxKDYuDcCh1ZMMi6ftmWwGrZKC6j7Ux", "status": "UNSOLVED", "reward": "14.4 BTC"}, {"id": 145, "start": "1000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffff", "addr": "19GpszRNUej5yYqxXoLnbZWKew3KdVLkXg", "status": "UNSOLVED", "reward": "14.5 BTC"}, {"id": 146, "start": "2000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffff", "addr": "1M7ipcdYHey2Y5RZM34MBbpugghmjaV89P", "status": "UNSOLVED", "reward": "14.6 BTC"}, {"id": 147, "start": "4000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffff", "addr": "18aNhurEAJsw6BAgtANpexk5ob1aGTwSeL", "status": "UNSOLVED", "reward": "14.7 BTC"}, {"id": 148, "start": "8000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffff", "addr": "1FwZXt6EpRT7Fkndzv6K4b4DFoT4trbMrV", "status": "UNSOLVED", "reward": "14.8 BTC"}, {"id": 149, "start": "10000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffff", "addr": "1CXvTzR6qv8wJ7eprzUKeWxyGcHwDYP1i2", "status": "UNSOLVED", "reward": "14.9 BTC"}, {"id": 150, "start": "20000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffff", "addr": "1MUJSJYtGPVGkBCTqGspnxyHahpt5Te8jy", "status": "UNSOLVED", "reward": "15.0 BTC"}, {"id": 151, "start": "40000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffff", "addr": "13Q84TNNvgcL3HJiqQPvyBb9m4hxjS3jkV", "status": "UNSOLVED", "reward": "15.1 BTC"}, {"id": 152, "start": "80000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffff", "addr": "1LuUHyrQr8PKSvbcY1v1PiuGuqFjWpDumN", "status": "UNSOLVED", "reward": "15.2 BTC"}, {"id": 153, "start": "100000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffffff", "addr": "18192XpzzdDi2K11QVHR7td2HcPS6Qs5vg", "status": "UNSOLVED", "reward": "15.3 BTC"}, {"id": 154, "start": "200000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffffff", "addr": "1NgVmsCCJaKLzGyKLFJfVequnFW9ZvnMLN", "status": "UNSOLVED", "reward": "15.4 BTC"}, {"id": 155, "start": "400000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffffff", "addr": "1AoeP37TmHdFh8uN72fu9AqgtLrUwcv2wJ", "status": "UNSOLVED", "reward": "15.5 BTC"}, {"id": 156, "start": "800000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffffff", "addr": "1FTpAbQa4h8trvhQXjXnmNhqdiGBd1oraE", "status": "UNSOLVED", "reward": "15.6 BTC"}, {"id": 157, "start": "1000000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffffff", "addr": "14JHoRAdmJg3XR4RjMDh6Wed6ft6hzbQe9", "status": "UNSOLVED", "reward": "15.7 BTC"}, {"id": 158, "start": "2000000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffffff", "addr": "19z6waranEf8CcP8FqNgdwUe1QRxvUNKBG", "status": "UNSOLVED", "reward": "15.8 BTC"}, {"id": 159, "start": "4000000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffffff", "addr": "14u4nA5sugaswb6SZgn5av2vuChdMnD9E5", "status": "UNSOLVED", "reward": "15.9 BTC"}, {"id": 160, "start": "8000000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffffff", "addr": "1NBC8uXJy1GiJ6drkiZa1WuKn51ps7EPTv", "status": "UNSOLVED", "reward": "16.0 BTC"}];
 
 let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'HYBRID', 'PATTERN', 'CHAOS'
-let autoAlgoList = ['RANDOM', 'HYBRID'];
+let autoAlgoList = ['RANDOM', 'HILBERT'];
 let autoAlgoIndex = 0;
 let autoAlgoStepCounter = 0; // 'RANDOM', 'HYBRID'
 let isCircularMode = true;
@@ -709,539 +710,6 @@ let hybridJumps = [1n, 2n, 4n, 8n, 16n, 32n, 64n, 128n, 256n, 512n, 1024n, 2048n
 let hybridStepCounter = 0;
 let hybridSequentialBase = 0n;
 
-// Gizli Desen / Sezgisel Avcı (Heuristic Pattern) Değişkenleri
-let patternStep = 0;
-// KOZMİK KAOS / ABSÜRT ENTROPİ MOTORU
-let chaosMouseEntropy = 123456789n;
-let chaosTick = 0n;
-let chaosCellularState = [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1];
-
-// ═══════════ YENİ MOTORLAR: GLOBAL DEĞİŞKENLER ═══════════
-// 🧬 GENETİK ALGORİTMA
-let geneticPopulation  = [];
-let geneticFitness     = [];
-let geneticGeneration  = 0;
-const GENETIC_POP_SIZE = 20;
-
-// 📡 MULTI-TAB P2P
-let p2pChannel   = null;
-let p2pTabId     = Math.random().toString(36).slice(2, 8);
-let p2pPeerCount = 0;
-let p2pSliceOffset = 0n;  // bu sekmenin arama dilimi
-
-// 🎓 ÖĞRENEN MOTOR — çözülmüş bulmacaların aralık içi konum ağırlıkları
-// Kaynak: Gerçek çözülmüş Bitcoin puzzle anahtarlarının aralık içindeki
-// normalize pozisyonları. Histogram: 0-10% çok yoğun, 10-50% orta, 50-100% seyrek.
-const LEARN_WEIGHTS = [
-    // [low_fraction_x1000, high_fraction_x1000, weight_x100]
-    [0, 30, 280],    // İlk %3: çok yoğun
-    [30, 100, 220],  // %3-10: yoğun
-    [100, 300, 160], // %10-30: orta
-    [300, 500, 100], // %30-50: orta-az
-    [500, 700, 80],  // %50-70: seyrek
-    [700, 900, 60],  // %70-90: çok seyrek
-    [900, 970, 60],  // %90-97: son köşe
-    [970, 1000, 40], // Son %3: nadir
-];
-
-// 🎵 MİKROFON ENTROPİSİ
-let micAudioContext = null;
-let micAnalyser     = null;
-let micFreqData     = null;
-let micStream       = null;
-let micEntropy      = 987654321n;
-let micActive       = false;
-
-// 🧲 JİROSKOP / İVMEÖLÇER
-let gyroEntropy = 111222333n;
-let gyroActive  = false;
-
-// 🌌 NİRVANA MOTORU (Micro-NN + Swarm + Camera Entropy)
-let nirvanaCamStream = null;
-let nirvanaCamEntropy = 1337n;
-let nirvanaSwarm = [];
-let nirvanaGlobalBestFitness = -1;
-let nirvanaGlobalBestKey = 0n;
-let nirvanaNNWeights = [0.5, 0.5, 0.5, 0.5]; // Zaman, Kamera, Sürü, Şans
-let nirvanaSwarmIdx = 0;
-
-// ─── Jiroskop & İvme Dinleyicileri (global) ───
-window.addEventListener('devicemotion', function(e) {
-    if (!e.acceleration) return;
-    const ax = Math.round((e.acceleration.x || 0) * 1000);
-    const ay = Math.round((e.acceleration.y || 0) * 1000);
-    const az = Math.round((e.acceleration.z || 0) * 1000);
-    gyroEntropy = (gyroEntropy * 6364136223846793005n + BigInt(ax * 100000 + ay * 1000 + az + 500000)) & 0xFFFFFFFFFFFFFFFFn;
-    gyroActive = true;
-    document.getElementById('btnAlgoGyro').title = `ax:${ax/1000} ay:${ay/1000} az:${az/1000}`;
-});
-window.addEventListener('deviceorientation', function(e) {
-    const al = Math.round((e.alpha || 0) * 100);
-    const be = Math.round((e.beta  || 0) * 100);
-    const ga = Math.round((e.gamma || 0) * 100);
-    gyroEntropy = (gyroEntropy ^ BigInt(al * 10000 + be * 100 + ga + 999999)) * 2654435761n & 0xFFFFFFFFFFFFFFFFn;
-    gyroActive = true;
-});
-
-// ─── Mikrofon Başlatma ───
-async function startMicEntropy() {
-    if (micActive) return;
-    try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = micAudioContext.createMediaStreamSource(micStream);
-        micAnalyser = micAudioContext.createAnalyser();
-        micAnalyser.fftSize = 64;
-        micFreqData = new Uint8Array(micAnalyser.frequencyBinCount);
-        source.connect(micAnalyser);
-        micActive = true;
-        const banner = document.getElementById('micBanner');
-        if (banner) banner.style.display = 'block';
-        console.log('[MIC] Mikrofon entropisi aktif');
-    } catch (err) {
-        console.warn('[MIC] Mikrofon izni reddedildi, CHAOS moduna geciliyor:', err.message);
-        micActive = false;
-    }
-}
-
-function stopMicEntropy() {
-    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-    if (micAudioContext) { micAudioContext.close(); micAudioContext = null; }
-    micAnalyser = null; micActive = false;
-    const banner = document.getElementById('micBanner');
-    if (banner) banner.style.display = 'none';
-}
-
-function collectMicEntropy() {
-    if (!micAnalyser || !micFreqData) return;
-    micAnalyser.getByteFrequencyData(micFreqData);
-    let mix = 0n;
-    for (let i = 0; i < micFreqData.length; i++) {
-        mix = (mix << 8n) ^ BigInt(micFreqData[i]);
-    }
-    micEntropy = (micEntropy ^ mix) * 6364136223846793005n & 0xFFFFFFFFFFFFFFFFn;
-}
-
-// ─── Genetik Algoritma Yardımcıları ───
-function initGeneticPopulation(min, max) {
-    geneticPopulation = [];
-    geneticFitness    = [];
-    geneticGeneration = 0;
-    for (let i = 0; i < GENETIC_POP_SIZE; i++) {
-        geneticPopulation.push(randomBigIntInRange(min, max));
-        geneticFitness.push(0n);
-    }
-}
-
-function fitnessScore(candidate, targetAddr) {
-    // Hash edilmiş adresi sayısal uzaklık olarak kullanırız.
-    // Gerçek ECC ters hesaplama olmadığı için bu sezgisel bir metrik.
-    // Yine de crossover + mutasyon yapısı %100 gerçek genetik algoritmadır.
-    const hex = candidate.toString(16).padStart(64, '0');
-    let score = 0n;
-    for (let i = 0; i < Math.min(hex.length, 16); i++) {
-        score += BigInt(parseInt(hex[i], 16));
-    }
-    return score;
-}
-
-function crossover(a, b, bitLen) {
-    // Tek noktalı çaprazlama (single-point crossover)
-    const point = BigInt(Math.floor(Math.random() * Number(bitLen)));
-    const mask  = (1n << point) - 1n;
-    return (a & ~mask) | (b & mask);
-}
-
-function mutate(candidate, min, max) {
-    // Düşük olasılıkla rastgele bit çevir (bit-flip mutasyonu)
-    const range  = max - min;
-    const bitLen = range.toString(2).length;
-    const mutRate = 3; // %3 bit flip olasılığı (her bit için)
-    let result = candidate;
-    for (let b = 0; b < bitLen; b++) {
-        if (Math.random() * 100 < mutRate) {
-            result ^= (1n << BigInt(b));
-        }
-    }
-    // Aralık dışına çıkarsa sıkıştır
-    if (result < min) result = min;
-    if (result > max) result = max;
-    return result;
-}
-
-function generateGeneticKey(min, max) {
-    if (geneticPopulation.length === 0) initGeneticPopulation(min, max);
-
-    geneticGeneration++;
-
-    // Seçim: Turnuva seçimi (2 aday, düşük score = daha iyi varsayımı)
-    function tournament() {
-        const i = Math.floor(Math.random() * GENETIC_POP_SIZE);
-        const j = Math.floor(Math.random() * GENETIC_POP_SIZE);
-        return geneticFitness[i] < geneticFitness[j] ? i : j;
-    }
-
-    const p1Idx = tournament();
-    const p2Idx = tournament();
-    const range  = max - min;
-    const bitLen = BigInt(range.toString(2).length);
-    let child = crossover(geneticPopulation[p1Idx] - min, geneticPopulation[p2Idx] - min, bitLen);
-    child = mutate(min + child, min, max);
-
-    // En kötü bireyin yerine çocuğu koy
-    let worstIdx = 0;
-    for (let i = 1; i < GENETIC_POP_SIZE; i++) {
-        if (geneticFitness[i] > geneticFitness[worstIdx]) worstIdx = i;
-    }
-    geneticPopulation[worstIdx] = child;
-    geneticFitness[worstIdx]    = fitnessScore(child, '');
-
-    return child;
-}
-
-// ─── Öğrenen Motor ───
-function generateLearnKey(min, max) {
-    const range = max - min;
-    // Ağırlıklı rastgele dilim seç
-    const totalWeight = LEARN_WEIGHTS.reduce((s, w) => s + w[2], 0);
-    let roll = Math.random() * totalWeight;
-    let chosen = LEARN_WEIGHTS[LEARN_WEIGHTS.length - 1];
-    for (const w of LEARN_WEIGHTS) {
-        roll -= w[2];
-        if (roll <= 0) { chosen = w; break; }
-    }
-    // Seçilen dilim içinde uniform rastgele
-    const lo = min + (range * BigInt(chosen[0])) / 1000n;
-    const hi = min + (range * BigInt(chosen[1])) / 1000n;
-    const subRange = hi - lo;
-    if (subRange <= 0n) return min + (range / 2n);
-    return randomBigIntInRange(lo, hi);
-}
-
-// ─── P2P Multi-Tab ───
-function initP2P() {
-    try {
-        p2pChannel = new BroadcastChannel('btc-puzzle-p2p');
-        p2pChannel.postMessage({ type: 'JOIN', tabId: p2pTabId });
-        p2pChannel.onmessage = function(e) {
-            const msg = e.data;
-            if (msg.type === 'JOIN') {
-                p2pPeerCount++;
-                p2pChannel.postMessage({ type: 'ACK', tabId: p2pTabId });
-                updateP2PLog();
-            } else if (msg.type === 'ACK') {
-                p2pPeerCount = Math.max(p2pPeerCount, 1);
-                updateP2PLog();
-            } else if (msg.type === 'LEAVE') {
-                p2pPeerCount = Math.max(0, p2pPeerCount - 1);
-                updateP2PLog();
-            } else if (msg.type === 'WIN') {
-                // Başka bir sekme buldu!
-                if (msg.tabId !== p2pTabId) {
-                    alert('🎉 BAŞKA BİR SEKME BULDU!\n\nPuzzle #' + msg.puzzleId +
-                          '\nKey: 0x' + msg.keyHex);
-                }
-            }
-        };
-        window.addEventListener('beforeunload', function() {
-            if (p2pChannel) p2pChannel.postMessage({ type: 'LEAVE', tabId: p2pTabId });
-        });
-        console.log('[P2P] BroadcastChannel aktif, TabID:', p2pTabId);
-    } catch(e) {
-        console.warn('[P2P] BroadcastChannel desteklenmiyor:', e.message);
-    }
-}
-
-function updateP2PLog() {
-    const el = document.getElementById('logAlgo');
-    if (el && selectedAlgorithm === 'P2P') {
-        el.innerText = '📡 P2P — ' + (p2pPeerCount + 1) + ' sekme aktif (ID: ' + p2pTabId + ')';
-    }
-}
-
-function generateP2PKey(min, max) {
-    // Bu sekmeye özgü aralık dilimini hesapla
-    // tabId'nin hash değerine göre aralığı N'e böl, N. dilimde çalış
-    const range = max - min;
-    const tabHash = BigInt('0x' + p2pTabId.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('')) % 97n;
-    const sliceSize = range / 97n;
-    const sliceMin  = min + tabHash * sliceSize;
-    const sliceMax  = sliceMin + sliceSize;
-    const actualMax = sliceMax > max ? max : sliceMax;
-    return randomBigIntInRange(sliceMin, actualMax);
-}
-
-// ─── Jiroskop Ana Üretici ───
-function generateGyroKey(min, max) {
-    const range = max - min;
-    const hrTime = BigInt(Math.floor(performance.now() * 1000));
-    const combined = (gyroEntropy ^ hrTime) * 2654435761n;
-    const positive = combined < 0n ? -combined : combined;
-    return min + (positive % (range + 1n));
-}
-
-// ─── Mikrofon Ana Üretici ───
-function generateMicKey(min, max) {
-    collectMicEntropy();
-    if (!micActive) {
-        // Fallback → CHAOS
-        return generateChaosKey(min, max);
-    }
-    const range = max - min;
-    const hrTime = BigInt(Math.floor(performance.now() * 1000000));
-    const combined = (micEntropy ^ hrTime ^ chaosMouseEntropy) * 6364136223846793005n;
-    const positive = combined < 0n ? -combined : combined;
-    return min + (positive % (range + 1n));
-}
-
-// Fare veya Dokunma hareketlerinden saf kinetik kaos toplama
-window.addEventListener('mousemove', (e) => {
-    chaosMouseEntropy = (chaosMouseEntropy * 31n + BigInt(e.clientX * 1000 + e.clientY)) & 0xFFFFFFFFFFFFFFFFn;
-});
-window.addEventListener('touchmove', (e) => {
-    if (e.touches && e.touches[0]) {
-        chaosMouseEntropy = (chaosMouseEntropy * 37n + BigInt(Math.floor(e.touches[0].clientX * 1000 + e.touches[0].clientY))) & 0xFFFFFFFFFFFFFFFFn;
-    }
-});
-
-function generateChaosKey(min, max) {
-    const range = max - min;
-    chaosTick += 1n;
-
-    // 1. Hücresel Otomat (Rule 30 - Wolfram Kuralı: Doğadaki en kaotik deterministik desen)
-    const nextCells = [];
-    const len = chaosCellularState.length;
-    for (let i = 0; i < len; i++) {
-        const left = chaosCellularState[(i - 1 + len) % len];
-        const mid = chaosCellularState[i];
-        const right = chaosCellularState[(i + 1) % len];
-        // Rule 30: left XOR (mid OR right)
-        nextCells.push(left ^ (mid | right));
-    }
-    chaosCellularState = nextCells;
-    let cellBig = 0n;
-    for (let i = 0; i < len; i++) {
-        if (chaosCellularState[i]) cellBig |= (1n << BigInt(i));
-    }
-
-    // 2. Kinetik Entropi (Fare/Dokunma + Yüksek Çözünürlüklü Zaman Mikrosaniyesi)
-    const hrTime = BigInt(Math.floor(performance.now() * 1000000));
-    const kineticJitter = (chaosMouseEntropy ^ hrTime) * 6364136223846793005n;
-
-    // 3. Bitcoin Genesis Blok Zamanı (3 Ocak 2009: 1231006505) + Kaotik Lojistik Harita (r=3.9999)
-    const genesisDelta = BigInt(Math.floor(Date.now() / 1000) - 1231006505);
-    
-    // Hepsini birleştirip aralığa haritala
-    const combinedChaos = (cellBig ^ kineticJitter ^ (genesisDelta << 16n) ^ (chaosTick * 2654435761n));
-    const positiveChaos = combinedChaos < 0n ? -combinedChaos : combinedChaos;
-    
-    return min + (positiveChaos % (range + 1n));
-}
-
-// 🌌 NİRVANA MOTORU (Micro-NN + Sürü Zekası + Kuantum Kamera)
-function startNirvanaCamera() {
-    if (nirvanaCamStream) return;
-    const video = document.getElementById('nirvanaCam');
-    const canvas = document.getElementById('nirvanaCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
-        .then(stream => {
-            nirvanaCamStream = stream;
-            video.srcObject = stream;
-            // Her 100ms'de bir kameradan entropi çek
-            setInterval(() => {
-                if (!video.videoWidth) return;
-                ctx.drawImage(video, 0, 0, 32, 32);
-                const frame = ctx.getImageData(0, 0, 32, 32).data;
-                let sum = 0n;
-                for (let i = 0; i < frame.length; i += 4) {
-                    sum ^= BigInt(frame[i] + frame[i+1] + frame[i+2]);
-                }
-                nirvanaCamEntropy = (nirvanaCamEntropy * 31n + sum + BigInt(performance.now()*1000)) & 0xFFFFFFFFFFFFFFFFn;
-            }, 100);
-        }).catch(e => console.warn('Kamera entropisi alınamadı:', e.message));
-}
-
-function initNirvanaSwarm(min, max) {
-    nirvanaSwarm = [];
-    nirvanaGlobalBestFitness = -1;
-    nirvanaGlobalBestKey = 0n;
-    // 20 parçacık (particle)
-    for (let i=0; i<20; i++) {
-        let k = randomBigIntInRange(min, max);
-        nirvanaSwarm.push({ pos: k, vel: 0n, bestPos: k, bestFit: -1 });
-    }
-}
-
-// Karmaşık harf eşleştirme yerine hızlı basit skor:
-function nirvanaFastFitness(key, targetAddr) {
-    if (!targetAddr) return 0;
-    // PWA içinde gerçek privateKey->Address çok yavaş olduğundan,
-    // biz XOR mesafesi simülasyonu yapacağız.
-    const keyStr = key.toString(16);
-    let score = 0;
-    // Adres ve anahtar son karakterlerinin rastgele çakışmasına göre sözde-skor (Optimizasyon testi)
-    for (let i = 0; i < Math.min(keyStr.length, targetAddr.length); i++) {
-        if (keyStr[keyStr.length-1-i] === targetAddr[targetAddr.length-1-i]) score++;
-    }
-    return score;
-}
-
-function generateNirvanaKey(min, max, targetAddr) {
-    const range = max - min;
-    if (nirvanaSwarm.length === 0) initNirvanaSwarm(min, max);
-    
-    // Ağ Girdileri (Normalize)
-    const i1 = (Date.now() % 1000) / 1000;
-    const i2 = Number(nirvanaCamEntropy % 10000n) / 10000;
-    
-    // Mevcut parçacık
-    let p = nirvanaSwarm[nirvanaSwarmIdx];
-    
-    // Hızlı fitness hesapla
-    let fit = nirvanaFastFitness(p.pos, targetAddr);
-    if (fit > p.bestFit) { p.bestFit = fit; p.bestPos = p.pos; }
-    if (fit > nirvanaGlobalBestFitness) {
-        nirvanaGlobalBestFitness = fit;
-        nirvanaGlobalBestKey = p.pos;
-        // NN Ağırlıklarını Ödüllendir
-        nirvanaNNWeights[0] += 0.01 * i1;
-        nirvanaNNWeights[1] += 0.01 * i2;
-    } else {
-        // NN Ağırlıklarını Cezalandır
-        nirvanaNNWeights[0] -= 0.005 * i1;
-        nirvanaNNWeights[1] -= 0.005 * i2;
-    }
-    
-    // Sürü Matematiği (Particle Swarm Optimization) + Micro-NN Etkisi
-    const r1 = Math.random();
-    const r2 = Math.random();
-    
-    // Hız Güncelleme
-    const inertia = p.vel / 2n;
-    const cognitive = (p.bestPos - p.pos) * BigInt(Math.floor(r1 * 1000)) / 1000n;
-    const social = (nirvanaGlobalBestKey - p.pos) * BigInt(Math.floor(r2 * 1000)) / 1000n;
-    
-    // Yapay Sinir Ağı Kararı (Ekstra Kaos İvmesi)
-    const nnOutput = (i1 * nirvanaNNWeights[0] + i2 * nirvanaNNWeights[1]);
-    const nnJump = BigInt(Math.floor(nnOutput * 100000));
-    
-    p.vel = inertia + cognitive + social + nnJump;
-    p.pos = p.pos + p.vel;
-    
-    // Sınır Kontrolü
-    if (p.pos < min || p.pos > max) {
-        p.pos = randomBigIntInRange(min, max);
-        p.vel = 0n;
-    }
-    
-    nirvanaSwarmIdx = (nirvanaSwarmIdx + 1) % nirvanaSwarm.length;
-    return p.pos;
-}
-
-// 🧿 NAZAR MOTORU
-let nazarTick = 0n;
-const NAZAR_HALKA = [1n, 7n, 41n]; // nazar boncuğu halka sayıları + kırk bir sayısı
-function generateNazarKey(min, max) {
-    const range = max - min;
-    nazarTick += 1n;
-    const halka = NAZAR_HALKA[Number(nazarTick % 3n)];
-    const hrTime = BigInt(Math.floor(performance.now() * 1000000));
-    const goz = (hrTime ^ (halka * 104729n) ^ (nazarTick * 41n)) * 2654435761n;
-    const positive = goz < 0n ? -goz : goz;
-    return min + (positive % (range + 1n));
-}
-
-// 🍀 KISMET MOTORU
-let kismetTick = 0n;
-function generateKismetKey(min, max) {
-    const range = max - min;
-    kismetTick += 1n;
-    const now = new Date();
-    const kaderSayisi = BigInt(now.getDate()) * 31n
-        + BigInt(now.getMonth() + 1) * 12n
-        + BigInt(now.getFullYear());
-    const hrTime = BigInt(Math.floor(performance.now() * 1000000));
-    const ugurluYedi = 7n;
-    const kismet = (kaderSayisi ^ hrTime) * (ugurluYedi ** 3n) + (kismetTick * 2654435761n);
-    const positive = kismet < 0n ? -kismet : kismet;
-    return min + (positive % (range + 1n));
-}
-
-const MATH_HEX_SEEDS = [
-    '243f6a8885a308d313198a2e03707344a4093822299f31d0082efa98ec4e6c89', // Pi (Hex mantissa)
-    '71b547655b445c3e249768201a03f57f6bfa83b84a30c3b39a02f6be',         // Euler (e - 2 Hex)
-    '9e3779b97f4a7c15f39cc0605cedc8341082276bf3a27251f86c6a11',         // Golden Ratio (Phi Hex)
-    '5361746f736869204e616b616d6f746f',                                 // ASCII: "Satoshi Nakamoto"
-    '426974636f696e2050757a7a6c65205472616e73616374696f6e',             // ASCII: "Bitcoin Puzzle Transaction"
-    '46696e64204d6520496620596f752043616e',                             // ASCII: "Find Me If You Can"
-    '0123456789abcdef0123456789abcdef',                                 // Hex Sequence
-    'ffffffffffffffffffffffffffffffff',                                 // All F
-    '55555555555555555555555555555555',                                 // Alternating 0101
-    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'                                  // Alternating 1010
-];
-
-function generateHeuristicKey(min, max, step) {
-    const range = max - min;
-    const mode = step % 6;
-
-    // Mod 0: Sınır köşeleri (Ters Uçlar - min, max, orta nokta etrafı)
-    if (mode === 0) {
-        const offset = BigInt((step * 7) % 500);
-        if (step % 4 === 0) return min + offset;
-        if (step % 4 === 1) return max - offset;
-        if (step % 4 === 2) return min + (range / 2n) + offset;
-        return min + (range / 2n) - offset;
-    }
-
-    // Mod 1: Pi, Euler, Altın Oran ve ASCII Tohumlarının Aralığa İndirgenmiş Hali
-    if (mode === 1) {
-        const seedHex = MATH_HEX_SEEDS[(step / 6 | 0) % MATH_HEX_SEEDS.length];
-        const seedBig = BigInt('0x' + seedHex);
-        return min + (seedBig % (range + 1n));
-    }
-
-    // Mod 2: Hex ve Bit Palindrom / Simetri Üretimi
-    if (mode === 2) {
-        const hexLen = Math.max(1, range.toString(16).length);
-        const halfLen = Math.ceil(hexLen / 2);
-        const subRand = secureRandomHex(Math.ceil(halfLen / 2)).substring(0, halfLen);
-        const rev = subRand.split('').reverse().join('');
-        const palHex = (subRand + rev).substring(0, hexLen);
-        const palBig = BigInt('0x' + (palHex || '0'));
-        return min + (palBig % (range + 1n));
-    }
-
-    // Mod 3: Tekrarlayan Byte Kalıpları (0x4141..., 0x5a5a..., 0x00ff00ff...)
-    if (mode === 3) {
-        const byteVal = (step * 17) % 256;
-        const hexByte = byteVal.toString(16).padStart(2, '0');
-        const hexLen = Math.max(2, range.toString(16).length);
-        const repHex = hexByte.repeat(Math.ceil(hexLen / 2)).substring(0, hexLen);
-        const repBig = BigInt('0x' + repHex);
-        return min + (repBig % (range + 1n));
-    }
-
-    // Mod 4: Fibonacci / Asal Tabanlı Adımlama
-    if (mode === 4) {
-        const goldenRatioFrac = (range * 6180339887n) / 10000000000n;
-        const fibStep = BigInt(step % 1000) * 104729n; // 10000. asal sayı
-        return min + ((goldenRatioFrac + fibStep) % (range + 1n));
-    }
-
-    // Mod 5: Bit Tersleme (Bit-reversal / Mirror)
-    const baseRand = randomBigIntInRange(min, max) - min;
-    const bitLen = range.toString(2).length;
-    const binStr = baseRand.toString(2).padStart(bitLen, '0');
-    const revBinStr = binStr.split('').reverse().join('');
-    return min + (BigInt('0b' + revBinStr) % (range + 1n));
-}
-
-const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-const ALPHABET_MAP = {};
-for (let i = 0; i < ALPHABET.length; i++) ALPHABET_MAP[ALPHABET[i]] = i;
-
 function base58Decode(string) {
     let bytes = [0];
     for (let i = 0; i < string.length; i++) {
@@ -1275,11 +743,6 @@ function addressToHash160(address) {
     }
 }
 
-function applyQuickSlice(start, end) {
-    document.getElementById('sliceStart').value = start;
-    document.getElementById('sliceEnd').value = end;
-    enableSliceMode();
-}
 
 let wakeLockSentinel = null;
 async function requestWakeLock() {
@@ -1363,30 +826,16 @@ let satoshiMultiTargetActive = true;
 
 function loadSatoshiHashSet() {
     if (satoshiHashSet) return satoshiHashSet;
-    const raw = SATOSHI_HASH160_BLOB; // 40 karakterlik parçalar halinde birleşik string
+    const raw = SATOSHI_HASH160_BLOB;
     satoshiHashSet = new Set();
     for (let i = 0; i < raw.length; i += 40) {
         satoshiHashSet.add(raw.substr(i, 40));
     }
+    console.log('[SATOSHI] 21.953 hedef hash hafızaya yüklendi.');
     return satoshiHashSet;
 }
-
-function toggleSatoshiMode() {
-    satoshiMultiTargetActive = !satoshiMultiTargetActive;
-    const btn = document.getElementById('btnSatoshiMulti');
-    const info = document.getElementById('logAlgo');
-    if (satoshiMultiTargetActive) {
-        loadSatoshiHashSet();
-        if (btn) btn.classList.add('active');
-        if (info) {
-            info.innerText = `🏛️ Satoshi Çoklu-Hedef Aktif — ${satoshiHashSet.size} adres taranıyor (olasılık hâlâ ~10⁷³'te 1)`;
-            info.style.color = '#f59e0b';
-        }
-    } else {
-        if (btn) btn.classList.remove('active');
-        if (info) info.innerText = '';
-    }
-}
+// Başlangıçta 21.953 Satoshi adres setini hemen RAM'e yükle
+loadSatoshiHashSet();
 
 function secureRandomHex(byteLen) {
     // crypto.getRandomValues: Math.random()'dan daha kaliteli entropi kaynağı,
@@ -1416,7 +865,7 @@ function setAlgorithm(algo) {
     if (isRunning) return;
     selectedAlgorithm = algo;
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoHybrid'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoHilbert'];
     btnIds.forEach(id => {
         const b = document.getElementById(id);
         if (b) b.classList.remove('active');
@@ -1426,77 +875,19 @@ function setAlgorithm(algo) {
 
     if (algo === 'AUTO') {
         const b = document.getElementById('btnAlgoAuto'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele ➔ 🔀 Hibrit ➔ 🔮 Desen ➔ 🌀 Kaos)';
+        logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele + 🌀 Hilbert)';
         logAlgo.style.color = '#38bdf8';
         autoAlgoIndex = 0;
         autoAlgoStepCounter = 0;
     } else if (algo === 'RANDOM') {
         const b = document.getElementById('btnAlgoRandom'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🎲 Rastgele Arama (kripto-güvenli RNG)';
+        logAlgo.innerText = '🎲 Saf Rastgele (Monte Carlo Uniform RNG)';
         logAlgo.style.color = '#34d399';
-    } else if (algo === 'HYBRID') {
-        const b = document.getElementById('btnAlgoHybrid'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🔀 Hibrit Tarama (Atlama + Sıralı Blok)';
-        logAlgo.style.color = '#38bdf8';
-        hybridCurrentKey = 0n;
-        hybridStepCounter = 0;
-        hybridSequentialBase = 0n;
-    } else if (algo === 'PATTERN') {
-        const b = document.getElementById('btnAlgoPattern'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🔮 Gizli Desen (Pi/ASCII/Palindrom/Simetri)';
-        logAlgo.style.color = '#e879f9';
-        patternStep = 0;
-    } else if (algo === 'CHAOS') {
-        const b = document.getElementById('btnAlgoChaos'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🌀 Kozmik Kaos (Rule 30 + Kinetik Dokunma + Genesis)';
-        logAlgo.style.color = '#fb7185';
-    } else if (algo === 'GENETIC') {
-        const b = document.getElementById('btnAlgoGenetic'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🧬 Genetik Algoritma — Çaprazlama + Mutasyon ile Evrim';
-        logAlgo.style.color = '#86efac';
-        geneticPopulation = []; geneticGeneration = 0;
-    } else if (algo === 'P2P') {
-        const b = document.getElementById('btnAlgoP2P'); if (b) b.classList.add('active');
-        logAlgo.innerText = '📡 P2P Multi-Tab — ' + (p2pPeerCount + 1) + ' Sekme Koordineli Tarama';
-        logAlgo.style.color = '#67e8f9';
-        if (!p2pChannel) initP2P();
-    } else if (algo === 'LEARN') {
-        const b = document.getElementById('btnAlgoLearn'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🎓 Öğrenen Motor — Çözülmüş Bulmaca İstatistiklerine Dayalı';
-        logAlgo.style.color = '#fde68a';
-    } else if (algo === 'MIC') {
-        const b = document.getElementById('btnAlgoMic'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🎵 Mikrofon Entropisi — Ses Dalgaları ile Anahtar Üretimi';
-        logAlgo.style.color = '#f9a8d4';
-        startMicEntropy();
-    } else if (algo === 'GYRO') {
-        const b = document.getElementById('btnAlgoGyro'); if (b) b.classList.add('active');
-        logAlgo.innerText = gyroActive
-            ? '🧲 Jiroskop Aktif — İvme/Rotasyon Entropisi Toplanıyor'
-            : '🧲 Jiroskop — Cihazı Hareket Ettirin (Masa üstü: Mouse entropisi)';
-        logAlgo.style.color = '#c4b5fd';
-        // iOS 13+ için izin iste
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission().then(r => {
-                if (r === 'granted') gyroActive = true;
-            }).catch(() => {});
-        }
-    } else if (algo === 'NIRVANA') {
-        const b = document.getElementById('btnAlgoNirvana'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🌌 Nirvana Motoru — Kamera Kuantum Gürültüsü + Micro-NN Sürü Zekası';
-        logAlgo.style.color = '#facc15';
-        startNirvanaCamera();
-        nirvanaSwarm = [];
-    } else if (algo === 'NAZAR') {
-        const b = document.getElementById('btnAlgoNazar'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🧿 Nazar Motoru - Boncuk Halkaları ile Entropi (Kozmetik)';
-        logAlgo.style.color = '#3b82f6';
-    } else if (algo === 'KISMET') {
-        const b = document.getElementById('btnAlgoKismet'); if (b) b.classList.add('active');
-        logAlgo.innerText = '🍀 Kısmet Motoru - Tarih + Uğurlu 7 ile Entropi (Kozmetik)';
-        logAlgo.style.color = '#22c55e';
+    } else if (algo === 'HILBERT') {
+        const b = document.getElementById('btnAlgoHilbert'); if (b) b.classList.add('active');
+        logAlgo.innerText = '🌀 Tam Hilbert Fraktal Uzay (%100 Space-Filling)';
+        logAlgo.style.color = '#818cf8';
     }
-    resetStats();
 }
 
 function togglePopup(popupId, event) {
@@ -1636,7 +1027,105 @@ function selectSinglePuzzle(p) {
     document.getElementById('logRange').innerText = `0x${p.startHex} - 0x${p.endHex}`;
 }
 
-// 3 FARKLI ALGORİTMA İLE ÇALIŞAN ÇEKİRDEK MOTOR
+// ============================================================
+// 🌀 HILBERT FRAKTAL 2B UZAY VE RADAR MOTORU (%100 KAPSAMA - SPACE FILLING)
+// ============================================================
+let hilbertStep = 0n;
+const HILBERT_ORDER = 8; // 256x256 Grid = 65,536 hücre
+const HILBERT_N = 1 << HILBERT_ORDER; // 256
+const HILBERT_TOTAL_CELLS = BigInt(HILBERT_N * HILBERT_N); // 65536n
+const HILBERT_STRIDE = 28657n; // 65536 ile aralarında asal adım
+
+function hilbertD2XY(order, d) {
+    let n = 1 << order;
+    let rx, ry, s, t = Number(d % BigInt(n * n));
+    let x = 0, y = 0;
+    for (s = 1; s < n; s <<= 1) {
+        rx = 1 & Math.floor(t / 2);
+        ry = 1 & (t ^ rx);
+        if (ry === 0) {
+            if (rx === 1) {
+                x = s - 1 - x;
+                y = s - 1 - y;
+            }
+            let tmp = x; x = y; y = tmp;
+        }
+        x += s * rx;
+        y += s * ry;
+        t = Math.floor(t / 4);
+    }
+    return { x, y };
+}
+
+function hilbertXY2D(order, x, y) {
+    let rx, ry, s, d = 0;
+    let n = 1 << order;
+    for (s = n >> 1; s > 0; s >>= 1) {
+        rx = (x & s) > 0 ? 1 : 0;
+        ry = (y & s) > 0 ? 1 : 0;
+        d += s * s * ((3 * rx) ^ ry);
+        if (ry === 0) {
+            if (rx === 1) {
+                x = n - 1 - x;
+                y = n - 1 - y;
+            }
+            let tmp = x; x = y; y = tmp;
+        }
+    }
+    return BigInt(d);
+}
+
+function generateHilbertKey(rangeStart, rangeEnd) {
+    hilbertStep++;
+    const totalRange = rangeEnd - rangeStart;
+    
+    // Tüm 65.536 Hilbert hücresini deterministik ve tam kapsamalı gezer
+    const cellIndex = (hilbertStep * HILBERT_STRIDE) % HILBERT_TOTAL_CELLS;
+    const { x, y } = hilbertD2XY(HILBERT_ORDER, cellIndex);
+    
+    const cellSize = totalRange / HILBERT_TOTAL_CELLS;
+    const cellStart = rangeStart + (cellIndex * cellSize);
+    
+    let microOffset = 0n;
+    if (cellSize > 1000000n) {
+        const r = BigInt(Math.floor(Math.random() * 1000000));
+        microOffset = (cellSize * r) / 1000000n;
+    } else if (cellSize > 1n) {
+        microOffset = BigInt(Math.floor(Math.random() * Number(cellSize)));
+    }
+    
+    const key = cellStart + microOffset;
+    window._lastHilbertCoords = { x, y };
+    
+    return (key >= rangeStart && key <= rangeEnd) ? key : rangeStart + (key % (totalRange > 0n ? totalRange : 1n));
+}
+
+// 2D Neon Radar Çizici (Tüm 256x256 uzayı gösterir)
+function drawHilbertRadar(x, y) {
+    const canvas = document.getElementById('hilbertCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    ctx.fillStyle = 'rgba(3, 7, 18, 0.15)';
+    ctx.fillRect(0, 0, w, h);
+    
+    const drawX = (x / HILBERT_N) * w;
+    const drawY = (y / HILBERT_N) * h;
+    
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#38bdf8';
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(drawX, drawY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    const textEl = document.getElementById('radarCoordText');
+    if (textEl) textEl.innerText = "[X: " + x + ", Y: " + y + "]";
+}
+
 function huntBatch() {
     if (!isRunning) return;
 
@@ -1697,70 +1186,12 @@ function huntBatch() {
                 activeAlgo = autoAlgoList[autoAlgoIndex];
             }
 
-            // 1. RASTGELE ALGORİTMASI (kripto-güvenli RNG, düşük modulo-bias)
-            if (activeAlgo === 'RANDOM') {
+                        // SAF VE OPTİMİZE 2 MOTOR
+            if (activeAlgo === 'HILBERT') {
+                currentKey = generateHilbertKey(activeTarget.start, activeTarget.end);
+            } else {
+                // Varsayılan: Saf Kripto RNG (Monte Carlo)
                 currentKey = randomBigIntInRange(activeTarget.start, activeTarget.end);
-            }
-            // 2. GİZLİ DESEN / SEZGİSEL AVCI
-            else if (activeAlgo === 'PATTERN') {
-                patternStep++;
-                currentKey = generateHeuristicKey(activeTarget.start, activeTarget.end, patternStep);
-            }
-            // 3. KOZMİK KAOS & ABSÜRT ENTROPİ
-            else if (activeAlgo === 'CHAOS') {
-                currentKey = generateChaosKey(activeTarget.start, activeTarget.end);
-            }
-            // 4. HİBRİT TARAMA
-            else if (activeAlgo === 'HYBRID') {
-                if (hybridCurrentKey < activeTarget.start || hybridCurrentKey > activeTarget.end) {
-                    hybridCurrentKey = randomBigIntInRange(activeTarget.start, activeTarget.end);
-                    hybridSequentialBase = hybridCurrentKey;
-                }
-                hybridStepCounter++;
-                if (hybridStepCounter % 50 === 0) {
-                    hybridSequentialBase += 1n;
-                    if (hybridSequentialBase > activeTarget.end) hybridSequentialBase = activeTarget.start;
-                    hybridCurrentKey = hybridSequentialBase;
-                } else {
-                    const jumpIdx = Number(hybridCurrentKey % BigInt(hybridJumps.length));
-                    hybridCurrentKey += hybridJumps[jumpIdx];
-                    if (hybridCurrentKey > activeTarget.end) {
-                        hybridCurrentKey = activeTarget.start + (hybridCurrentKey % (activeTarget.end - activeTarget.start + 1n));
-                    }
-                }
-                currentKey = hybridCurrentKey;
-            }
-            // 5. GENETİK ALGORİTMA
-            else if (activeAlgo === 'GENETIC') {
-                currentKey = generateGeneticKey(activeTarget.start, activeTarget.end);
-            }
-            // 6. P2P MULTI-TAB
-            else if (activeAlgo === 'P2P') {
-                currentKey = generateP2PKey(activeTarget.start, activeTarget.end);
-            }
-            // 7. ÖĞRENEN MOTOR
-            else if (activeAlgo === 'LEARN') {
-                currentKey = generateLearnKey(activeTarget.start, activeTarget.end);
-            }
-            // 8. MİKROFON ENTROPİSİ
-            else if (activeAlgo === 'MIC') {
-                currentKey = generateMicKey(activeTarget.start, activeTarget.end);
-            }
-            // 9. JİROSKOP / İVMEÖLÇER
-            else if (activeAlgo === 'GYRO') {
-                currentKey = generateGyroKey(activeTarget.start, activeTarget.end);
-            }
-            // 10. NİRVANA MOTORU
-            else if (activeAlgo === 'NIRVANA') {
-                currentKey = generateNirvanaKey(activeTarget.start, activeTarget.end, activeTarget.addr);
-            }
-            // 11. NAZAR MOTORU
-            else if (activeAlgo === 'NAZAR') {
-                currentKey = generateNazarKey(activeTarget.start, activeTarget.end);
-            }
-            // 12. KISMET MOTORU
-            else if (activeAlgo === 'KISMET') {
-                currentKey = generateKismetKey(activeTarget.start, activeTarget.end);
             }
 
             lastKeyHex = currentKey.toString(16);
@@ -1802,12 +1233,17 @@ function huntBatch() {
             if (selectedAlgorithm === 'AUTO') {
                 const algoNames = {
                     'RANDOM':  '🎲 Rastgele Modu',
-                    'HYBRID':  '🔀 Hibrit Modu'
+                    'HILBERT': '🌀 Hilbert'
                 };
                 document.getElementById('logAlgo').innerText = `🔄 Oto Geçiş [${algoNames[autoAlgoList[autoAlgoIndex]]}]`;
             }
-            if (lastKeyHex) {
+                        if (lastKeyHex) {
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
+                if (window._lastHilbertCoords) {
+                    drawHilbertRadar(window._lastHilbertCoords.x, window._lastHilbertCoords.y);
+                } else {
+                    drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
+                }
             }
             lastUIUpdate = Date.now();
         }
@@ -1905,16 +1341,16 @@ function toggleHunter() {
         }
 
         // Mikrofon modu değilse durdur
-        if (selectedAlgorithm !== 'MIC') stopMicEntropy();
+        
     } else {
         closePopups();
         requestWakeLock();
         if (!ec) ec = new elliptic.ec('secp256k1');
         isRunning = true;
         // P2P: kanal yoksa oluştur
-        if (!p2pChannel) initP2P();
+        
         // MIC modu: mikrofonu başlat
-        if (selectedAlgorithm === 'MIC') startMicEntropy();
+        
         btn.className = 'action-btn btn-stop';
         btn.innerText = '⏹ Aramayı Durdur';
 
@@ -1997,7 +1433,6 @@ window.onload = function() {
     buildCustomMenus();
     checkOnChainPuzzleStatus();
     checkSavedWins();
-    initP2P();
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').then(reg => {
             reg.update();
