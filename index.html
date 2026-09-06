@@ -897,7 +897,7 @@
 
         <!-- Mor Açılır Buton (Arşiv) -->
         <div id="btnMainSolved" class="custom-btn btn-solved" onclick="togglePopup('popupSolved', event)">
-            <span id="labelSolved">⚪ Arşiv</span>
+            <span id="labelSolved" style="display:inline-flex; align-items:center; gap:4px;"><span style="font-size:9px; opacity:0.85;">⚪</span> Bitti</span>
             <span>▼</span>
         </div>
 
@@ -1528,7 +1528,7 @@ function fillTargetHexRange() {
         userHexStart = BigInt(target.start);
         userHexEnd   = BigInt(target.end);
         if (typeof setHexSliderBounds === 'function') {
-            setHexSliderBounds(target.start, target.end, target.id ? ('Puzzle #' + target.id) : '');
+            setHexSliderBounds(target.start, target.end, target.id ? ('#' + target.id) : '');
         }
     }
 }
@@ -2192,7 +2192,7 @@ function applyPuzzleToHexRange(puzzleId) {
     const p = ALL_PUZZLES.find(x => x.id === puzzleId);
     if (!p) return;
     selectSinglePuzzle(p);
-    setHexSliderBounds(p.start, p.end, `Puzzle #${p.id}`);
+    setHexSliderBounds(p.start, p.end, `#${p.id}`);
     const statusMsg = document.getElementById('customPoolStatusMsg');
     if (statusMsg) {
         statusMsg.innerHTML = `<span style="color:#34d399; font-weight:bold;">✓ Puzzle #${p.id} seçildi ve Hex aralığı kilitlendi (0x${p.start} - 0x${p.end}). "Aramayı Başlat"a basarak tarayabilirsiniz.</span>`;
@@ -2224,7 +2224,7 @@ function updateLogTargetLabel() {
     if (isCircularMode) {
         targetEl.innerHTML = `71 ➔ 160 Sırayla Dönüyor <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>${customText}`;
     } else if (currentTarget) {
-        targetEl.innerHTML = `Puzzle #${currentTarget.id} -> ${currentTarget.addr} <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>${customText}`;
+        targetEl.innerHTML = `#${currentTarget.id} -> ${currentTarget.addr} <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>${customText}`;
     }
 }
 
@@ -2412,7 +2412,7 @@ function buildCustomMenus() {
     });
 
     const solvedList = ALL_PUZZLES.filter(p => p.status === 'SOLVED');
-    document.getElementById('labelSolved').innerText = '⚪ Arşiv';
+    document.getElementById('labelSolved').innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> Bitti';
 
     const ARCHIVE_TEST_MAP = {
         19: { startHex: '0x5749e', endHex: '0x5749f', label: '🔑 #19 Test', color: '#eab308' },
@@ -2514,7 +2514,7 @@ function selectSinglePuzzle(p) {
     if (minEl) minEl.value = 0;
     if (maxEl) maxEl.value = 1000000;
 
-    document.getElementById('labelUnsolved').innerText = `🟢 Puzzle #${p.id} (${p.reward})`;
+    document.getElementById('labelUnsolved').innerText = `#${p.id}`;
     document.getElementById('statPoolCount').innerText = p.reward;
     updateLogTargetLabel();
     document.getElementById('logRange').innerText = `0x${p.startHex || pStart.toString(16)} - 0x${p.endHex || pEnd.toString(16)}`;
@@ -2901,7 +2901,7 @@ function huntBatch() {
         if (Date.now() - lastUIUpdate > 100) {
             document.getElementById('statAttempts').innerText = attempts.toLocaleString();
             if (activeTarget) {
-                document.getElementById('logTarget').innerHTML = `Puzzle #${activeTarget.id} -> ${activeTarget.addr} <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>`;
+                document.getElementById('logTarget').innerHTML = `#${activeTarget.id} -> ${activeTarget.addr} <span style="color:#f59e0b; font-weight:bold; font-size:11px;">(+21.953 Satoshi 🏛️)</span>`;
                 let rangeText = '';
                 const baseStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
                 const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
