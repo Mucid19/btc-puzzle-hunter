@@ -2494,11 +2494,19 @@ function enableCircularMode() {
     if (isRunning) toggleHunter();
     resetStats();
     isCircularMode = true;
+    currentTarget = null;
     circularIndex = 0;
+    sliderMinHex = null;
+    sliderMaxHex = null;
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    if (minEl) minEl.value = 0;
+    if (maxEl) maxEl.value = 1000000;
     document.getElementById('labelUnsolved').innerText = '🔁 Hepsi';
     document.getElementById('statPoolCount').innerText = 'TÜMÜ (77)';
     updateLogTargetLabel();
     document.getElementById('logRange').innerText = 'Bulmacaya Göre Dinamik';
+    if (typeof updateSliderUI === 'function') updateSliderUI();
 }
 
 function selectSinglePuzzle(p) {
@@ -2700,18 +2708,32 @@ function huntBatch() {
             // 🎚️ UZAY DARALTMA KAYDIRACI ENTEGRASYONU (6 Basamak Mikro/Nano Hassasiyet)
             const baseStartKey = BigInt(activeTarget.origStart || activeTarget.start);
             const baseEndKey   = BigInt(activeTarget.origEnd   || activeTarget.end);
-            let boundMin = (sliderMinHex !== null && isDualSliderActive) ? sliderMinHex : baseStartKey;
-            let boundMax = (sliderMaxHex !== null && isDualSliderActive) ? sliderMaxHex : baseEndKey;
-            if (boundMax <= boundMin) {
-                if (boundMin + 1n <= baseEndKey) {
-                    boundMax = boundMin + 1n;
-                } else {
-                    boundMax = baseEndKey;
-                    boundMin = baseEndKey > baseStartKey ? baseEndKey - 1n : baseStartKey;
+            const baseRange    = baseEndKey - baseStartKey;
+
+            let boundMin, boundMax;
+            if (isCircularMode) {
+                const minEl = document.getElementById('rangeSliderMin');
+                const maxEl = document.getElementById('rangeSliderMax');
+                const minStep = minEl ? BigInt(minEl.value || 0) : 0n;
+                const maxStep = maxEl ? BigInt(maxEl.value || 1000000) : 1000000n;
+
+                boundMin = baseStartKey + (baseRange * minStep / 1000000n);
+                boundMax = baseStartKey + (baseRange * maxStep / 1000000n);
+                if (boundMax <= boundMin) boundMax = boundMin + 1n;
+            } else {
+                boundMin = (sliderMinHex !== null && isDualSliderActive) ? sliderMinHex : baseStartKey;
+                boundMax = (sliderMaxHex !== null && isDualSliderActive) ? sliderMaxHex : baseEndKey;
+                if (boundMin < baseStartKey) boundMin = baseStartKey;
+                if (boundMax > baseEndKey) boundMax = baseEndKey;
+                if (boundMax <= boundMin) {
+                    if (boundMin + 1n <= baseEndKey) {
+                        boundMax = boundMin + 1n;
+                    } else {
+                        boundMax = baseEndKey;
+                        boundMin = baseEndKey > baseStartKey ? baseEndKey - 1n : baseStartKey;
+                    }
                 }
             }
-            if (boundMax > baseEndKey) boundMax = baseEndKey;
-            if (boundMin < baseStartKey) boundMin = baseStartKey;
             lastBoundMin = boundMin;
             lastBoundMax = boundMax;
 
@@ -2908,11 +2930,13 @@ function huntBatch() {
                 let rangeText = '';
                 const baseStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
                 const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
-                const isNarrowed = sliderMinHex !== null && sliderMaxHex !== null && (sliderMinHex > baseStart || sliderMaxHex < baseEnd);
+                const isNarrowed = isCircularMode
+                    ? (lastBoundMin && (lastBoundMin > baseStart || lastBoundMax < baseEnd))
+                    : (sliderMinHex !== null && sliderMaxHex !== null && (sliderMinHex > baseStart || sliderMaxHex < baseEnd));
                 if (isDualSliderActive && isNarrowed && activeRangeMode !== 'HEX' && activeRangeMode !== 'PREFIX' && activeRangeMode !== 'GRID') {
-                    const bMinHex = lastBoundMin ? lastBoundMin.toString(16) : (sliderMinHex ? sliderMinHex.toString(16) : '');
-                    const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : (sliderMaxHex ? sliderMaxHex.toString(16) : '');
-                    rangeText = `🎚️ Hex Kaydıraç: 0x${bMinHex.substring(0, 10)}... - 0x${bMaxHex.substring(0, 10)}...`;
+                    const bMinHex = lastBoundMin ? lastBoundMin.toString(16) : '';
+                    const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
+                    rangeText = `🎚️ Hex Kaydıraç: 0x${bMinHex.substring(0, 8)}... - 0x${bMaxHex.substring(0, 8)}...`;
                 } else if (activeRangeMode === 'PHYSICS') {
                     rangeText = `🌀 FİZİK [${activeFormula}] -> %${physicsSliceStartPct.toFixed(3)} - %${physicsSliceEndPct.toFixed(3)}`;
                 } else if (activeRangeMode === 'CHAOS') {
