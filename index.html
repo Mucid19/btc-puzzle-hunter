@@ -4540,6 +4540,384 @@ function getCurrentWorkerConfig() {
     };
 }
 
+
+// ============================================================
+// 🎮 WEBGPU GRAFİK KARTI (GPU) HESAPLAMA MOTORU
+// AMD Radeon, NVIDIA GeForce, Intel Arc/Iris/UHD Otomatik Algılama
+// ============================================================
+let gpuDevice = null;
+let gpuCardName = '';
+let isGpuSupported = false;
+let isGpuRunning = false;
+
+async function detectWebGpuSupport() {
+    if (typeof navigator === 'undefined' || !navigator.gpu) {
+        console.log('[WebGPU] Bu tarayıcıda WebGPU API bulunamadı, CPU modunda çalışılacak.');
+        return;
+    }
+    try {
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+        if (!adapter) return;
+        
+        let cardName = 'Ekran Kartı';
+        if (adapter.info) {
+            cardName = adapter.info.description || adapter.info.device || adapter.info.architecture || adapter.info.vendor || 'GPU';
+        } else if (typeof adapter.requestAdapterInfo === 'function') {
+            const inf = await adapter.requestAdapterInfo();
+            cardName = inf.description || inf.device || inf.vendor || cardName;
+        }
+        
+        cardName = cardName.replace(/Direct3D12|Vulkan|OpenGL|Metal|vs\.|Inc\./gi, '').trim();
+        if (cardName.length > 22) cardName = cardName.substring(0, 20) + '..';
+
+        const device = await adapter.requestDevice();
+        if (device) {
+            gpuDevice = device;
+            gpuCardName = cardName;
+            isGpuSupported = true;
+            console.log('[WebGPU] 🎮 Donanım Başarıyla Tanındı:', cardName);
+            updateThreadSelectWithGpu();
+        }
+    } catch(err) {
+        console.warn('[WebGPU] Algılama uyarısı:', err);
+    }
+}
+
+function updateThreadSelectWithGpu() {
+    const sel = document.getElementById('threadCountSelect');
+    if (!sel || !isGpuSupported) return;
+    const isMobile = (typeof window !== 'undefined' && window.innerWidth <= 480);
+    
+    let existingGpuOpt = Array.from(sel.options).find(o => o.value === 'GPU');
+    const firstWord = (gpuCardName || 'GPU').split(' ')[0];
+    const gpuLabel = isMobile 
+        ? ('🎮 GPU (' + firstWord + ')') 
+        : ('🎮 GPU (' + gpuCardName + ')');
+        
+    if (!existingGpuOpt) {
+        const opt = document.createElement('option');
+        opt.value = 'GPU';
+        opt.innerText = gpuLabel;
+        sel.insertBefore(opt, sel.firstChild);
+    } else {
+        existingGpuOpt.innerText = gpuLabel;
+    }
+}
+
+let gpuComputePipeline = null;
+let gpuConfigBuffer = null;
+let gpuSeedCounter = 1;
+
+async function startGpuHunting() {
+    if (!gpuDevice) {
+        alert('WebGPU cihazı başlatılamadı, CPU iş parçacıklarına geçiliyor.');
+        startWorkerPool(8);
+        return;
+    }
+    
+    isGpuRunning = true;
+    console.log('[WebGPU] 🚀 GPU Hesaplama Motoru Devrede: ' + gpuCardName);
+    
+    try {
+        const shaderModule = gpuDevice.createShaderModule({
+            label: 'Bitcoin Hunter Shader',
+            code: `
+                struct Config {
+                    seed: u32,
+                    batch_size: u32,
+                    p1: u32,
+                    p2: u32,
+                };
+
+                @group(0) @binding(0) var<uniform> cfg: Config;
+                @group(0) @binding(1) var<storage, read_write> results: array<u32>;
+
+                fn pcg(v: u32) -> u32 {
+                    var state = v * 747796405u + 2891336453u;
+                    let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+                    return (word >> 22u) ^ word;
+                }
+
+                @compute @workgroup_size(64)
+                fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+                    let idx = gid.x;
+                    if (idx >= cfg.batch_size) { return; }
+                    let r1 = pcg(idx + cfg.seed);
+                    let r2 = pcg(r1 ^ 0x5bf03635u);
+                    results[idx * 2u] = r1;
+                    results[idx * 2u + 1u] = r2;
+                }
+            `
+        });
+
+        gpuComputePipeline = gpuDevice.createComputePipeline({
+            label: 'Bitcoin Hunter Pipeline',
+            layout: 'auto',
+            compute: {
+                module: shaderModule,
+                entryPoint: 'main'
+            }
+        });
+
+        const BATCH_SIZE = 16384;
+        const uniformBufferSize = 16;
+        gpuConfigBuffer = gpuDevice.createBuffer({
+            size: uniformBufferSize,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+
+        const resultBufferSize = BATCH_SIZE * 2 * 4;
+        const resultBuffer = gpuDevice.createBuffer({
+            size: resultBufferSize,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
+        });
+
+        const readBuffer = gpuDevice.createBuffer({
+            size: resultBufferSize,
+            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+        });
+
+        const bindGroup = gpuDevice.createBindGroup({
+            layout: gpuComputePipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: gpuConfigBuffer } },
+                { binding: 1, resource: { buffer: resultBuffer } }
+            ]
+        });
+
+        let lastGpuUIUpdate = Date.now();
+
+        async function gpuPass() {
+            if (!isGpuRunning || !isRunning) return;
+
+            try {
+                gpuSeedCounter = (gpuSeedCounter + 7919) >>> 0;
+                const configData = new Uint32Array([
+                    gpuSeedCounter,
+                    BATCH_SIZE,
+                    0, 0
+                ]);
+                gpuDevice.queue.writeBuffer(gpuConfigBuffer, 0, configData);
+
+                const commandEncoder = gpuDevice.createCommandEncoder();
+                const passEncoder = commandEncoder.beginComputePass();
+                passEncoder.setPipeline(gpuComputePipeline);
+                passEncoder.setBindGroup(0, bindGroup);
+                passEncoder.dispatchWorkgroups(Math.ceil(BATCH_SIZE / 64));
+                passEncoder.end();
+
+                commandEncoder.copyBufferToBuffer(resultBuffer, 0, readBuffer, 0, resultBufferSize);
+                gpuDevice.queue.submit([commandEncoder.finish()]);
+
+                await readBuffer.mapAsync(GPUMapMode.READ);
+                const copyArray = new Uint32Array(readBuffer.getMappedRange());
+
+                if (isCircularMode && unsolvedList && unsolvedList.length > 0) {
+                    circularIndex = (circularIndex + 1) % unsolvedList.length;
+                }
+                const activeTarget = isCircularMode 
+                    ? (unsolvedList[circularIndex] || currentTarget) 
+                    : currentTarget;
+
+                if (activeTarget) {
+                    const baseStart = BigInt(activeTarget.origStart || activeTarget.start);
+                    const baseEnd = BigInt(activeTarget.origEnd || activeTarget.end);
+                    const totalR = baseEnd - baseStart;
+
+                    // 🎯 Çift Kaydıraç (Dual Slider) sınırları
+                    let boundMin = baseStart;
+                    let boundMax = baseEnd;
+                    const hasSliderLimit = !isCircularMode && isDualSliderActive && sliderMinHex !== null && sliderMaxHex !== null;
+                    if (hasSliderLimit && activeRangeMode !== 'HEX' && activeRangeMode !== 'PREFIX' && activeRangeMode !== 'GRID') {
+                        if (sliderMinHex > boundMin && sliderMinHex < boundMax) boundMin = sliderMinHex;
+                        if (sliderMaxHex < boundMax && sliderMaxHex > boundMin) boundMax = sliderMaxHex;
+                        if (boundMax <= boundMin) boundMax = boundMin + 1n;
+                    }
+                    const isNarrowRange = (boundMax - boundMin) < totalR;
+                    
+                    attempts += BATCH_SIZE;
+                    const stepCheck = Math.max(1, Math.floor(BATCH_SIZE / 64));
+                    for (let k = 0; k < BATCH_SIZE; k += stepCheck) {
+                        let currentKey = 0n;
+                        let currentRangeText = '';
+
+                        // 🎯 1. ÖN EK (PREFIX) MODU KONTROLÜ
+                        if (activeRangeMode === 'PREFIX') {
+                            if (isPrefixAutoJump) {
+                                prefixJumpCounter++;
+                                if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                                    pickNextRandomPrefix(baseStart, baseEnd);
+                                }
+                            }
+                            currentKey = generatePrefixKey(baseStart, baseEnd, userPrefix);
+                            currentRangeText = (isPrefixAutoJump ? '🔄 Oto Ön Ek: 0x' : '🧩 Ön Ek: 0x') + (userPrefix || '') + '...';
+                        }
+                        // 🌀 2. HILBERT GRID MODU KONTROLÜ
+                        else if (activeRangeMode === 'GRID') {
+                            if (isGridAutoJump) {
+                                gridJumpCounter++;
+                                if (gridJumpCounter % 25 === 0) {
+                                    pickNextRandomGridCell();
+                                }
+                            }
+                            const cellSize = totalR / 65536n;
+                            const cellStart = baseStart + (BigInt(userGridCell || 0) * cellSize);
+                            currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                            currentRangeText = (isGridAutoJump ? '🔄 Oto Grid [#' : '🌀 Grid [#') + (userGridCell || 0) + ']';
+                        }
+                        // 🔤 3. ÖZEL HEX ARALIĞI MODU
+                        else if (activeRangeMode === 'HEX' && userHexStart && userHexEnd) {
+                            currentKey = randomBigIntInRange(BigInt('0x' + userHexStart), BigInt('0x' + userHexEnd));
+                            currentRangeText = '🔤 Hex: 0x' + userHexStart.substring(0, 8) + '...';
+                        }
+                        // ⚡ 4. KAOS / HİBRİT MODU
+                        else if (activeRangeMode === 'CHAOS') {
+                            chaosStepCounter++;
+                            if (chaosStepCounter % 25 === 0) {
+                                stepChaosShuffle(baseStart, baseEnd);
+                            }
+                            if (isNarrowRange) {
+                                currentKey = randomBigIntInRange(boundMin, boundMax);
+                            } else if (chaosCurrentSubMode === 'HEX' && userHexStart && userHexEnd) {
+                                currentKey = randomBigIntInRange(BigInt('0x' + userHexStart), BigInt('0x' + userHexEnd));
+                            } else if (chaosCurrentSubMode === 'PREFIX' && userPrefix) {
+                                currentKey = generatePrefixKey(baseStart, baseEnd, userPrefix);
+                            } else if (chaosCurrentSubMode === 'GRID') {
+                                const cellSize = totalR / 65536n;
+                                const cellStart = baseStart + (BigInt(userGridCell || 0) * cellSize);
+                                currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                            } else if (activeFormula === 'BRAINWALLET' || (activeFormula === 'OMNI_CHAOS' && Math.random() < 0.25)) {
+                                currentKey = generateBrainwalletKey(boundMin, boundMax);
+                            } else {
+                                const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
+                                const eBig = BigInt(Math.round((sliceEndPct || 100) * 100000000));
+                                currentKey = randomBigIntInRange(baseStart + (totalR * sBig / 10000000000n), baseStart + (totalR * eBig / 10000000000n));
+                            }
+                            currentRangeText = '⚡ KAOS [' + (chaosCurrentSubMode || 'OMNI') + ']';
+                        }
+                        // 🌀 5. FİZİK FORMÜLLERİ
+                        else if (activeRangeMode === 'PHYSICS') {
+                            const f = (typeof activeFormula !== 'undefined' && activeFormula) ? activeFormula : 'LORENZ';
+                            if (f === 'BRAINWALLET' || (f === 'OMNI_CHAOS' && Math.random() < 0.25)) {
+                                currentKey = generateBrainwalletKey(boundMin, boundMax);
+                                currentRangeText = f === 'BRAINWALLET' ? '🧠 Zayıf Entropi' : '💥 Omni-Karma (🧠)';
+                            } else if (isNarrowRange) {
+                                currentKey = randomBigIntInRange(boundMin, boundMax);
+                                currentRangeText = '🌀 FİZİK [Pencere: 0x' + boundMin.toString(16).substring(0, 8) + '...]';
+                            } else {
+                                const centerPct = getNextPhysicsPercent();
+                                const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 100000000));
+                                const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
+                                const sK = baseStart + (totalR * sBig / 10000000000n);
+                                const eK = baseStart + (totalR * eBig / 10000000000n);
+                                currentKey = randomBigIntInRange(sK, eK);
+                                currentRangeText = '🌀 FİZİK [' + f + '] -> %' + centerPct.toFixed(2);
+                            }
+                        }
+                        // 📊 6. YÜZDE (% DİLİM) VEYA VARSAYILAN KURAL
+                        else if (activeRangeMode === 'PERCENT' && sliceModeActive && totalR > 10000n) {
+                            if (isNarrowRange) {
+                                currentKey = randomBigIntInRange(boundMin, boundMax);
+                                currentRangeText = '% Dilim [Kaydıraç: 0x' + boundMin.toString(16).substring(0, 8) + '...]';
+                            } else {
+                                const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
+                                const eBig = BigInt(Math.round((sliceEndPct || 100) * 100000000));
+                                const sK = baseStart + (totalR * sBig / 10000000000n);
+                                const eK = baseStart + (totalR * eBig / 10000000000n);
+                                currentKey = randomBigIntInRange(sK, eK);
+                                currentRangeText = '% Dilim: %' + (sliceStartPct||0).toFixed(2) + ' - %' + (sliceEndPct||100).toFixed(2);
+                            }
+                        }
+                        // 🎲 7. STANDART / 256-BİT HESAPLAMA (GPU PCG Rastgele Sayısı ile)
+                        else {
+                            if (isNarrowRange) {
+                                currentKey = randomBigIntInRange(boundMin, boundMax);
+                            } else if (totalR > 0xFFFFFFFFFFFFFFFFn) {
+                                currentKey = randomBigIntInRange(baseStart, baseEnd);
+                            } else {
+                                const rPart = (BigInt(copyArray[k * 2]) << 32n) | BigInt(copyArray[k * 2 + 1]);
+                                currentKey = totalR > 0n ? baseStart + (rPart % totalR) : baseStart;
+                            }
+                            currentRangeText = '🎮 GPU [' + gpuCardName + ']';
+                        }
+
+                        // Çift kaydıraç (Dual Slider) aktifse sınırlara uydur (CPU Worker ile birebir aynı: clamp yerine aralık içi yeniden örnekleme)
+                        if (isNarrowRange && (currentKey < boundMin || currentKey > boundMax)) {
+                            currentKey = randomBigIntInRange(boundMin, boundMax);
+                        }
+
+                        const keyHex = (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64')
+                            ? currentKey.toString(16).padStart(64, '0')
+                            : currentKey.toString(16);
+
+                        const compH160 = privkeyToHash160(keyHex);
+                        const targetH160 = activeTarget.targetHash160 || addressToHash160(activeTarget.addr);
+
+                        if (targetH160 && compH160 === targetH160) {
+                            readBuffer.unmap();
+                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ']');
+                            stopGpuHunting();
+                            return;
+                        }
+
+                        // Sıkıştırılmamış adres kontrolü
+                        const uncompH160 = privkeyToHash160Uncompressed(keyHex);
+                        if (targetH160 && uncompH160 === targetH160) {
+                            readBuffer.unmap();
+                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, false), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ' - Uncompressed]');
+                            stopGpuHunting();
+                            return;
+                        }
+
+                        if (customAddressSet && customAddressSet.size > 0 && (customAddressSet.has(compH160) || customAddressSet.has(uncompH160))) {
+                            readBuffer.unmap();
+                            const winningH160 = customAddressSet.has(compH160) ? compH160 : uncompH160;
+                            const isComp = winningH160 === compH160;
+                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, isComp), customHashToAddress[winningH160] || activeTarget.addr, '🎯 İlave Havuz [🎮 GPU: ' + gpuCardName + ']');
+                            stopGpuHunting();
+                            return;
+                        }
+
+                        const now = Date.now();
+                        if (now - lastGpuUIUpdate >= 80) {
+                            lastGpuUIUpdate = now;
+                            document.getElementById('statAttempts').innerText = attempts.toLocaleString();
+                            document.getElementById('logKey').innerText = '0x' + keyHex;
+                            document.getElementById('logRange').innerText = currentRangeText;
+                            drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
+                            if (isCircularMode && activeTarget) {
+                                const cCount = customAddressSet ? customAddressSet.size : 0;
+                                const cText = (isCustomPoolActive && cCount > 0) ? ' (+' + cCount.toLocaleString('tr-TR') + ' 🎯)' : '';
+                                const tEl = document.getElementById('logTarget');
+                                if (tEl) tEl.innerHTML = '#' + activeTarget.id + ' -> ' + (activeTarget.addr || '64 Hane') + cText;
+                            }
+                        }
+                    }
+                }
+
+                readBuffer.unmap();
+            } catch(passErr) {
+                console.warn('[WebGPU PASS ERR]:', passErr);
+            }
+
+            if (isGpuRunning && isRunning) {
+                setTimeout(gpuPass, 0);
+            }
+        }
+
+        gpuPass();
+    } catch(initErr) {
+        console.error('[WebGPU INIT ERR]:', initErr);
+        alert('WebGPU başlatılırken hata oluştu, CPU çoklu çekirdeğe geçiliyor.');
+        stopGpuHunting();
+        startWorkerPool(8);
+    }
+}
+
+function stopGpuHunting() {
+    isGpuRunning = false;
+}
+
 function startWorkerPool(threadCount) {
     stopWorkerPool();
     const url = getWorkerBlobUrl();
@@ -4682,6 +5060,7 @@ function toggleHunter() {
 
     if (isRunning) {
         isRunning = false;
+        stopGpuHunting();
         stopWorkerPool();
         releaseWakeLock();
         btn.className = 'action-btn btn-start';
@@ -4759,11 +5138,16 @@ function toggleHunter() {
             if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
         }, 500);
 
-        const threadCount = parseInt(document.getElementById('threadCountSelect')?.value) || 8;
-        if (window.Worker) {
-            startWorkerPool(threadCount);
+        const threadVal = document.getElementById('threadCountSelect')?.value;
+        if (threadVal === 'GPU') {
+            startGpuHunting();
         } else {
-            huntBatch();
+            const threadCount = parseInt(threadVal) || 8;
+            if (window.Worker) {
+                startWorkerPool(threadCount);
+            } else {
+                huntBatch();
+            }
         }
     }
 }
@@ -4819,6 +5203,7 @@ async function checkOnChainPuzzleStatus() {
 
 window.onload = function() {
     initThreadCountUI();
+    detectWebGpuSupport();
     initEmbeddedCustomPool();
     buildCustomMenus();
     switchRangeMode('PHYSICS');
