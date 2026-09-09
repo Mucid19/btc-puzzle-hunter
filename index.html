@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTC Puzzle (v22 - Antigravity Quantum Matrix)</title>
+    <title>BTC Puzzle</title>
     <!-- PWA / Uygulama Olarak İndirme Meta Etiketleri -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BTC Hunter v22">
+    <meta name="apple-mobile-web-app-title" content="BTC Puzzle">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
     <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
@@ -717,41 +717,121 @@
     }
     
     
-    /* v10 Çoklu Mod Seçim Çubuğu */
+    /* v10 Çoklu Mod Seçim Çubuğu & Donanım Seçimi */
+    .range-top-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: nowrap;
+    }
     .range-mode-tabs {
         display: flex;
-        gap: 6px;
-        margin-bottom: 6px;
+        gap: 5px;
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 0;
         flex-wrap: nowrap;
     }
     .range-mode-tab {
         flex: 1;
         min-width: 0;
-        background: #0f172a;
-        color: #94a3b8;
-        border: 1px solid #334155;
-        padding: 4px 6px;
-        border-radius: 6px;
-        font-size: 11px;
+        background: #0b1326;
+        color: #64748b;
+        border: 1px solid #1e293b;
+        padding: 5px 4px;
+        border-radius: 7px;
+        font-size: 10.5px;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         text-align: center;
         white-space: nowrap;
         line-height: 1.25;
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
     }
     .range-mode-tab:hover {
-        background: #1e293b;
-        color: #f8fafc;
+        background: #172554;
+        color: #cbd5e1;
+        border-color: #3b82f6;
     }
+    /* 🌟 SEÇİLİ SEKME (ÇOK NET & BELİRGİN VURGU) */
     .range-mode-tab.active {
-        background: #1e1b4b;
-        color: #a78bfa;
-        border-color: #8b5cf6;
-        box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+        font-weight: 800;
+        transform: translateY(-1px);
+    }
+    .range-mode-tab.tab-prefix.active {
+        background: linear-gradient(135deg, #7c2d12 0%, #ea580c 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #fb923c !important;
+        box-shadow: 0 0 14px rgba(249, 115, 22, 0.6) !important;
+    }
+    .range-mode-tab.tab-grid.active {
+        background: linear-gradient(135deg, #075985 0%, #0284c7 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #38bdf8 !important;
+        box-shadow: 0 0 14px rgba(2, 132, 199, 0.6) !important;
+    }
+    .range-mode-tab.tab-chaos.active {
+        background: linear-gradient(135deg, #831843 0%, #db2777 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #f472b6 !important;
+        box-shadow: 0 0 14px rgba(236, 72, 153, 0.6) !important;
+    }
+    .range-mode-tab.tab-physics.active {
+        background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #c084fc !important;
+        box-shadow: 0 0 14px rgba(168, 85, 247, 0.6) !important;
+    }
+    .thread-select-wrapper {
+        min-width: 125px;
+        max-width: 180px;
+        flex-shrink: 0;
+    }
+    .thread-select-box {
+        width: 100%;
+        height: 28px;
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 7px;
+        border: 1.5px solid #0284c7;
+        background: #0f172a;
+        color: #38bdf8;
+        box-shadow: 0 0 8px rgba(2, 132, 199, 0.25);
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    @media (max-width: 540px) {
+        .range-top-header {
+            flex-direction: column;
+            gap: 6px;
+            align-items: stretch;
+        }
+        .range-mode-tabs {
+            width: 100%;
+        }
+        .range-mode-tab {
+            font-size: 10px;
+            padding: 6px 2px;
+        }
+        .thread-select-wrapper {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+        .thread-select-box {
+            height: 30px;
+            font-size: 11px;
+        }
     }
     .mode-sub-panel {
         display: flex;
@@ -941,12 +1021,26 @@
     <!-- ÇOKLU SEKME DİLİM MODU -->
     <!-- v10 EVRENSEL ARALIK KONTROL MERKEZİ -->
     <div class="range-bar-panel" id="rangePanel" style="flex-direction:column; align-items:stretch; gap:10px;">
-        <!-- 4 Mod Seçim Butonları -->
-        <div class="range-mode-tabs">
-            <button class="range-mode-tab" id="tabModePrefix" onclick="switchRangeMode('PREFIX')" title="1. Ön Ek (Prefix) Kilitleme">🧩 1. Ön Ek</button>
-            <button class="range-mode-tab" id="tabModeGrid" onclick="switchRangeMode('GRID')" title="2. Grid (Hücre) Tarama">🌀 2. Grid</button>
-            <button class="range-mode-tab" id="tabModeChaos" onclick="switchRangeMode('CHAOS')" style="border-color:#ec4899; color:#f472b6;" title="3. Kaos / Hibrit Karma">⚡ 3. Kaos</button>
-            <button class="range-mode-tab active" id="tabModePhysics" onclick="switchRangeMode('PHYSICS')" style="border-color:#a855f7; color:#c084fc;" title="4. Boyutsal Fizik & Geometrik Matris">🌀 4. Fizik</button>
+        <!-- 4 Mod Seçim Butonları & Genel Donanım (Thread / GPU) Seçimi -->
+        <div class="range-top-header">
+            <!-- 4 Mod Seçim Butonları -->
+            <div class="range-mode-tabs">
+                <button class="range-mode-tab tab-prefix" id="tabModePrefix" onclick="switchRangeMode('PREFIX')" title="1. Ön Ek (Prefix) Kilitleme">🧩 1. Ön Ek</button>
+                <button class="range-mode-tab tab-grid" id="tabModeGrid" onclick="switchRangeMode('GRID')" title="2. Grid (Hücre) Tarama">🌀 2. Grid</button>
+                <button class="range-mode-tab tab-chaos" id="tabModeChaos" onclick="switchRangeMode('CHAOS')" title="3. Kaos / Hibrit Karma">⚡ 3. Kaos</button>
+                <button class="range-mode-tab tab-physics active" id="tabModePhysics" onclick="switchRangeMode('PHYSICS')" title="4. Boyutsal Fizik & Geometrik Matris">🌀 4. Fizik</button>
+            </div>
+
+            <!-- ⚡ GENEL DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ (Tüm Sekmelerde Daima Görünür) -->
+            <div class="thread-select-wrapper">
+                <select id="threadCountSelect" class="range-select thread-select-box" title="Donanım / İş Parçacığı / GPU Seçimi">
+                    <option value="GPU" selected>🎮 GPU (Oto)</option>
+                    <option value="4">🚀 4 Thread</option>
+                    <option value="8">⚡ 8 Thread (Cihaz)</option>
+                    <option value="12">🔥 12 Thread</option>
+                    <option value="16">🌌 16 Thread</option>
+                </select>
+            </div>
         </div>
 
         <!-- 1. PANEL: ÖN EK (PREFIX) SABİTLEME -->
@@ -990,20 +1084,14 @@
 
         <!-- 6. PANEL: BOYUTSAL FİZİK & GEOMETRİK FORMÜL MATRİSİ -->
         <div id="panelPhysics" class="mode-sub-panel" style="display:flex; background:#130b20; border:1px solid #a855f7; border-radius:5px; padding:2px 4px; align-items:center; gap:4px; box-shadow:0 0 8px rgba(168,85,247,0.2); box-sizing:border-box; width:100%;">
-            <select id="physicsFormulaSelect" class="range-select" style="flex:1.2; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px;" onchange="onFormulaChange()">
+            <select id="physicsFormulaSelect" class="range-select" style="flex:1.5; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px;" onchange="onFormulaChange()">
                 <option value="LORENZ">🌀 Lorenz</option>
                 <option value="QUANTUM_TUNNEL">⚛️ Schrödinger</option>
                 <option value="RIEMANN_ZETA">🧬 Riemann</option>
                 <option value="GOLDEN_SINGULARITY">🌟 Altın Oran</option>
+                <option value="HEX_SCRAMBLER">🔀 Hex / Bit Karıştırıcı</option>
                 <option value="OMNI_CHAOS" selected>💥 Omni-Karma</option>
                 <option value="BRAINWALLET">🧠 Zayıf Entropi</option>
-            </select>
-
-            <select id="threadCountSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
-                <option value="4">🚀 4 Thread</option>
-                <option value="8" selected>⚡ 8 Thread (Cihaz)</option>
-                <option value="12">🔥 12 Thread</option>
-                <option value="16">🌌 16 Thread</option>
             </select>
 
             <select id="quantumFreqSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px;">
@@ -1672,6 +1760,45 @@ function generateBrainwalletKey(targetStart, targetEnd) {
     return safeBig;
 }
 
+let hexScrambleCounter = 0;
+function generateHexScramblerKey(targetStart, targetEnd) {
+    const range = targetEnd - targetStart;
+    if (range <= 0n) return targetStart;
+    const baseOffset = randomBigIntInRange(0n, range);
+    hexScrambleCounter = (hexScrambleCounter + 1) & 0x7FFFFFFF;
+    const mode = hexScrambleCounter % 5;
+    let scrambled = baseOffset;
+    if (mode === 0) {
+        let z = baseOffset ^ (baseOffset >> 30n) ^ BigInt(hexScrambleCounter);
+        z = (z * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+        z = (z ^ (z >> 27n)) * 0x94d049bb133111ebn;
+        scrambled = (baseOffset ^ (z & 0xFFFFFFFFFFFFFFFFn));
+    } else if (mode === 1) {
+        const shift = BigInt((hexScrambleCounter % 15 + 1) * 4);
+        const bitLen = BigInt(Math.max(16, range.toString(16).length * 4));
+        const mask = (1n << bitLen) - 1n;
+        const norm = baseOffset & mask;
+        scrambled = ((norm << shift) | (norm >> (bitLen - shift))) & mask;
+    } else if (mode === 2) {
+        const gray = baseOffset ^ (baseOffset >> 1n);
+        const inv = gray ^ (gray >> 2n) ^ (gray >> 4n) ^ (gray >> 8n);
+        scrambled = baseOffset ^ inv;
+    } else if (mode === 3) {
+        const mask = (hexScrambleCounter % 2 === 0) ? 0x5555555555555555n : 0xAAAAAAAAAAAAAAAAn;
+        scrambled = baseOffset ^ (mask & range);
+    } else {
+        const L = (baseOffset >> 32n) & 0xFFFFFFFFn;
+        const R = baseOffset & 0xFFFFFFFFn;
+        const F = ((R * 0x45d9f3bn + BigInt(hexScrambleCounter)) ^ (R >> 13n)) & 0xFFFFFFFFn;
+        const newL = R;
+        const newR = L ^ F;
+        scrambled = (newL << 32n) | newR;
+    }
+    if (scrambled < 0n) scrambled = -scrambled;
+    const finalOffset = scrambled % (range + 1n);
+    return targetStart + finalOffset;
+}
+
 let activeFormula = 'OMNI_CHAOS';
 let lx = 0.1, ly = 0.0, lz = 0.0;
 const sigma = 10.0, rho = 28.0, beta = 8.0 / 3.0, dt = 0.01;
@@ -1738,13 +1865,16 @@ function getNextPhysicsPercent() {
         riemannCounter++;
         pct = ((riemannCounter * 0.618033988749895) % 1.0) * 100.0;
     } else {
-        // 💥 Omni-Karma: Lorenz, Kuantum, Riemann, Altın Oran ve Zayıf Entropi harmanı
+        // 💥 Omni-Karma: Lorenz, Kuantum, Riemann, Altın Oran, Hex Karıştırıcı ve Zayıf Entropi harmanı
         const pick = Math.random();
         if (pick < 0.20) pct = stepLorenzAttractor();
         else if (pick < 0.40) pct = getQuantumTunnelPercent();
         else if (pick < 0.60) pct = getRiemannHarmonicPercent();
-        else if (pick < 0.80) pct = ((riemannCounter++ * 0.618033988749895) % 1.0) * 100.0;
-        else {
+        else if (pick < 0.75) pct = ((riemannCounter++ * 0.618033988749895) % 1.0) * 100.0;
+        else if (pick < 0.88) {
+            hexScrambleCounter++;
+            pct = ((mix32(hexScrambleCounter * 0x45d9f3b) / 4294967296) * 100.0);
+        } else {
             brainCounter++;
             pct = ((mix32(brainCounter * 0x9e3779b9) / 4294967296) * 100.0);
         }
@@ -3360,9 +3490,30 @@ function huntBatch() {
                 const tMax = BigInt(activeTarget.origEnd   || activeTarget.end);
                 if (activeFormula === 'BRAINWALLET') {
                     currentKey = generateBrainwalletKey(tMin, tMax);
-                } else if (activeFormula === 'OMNI_CHAOS' && Math.random() < 0.25) {
-                    // 💥 Omni-Karma: %25 oranında Zayıf Entropi & Brainwallet anahtarlarını da harmanlar!
-                    currentKey = generateBrainwalletKey(tMin, tMax);
+                } else if (activeFormula === 'HEX_SCRAMBLER') {
+                    currentKey = generateHexScramblerKey(tMin, tMax);
+                } else if (activeFormula === 'OMNI_CHAOS') {
+                    const r = Math.random();
+                    if (r < 0.20) {
+                        currentKey = generateBrainwalletKey(tMin, tMax);
+                    } else if (r < 0.40) {
+                        currentKey = generateHexScramblerKey(tMin, tMax);
+                    } else {
+                        physicsStepCounter++;
+                        const freq = parseInt(document.getElementById('quantumFreqSelect')?.value) || 500;
+                        if (physicsStepCounter % Math.max(10, Math.floor(freq / 30)) === 0) {
+                            const centerPct = getNextPhysicsPercent();
+                            const microWidth = 0.005;
+                            physicsSliceStartPct = Math.max(0.0, centerPct - microWidth);
+                            physicsSliceEndPct   = Math.min(100.0, centerPct + microWidth);
+                        }
+                        const totalR = tMax - tMin;
+                        const startBig = BigInt(Math.round(physicsSliceStartPct * 100000000));
+                        const endBig   = BigInt(Math.round(physicsSliceEndPct * 100000000));
+                        const sKey = tMin + (totalR * startBig / 10000000000n);
+                        const eKey = tMin + (totalR * endBig   / 10000000000n);
+                        currentKey = randomBigIntInRange(sKey, eKey);
+                    }
                 } else {
                     physicsStepCounter++;
                     const freq = parseInt(document.getElementById('quantumFreqSelect')?.value) || 500;
@@ -3609,10 +3760,12 @@ function huntBatch() {
                     rangeText = `🎚️ Hex Kaydıraç: 0x${bMinHex.substring(0, 8)}... - 0x${bMaxHex.substring(0, 8)}...`;
                 } else if (activeRangeMode === 'PHYSICS') {
                     if (activeFormula === 'BRAINWALLET') {
-                    rangeText = `🧠 Zayıf Entropi`;
-                } else {
-                    rangeText = `🌀 FİZİK [${activeFormula}] -> %${physicsSliceStartPct.toFixed(3)} - %${physicsSliceEndPct.toFixed(3)}`;
-                }
+                        rangeText = `🧠 Zayıf Entropi`;
+                    } else if (activeFormula === 'HEX_SCRAMBLER') {
+                        rangeText = `🔀 Hex / Bit Karıştırıcı`;
+                    } else {
+                        rangeText = `🌀 FİZİK [${activeFormula}] -> %${physicsSliceStartPct.toFixed(3)} - %${physicsSliceEndPct.toFixed(3)}`;
+                    }
                 } else if (activeRangeMode === 'CHAOS') {
                     rangeText = `⚡ KAOS MODU [${chaosCurrentSubMode}] -> 0x${lastKeyHex ? lastKeyHex.substring(0, 10) : ''}...`;
                 } else if (activeRangeMode === 'GRID') {
@@ -4056,6 +4209,45 @@ function bgWorkerProcess() {
         return val;
     }
 
+    let workerHexScrambleCounter = 0;
+    function generateHexScramblerKey(targetStart, targetEnd) {
+        const range = targetEnd - targetStart;
+        if (range <= 0n) return targetStart;
+        const baseOffset = randomBigIntInRange(0n, range);
+        workerHexScrambleCounter = (workerHexScrambleCounter + 1) & 0x7FFFFFFF;
+        const mode = workerHexScrambleCounter % 5;
+        let scrambled = baseOffset;
+        if (mode === 0) {
+            let z = baseOffset ^ (baseOffset >> 30n) ^ BigInt(workerHexScrambleCounter);
+            z = (z * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+            z = (z ^ (z >> 27n)) * 0x94d049bb133111ebn;
+            scrambled = (baseOffset ^ (z & 0xFFFFFFFFFFFFFFFFn));
+        } else if (mode === 1) {
+            const shift = BigInt((workerHexScrambleCounter % 15 + 1) * 4);
+            const bitLen = BigInt(Math.max(16, range.toString(16).length * 4));
+            const mask = (1n << bitLen) - 1n;
+            const norm = baseOffset & mask;
+            scrambled = ((norm << shift) | (norm >> (bitLen - shift))) & mask;
+        } else if (mode === 2) {
+            const gray = baseOffset ^ (baseOffset >> 1n);
+            const inv = gray ^ (gray >> 2n) ^ (gray >> 4n) ^ (gray >> 8n);
+            scrambled = baseOffset ^ inv;
+        } else if (mode === 3) {
+            const mask = (workerHexScrambleCounter % 2 === 0) ? 0x5555555555555555n : 0xAAAAAAAAAAAAAAAAn;
+            scrambled = baseOffset ^ (mask & range);
+        } else {
+            const L = (baseOffset >> 32n) & 0xFFFFFFFFn;
+            const R = baseOffset & 0xFFFFFFFFn;
+            const F = ((R * 0x45d9f3bn + BigInt(workerHexScrambleCounter)) ^ (R >> 13n)) & 0xFFFFFFFFn;
+            const newL = R;
+            const newR = L ^ F;
+            scrambled = (newL << 32n) | newR;
+        }
+        if (scrambled < 0n) scrambled = -scrambled;
+        const finalOffset = scrambled % (range + 1n);
+        return targetStart + finalOffset;
+    }
+
     function generatePrefixKey(targetStart, targetEnd, prefixHex) {
         if (!prefixHex) return randomBigIntInRange(targetStart, targetEnd);
         const maxHex = targetEnd.toString(16);
@@ -4178,9 +4370,27 @@ function bgWorkerProcess() {
                 if (f === 'BRAINWALLET') {
                     currentKey = generateBrainwalletKey(boundMin, boundMax);
                     currentRangeText = '🧠 Zayıf Entropi';
-                } else if (f === 'OMNI_CHAOS' && Math.random() < 0.25) {
-                    currentKey = generateBrainwalletKey(boundMin, boundMax);
-                    currentRangeText = '💥 Omni-Karma (🧠 Zayıf Entropi)';
+                } else if (f === 'HEX_SCRAMBLER') {
+                    currentKey = generateHexScramblerKey(boundMin, boundMax);
+                    currentRangeText = '🔀 Hex / Bit Karıştırıcı';
+                } else if (f === 'OMNI_CHAOS') {
+                    const r = Math.random();
+                    if (r < 0.20) {
+                        currentKey = generateBrainwalletKey(boundMin, boundMax);
+                        currentRangeText = '💥 Omni-Karma (🧠 Zayıf Entropi)';
+                    } else if (r < 0.40) {
+                        currentKey = generateHexScramblerKey(boundMin, boundMax);
+                        currentRangeText = '💥 Omni-Karma (🔀 Hex Karıştırıcı)';
+                    } else {
+                        physicsStep++;
+                        const centerPct = getNextPhysicsPercent(f);
+                        const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 100000000));
+                        const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
+                        const sK = baseStart + (totalR * sBig / 10000000000n);
+                        const eK = baseStart + (totalR * eBig / 10000000000n);
+                        currentKey = randomBigIntInRange(sK, eK);
+                        currentRangeText = '🌀 FİZİK [' + f + '] -> %' + centerPct.toFixed(3);
+                    }
                 } else {
                     physicsStep++;
                     const centerPct = getNextPhysicsPercent(f);
@@ -4598,10 +4808,13 @@ function updateThreadSelectWithGpu() {
         const opt = document.createElement('option');
         opt.value = 'GPU';
         opt.innerText = gpuLabel;
+        opt.selected = true;
         sel.insertBefore(opt, sel.firstChild);
     } else {
         existingGpuOpt.innerText = gpuLabel;
+        existingGpuOpt.selected = true;
     }
+    sel.value = 'GPU';
 }
 
 let gpuComputePipeline = null;
@@ -4610,8 +4823,9 @@ let gpuSeedCounter = 1;
 
 async function startGpuHunting() {
     if (!gpuDevice) {
-        alert('WebGPU cihazı başlatılamadı, CPU iş parçacıklarına geçiliyor.');
-        startWorkerPool(8);
+        const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+        alert('WebGPU cihazı başlatılamadı, ' + fallbackCores + ' çekirdekli CPU işlemcisine geçiliyor.');
+        startWorkerPool(fallbackCores);
         return;
     }
     
@@ -4786,8 +5000,19 @@ async function startGpuHunting() {
                                 const cellSize = totalR / 65536n;
                                 const cellStart = baseStart + (BigInt(userGridCell || 0) * cellSize);
                                 currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
-                            } else if (activeFormula === 'BRAINWALLET' || (activeFormula === 'OMNI_CHAOS' && Math.random() < 0.25)) {
+                            } else if (activeFormula === 'BRAINWALLET') {
                                 currentKey = generateBrainwalletKey(boundMin, boundMax);
+                            } else if (activeFormula === 'HEX_SCRAMBLER') {
+                                currentKey = generateHexScramblerKey(boundMin, boundMax);
+                            } else if (activeFormula === 'OMNI_CHAOS') {
+                                const r = Math.random();
+                                if (r < 0.20) currentKey = generateBrainwalletKey(boundMin, boundMax);
+                                else if (r < 0.40) currentKey = generateHexScramblerKey(boundMin, boundMax);
+                                else {
+                                    const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
+                                    const eBig = BigInt(Math.round((sliceEndPct || 100) * 100000000));
+                                    currentKey = randomBigIntInRange(baseStart + (totalR * sBig / 10000000000n), baseStart + (totalR * eBig / 10000000000n));
+                                }
                             } else {
                                 const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
                                 const eBig = BigInt(Math.round((sliceEndPct || 100) * 100000000));
@@ -4798,9 +5023,32 @@ async function startGpuHunting() {
                         // 🌀 5. FİZİK FORMÜLLERİ
                         else if (activeRangeMode === 'PHYSICS') {
                             const f = (typeof activeFormula !== 'undefined' && activeFormula) ? activeFormula : 'LORENZ';
-                            if (f === 'BRAINWALLET' || (f === 'OMNI_CHAOS' && Math.random() < 0.25)) {
+                            if (f === 'BRAINWALLET') {
                                 currentKey = generateBrainwalletKey(boundMin, boundMax);
-                                currentRangeText = f === 'BRAINWALLET' ? '🧠 Zayıf Entropi' : '💥 Omni-Karma (🧠)';
+                                currentRangeText = '🧠 Zayıf Entropi';
+                            } else if (f === 'HEX_SCRAMBLER') {
+                                currentKey = generateHexScramblerKey(boundMin, boundMax);
+                                currentRangeText = '🔀 Hex / Bit Karıştırıcı';
+                            } else if (f === 'OMNI_CHAOS') {
+                                const r = Math.random();
+                                if (r < 0.20) {
+                                    currentKey = generateBrainwalletKey(boundMin, boundMax);
+                                    currentRangeText = '💥 Omni-Karma (🧠)';
+                                } else if (r < 0.40) {
+                                    currentKey = generateHexScramblerKey(boundMin, boundMax);
+                                    currentRangeText = '💥 Omni-Karma (🔀)';
+                                } else if (isNarrowRange) {
+                                    currentKey = randomBigIntInRange(boundMin, boundMax);
+                                    currentRangeText = '💥 Omni-Karma (Pencere)';
+                                } else {
+                                    const centerPct = getNextPhysicsPercent();
+                                    const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 100000000));
+                                    const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
+                                    const sK = baseStart + (totalR * sBig / 10000000000n);
+                                    const eK = baseStart + (totalR * eBig / 10000000000n);
+                                    currentKey = randomBigIntInRange(sK, eK);
+                                    currentRangeText = '💥 Omni-Karma -> %' + centerPct.toFixed(2);
+                                }
                             } else if (isNarrowRange) {
                                 currentKey = randomBigIntInRange(boundMin, boundMax);
                                 currentRangeText = '🌀 FİZİK [Pencere: 0x' + boundMin.toString(16).substring(0, 8) + '...]';
@@ -4855,8 +5103,8 @@ async function startGpuHunting() {
 
                         if (targetH160 && compH160 === targetH160) {
                             readBuffer.unmap();
-                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ']');
                             stopGpuHunting();
+                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ']');
                             return;
                         }
 
@@ -4864,17 +5112,17 @@ async function startGpuHunting() {
                         const uncompH160 = privkeyToHash160Uncompressed(keyHex);
                         if (targetH160 && uncompH160 === targetH160) {
                             readBuffer.unmap();
-                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, false), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ' - Uncompressed]');
                             stopGpuHunting();
+                            handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, false), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ' - Uncompressed]');
                             return;
                         }
 
                         if (customAddressSet && customAddressSet.size > 0 && (customAddressSet.has(compH160) || customAddressSet.has(uncompH160))) {
                             readBuffer.unmap();
+                            stopGpuHunting();
                             const winningH160 = customAddressSet.has(compH160) ? compH160 : uncompH160;
                             const isComp = winningH160 === compH160;
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, isComp), customHashToAddress[winningH160] || activeTarget.addr, '🎯 İlave Havuz [🎮 GPU: ' + gpuCardName + ']');
-                            stopGpuHunting();
                             return;
                         }
 
@@ -4908,14 +5156,47 @@ async function startGpuHunting() {
         gpuPass();
     } catch(initErr) {
         console.error('[WebGPU INIT ERR]:', initErr);
-        alert('WebGPU başlatılırken hata oluştu, CPU çoklu çekirdeğe geçiliyor.');
+        const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+        alert('WebGPU başlatılırken hata oluştu, ' + fallbackCores + ' çekirdekli CPU işlemcisine geçiliyor.');
         stopGpuHunting();
-        startWorkerPool(8);
+        startWorkerPool(fallbackCores);
     }
 }
 
 function stopGpuHunting() {
     isGpuRunning = false;
+    isRunning = false;
+    if (typeof timerInterval !== 'undefined' && timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (typeof releaseWakeLock === 'function') releaseWakeLock();
+
+    const btn = document.getElementById('btnToggle');
+    if (btn) {
+        btn.className = 'action-btn btn-start';
+        btn.innerText = '▶ Aramayı Başlat';
+    }
+
+    const btnUnsolved = document.getElementById('btnMainUnsolved');
+    const btnSolved = document.getElementById('btnMainSolved');
+    const btnCustomPool = document.getElementById('btnMainCustomPool');
+    if (btnUnsolved) btnUnsolved.classList.remove('locked');
+    if (btnSolved) btnSolved.classList.remove('locked');
+    if (btnCustomPool) btnCustomPool.classList.remove('locked');
+
+    ['physicsFormulaSelect', 'threadCountSelect', 'quantumFreqSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
+    });
+    const algoButtons = document.querySelectorAll('.algo-btn');
+    algoButtons.forEach(b => b.classList.remove('locked'));
+    const rangeSel = document.getElementById('rangeSelect');
+    if (rangeSel) {
+        rangeSel.disabled = false;
+        rangeSel.style.opacity = '1';
+        rangeSel.style.cursor = 'pointer';
+    }
 }
 
 function startWorkerPool(threadCount) {
