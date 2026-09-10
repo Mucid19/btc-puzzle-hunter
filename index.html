@@ -790,12 +790,35 @@
         box-shadow: 0 0 14px rgba(168, 85, 247, 0.6) !important;
     }
     .thread-select-wrapper {
-        min-width: 125px;
-        max-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         flex-shrink: 0;
     }
+    #cmdBadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 8px;
+        height: 28px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        background: #1e293b;
+        border: 1.5px solid #475569;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.3s;
+        user-select: none;
+    }
+    #cmdBadgeText {
+        white-space: nowrap !important;
+    }
     .thread-select-box {
-        width: 100%;
+        min-width: 115px;
+        max-width: 155px;
         height: 28px;
         font-size: 10.5px;
         font-weight: 700;
@@ -809,6 +832,7 @@
         overflow: hidden;
         white-space: nowrap;
         cursor: pointer;
+        flex-shrink: 0;
     }
     @media (max-width: 540px) {
         .range-top-header {
@@ -1034,8 +1058,13 @@
 
             <!-- ⚡ GENEL DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ (Tüm Sekmelerde Daima Görünür) -->
             <div class="thread-select-wrapper">
+                <div id="cmdBadge" title="CMD Motoru (Tıklayarak Yeniden Bağlanın)" onclick="checkOrReconnectCmd()">
+                    <span id="cmdBadgeDot" style="width:8px; height:8px; border-radius:50%; background:#94a3b8; display:inline-block; flex-shrink:0;"></span>
+                    <span id="cmdBadgeText">CMD: Çevrimdışı</span>
+                </div>
                 <select id="threadCountSelect" class="range-select thread-select-box" title="Donanım / İş Parçacığı / GPU Seçimi">
-                    <option value="GPU" selected>🎮 GPU (Oto)</option>
+                    <option value="HYBRID" selected>🚀 CPU + GPU</option>
+                    <option value="GPU">🎮 GPU (Oto)</option>
                     <option value="4">🚀 4 Thread</option>
                     <option value="8">⚡ 8 Thread (Cihaz)</option>
                     <option value="12">🔥 12 Thread</option>
@@ -3736,6 +3765,10 @@ function huntBatch() {
             if (currentH160 === targetH160) {
                 const winAddr = privkeyToAddress(lastKeyHex);
                 document.getElementById('statAttempts').innerText = attempts.toLocaleString();
+            if (data.rate) {
+                const spEl = document.getElementById('statSpeed');
+                if (spEl) spEl.innerText = Number(Math.round(data.rate)).toLocaleString('tr-TR') + ' key/s';
+            }
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
                 const inPoolNote = (isCustomPoolActive && customAddressSet.has(currentH160)) ? ' (🎯 İlave Adres Havuzunda da Eşleşti)' : '';
                 handleWin(activeTarget.id, lastKeyHex, winAddr, activeTarget.addr, activeTarget.reward + inPoolNote);
@@ -4996,23 +5029,28 @@ function updateThreadSelectWithGpu() {
     if (!sel || !isGpuSupported) return;
     const isMobile = (typeof window !== 'undefined' && window.innerWidth <= 480);
     
-    let existingGpuOpt = Array.from(sel.options).find(o => o.value === 'GPU');
     const firstWord = (gpuCardName || 'GPU').split(' ')[0];
-    const gpuLabel = isMobile 
-        ? ('🎮 GPU (' + firstWord + ')') 
-        : ('🎮 GPU (' + gpuCardName + ')');
-        
-    if (!existingGpuOpt) {
-        const opt = document.createElement('option');
-        opt.value = 'GPU';
-        opt.innerText = gpuLabel;
-        opt.selected = true;
-        sel.insertBefore(opt, sel.firstChild);
-    } else {
-        existingGpuOpt.innerText = gpuLabel;
-        existingGpuOpt.selected = true;
+    const gpuLabel = isMobile ? ('🎮 GPU (' + firstWord + ')') : ('🎮 GPU (' + gpuCardName + ')');
+    const hybridLabel = '🚀 CPU + GPU';
+
+    let hybridOpt = Array.from(sel.options).find(o => o.value === 'HYBRID');
+    if (!hybridOpt) {
+        hybridOpt = document.createElement('option');
+        hybridOpt.value = 'HYBRID';
+        hybridOpt.innerText = hybridLabel;
+        sel.insertBefore(hybridOpt, sel.firstChild);
     }
-    sel.value = 'GPU';
+
+    let gpuOpt = Array.from(sel.options).find(o => o.value === 'GPU');
+    if (!gpuOpt) {
+        gpuOpt = document.createElement('option');
+        gpuOpt.value = 'GPU';
+        gpuOpt.innerText = gpuLabel;
+        sel.insertBefore(gpuOpt, hybridOpt.nextSibling);
+    } else {
+        gpuOpt.innerText = gpuLabel;
+    }
+    sel.value = 'HYBRID';
 }
 
 let gpuComputePipeline = null;
@@ -5438,8 +5476,13 @@ function stopWorkerPool() {
 }
 
 function broadcastWorkerConfig() {
-    if (!workerPool || workerPool.length === 0) return;
     const cfg = getCurrentWorkerConfig();
+    if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+        try {
+            cmdSocket.send(JSON.stringify({ cmd: 'updateConfig', config: cfg }));
+        } catch(e) {}
+    }
+    if (!workerPool || workerPool.length === 0) return;
     workerPool.forEach(w => {
         try {
             w.postMessage({ cmd: 'updateConfig', config: cfg });
@@ -5497,6 +5540,9 @@ function handleWorkerMessage(e) {
         }
     } else if (data.type === 'win') {
         console.log('🎉🎉🎉 KAZANÇ BULUNDU!', data);
+        if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+            try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
+        }
         stopWorkerPool();
         isRunning = false;
         
@@ -5539,6 +5585,9 @@ function toggleHunter() {
 
     if (isRunning) {
         isRunning = false;
+        if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+            try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
+        }
         stopGpuHunting();
         stopWorkerPool();
         releaseWakeLock();
@@ -5617,15 +5666,24 @@ function toggleHunter() {
             if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
         }, 500);
 
-        const threadVal = document.getElementById('threadCountSelect')?.value;
-        if (threadVal === 'GPU') {
-            startGpuHunting();
+        if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+            console.log('🚀 [CMD MOTOR] Tarama komutu CMD motoruna iletildi.');
+            cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
         } else {
-            const threadCount = parseInt(threadVal) || 8;
-            if (window.Worker) {
-                startWorkerPool(threadCount);
+            const threadVal = document.getElementById('threadCountSelect')?.value;
+            if (threadVal === 'HYBRID') {
+                startGpuHunting();
+                const threadCount = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+                if (window.Worker) startWorkerPool(threadCount);
+            } else if (threadVal === 'GPU') {
+                startGpuHunting();
             } else {
-                huntBatch();
+                const threadCount = parseInt(threadVal) || 8;
+                if (window.Worker) {
+                    startWorkerPool(threadCount);
+                } else {
+                    huntBatch();
+                }
             }
         }
     }
@@ -5680,7 +5738,158 @@ async function checkOnChainPuzzleStatus() {
     isCheckingOnChain = false;
 }
 
+// ============================================================
+// ⚡ CMD ARKA PLAN MOTORU ENTEGRASYONU (WebSocket ws://127.0.0.1:8765)
+// ============================================================
+let cmdSocket = null;
+let cmdConnected = false;
+let cmdReconnectTimer = null;
+
+function updateCmdBadge(connected, info) {
+    const badge = document.getElementById('cmdBadge');
+    const dot = document.getElementById('cmdBadgeDot');
+    const text = document.getElementById('cmdBadgeText');
+    const threadSel = document.getElementById('threadCountSelect');
+    if (!badge || !dot || !text) return;
+    
+    if (connected) {
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        badge.style.borderColor = '#10b981';
+        badge.style.color = '#34d399';
+        badge.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
+        badge.style.whiteSpace = 'nowrap';
+        dot.style.background = '#10b981';
+        dot.style.boxShadow = '0 0 8px #10b981';
+        dot.style.flexShrink = '0';
+        dot.style.display = 'inline-block';
+        dot.style.width = '8px';
+        dot.style.height = '8px';
+        dot.style.borderRadius = '50%';
+        const cores = (info && info.cpuCount) ? info.cpuCount : 16;
+        const gpuStr = (info && info.hasGpu) ? ' + GPU' : '';
+        text.innerText = 'CMD: Aktif';
+        text.style.whiteSpace = 'nowrap';
+        badge.title = `⚡ CMD Motoru Aktif (${cores} Çekirdek${gpuStr})`;
+        if (threadSel) {
+            threadSel.style.display = '';
+        }
+    } else {
+        badge.style.background = '#1e293b';
+        badge.style.borderColor = '#475569';
+        badge.style.color = '#94a3b8';
+        badge.style.boxShadow = 'none';
+        badge.style.whiteSpace = 'nowrap';
+        badge.style.flexShrink = '0';
+        dot.style.background = '#94a3b8';
+        dot.style.boxShadow = 'none';
+        dot.style.flexShrink = '0';
+        dot.style.display = 'inline-block';
+        dot.style.width = '8px';
+        dot.style.height = '8px';
+        dot.style.borderRadius = '50%';
+        text.innerText = 'CMD: Çevrimdışı';
+        text.style.whiteSpace = 'nowrap';
+        badge.title = '⚪ CMD Motoru Çevrimdışı (Tıklayarak Yeniden Bağlanın)';
+        text.style.whiteSpace = 'nowrap';
+        if (threadSel) {
+            threadSel.style.display = ''; // CMD çevrimdışıysa tarayıcı thread seçici gösterilir
+        }
+    }
+}
+
+function checkOrReconnectCmd() {
+    if (cmdSocket) {
+        try { cmdSocket.close(); } catch(e) {}
+    }
+    initCmdMotorWebSocket();
+}
+
+function initCmdMotorWebSocket() {
+    if (cmdReconnectTimer) {
+        clearTimeout(cmdReconnectTimer);
+        cmdReconnectTimer = null;
+    }
+    try {
+        cmdSocket = new WebSocket('ws://127.0.0.1:8765');
+        
+        cmdSocket.onopen = function() {
+            cmdConnected = true;
+            console.log('⚡ [CMD MOTOR] ws://127.0.0.1:8765 bağlantısı kuruldu.');
+            updateCmdBadge(true);
+            broadcastWorkerConfig();
+        };
+
+        cmdSocket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'system_info') {
+                    updateCmdBadge(true, data);
+                    if (data.isRunning && !isRunning) {
+                        syncGuiRunning(true);
+                    }
+                } else if (data.type === 'progress' || data.type === 'win') {
+                    handleWorkerMessage({ data: data });
+                }
+            } catch(err) {
+                console.error('CMD mesaj ayrıştırma hatası:', err);
+            }
+        };
+
+        cmdSocket.onclose = function() {
+            cmdConnected = false;
+            updateCmdBadge(false);
+            if (!cmdReconnectTimer) {
+                cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+            }
+        };
+
+        cmdSocket.onerror = function() {
+            cmdConnected = false;
+            updateCmdBadge(false);
+        };
+    } catch(e) {
+        cmdConnected = false;
+        updateCmdBadge(false);
+        if (!cmdReconnectTimer) {
+            cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+        }
+    }
+}
+
+function syncGuiRunning(running) {
+    const btn = document.getElementById('btnToggle');
+    if (running) {
+        isRunning = true;
+        if (btn) {
+            btn.className = 'action-btn btn-stop';
+            btn.innerText = '⏹ Aramayı Durdur';
+        }
+        if (!startTime) startTime = Date.now();
+        if (!timerInterval) {
+            timerInterval = setInterval(() => {
+                const sec = Math.floor((Date.now() - startTime) / 1000);
+                const hrs = String(Math.floor(sec / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+                const secs = String(sec % 60).padStart(2, '0');
+                const el = document.getElementById('statElapsed');
+                if (el) el.innerText = hrs + ':' + mins + ':' + secs;
+            }, 500);
+        }
+    } else {
+        isRunning = false;
+        if (btn) {
+            btn.className = 'action-btn btn-start';
+            btn.innerText = '▶ Aramayı Başlat';
+        }
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+}
+
 window.onload = function() {
+    initCmdMotorWebSocket();
     initThreadCountUI();
     detectWebGpuSupport();
     initEmbeddedCustomPool();
