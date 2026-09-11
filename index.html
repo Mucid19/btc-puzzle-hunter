@@ -55,8 +55,8 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
+            overflow-x: hidden;
             overscroll-behavior: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -68,6 +68,8 @@
             justify-content: center;
             align-items: center;
             padding: 12px;
+            box-sizing: border-box;
+            min-height: 100vh;
         }
 
         .container {
@@ -79,6 +81,9 @@
             border: 1px solid var(--border);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             position: relative;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            margin: auto;
         }
 
         .header {
@@ -283,6 +288,8 @@
         .space-slider {
             -webkit-appearance: none;
             appearance: none;
+            flex: 1;
+            min-width: 0;
             width: 100%;
             height: 6px;
             background: #1e293b;
@@ -290,6 +297,14 @@
             outline: none;
             cursor: pointer;
             transition: all 0.15s;
+        }
+
+        .hex-bound-input {
+            width: 135px;
+            max-width: 42%;
+            min-width: 75px;
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         .space-slider::-webkit-slider-thumb {
@@ -647,9 +662,20 @@
         }
 
         @media (max-width: 540px) {
+            body {
+                padding: 6px 4px;
+                align-items: center;
+                justify-content: center;
+                overflow-x: hidden;
+            }
             .container {
-                padding: 12px;
-                border-radius: 14px;
+                padding: 10px 8px;
+                border-radius: 12px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow-x: hidden;
+                margin: auto;
             }
             .header h1 {
                 font-size: 18px;
@@ -657,6 +683,47 @@
             .algo-btn {
                 font-size: 10px;
                 padding: 6px 2px;
+                min-width: 0 !important;
+            }
+            .range-bar-panel {
+                padding: 6px 6px;
+                margin-bottom: 8px;
+                gap: 6px;
+            }
+            .dual-slider-bar {
+                padding: 8px 8px;
+                margin-bottom: 8px;
+            }
+            .slider-item {
+                padding: 6px 8px;
+            }
+            .hex-bound-input {
+                width: 110px !important;
+                max-width: 38% !important;
+                min-width: 70px !important;
+                font-size: 9.5px !important;
+                padding: 2px 4px !important;
+            }
+            .range-select {
+                min-width: 0 !important;
+                font-size: 10px !important;
+                padding: 1px 3px !important;
+            }
+            .thread-select-box {
+                min-width: 0 !important;
+                max-width: 95px !important;
+                font-size: 9.5px !important;
+                padding: 1px 2px !important;
+            }
+            .stat-card {
+                padding: 4px 6px;
+            }
+            .stat-card .value {
+                font-size: 13.5px;
+            }
+            .live-log {
+                padding: 8px 10px;
+                font-size: 10.5px;
             }
         }
     .range-bar-panel {
@@ -676,7 +743,7 @@
         align-items: center;
         gap: 8px;
         flex: 1;
-        min-width: 260px;
+        min-width: 0;
     }
     .range-bar-label {
         font-size: 12px;
@@ -695,7 +762,7 @@
         outline: none;
         cursor: pointer;
         flex: 1;
-        min-width: 180px;
+        min-width: 0;
     }
     .range-select option {
         background: #0f172a;
@@ -1150,8 +1217,9 @@
 
             </div>
         </div>
+    </div>
 
-        <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI (Satoshi Cracker Style) -->
+    <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI (Satoshi Cracker Style) -->
     <div class="dual-slider-bar">
         <!-- Başlık & Kaydıraç Aktif Butonu Gizlendi (Varsayılan olarak daima aktif) -->
         <div class="slider-header" style="display: none !important;">
@@ -1170,8 +1238,8 @@
                     <span id="lblSliderMin" style="color:#10b981; font-family:monospace; font-size:12px; font-weight:bold;">0x400000000000000000</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="range" id="rangeSliderMin" class="space-slider slider-min" min="0" max="1000000" step="1" value="0" oninput="onHexSliderChange('MIN')">
-                    <input type="text" id="hexSliderMin" class="hex-bound-input" placeholder="0x..." style="width:175px; background:#0b1320; border:1px solid #10b981; color:#34d399; font-size:11px; padding:3px 6px; border-radius:4px; font-family:monospace; text-align:right;" oninput="onHexSliderInputChange('MIN')">
+                    <input type="range" id="rangeSliderMin" class="space-slider slider-min" min="0" max="1000000" step="1" value="0" oninput="onHexSliderChange('MIN')" style="flex:1; min-width:0;">
+                    <input type="text" id="hexSliderMin" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #10b981; color:#34d399; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MIN')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
                     <span>Taban: <span id="lblHexStartMinBound" style="font-family:monospace; color:#34d399;">0x400000...</span></span>
@@ -1186,8 +1254,8 @@
                     <span id="lblSliderMax" style="color:#ec4899; font-family:monospace; font-size:12px; font-weight:bold;">0x7fffffffffffffffff</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="range" id="rangeSliderMax" class="space-slider slider-max" min="0" max="1000000" step="1" value="1000000" oninput="onHexSliderChange('MAX')">
-                    <input type="text" id="hexSliderMax" class="hex-bound-input" placeholder="0x..." style="width:175px; background:#0b1320; border:1px solid #ec4899; color:#f472b6; font-size:11px; padding:3px 6px; border-radius:4px; font-family:monospace; text-align:right;" oninput="onHexSliderInputChange('MAX')">
+                    <input type="range" id="rangeSliderMax" class="space-slider slider-max" min="0" max="1000000" step="1" value="1000000" oninput="onHexSliderChange('MAX')" style="flex:1; min-width:0;">
+                    <input type="text" id="hexSliderMax" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #ec4899; color:#f472b6; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MAX')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
                     <span>Taban: <span id="lblHexStartMaxBound" style="font-family:monospace; color:#64748b;">0x400000...</span></span>
