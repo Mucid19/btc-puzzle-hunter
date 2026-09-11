@@ -4,8 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BTC Puzzle</title>
-    <!-- PWA / Uygulama Olarak İndirme Meta Etiketleri -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA / Uygulama Olarak İndirme Meta Etiketleri (Sadece HTTP/HTTPS üzerinden açıldığında yüklenir; local file:// CORS hatasını önler) -->
+    <script>
+        if (window.location.protocol.startsWith('http')) {
+            const m = document.createElement('link');
+            m.rel = 'manifest';
+            m.href = 'manifest.json';
+            document.head.appendChild(m);
+        } else if ('serviceWorker' in navigator) {
+            try {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    for (let r of regs) r.unregister();
+                }).catch(() => {});
+            } catch(e) {}
+        }
+    </script>
     <meta name="theme-color" content="#10b981">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1065,93 +1078,78 @@
             </div>
         </div>
 
-        <!-- 4 Mod Seçim Butonları & Genel Donanım (Thread / GPU) Seçimi -->
-        <div class="range-top-header">
-            <!-- 4 Mod Seçim Butonları -->
-            <div class="range-mode-tabs">
-                <button class="range-mode-tab tab-prefix" id="tabModePrefix" onclick="switchRangeMode('PREFIX')" title="1. Ön Ek (Prefix) Kilitleme">🧩 1. Ön Ek</button>
-                <button class="range-mode-tab tab-grid" id="tabModeGrid" onclick="switchRangeMode('GRID')" title="2. Grid (Hücre) Tarama">🌀 2. Grid</button>
-                <button class="range-mode-tab tab-chaos" id="tabModeChaos" onclick="switchRangeMode('CHAOS')" title="3. Kaos / Hibrit Karma">⚡ 3. Kaos</button>
-                <button class="range-mode-tab tab-physics active" id="tabModePhysics" onclick="switchRangeMode('PHYSICS')" title="4. Boyutsal Fizik & Geometrik Matris">🌀 4. Fizik</button>
-            </div>
+        <!-- Gizli mod butonları (eski js referansları için) -->
+        <div style="display:none;">
+            <button id="tabModePhysics" class="active"></button>
+            <button id="tabModeChaos"></button>
+            <button id="tabModePrefix"></button>
+            <button id="tabModeGrid"></button>
+        </div>
 
-            <!-- ⚡ GENEL DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ (Tüm Sekmelerde Daima Görünür) -->
-            <div class="thread-select-wrapper">
-                <div id="cmdBadge" title="CMD Motoru (Tıklayarak Yeniden Bağlanın)" onclick="checkOrReconnectCmd()">
-                    <span id="cmdBadgeDot" style="width:8px; height:8px; border-radius:50%; background:#94a3b8; display:inline-block; flex-shrink:0;"></span>
-                    <span id="cmdBadgeText">CMD: Çevrimdışı</span>
+        <!-- 🌟 BİRLEŞİK FİZİK & HİBRİT PANELİ (HEPSİ YANYANA) -->
+        <div id="panelPhysics" class="mode-sub-panel" style="display:flex; flex-direction:column; gap:4px; background:#130b20; border:1px solid #a855f7; border-radius:6px; padding:4px 6px; box-shadow:0 0 10px rgba(168,85,247,0.25); box-sizing:border-box; width:100%;">
+            
+            <!-- 1. SATIR: HEPSİ YANYANA (CMD ROZETİ + ÇALIŞMA MODU / FORMÜL + DONANIM / THREAD / GPU) -->
+            <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
+                
+                <!-- CMD ROZETİ (Çevrimdışı yazısız, kompakt) -->
+                <div id="cmdBadge" title="CMD Motoru (Tıklayarak Yeniden Bağlanın)" onclick="checkOrReconnectCmd()" style="display:inline-flex; align-items:center; gap:3px; padding:0 5px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e293b; border:1px solid #475569; color:#94a3b8; cursor:pointer;">
+                    <span id="cmdBadgeDot" style="width:7px; height:7px; border-radius:50%; background:#94a3b8; display:inline-block; flex-shrink:0;"></span>
+                    <span id="cmdBadgeText" style="white-space:nowrap; font-size:10px;">CMD</span>
                 </div>
-                <select id="threadCountSelect" class="range-select thread-select-box" title="Donanım / İş Parçacığı / GPU Seçimi">
+
+                <!-- ÇALIŞMA MODU / FORMÜL SEÇİCİ -->
+                <select id="physicsFormulaSelect" class="range-select" style="flex:1.4; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" onchange="onFormulaChange()">
+                    <option value="PREFIX">🧩 1. Sadece Ön Ek (0x)</option>
+                    <option value="GRID">🌀 2. Sadece Grid (Hücre)</option>
+                    <option value="OMNI_CHAOS" selected>💥 3. Hibrit (Ön Ek+Grid+Fizik)</option>
+                    <option value="LORENZ">🌀 Lorenz</option>
+                    <option value="QUANTUM_TUNNEL">⚛️ Schrödinger</option>
+                    <option value="RIEMANN_ZETA">🧬 Riemann Zeta</option>
+                    <option value="GOLDEN_SINGULARITY">🌟 Altın Oran</option>
+                    <option value="HEX_SCRAMBLER">🔀 Hex Karıştırıcı</option>
+                    <option value="BRAINWALLET">🧠 Zayıf Entropi</option>
+                </select>
+
+                <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
+                <select id="threadCountSelect" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:115px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı / GPU Seçimi">
                     <option value="HYBRID" selected>🚀 CPU + GPU</option>
                     <option value="GPU">🎮 GPU (Oto)</option>
-                    <option value="4">🚀 4 Thread</option>
-                    <option value="8">⚡ 8 Thread (Cihaz)</option>
-                    <option value="12">🔥 12 Thread</option>
-                    <option value="16">🌌 16 Thread</option>
+                    <option value="4">🚀 4T</option>
+                    <option value="8">⚡ 8T (Cihaz)</option>
+                    <option value="12">🔥 12T</option>
+                    <option value="16">🌌 16T</option>
                 </select>
+
+            </div>
+
+            <!-- 2. SATIR: ÖN EK (0x) VE GRID (🌀) BAĞIMSIZ KONTROLLERİ -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
+                
+                <!-- ÖN EK BLOĞU -->
+                <div id="blockPrefix" onclick="if(activeFormula !== 'PREFIX' && activeFormula !== 'OMNI_CHAOS') selectModeFormula('PREFIX')" style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #f97316; box-shadow:0 0 6px rgba(249,115,22,0.3); transition:all 0.2s ease; cursor:pointer;" title="Ön Ek Arama Bloğu (Tıklayarak Seçin)">
+                    <span style="color:#fb923c; font-weight:bold; font-family:monospace; font-size:10.5px; flex-shrink:0;">0x</span>
+                    <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; max-width:65px; border-radius:3px;" oninput="onPrefixInput()" onfocus="if(activeFormula !== 'PREFIX' && activeFormula !== 'OMNI_CHAOS') selectModeFormula('PREFIX')" title="Ön Ek">
+                    <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#f97316; color:#ffffff; border:1px solid #fb923c; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek Otomatik Zıplama Aç/Kapat">
+                        🔄 Oto
+                    </button>
+                    <input type="checkbox" id="chkPrefixAutoJump" style="display:none;" checked>
+                </div>
+
+                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+
+                <!-- GRID BLOĞU -->
+                <div id="blockGrid" onclick="if(activeFormula !== 'GRID' && activeFormula !== 'OMNI_CHAOS') selectModeFormula('GRID')" style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #0284c7; box-shadow:0 0 6px rgba(2,132,199,0.3); transition:all 0.2s ease; cursor:pointer;" title="Grid Arama Bloğu (Tıklayarak Seçin)">
+                    <span style="color:#38bdf8; font-weight:bold; font-size:10.5px; flex-shrink:0;" title="Hilbert Hücre">🌀</span>
+                    <input type="number" id="gridCellInput" class="grid-input-box" min="0" max="65535" value="57057" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; max-width:60px; border-radius:3px;" oninput="onGridCellInput()" onfocus="if(activeFormula !== 'GRID' && activeFormula !== 'OMNI_CHAOS') selectModeFormula('GRID')" title="Hücre No">
+                    <button type="button" id="btnGridAuto" onclick="event.stopPropagation(); toggleGridAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0284c7; color:#ffffff; border:1px solid #38bdf8; display:inline-flex; align-items:center; gap:2px;" title="Hücre Otomatik Zıplama Aç/Kapat">
+                        🔄 Oto
+                    </button>
+                    <input type="checkbox" id="chkGridAutoJump" style="display:none;" checked>
+                </div>
+
             </div>
         </div>
-
-        <!-- 1. PANEL: ÖN EK (PREFIX) SABİTLEME -->
-        <div id="panelPrefix" class="mode-sub-panel" style="display:none; align-items:center; gap:5px; width:100%; flex-wrap:nowrap; box-sizing:border-box;">
-            <span style="color:#fb923c; font-weight:bold; font-family:monospace; font-size:11px; flex-shrink:0;">0x</span>
-            <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 4px; height:24px; font-size:11px; font-family:monospace; width:75px; min-width:60px; max-width:90px; flex-shrink:1; border-radius:4px;" oninput="onPrefixInput()">
-            <label style="display:inline-flex; align-items:center; justify-content:center; gap:2px; font-size:10.5px; color:#fb923c; cursor:pointer; font-weight:700; background:#0f172a; padding:1px 6px; height:24px; box-sizing:border-box; border-radius:4px; border:1px solid #f97316; flex-shrink:0; white-space:nowrap;">
-                <input type="checkbox" id="chkPrefixAutoJump" style="width:12px; height:12px; accent-color:#f97316; cursor:pointer;" checked onchange="togglePrefixAutoJump()">
-                🔄 Oto
-            </label>
-            <div id="prefixInfo" style="color:#38bdf8; font-size:10.5px; font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; margin-left:2px;">
-                🔄 Oto
-            </div>
-        </div>
-
-        <!-- 4. PANEL: HİLBERT GRID (HÜCRE) -->
-        <div id="panelGrid" class="mode-sub-panel" style="display:none; align-items:center; gap:5px; width:100%; flex-wrap:nowrap; box-sizing:border-box;">
-            <span style="color:#38bdf8; font-weight:bold; font-family:monospace; font-size:11px; flex-shrink:0;" title="Hilbert Hücre">🌀</span>
-            <input type="number" id="gridCellInput" class="grid-input-box" min="0" max="65535" value="57057" style="padding:1px 4px; height:24px; font-size:11px; font-family:monospace; width:60px; min-width:48px; max-width:68px; flex-shrink:0; border-radius:4px;" oninput="onGridCellInput()">
-            <label style="display:inline-flex; align-items:center; justify-content:center; gap:2px; font-size:10.5px; color:#38bdf8; cursor:pointer; font-weight:700; background:#0f172a; padding:1px 6px; height:24px; box-sizing:border-box; border-radius:4px; border:1px solid #0284c7; flex-shrink:0; white-space:nowrap;">
-                <input type="checkbox" id="chkGridAutoJump" style="width:12px; height:12px; accent-color:#0284c7; cursor:pointer;" checked onchange="toggleGridAutoJump()">
-                🔄 Oto
-            </label>
-            <div id="gridInfo" style="color:#38bdf8; font-size:10.5px; font-family:monospace; white-space:nowrap; flex-shrink:0;">
-                (750 Key)
-            </div>
-        </div>
-
-        <!-- 5. PANEL: KAOS / HİBRİT KARMA MOD -->
-        <div id="panelChaos" class="mode-sub-panel" style="display:none; background:#180d1e; border:1px solid #ec4899; border-radius:5px; padding:2px 6px; align-items:center; gap:6px; box-shadow:0 0 8px rgba(236,72,153,0.2); box-sizing:border-box; width:100%;">
-            <div style="display:none;">
-                <span id="chaosStatusText"></span>
-            </div>
-            <div style="display:flex; align-items:center; gap:6px;">
-                <span style="color:#94a3b8; font-size:10.5px;">Frekans:</span>
-                <select id="chaosJumpFreq" class="range-select" style="min-width:120px; padding:1px 4px; font-size:10.5px; height:22px; border-radius:4px;" onchange="onChaosFreqChange()">
-                    <option value="15">⚡ Hızlı (450 Key)</option>
-                    <option value="25" selected>🚀 Dengeli (750 Key)</option>
-                    <option value="50">🛡️ Derin (1500 Key)</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- 6. PANEL: BOYUTSAL FİZİK & GEOMETRİK FORMÜL MATRİSİ -->
-        <div id="panelPhysics" class="mode-sub-panel" style="display:flex; background:#130b20; border:1px solid #a855f7; border-radius:5px; padding:2px 4px; align-items:center; gap:4px; box-shadow:0 0 8px rgba(168,85,247,0.2); box-sizing:border-box; width:100%;">
-            <select id="physicsFormulaSelect" class="range-select" style="flex:1.5; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px;" onchange="onFormulaChange()">
-                <option value="LORENZ">🌀 Lorenz</option>
-                <option value="QUANTUM_TUNNEL">⚛️ Schrödinger</option>
-                <option value="RIEMANN_ZETA">🧬 Riemann</option>
-                <option value="GOLDEN_SINGULARITY">🌟 Altın Oran</option>
-                <option value="HEX_SCRAMBLER">🔀 Hex / Bit Karıştırıcı</option>
-                <option value="OMNI_CHAOS" selected>💥 Omni-Karma</option>
-                <option value="BRAINWALLET">🧠 Zayıf Entropi</option>
-            </select>
-
-            <select id="quantumFreqSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:22px; border-radius:4px;">
-                <option value="150" selected>⚡ 150 Key</option>
-                <option value="500">🚀 500 Key</option>
-                <option value="1500">🛡️ 1500 Key</option>
-            </select>
-        </div>
-    </div>
 
         <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI (Satoshi Cracker Style) -->
     <div class="dual-slider-bar">
@@ -1275,9 +1273,6 @@ let chaosCurrentSubMode = 'PERCENT';
 let chaosStepCounter = 0;
 let chaosJumpFreq = 25;
 
-function onChaosFreqChange() {
-    chaosJumpFreq = parseInt(document.getElementById('chaosJumpFreq').value) || 25;
-}
 
 
 // ============================================================
@@ -1860,10 +1855,57 @@ let physicsStepCounter = 0;
 let physicsSliceStartPct = 0.93;
 let physicsSliceEndPct   = 0.94;
 
+function selectModeFormula(mode) {
+    activeFormula = mode;
+    const sel = document.getElementById('physicsFormulaSelect');
+    if (sel) sel.value = mode;
+    updateModeVisuals();
+    broadcastWorkerConfig();
+}
+
+function updateModeVisuals() {
+    const f = activeFormula;
+    const bPre = document.getElementById('blockPrefix');
+    const bGrid = document.getElementById('blockGrid');
+    
+    if (bPre) {
+        if (f === 'PREFIX') {
+            bPre.style.border = '1px solid #f97316';
+            bPre.style.boxShadow = '0 0 8px rgba(249,115,22,0.45)';
+            bPre.style.opacity = '1';
+        } else if (f === 'OMNI_CHAOS') {
+            bPre.style.border = '1px solid rgba(249,115,22,0.5)';
+            bPre.style.boxShadow = 'none';
+            bPre.style.opacity = '1';
+        } else {
+            bPre.style.border = '1px solid #334155';
+            bPre.style.boxShadow = 'none';
+            bPre.style.opacity = '0.55';
+        }
+    }
+
+    if (bGrid) {
+        if (f === 'GRID') {
+            bGrid.style.border = '1px solid #38bdf8';
+            bGrid.style.boxShadow = '0 0 8px rgba(56,189,248,0.45)';
+            bGrid.style.opacity = '1';
+        } else if (f === 'OMNI_CHAOS') {
+            bGrid.style.border = '1px solid rgba(56,189,248,0.5)';
+            bGrid.style.boxShadow = 'none';
+            bGrid.style.opacity = '1';
+        } else {
+            bGrid.style.border = '1px solid #334155';
+            bGrid.style.boxShadow = 'none';
+            bGrid.style.opacity = '0.55';
+        }
+    }
+}
+
 function onFormulaChange() {
-    if (isRunning) return;
     const el = document.getElementById('physicsFormulaSelect');
     if (el) activeFormula = el.value;
+    updateModeVisuals();
+    broadcastWorkerConfig();
 }
 
 // Murmur3 Bit-Mixer: Kaotik ve Kuantum formüllerini uzayda homojen dağıtır
@@ -1943,15 +1985,12 @@ function switchRangeMode(mode) {
     const tHex = document.getElementById('tabModeHex'); if (tHex) tHex.classList.toggle('active', mode === 'HEX');
     const tPre = document.getElementById('tabModePrefix'); if (tPre) tPre.classList.toggle('active', mode === 'PREFIX');
     const tGrid = document.getElementById('tabModeGrid'); if (tGrid) tGrid.classList.toggle('active', mode === 'GRID');
-    const tChaos = document.getElementById('tabModeChaos'); if (tChaos) tChaos.classList.toggle('active', mode === 'CHAOS');
+    const tChaos = document.getElementById('tabModeChaos'); if (tChaos) tChaos.classList.toggle('active', mode === 'CHAOS' || mode === 'PREFIX' || mode === 'GRID');
     const tPhys = document.getElementById('tabModePhysics'); if (tPhys) tPhys.classList.toggle('active', mode === 'PHYSICS');
 
     const pPerc = document.getElementById('panelPercent'); if (pPerc) pPerc.style.display = mode === 'PERCENT' ? 'flex' : 'none';
     const pHex = document.getElementById('panelHex'); if (pHex) pHex.style.display       = mode === 'HEX'     ? 'flex' : 'none';
-    const pPre = document.getElementById('panelPrefix'); if (pPre) pPre.style.display     = mode === 'PREFIX'  ? 'flex' : 'none';
-    const pGrid = document.getElementById('panelGrid'); if (pGrid) pGrid.style.display   = mode === 'GRID'    ? 'flex' : 'none';
-    const pChaos = document.getElementById('panelChaos'); if (pChaos) pChaos.style.display = mode === 'CHAOS'   ? 'flex' : 'none';
-    const pPhys = document.getElementById('panelPhysics'); if (pPhys) pPhys.style.display = mode === 'PHYSICS' ? 'flex' : 'none';
+    const pPhys = document.getElementById('panelPhysics'); if (pPhys) pPhys.style.display = 'flex';
 
     if (mode === 'HEX' && (!userHexStart || !userHexEnd)) {
         fillTargetHexRange();
@@ -1979,15 +2018,6 @@ function stepChaosShuffle(tStart, tEnd) {
     } else if (chaosCurrentSubMode === 'GRID') {
         pickNextRandomGridCell();
     }
-
-    const modeLabels = {
-        'PERCENT': '📊 Yüzdelik Mikro Dilim',
-        'HEX':     '🔤 Mikro Hex Penceresi',
-        'PREFIX':  '🧩 Dinamik Ön Ek',
-        'GRID':    '🌀 Hilbert Uzay Hücresi'
-    };
-    const txt = document.getElementById('chaosStatusText');
-    if (txt) txt.innerText = `Aktif Dalga: ${modeLabels[chaosCurrentSubMode]} (${chaosCurrentSubMode === 'GRID' ? '#' + userGridCell : chaosCurrentSubMode === 'PREFIX' ? '0x' + userPrefix : ''})`;
 }
 
 function fillTargetHexRange() {
@@ -2037,15 +2067,6 @@ function getDynamicPrefixLength(totalLen) {
     return Math.min(8, Math.max(1, totalLen - 2)); // Puzzle #160 (40 hane) -> 8 hane
 }
 
-function updatePrefixPlaceholder(tStart, tEnd) {
-    const pInput = document.getElementById('prefixInput');
-    if (!pInput || !tEnd || tEnd === 0n) return;
-    const eHex = tEnd.toString(16);
-    const totalLen = eHex.length;
-    const prefixLen = getDynamicPrefixLength(totalLen);
-    const sHex = tStart.toString(16).padStart(totalLen, '0');
-    pInput.placeholder = sHex.substring(0, prefixLen);
-}
 
 function updatePrefixForTarget(targetStart, targetEnd) {
     if (!targetEnd || targetEnd === 0n) return;
@@ -2071,24 +2092,6 @@ function updatePrefixForTarget(targetStart, targetEnd) {
 
     if (isPrefixAutoJump || !userPrefix) {
         pickNextRandomPrefix(targetStart, targetEnd);
-    } else {
-        const info = document.getElementById('prefixInfo');
-        if (info) {
-            if (!isCustom64) {
-                const minCandidate = BigInt('0x' + userPrefix.padEnd(totalLen, '0'));
-                const maxCandidate = BigInt('0x' + userPrefix.padEnd(totalLen, 'f'));
-                if (maxCandidate < targetStart || minCandidate > targetEnd) {
-                    const sFirst = sHexPadded[0];
-                    const eFirst = eHex[0];
-                    const allowed = (sFirst === eFirst) ? `0x${sFirst}` : `0x${sFirst}-0x${eFirst}`;
-                    info.innerHTML = `<span style="color:#ef4444; font-weight:bold;">⚠️ 0x${userPrefix} aralık dışı! (#${target ? target.id : ''}: ${allowed})</span>`;
-                } else {
-                    info.innerHTML = `<span style="color:#10b981; font-weight:bold;">🧩 Sabit: 0x${userPrefix} (${userPrefix.length}/${totalLen})</span>`;
-                }
-            } else {
-                info.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">🧩 64 Haneli Uzay (${userPrefix.length}/64)</span>`;
-            }
-        }
     }
 }
 
@@ -2098,9 +2101,11 @@ function onPrefixInput() {
     raw = raw.replace(/^0x/, '').replace(/[^0-9a-f]/g, '');
     
     const target = isCircularMode ? (unsolvedList[circularIndex] || currentTarget) : currentTarget;
-    const info = document.getElementById('prefixInfo');
     const isCustom64 = target && target.id === 'ilave';
 
+    if (activeFormula !== 'PREFIX' && activeFormula !== 'OMNI_CHAOS') {
+        selectModeFormula('PREFIX');
+    }
     if (target && !isCustom64) {
         const tStart = BigInt(target.origStart || target.start);
         const tEnd   = BigInt(target.origEnd   || target.end);
@@ -2116,33 +2121,19 @@ function onPrefixInput() {
         userPrefix = raw;
         if (raw.length > 0) {
             const chk = document.getElementById('chkPrefixAutoJump');
-            if (chk && chk.checked) {
-                chk.checked = false;
-                isPrefixAutoJump = false;
+            if (chk) chk.checked = false;
+            isPrefixAutoJump = false;
+            const btn = document.getElementById('btnPrefixAuto');
+            if (btn) {
+                btn.style.background = '#1e293b';
+                btn.style.color = '#94a3b8';
+                btn.style.borderColor = '#475569';
+                btn.innerText = '🔒 Sabit';
             }
-
-            const minCandidate = BigInt('0x' + raw.padEnd(totalHexLen, '0'));
-            const maxCandidate = BigInt('0x' + raw.padEnd(totalHexLen, 'f'));
-
-            if (maxCandidate < tStart || minCandidate > tEnd) {
-                const sFirst = tStart.toString(16).padStart(totalHexLen, '0')[0];
-                const eFirst = tEnd.toString(16)[0];
-                const allowed = (sFirst === eFirst) ? `0x${sFirst}` : `0x${sFirst} - 0x${eFirst}`;
-                if (info) info.innerHTML = `<span style="color:#ef4444; font-weight:bold;">⚠️ 0x${raw} aralık dışı! (#${target.id} başı: ${allowed})</span>`;
-            } else {
-                if (info) info.innerHTML = `<span style="color:#10b981; font-weight:bold;">🧩 Sabit: 0x${raw} (${raw.length}/${totalHexLen})</span>`;
-            }
-        } else {
-            if (info) info.innerText = `Boş (${totalHexLen} hane)`;
         }
     } else {
         pInput.maxLength = 64;
         userPrefix = raw;
-        if (raw.length > 0) {
-            if (info) info.innerHTML = `<span style="color:#38bdf8; font-weight:bold;">🧩 64 Haneli Uzay (${raw.length}/64)</span>`;
-        } else {
-            if (info) info.innerText = `Boş (64 hane)`;
-        }
     }
     broadcastWorkerConfig();
 }
@@ -2150,10 +2141,6 @@ function onPrefixInput() {
 let isHexAutoJump = true;
 let hexJumpCounter = 0;
 
-function toggleHexAutoJump() {
-    const chk = document.getElementById('chkHexAutoJump');
-    isHexAutoJump = chk ? chk.checked : true;
-}
 
 function pickNextRandomHexSlice(targetStart, targetEnd) {
     const totalR = targetEnd - targetStart;
@@ -2178,26 +2165,41 @@ function pickNextRandomHexSlice(targetStart, targetEnd) {
 let isPrefixAutoJump = true;
 let prefixJumpCounter = 0;
 
-function togglePrefixAutoJump() {
+function togglePrefixAutoJump(explicitVal) {
+    if (typeof explicitVal === 'boolean') {
+        isPrefixAutoJump = explicitVal;
+    } else {
+        isPrefixAutoJump = !isPrefixAutoJump;
+    }
     const chk = document.getElementById('chkPrefixAutoJump');
-    isPrefixAutoJump = chk ? chk.checked : true;
-    const target = isCircularMode ? (unsolvedList[circularIndex] || currentTarget) : currentTarget;
-    if (target) {
-        const tStart = BigInt(target.origStart || target.start);
-        const tEnd   = BigInt(target.origEnd   || target.end);
-        const totalLen = tEnd.toString(16).length;
+    if (chk) chk.checked = isPrefixAutoJump;
+
+    const btn = document.getElementById('btnPrefixAuto');
+    if (btn) {
         if (isPrefixAutoJump) {
-            pickNextRandomPrefix(tStart, tEnd);
-            broadcastWorkerConfig();
-} else {
-            const info = document.getElementById('prefixInfo');
-            if (info) {
-                info.innerText = userPrefix 
-                    ? `🧩 Sabit: 0x${userPrefix} (${userPrefix.length}/${totalLen})` 
-                    : `🧩 Sabit (${totalLen} hane)`;
-            }
+            btn.style.background = '#f97316';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#fb923c';
+            btn.innerText = '🔄 Oto';
+        } else {
+            btn.style.background = '#1e293b';
+            btn.style.color = '#94a3b8';
+            btn.style.borderColor = '#475569';
+            btn.innerText = '🔒 Sabit';
         }
     }
+
+    if (activeFormula !== 'PREFIX' && activeFormula !== 'OMNI_CHAOS') {
+        selectModeFormula('PREFIX');
+    }
+
+    const target = isCircularMode ? (unsolvedList[circularIndex] || currentTarget) : currentTarget;
+    if (target && isPrefixAutoJump) {
+        const tStart = BigInt(target.origStart || target.start);
+        const tEnd   = BigInt(target.origEnd   || target.end);
+        pickNextRandomPrefix(tStart, tEnd);
+    }
+    broadcastWorkerConfig();
 }
 
 function pickNextRandomPrefix(targetStart, targetEnd) {
@@ -2226,21 +2228,37 @@ function pickNextRandomPrefix(targetStart, targetEnd) {
         pInput.value = userPrefix;
         pInput.placeholder = userPrefix;
     }
-    const info = document.getElementById('prefixInfo');
-    if (info && isPrefixAutoJump) {
-        info.innerText = autoSuffix ? `🔄 Oto: 0x${userPrefix}...${autoSuffix}` : `🔄 Oto: 0x${userPrefix} (${prefixLen}/${totalLen})`;
-    }
 }
 
 let isGridAutoJump = true;
 let gridJumpCounter = 0;
 
-function toggleGridAutoJump() {
+function toggleGridAutoJump(explicitVal) {
+    if (typeof explicitVal === 'boolean') {
+        isGridAutoJump = explicitVal;
+    } else {
+        isGridAutoJump = !isGridAutoJump;
+    }
     const chk = document.getElementById('chkGridAutoJump');
-    isGridAutoJump = chk ? chk.checked : true;
-    const info = document.getElementById('gridInfo');
-    if (info) {
-        info.innerText = isGridAutoJump ? '(750 Key)' : 'Sabit #' + userGridCell;
+    if (chk) chk.checked = isGridAutoJump;
+
+    const btn = document.getElementById('btnGridAuto');
+    if (btn) {
+        if (isGridAutoJump) {
+            btn.style.background = '#0284c7';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#38bdf8';
+            btn.innerText = '🔄 Oto';
+        } else {
+            btn.style.background = '#1e293b';
+            btn.style.color = '#94a3b8';
+            btn.style.borderColor = '#475569';
+            btn.innerText = '🔒 Sabit';
+        }
+    }
+
+    if (activeFormula !== 'GRID' && activeFormula !== 'OMNI_CHAOS') {
+        selectModeFormula('GRID');
     }
     broadcastWorkerConfig();
 }
@@ -2250,34 +2268,33 @@ function onGridCellInput() {
     c = Math.max(0, Math.min(65535, c));
     userGridCell = c;
     
-    // Kullanıcı elle giriş yaptığında Oto'daki tık kalksın:
-    const chk = document.getElementById('chkGridAutoJump');
-    if (chk && chk.checked) {
-        chk.checked = false;
-        isGridAutoJump = false;
+    if (activeFormula !== 'GRID' && activeFormula !== 'OMNI_CHAOS') {
+        selectModeFormula('GRID');
     }
 
-    const info = document.getElementById('gridInfo');
-    if (info) info.innerText = `🌀 Sabit #${c}`;
+    // Kullanıcı elle giriş yaptığında Sabit moda geçsin:
+    const chk = document.getElementById('chkGridAutoJump');
+    if (chk) chk.checked = false;
+    isGridAutoJump = false;
+    const btn = document.getElementById('btnGridAuto');
+    if (btn) {
+        btn.style.background = '#1e293b';
+        btn.style.color = '#94a3b8';
+        btn.style.borderColor = '#475569';
+        btn.innerText = '🔒 Sabit';
+    }
+
     const cellX = userGridCell % 256;
     const cellY = Math.floor(userGridCell / 256);
     drawHilbertRadar(cellX, cellY);
+    broadcastWorkerConfig();
 }
 
-function randomGridCell() {
-    const c = Math.floor(Math.random() * 65536);
-    document.getElementById('gridCellInput').value = c;
-    onGridCellInput();
-}
 
 function pickNextRandomGridCell() {
     userGridCell = Math.floor(Math.random() * 65536);
     const input = document.getElementById('gridCellInput');
     if (input) input.value = userGridCell;
-    const info = document.getElementById('gridInfo');
-    if (info && isGridAutoJump) {
-        info.innerText = `🔄 Oto: #${userGridCell}`;
-    }
     const cellX = userGridCell % 256;
     const cellY = Math.floor(userGridCell / 256);
     drawHilbertRadar(cellX, cellY);
@@ -2334,42 +2351,6 @@ const SLICE_10PCT_LIST = [
 ];
 
 
-function onRangeSelectChange() {
-    if (isRunning) return;
-    const sel = document.getElementById('rangeSelect');
-    const customBox = document.getElementById('customRangeBox');
-    const val = sel.value;
-
-    if (val === 'custom') {
-        customBox.style.display = 'flex';
-        const sEl = document.getElementById('customStart');
-        const eEl = document.getElementById('customEnd');
-        let s = parseFloat(sEl.value.replace(',', '.'));
-        let e = parseFloat(eEl.value.replace(',', '.'));
-        if (isNaN(s) || isNaN(e) || (s === 0 && e === 5) || s >= e) {
-            sEl.value = "0.3333";
-            eEl.value = "0.3334";
-        }
-        autoFixCustomRange();
-        return;
-    } else {
-        customBox.style.display = 'none';
-    }
-
-    if (val === 'auto') {
-        isRangeAuto = true;
-        sliceModeActive = true;
-        pickNextRandomSlice();
-        return;
-    }
-
-    isRangeAuto = false;
-    const parts = val.split('-');
-    const start = parseFloat(parts[0]);
-    const end = parseFloat(parts[1]);
-
-    applyAutoRange(start, end);
-}
 
 function pickNextRandomSlice() {
     // 🎯 HASSAS DİNAMİK MİKRO DİLİM: %0.2 ile %1.0 arasında ultra-hassas rastgele pencere
@@ -2381,87 +2362,6 @@ function pickNextRandomSlice() {
     sliceEndPct = end;
 }
 
-function onCustomRangeInput(source) {
-    if (isRunning) return;
-    isRangeAuto = false;
-
-    const sEl = document.getElementById('customStart');
-    const eEl = document.getElementById('customEnd');
-
-    let sRaw = sEl.value.toString().replace(',', '.');
-    let eRaw = eEl.value.toString().replace(',', '.');
-
-    let s = parseFloat(sRaw);
-    let e = parseFloat(eRaw);
-
-    if (isNaN(s)) s = 0;
-    if (s < 0) s = 0;
-    if (s > 100) s = 99.9999;
-
-    if (source === 'start') {
-        let decPlaces = 4;
-        if (sRaw.includes('.')) {
-            decPlaces = Math.max(4, sRaw.split('.')[1].length);
-        }
-        const microStep = Math.pow(10, -decPlaces);
-        e = parseFloat((s + microStep).toFixed(decPlaces));
-        if (e > 100) e = 100;
-        eEl.value = e.toString();
-    }
-
-    if (isNaN(e) || e <= s) {
-        let decPlaces = 4;
-        if (sRaw.includes('.')) decPlaces = Math.max(4, sRaw.split('.')[1].length);
-        const step = Math.pow(10, -decPlaces);
-        e = parseFloat((s + step).toFixed(decPlaces));
-        if (e > 100) e = 100;
-        if (e <= s) e = s + 0.00000001;
-    }
-
-    applyAutoRange(s, e);
-}
-
-function autoFixCustomRange() {
-    const sEl = document.getElementById('customStart');
-    const eEl = document.getElementById('customEnd');
-
-    let s = parseFloat(sEl.value.replace(',', '.')) || 0;
-    let e = parseFloat(eEl.value.replace(',', '.')) || 0;
-
-    if (s < 0) s = 0;
-    if (s >= 100) s = 99.9999;
-
-    if (e <= s || isNaN(e) || e > 100) {
-        let sStr = sEl.value.trim();
-        let dec = sStr.includes('.') ? Math.max(4, sStr.split('.')[1].length) : 4;
-        let step = Math.pow(10, -dec);
-        e = parseFloat((s + step).toFixed(dec));
-        if (e > 100) e = 100;
-        if (e <= s) e = s + 0.0001;
-    }
-
-    sEl.value = s.toString();
-    eEl.value = e.toString();
-    applyAutoRange(s, e);
-}
-
-function addMicroStep(delta) {
-    const sEl = document.getElementById('customStart');
-    const eEl = document.getElementById('customEnd');
-
-    let s = parseFloat(sEl.value.replace(',', '.')) || 0;
-    let e = parseFloat(eEl.value.replace(',', '.')) || 0;
-    let width = Math.max(0.00000001, e - s);
-
-    s = parseFloat((s + delta).toFixed(8));
-    if (s >= 100) s = 0;
-    e = parseFloat((s + width).toFixed(8));
-    if (e > 100) e = 100;
-
-    sEl.value = s.toString();
-    eEl.value = e.toString();
-    applyAutoRange(s, e);
-}
 
 function applyAutoRange(startPct, endPct) {
     if (isNaN(startPct) || isNaN(endPct) || startPct < 0 || endPct > 100 || startPct >= endPct) {
@@ -2951,33 +2851,6 @@ function loadLargeAddressFile(event) {
     reader.readAsText(file);
 }
 
-async function loadCustom22kFromDesktop() {
-    const statusMsg = document.getElementById('customPoolStatusMsg');
-    if (statusMsg) statusMsg.innerHTML = '<span style="color:#fbbf24;">Yeni Metin Belgesi (2).txt okunuyor...</span>';
-    try {
-        const resp = await fetch('Yeni Metin Belgesi (2).txt');
-        if (!resp.ok) throw new Error();
-        const text = await resp.text();
-        document.getElementById('customAddressInput').value = text;
-        parseAndApplyCustomAddresses();
-    } catch(e) {
-        if (statusMsg) statusMsg.innerHTML = '<span style="color:#f87171;">Dosya okunamadı. Masaüstündeki Yeni Metin Belgesi (2).txt içeriğini kutuya yapıştırıp "Havuzu Yükle"ye tıklayabilirsiniz.</span>';
-    }
-}
-
-async function loadWhale100FromDesktop() {
-    const statusMsg = document.getElementById('customPoolStatusMsg');
-    if (statusMsg) statusMsg.innerHTML = '<span style="color:#fbbf24;">Yeni Metin Belgesi.txt okunuyor...</span>';
-    try {
-        const resp = await fetch('Yeni Metin Belgesi.txt');
-        if (!resp.ok) throw new Error();
-        const text = await resp.text();
-        document.getElementById('customAddressInput').value = text;
-        parseAndApplyCustomAddresses();
-    } catch(e) {
-        if (statusMsg) statusMsg.innerHTML = '<span style="color:#f87171;">Dosya okunamadı. Masaüstündeki Yeni Metin Belgesi.txt içeriğini kutuya yapıştırıp "Havuzu Yükle"ye tıklayabilirsiniz.</span>';
-    }
-}
 
 let satoshiHashSet = null;
 let satoshiMultiTargetActive = true;
@@ -3382,23 +3255,6 @@ function hilbertD2XY(order, d) {
     return { x, y };
 }
 
-function hilbertXY2D(order, x, y) {
-    let rx, ry, s, d = 0;
-    let n = 1 << order;
-    for (s = n >> 1; s > 0; s >>= 1) {
-        rx = (x & s) > 0 ? 1 : 0;
-        ry = (y & s) > 0 ? 1 : 0;
-        d += s * s * ((3 * rx) ^ ry);
-        if (ry === 0) {
-            if (rx === 1) {
-                x = n - 1 - x;
-                y = n - 1 - y;
-            }
-            let tmp = x; x = y; y = tmp;
-        }
-    }
-    return BigInt(d);
-}
 
 function generateHilbertKey(rangeStart, rangeEnd) {
     hilbertStep++;
@@ -3646,22 +3502,56 @@ function huntBatch() {
             }
 
             // 🌀 v13 BOYUTSAL FİZİK & GEOMETRİK MATRİS MODU
-            if (activeRangeMode === 'PHYSICS') {
+            if (activeRangeMode === 'PHYSICS' || activeFormula === 'PREFIX' || activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS') {
                 const tMin = BigInt(activeTarget.origStart || activeTarget.start);
                 const tMax = BigInt(activeTarget.origEnd   || activeTarget.end);
-                if (activeFormula === 'BRAINWALLET') {
-                    currentKey = generateBrainwalletKey(tMin, tMax);
-                } else if (activeFormula === 'HEX_SCRAMBLER') {
-                    currentKey = generateHexScramblerKey(tMin, tMax);
+                if (activeFormula === 'PREFIX') {
+                    if (isPrefixAutoJump) {
+                        prefixJumpCounter++;
+                        if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                            pickNextRandomPrefix(tMin, tMax);
+                        }
+                    }
+                    currentKey = generatePrefixKey(tMin, tMax, userPrefix, '');
+                } else if (activeFormula === 'GRID') {
+                    if (isGridAutoJump) {
+                        gridJumpCounter++;
+                        if (gridJumpCounter % 25 === 0) {
+                            userGridCell = Math.floor(Math.random() * 65536);
+                            const gIn = document.getElementById('gridCellInput');
+                            if (gIn) gIn.value = userGridCell;
+                        }
+                    }
+                    const totalR = tMax - tMin;
+                    const cellSize = totalR / 65536n;
+                    const cellStart = tMin + (BigInt(userGridCell || 0) * cellSize);
+                    currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                 } else if (activeFormula === 'OMNI_CHAOS') {
                     const r = Math.random();
-                    if (r < 0.20) {
-                        currentKey = generateBrainwalletKey(tMin, tMax);
-                    } else if (r < 0.40) {
-                        currentKey = generateHexScramblerKey(tMin, tMax);
-                    } else {
+                    if (r < 0.35) {
+                        if (isPrefixAutoJump) {
+                            prefixJumpCounter++;
+                            if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                                pickNextRandomPrefix(tMin, tMax);
+                            }
+                        }
+                        currentKey = generatePrefixKey(tMin, tMax, userPrefix, '');
+                    } else if (r < 0.70) {
+                        if (isGridAutoJump) {
+                            gridJumpCounter++;
+                            if (gridJumpCounter % 25 === 0) {
+                                userGridCell = Math.floor(Math.random() * 65536);
+                                const gIn = document.getElementById('gridCellInput');
+                                if (gIn) gIn.value = userGridCell;
+                            }
+                        }
+                        const totalR = tMax - tMin;
+                        const cellSize = totalR / 65536n;
+                        const cellStart = tMin + (BigInt(userGridCell || 0) * cellSize);
+                        currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                    } else if (r < 0.85) {
                         physicsStepCounter++;
-                        const freq = parseInt(document.getElementById('quantumFreqSelect')?.value) || 500;
+                        const freq = 750;
                         if (physicsStepCounter % Math.max(10, Math.floor(freq / 30)) === 0) {
                             const centerPct = getNextPhysicsPercent();
                             const microWidth = 0.005;
@@ -3674,10 +3564,16 @@ function huntBatch() {
                         const sKey = tMin + (totalR * startBig / 10000000000n);
                         const eKey = tMin + (totalR * endBig   / 10000000000n);
                         currentKey = randomBigIntInRange(sKey, eKey);
+                    } else {
+                        currentKey = generateBrainwalletKey(tMin, tMax);
                     }
+                } else if (activeFormula === 'BRAINWALLET') {
+                    currentKey = generateBrainwalletKey(tMin, tMax);
+                } else if (activeFormula === 'HEX_SCRAMBLER') {
+                    currentKey = generateHexScramblerKey(tMin, tMax);
                 } else {
                     physicsStepCounter++;
-                    const freq = parseInt(document.getElementById('quantumFreqSelect')?.value) || 500;
+                    const freq = 750;
                     if (physicsStepCounter % Math.max(10, Math.floor(freq / 30)) === 0) {
                         const centerPct = getNextPhysicsPercent();
                         const microWidth = 0.005;
@@ -4572,6 +4468,7 @@ function bgWorkerProcess() {
         let activeTarget = null;
         let currentRangeText = '';
         const mode = cfg.activeRangeMode || 'PERCENT';
+        const f = cfg.activeFormula || 'OMNI_CHAOS';
         
         for (let i = 0; i < batchSize; i++) {
             if (cfg.isCircularMode && cfg.unsolvedList && cfg.unsolvedList.length > 0) {
@@ -4598,32 +4495,103 @@ function bgWorkerProcess() {
                 if (boundMax <= boundMin) boundMax = boundMin + 1n;
             }
             
-            if (mode === 'PHYSICS') {
-                const f = cfg.activeFormula || 'LORENZ';
-                if (f === 'BRAINWALLET') {
-                    currentKey = generateBrainwalletKey(boundMin, boundMax);
-                    currentRangeText = '🧠 Zayıf Entropi';
-                } else if (f === 'HEX_SCRAMBLER') {
-                    currentKey = generateHexScramblerKey(boundMin, boundMax);
-                    currentRangeText = '🔀 Hex / Bit Karıştırıcı';
-                } else if (f === 'OMNI_CHAOS') {
+
+            if (mode === 'PREFIX' || f === 'PREFIX') {
+                if (cfg.isPrefixAutoJump) {
+                    prefixJumpCounter++;
+                    if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
+                        const totalLen = baseEnd.toString(16).length;
+                        const pLen = getDynamicPrefixLength(totalLen);
+                        const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                        const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
+                        const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                        const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
+                        activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
+                        if (totalLen >= 4) {
+                            const sLen = (totalLen >= 10) ? 2 : 1;
+                            activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
+                        } else {
+                            activeWorkerSuffix = '';
+                        }
+                    }
+                } else {
+                    activeWorkerPrefix = cfg.userPrefix || '';
+                    activeWorkerSuffix = '';
+                }
+                currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                currentRangeText = (cfg.isPrefixAutoJump ? '🔄 Oto Ön Ek: 0x' : '🧩 Sabit Ön Ek: 0x') + (activeWorkerPrefix || '') + '...' + (activeWorkerSuffix ? ('[' + activeWorkerSuffix + ']') : '');
+            } else if (mode === 'GRID' || f === 'GRID') {
+                if (cfg.isGridAutoJump) {
+                    gridJumpCounter++;
+                    if (gridJumpCounter % 25 === 0 || activeWorkerGridCell === undefined) {
+                        activeWorkerGridCell = Math.floor(Math.random() * 65536);
+                    }
+                } else {
+                    activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
+                }
+                const cellSize = totalR / 65536n;
+                const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                currentRangeText = (cfg.isGridAutoJump ? '🔄 Oto Grid [Hücre #' : '🌀 Sabit Grid [Hücre #') + activeWorkerGridCell + ' / 65535]';
+            } else if (mode === 'PHYSICS' || f === 'OMNI_CHAOS') {
+                if (f === 'OMNI_CHAOS') {
                     const r = Math.random();
-                    if (r < 0.20) {
-                        currentKey = generateBrainwalletKey(boundMin, boundMax);
-                        currentRangeText = '💥 Omni-Karma (🧠 Zayıf Entropi)';
-                    } else if (r < 0.40) {
-                        currentKey = generateHexScramblerKey(boundMin, boundMax);
-                        currentRangeText = '💥 Omni-Karma (🔀 Hex Karıştırıcı)';
-                    } else {
+                    if (r < 0.35) {
+                        if (cfg.isPrefixAutoJump) {
+                            prefixJumpCounter++;
+                            if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
+                                const totalLen = baseEnd.toString(16).length;
+                                const pLen = getDynamicPrefixLength(totalLen);
+                                const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                                const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
+                                const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                                const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
+                                activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
+                                if (totalLen >= 4) {
+                                    const sLen = (totalLen >= 10) ? 2 : 1;
+                                    activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
+                                } else {
+                                    activeWorkerSuffix = '';
+                                }
+                            }
+                        } else {
+                            activeWorkerPrefix = cfg.userPrefix || '';
+                            activeWorkerSuffix = '';
+                        }
+                        currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                        currentRangeText = '💥 Hibrit [0x' + (activeWorkerPrefix || '') + '...]';
+                    } else if (r < 0.70) {
+                        if (cfg.isGridAutoJump) {
+                            gridJumpCounter++;
+                            if (gridJumpCounter % 25 === 0 || activeWorkerGridCell === undefined) {
+                                activeWorkerGridCell = Math.floor(Math.random() * 65536);
+                            }
+                        } else {
+                            activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
+                        }
+                        const cellSize = totalR / 65536n;
+                        const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                        currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                        currentRangeText = '💥 Hibrit [🌀 #' + activeWorkerGridCell + ']';
+                    } else if (r < 0.85) {
                         physicsStep++;
-                        const centerPct = getNextPhysicsPercent(f);
+                        const centerPct = getNextPhysicsPercent('LORENZ');
                         const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 100000000));
                         const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
                         const sK = baseStart + (totalR * sBig / 10000000000n);
                         const eK = baseStart + (totalR * eBig / 10000000000n);
                         currentKey = randomBigIntInRange(sK, eK);
-                        currentRangeText = '🌀 FİZİK [' + f + '] -> %' + centerPct.toFixed(3);
+                        currentRangeText = '💥 Hibrit [🌀 Lorenz -> %' + centerPct.toFixed(2) + ']';
+                    } else {
+                        currentKey = generateBrainwalletKey(boundMin, boundMax);
+                        currentRangeText = '💥 Hibrit [🧠 Zayıf Entropi]';
                     }
+                } else if (f === 'BRAINWALLET') {
+                    currentKey = generateBrainwalletKey(boundMin, boundMax);
+                    currentRangeText = '🧠 Zayıf Entropi';
+                } else if (f === 'HEX_SCRAMBLER') {
+                    currentKey = generateHexScramblerKey(boundMin, boundMax);
+                    currentRangeText = '🔀 Hex / Bit Karıştırıcı';
                 } else {
                     physicsStep++;
                     const centerPct = getNextPhysicsPercent(f);
@@ -4632,29 +4600,63 @@ function bgWorkerProcess() {
                     const sK = baseStart + (totalR * sBig / 10000000000n);
                     const eK = baseStart + (totalR * eBig / 10000000000n);
                     currentKey = randomBigIntInRange(sK, eK);
-                    currentRangeText = '🌀 FİZİK [' + f + '] -> %' + centerPct.toFixed(3);
+                    currentRangeText = '🌀 Fizik [' + f + '] -> %' + centerPct.toFixed(3);
                 }
             } else if (mode === 'CHAOS') {
                 chaosStep++;
-                if (chaosStep % 15 === 0) {
+                const cFreq = cfg.chaosJumpFreq || 25;
+                if (chaosStep % cFreq === 0) {
                     chaosCurrentSubMode = chaosSubModes[Math.floor(Math.random() * chaosSubModes.length)];
                 }
                 if (chaosCurrentSubMode === 'HEX' && cfg.userHexStart && cfg.userHexEnd) {
                     currentKey = randomBigIntInRange(BigInt('0x' + cfg.userHexStart), BigInt('0x' + cfg.userHexEnd));
-                } else if (chaosCurrentSubMode === 'PREFIX' && cfg.userPrefix) {
-                    currentKey = generatePrefixKey(baseStart, baseEnd, cfg.userPrefix);
+                    currentRangeText = '⚡ Kaos [Hex]';
+                } else if (chaosCurrentSubMode === 'PREFIX') {
+                    if (cfg.isPrefixAutoJump) {
+                        prefixJumpCounter++;
+                        if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
+                            const totalLen = baseEnd.toString(16).length;
+                            const pLen = getDynamicPrefixLength(totalLen);
+                            const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                            const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
+                            const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                            const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
+                            activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
+                            if (totalLen >= 4) {
+                                const sLen = (totalLen >= 10) ? 2 : 1;
+                                activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
+                            } else {
+                                activeWorkerSuffix = '';
+                            }
+                        }
+                    } else {
+                        activeWorkerPrefix = cfg.userPrefix || '';
+                        activeWorkerSuffix = '';
+                    }
+                    currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                    currentRangeText = '⚡ Kaos [0x' + (activeWorkerPrefix || '') + '...]';
                 } else if (chaosCurrentSubMode === 'GRID') {
+                    if (cfg.isGridAutoJump) {
+                        gridJumpCounter++;
+                        if (gridJumpCounter % 25 === 0) {
+                            activeWorkerGridCell = Math.floor(Math.random() * 65536);
+                        }
+                    } else {
+                        activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
+                    }
                     const cellSize = totalR / 65536n;
-                    const cellStart = baseStart + (BigInt(cfg.userGridCell || 0) * cellSize);
+                    const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
                     currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                    currentRangeText = '⚡ Kaos [🌀 #' + activeWorkerGridCell + ']';
                 } else if (chaosCurrentSubMode === 'OMNI_CHAOS') {
                     currentKey = generateBrainwalletKey(boundMin, boundMax);
+                    currentRangeText = '⚡ Kaos [Omni]';
                 } else {
                     const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 100000000));
                     const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 100000000));
                     currentKey = randomBigIntInRange(baseStart + (totalR * sBig / 10000000000n), baseStart + (totalR * eBig / 10000000000n));
+                    currentRangeText = '⚡ Kaos [Dilim]';
                 }
-                currentRangeText = '⚡ KAOS MODU [' + chaosCurrentSubMode + ']';
             } else if (mode === 'HEX' && cfg.userHexStart && cfg.userHexEnd) {
                 currentKey = randomBigIntInRange(BigInt('0x' + cfg.userHexStart), BigInt('0x' + cfg.userHexEnd));
                 currentRangeText = '🔤 Hex: 0x' + cfg.userHexStart + '...';
@@ -4876,9 +4878,9 @@ function bgWorkerProcess() {
             lastKey: lastKeyHex,
             targetId: activeTarget ? activeTarget.id : '',
             rangeText: currentRangeText,
-            currentPrefix: (mode === 'PREFIX') ? activeWorkerPrefix : null,
-            currentSuffix: (mode === 'PREFIX') ? activeWorkerSuffix : null,
-            currentGridCell: (mode === 'GRID') ? activeWorkerGridCell : null
+            currentPrefix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerPrefix : null,
+            currentSuffix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerSuffix : null,
+            currentGridCell: (mode === 'GRID' || f === 'GRID' || f === 'OMNI_CHAOS') ? activeWorkerGridCell : null
         });
         
         if (isWorking) {
@@ -5011,15 +5013,18 @@ function getCurrentWorkerConfig() {
         sliceEndPct: sliceEndPct,
         userHexStart: (userHexStart !== null && userHexStart !== undefined) ? userHexStart.toString(16) : null,
         userHexEnd: (userHexEnd !== null && userHexEnd !== undefined) ? userHexEnd.toString(16) : null,
-        userPrefix: userPrefix,
+        activeFormula: activeFormula,
+        activeRangeMode: (activeFormula === 'PREFIX') ? 'PREFIX' : ((activeFormula === 'GRID') ? 'GRID' : 'PHYSICS'),
+        userPrefix: userPrefix || (document.getElementById('prefixInput')?.value.trim().replace(/^0x/i, '') || ''),
         isPrefixAutoJump: isPrefixAutoJump,
-        userGridCell: userGridCell,
+        userGridCell: (userGridCell !== null && userGridCell !== undefined) ? userGridCell : (parseInt(document.getElementById('gridCellInput')?.value) || 0),
         isGridAutoJump: isGridAutoJump,
         isDualSliderActive: isDualSliderActive,
         sliderMinHex: (sliderMinHex !== null && sliderMinHex !== undefined) ? sliderMinHex.toString(16) : null,
         sliderMaxHex: (sliderMaxHex !== null && sliderMaxHex !== undefined) ? sliderMaxHex.toString(16) : null,
         isCustomPoolActive: (isCustomPoolActive || (currentTarget && (currentTarget.id === 'ilave' || currentTarget.id === 'TEST_64'))) && customAddressSet && customAddressSet.size > 0,
-        satoshiMultiTargetActive: satoshiMultiTargetActive
+        satoshiMultiTargetActive: satoshiMultiTargetActive,
+        chaosJumpFreq: chaosJumpFreq
     };
 }
 
@@ -5032,6 +5037,7 @@ let gpuDevice = null;
 let gpuCardName = '';
 let isGpuSupported = false;
 let isGpuRunning = false;
+let gpuRunId = 0;
 
 async function detectWebGpuSupport() {
     if (typeof navigator === 'undefined' || !navigator.gpu) {
@@ -5101,9 +5107,7 @@ let gpuSeedCounter = 1;
 
 async function startGpuHunting() {
     if (!gpuDevice) {
-        const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-        alert('WebGPU cihazı başlatılamadı, ' + fallbackCores + ' çekirdekli CPU işlemcisine geçiliyor.');
-        startWorkerPool(fallbackCores);
+        console.warn('[WebGPU] WebGPU cihazı hazır değil veya desteklenmiyor, CPU modunda çalışılacak.');
         return;
     }
     
@@ -5178,9 +5182,13 @@ async function startGpuHunting() {
         });
 
         let lastGpuUIUpdate = Date.now();
+        let isGpuPassRunning = false;
+        let gpuPassErrorStreak = 0;
+        const currentRunId = ++gpuRunId;
 
         async function gpuPass() {
-            if (!isGpuRunning || !isRunning) return;
+            if (currentRunId !== gpuRunId || !isGpuRunning || !isRunning || isGpuPassRunning) return;
+            isGpuPassRunning = true;
 
             try {
                 gpuSeedCounter = (gpuSeedCounter + 7919) >>> 0;
@@ -5201,8 +5209,16 @@ async function startGpuHunting() {
                 commandEncoder.copyBufferToBuffer(resultBuffer, 0, readBuffer, 0, resultBufferSize);
                 gpuDevice.queue.submit([commandEncoder.finish()]);
 
-                await readBuffer.mapAsync(GPUMapMode.READ);
-                const copyArray = new Uint32Array(readBuffer.getMappedRange());
+                let copyArray = null;
+                try {
+                    await readBuffer.mapAsync(GPUMapMode.READ);
+                    copyArray = new Uint32Array(readBuffer.getMappedRange().slice(0));
+                } finally {
+                    try { readBuffer.unmap(); } catch(e) {}
+                }
+
+                if (!copyArray) return;
+                gpuPassErrorStreak = 0;
 
                 if (isCircularMode && unsolvedList && unsolvedList.length > 0) {
                     circularIndex = (circularIndex + 1) % unsolvedList.length;
@@ -5380,7 +5396,6 @@ async function startGpuHunting() {
                         const targetH160 = activeTarget.targetHash160 || addressToHash160(activeTarget.addr);
 
                         if (targetH160 && compH160 === targetH160) {
-                            readBuffer.unmap();
                             stopGpuHunting();
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ']');
                             return;
@@ -5389,14 +5404,12 @@ async function startGpuHunting() {
                         // Sıkıştırılmamış adres kontrolü
                         const uncompH160 = privkeyToHash160Uncompressed(keyHex);
                         if (targetH160 && uncompH160 === targetH160) {
-                            readBuffer.unmap();
                             stopGpuHunting();
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, false), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ' - Uncompressed]');
                             return;
                         }
 
                         if (customAddressSet && customAddressSet.size > 0 && (customAddressSet.has(compH160) || customAddressSet.has(uncompH160))) {
-                            readBuffer.unmap();
                             stopGpuHunting();
                             const winningH160 = customAddressSet.has(compH160) ? compH160 : uncompH160;
                             const isComp = winningH160 === compH160;
@@ -5410,7 +5423,8 @@ async function startGpuHunting() {
                             document.getElementById('statAttempts').innerText = attempts.toLocaleString();
                             const dbMode = document.getElementById('dbModeSelect') ? document.getElementById('dbModeSelect').value : 'online';
                             if (dbMode === 'online') {
-                                const addr = privkeyToAddress(keyHex, isComp);
+                                const isCompAddr = (typeof isCompressed !== 'undefined') ? isCompressed : true;
+                                const addr = privkeyToAddress(keyHex, isCompAddr);
                                 if (addr && addr !== '---') {
                                     puzzleApiQueue.push({ addr: addr, hex: keyHex });
                                     if (puzzleApiQueue.length > 200) puzzleApiQueue.splice(0, 50);
@@ -5436,12 +5450,21 @@ async function startGpuHunting() {
                     }
                 }
 
-                readBuffer.unmap();
             } catch(passErr) {
                 console.warn('[WebGPU PASS ERR]:', passErr);
+                gpuPassErrorStreak++;
+                if (gpuPassErrorStreak > 5) {
+                    console.error('[WebGPU] Çok fazla GPU geçiş hatası alındı, CPU iş parçacıklarına geçiliyor.');
+                    stopGpuHunting();
+                    const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+                    if (window.Worker) startWorkerPool(fallbackCores);
+                    return;
+                }
+            } finally {
+                isGpuPassRunning = false;
             }
 
-            if (isGpuRunning && isRunning) {
+            if (currentRunId === gpuRunId && isGpuRunning && isRunning) {
                 setTimeout(gpuPass, 0);
             }
         }
@@ -5457,6 +5480,7 @@ async function startGpuHunting() {
 }
 
 function stopGpuHunting() {
+    gpuRunId++;
     isGpuRunning = false;
     isRunning = false;
     if (typeof timerInterval !== 'undefined' && timerInterval) {
@@ -5478,7 +5502,7 @@ function stopGpuHunting() {
     if (btnSolved) btnSolved.classList.remove('locked');
     if (btnCustomPool) btnCustomPool.classList.remove('locked');
 
-    ['physicsFormulaSelect', 'threadCountSelect', 'quantumFreqSelect'].forEach(id => {
+    ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
     });
@@ -5946,24 +5970,15 @@ function handleWorkerMessage(e) {
             if (data.rangeText) {
                 document.getElementById('logRange').innerText = data.rangeText;
             }
-            if (data.currentPrefix && isPrefixAutoJump && activeRangeMode === 'PREFIX') {
+            if (data.currentPrefix && isPrefixAutoJump && (activeFormula === 'PREFIX' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'PREFIX')) {
                 userPrefix = data.currentPrefix;
                 const pInput = document.getElementById('prefixInput');
                 if (pInput) pInput.value = data.currentPrefix;
-                const pInfo = document.getElementById('prefixInfo');
-                if (pInfo) {
-                    const target = isCircularMode ? (unsolvedList[circularIndex] || currentTarget) : currentTarget;
-                    const totalLen = (target && (target.origEnd || target.end)) ? BigInt(target.origEnd || target.end).toString(16).length : data.currentPrefix.length + 10;
-                    const sufTxt = data.currentSuffix ? `...${data.currentSuffix}` : ` (${data.currentPrefix.length}/${totalLen})`;
-                    pInfo.innerText = `🔄 Oto: 0x${data.currentPrefix}${sufTxt}`;
-                }
             }
-            if (data.currentGridCell !== null && data.currentGridCell !== undefined && isGridAutoJump && activeRangeMode === 'GRID') {
+            if (data.currentGridCell !== null && data.currentGridCell !== undefined && isGridAutoJump && (activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'GRID')) {
                 userGridCell = data.currentGridCell;
                 const gInput = document.getElementById('gridCellInput');
                 if (gInput) gInput.value = data.currentGridCell;
-                const gInfo = document.getElementById('gridInfo');
-                if (gInfo) gInfo.innerText = `🔄 Oto: #${data.currentGridCell}`;
             }
             if (data.targetId && !isCircularMode && currentTarget) {
                 updateLogTargetLabel();
@@ -6036,7 +6051,7 @@ function toggleHunter() {
         btnUnsolved.classList.remove('locked');
         btnSolved.classList.remove('locked');
         if (btnCustomPool) btnCustomPool.classList.remove('locked');
-        ['physicsFormulaSelect', 'threadCountSelect', 'quantumFreqSelect'].forEach(id => {
+        ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
             const el = document.getElementById(id);
             if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
         });
@@ -6058,7 +6073,7 @@ function toggleHunter() {
             btnCustomPool.classList.remove('active-pool');
             btnCustomPool.classList.add('locked');
         }
-        ['physicsFormulaSelect', 'threadCountSelect', 'quantumFreqSelect'].forEach(id => {
+        ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
             const el = document.getElementById(id);
             if (el) { el.disabled = true; el.style.opacity = '0.5'; el.style.cursor = 'not-allowed'; }
         });
@@ -6110,11 +6125,26 @@ function toggleHunter() {
         } else {
             const threadVal = document.getElementById('threadCountSelect')?.value;
             if (threadVal === 'HYBRID') {
-                startGpuHunting();
+                if (gpuDevice) {
+                    startGpuHunting();
+                }
                 const threadCount = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-                if (window.Worker) startWorkerPool(threadCount);
+                if (window.Worker) {
+                    startWorkerPool(threadCount);
+                } else {
+                    huntBatch();
+                }
             } else if (threadVal === 'GPU') {
-                startGpuHunting();
+                if (gpuDevice) {
+                    startGpuHunting();
+                } else {
+                    const threadCount = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+                    if (window.Worker) {
+                        startWorkerPool(threadCount);
+                    } else {
+                        huntBatch();
+                    }
+                }
             } else {
                 const threadCount = parseInt(threadVal) || 8;
                 if (window.Worker) {
@@ -6142,11 +6172,14 @@ async function checkOnChainPuzzleStatus() {
     const unsolved = ALL_PUZZLES.filter(p => p.status === 'UNSOLVED');
     let hasNewlySolved = false;
 
-    // İlk 15 açık bulmacayı öncelikli olarak tek tek kontrol et
+    // İlk 15 açık bulmacayı kontrol et, hata alınırsa döngüyü hemen durdur
     for (let i = 0; i < Math.min(unsolved.length, 15); i++) {
         const p = unsolved[i];
         try {
-            const resp = await fetch(`https://mempool.space/api/address/${p.addr}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const resp = await fetch(`https://mempool.space/api/address/${p.addr}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (resp.ok) {
                 const data = await resp.json();
                 const funded = data.chain_stats ? data.chain_stats.funded_txo_sum : 0;
@@ -6154,7 +6187,6 @@ async function checkOnChainPuzzleStatus() {
                 const balanceSats = funded - spent;
 
                 if (balanceSats === 0 && funded > 0) {
-                    // Bulmaca çözülmüş ve parası çekilmiş!
                     console.log(`[ON-CHAIN] 🎉 Puzzle #${p.id} çözülmüş bulundu, arşive taşınıyor!`);
                     p.status = 'SOLVED';
                     localStorage.setItem('PUZZLE_STATUS_' + p.id, 'SOLVED');
@@ -6162,16 +6194,15 @@ async function checkOnChainPuzzleStatus() {
                 }
             }
         } catch (e) {
-            // Ağ hatası veya rate-limit durumunda sessizce devam et
+            // Ağ yoksa veya bağlantı zaman aşımına uğradıysa döngüyü hemen kes, konsolu hataya boğma
+            break;
         }
-        // Blokzincir API'sine yük bindirmemek için 200ms bekleme
         await new Promise(r => setTimeout(r, 200));
     }
 
     if (hasNewlySolved) {
         buildCustomMenus();
-    switchRangeMode('PHYSICS');
-    checkOnChainPuzzleStatus();
+        switchRangeMode('PHYSICS');
     }
     isCheckingOnChain = false;
 }
@@ -6182,6 +6213,9 @@ async function checkOnChainPuzzleStatus() {
 let cmdSocket = null;
 let cmdConnected = false;
 let cmdReconnectTimer = null;
+let cmdWasConnected = false;
+let cmdAutoReconnectCount = 0;
+const MAX_CMD_AUTO_RECONNECT = 2;
 
 function updateCmdBadge(connected, info) {
     const badge = document.getElementById('cmdBadge');
@@ -6205,7 +6239,7 @@ function updateCmdBadge(connected, info) {
         dot.style.borderRadius = '50%';
         const cores = (info && info.cpuCount) ? info.cpuCount : 16;
         const gpuStr = (info && info.hasGpu) ? ' + GPU' : '';
-        text.innerText = 'CMD: Aktif';
+        text.innerText = 'CMD';
         text.style.whiteSpace = 'nowrap';
         badge.title = `⚡ CMD Motoru Aktif (${cores} Çekirdek${gpuStr})`;
         if (threadSel) {
@@ -6222,12 +6256,11 @@ function updateCmdBadge(connected, info) {
         dot.style.boxShadow = 'none';
         dot.style.flexShrink = '0';
         dot.style.display = 'inline-block';
-        dot.style.width = '8px';
-        dot.style.height = '8px';
+        dot.style.width = '7px';
+        dot.style.height = '7px';
         dot.style.borderRadius = '50%';
-        text.innerText = 'CMD: Çevrimdışı';
-        text.style.whiteSpace = 'nowrap';
-        badge.title = '⚪ CMD Motoru Çevrimdışı (Tıklayarak Yeniden Bağlanın)';
+        text.innerText = 'CMD';
+        badge.title = '⚪ CMD Motoru Çevrimdışı (Tıklayarak Bağlanın / Yenileyin)';
         text.style.whiteSpace = 'nowrap';
         if (threadSel) {
             threadSel.style.display = ''; // CMD çevrimdışıysa tarayıcı thread seçici gösterilir
@@ -6236,9 +6269,13 @@ function updateCmdBadge(connected, info) {
 }
 
 function checkOrReconnectCmd() {
+    cmdAutoReconnectCount = 0;
+    cmdWasConnected = true;
     if (cmdSocket) {
         try { cmdSocket.close(); } catch(e) {}
     }
+    const text = document.getElementById('cmdBadgeText');
+    if (text) text.innerText = 'CMD...';
     initCmdMotorWebSocket();
 }
 
@@ -6252,6 +6289,8 @@ function initCmdMotorWebSocket() {
         
         cmdSocket.onopen = function() {
             cmdConnected = true;
+            cmdWasConnected = true;
+            cmdAutoReconnectCount = 0;
             console.log('⚡ [CMD MOTOR] ws://127.0.0.1:8765 bağlantısı kuruldu.');
             updateCmdBadge(true);
             broadcastWorkerConfig();
@@ -6276,8 +6315,13 @@ function initCmdMotorWebSocket() {
         cmdSocket.onclose = function() {
             cmdConnected = false;
             updateCmdBadge(false);
-            if (!cmdReconnectTimer) {
+            // Sadece bağlantı daha önce açıkken koptuysa sınırlı sayıda (max 2) dene
+            // CMD başlatılmamışsa konsolu sürekli kırmızı hata ile boğma
+            if (cmdWasConnected && cmdAutoReconnectCount < MAX_CMD_AUTO_RECONNECT) {
+                cmdAutoReconnectCount++;
                 cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+            } else {
+                cmdWasConnected = false;
             }
         };
 
@@ -6288,9 +6332,6 @@ function initCmdMotorWebSocket() {
     } catch(e) {
         cmdConnected = false;
         updateCmdBadge(false);
-        if (!cmdReconnectTimer) {
-            cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
-        }
     }
 }
 
@@ -6327,16 +6368,15 @@ function syncGuiRunning(running) {
 }
 
 window.onload = function() {
-    initCmdMotorWebSocket();
+    updateCmdBadge(false);
     initThreadCountUI();
     detectWebGpuSupport();
     initEmbeddedCustomPool();
     buildCustomMenus();
     switchRangeMode('PHYSICS');
     if (typeof updateSliderUI === 'function') updateSliderUI(); broadcastWorkerConfig();
-    checkOnChainPuzzleStatus();
     checkSavedWins();
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
         navigator.serviceWorker.register('./sw.js').then(reg => {
             reg.update();
         }).catch(() => {});
