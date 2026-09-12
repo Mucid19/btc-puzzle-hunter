@@ -61,6 +61,42 @@ def detect_gpu():
 # --- BASE58 VE SECP256K1 SABİTLERİ ---
 B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 _N  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+_P  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+_Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+_Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+_G  = (_Gx, _Gy)
+
+def _point_add(p1, p2):
+    if p1 is None: return p2
+    if p2 is None: return p1
+    x1, y1 = p1
+    x2, y2 = p2
+    if x1 == x2:
+        if (y1 + y2) % _P == 0: return None
+        m = (3 * x1 * x1) * pow(2 * y1, _P - 2, _P) % _P
+    else:
+        m = (y2 - y1) * pow(x2 - x1, _P - 2, _P) % _P
+    x3 = (m * m - x1 - x2) % _P
+    y3 = (m * (x1 - x3) - y1) % _P
+    return (x3, y3)
+
+def _point_mul(k, p=_G):
+    r = None
+    addend = p
+    while k:
+        if k & 1: r = _point_add(r, addend)
+        addend = _point_add(addend, addend)
+        k >>= 1
+    return r
+
+def get_pubkey_bytes(priv_int, compressed=True):
+    pt = _point_mul(priv_int)
+    if pt is None: return b''
+    x, y = pt
+    if compressed:
+        prefix = b'\x02' if (y % 2 == 0) else b'\x03'
+        return prefix + x.to_bytes(32, 'big')
+    return b'\x04' + x.to_bytes(32, 'big') + y.to_bytes(32, 'big')
 
 def b58decode_check(s: str) -> bytes:
     n = 0
@@ -306,6 +342,34 @@ def _worker_proc(worker_id, num_workers, config_queue, stats_queue, stop_event, 
                     break
 
                 pub_u = pk.format(compressed=False)
+                hu = h160(pub_u)
+                if hu in target_h160_set:
+                    hit = h160_to_target.get(hu, {})
+                    win_event.set()
+                    win_queue.put({
+                        'keyHex': priv_bytes.hex().lstrip('0') or '0',
+                        'targetId': hit.get('id', curr_tid),
+                        'targetAddr': hit.get('target_addr', ''),
+                        'reward': hit.get('reward', 'Bitcoin Odulu'),
+                        'isUncompressed': True
+                    })
+                    break
+            else:
+                pub_c = get_pubkey_bytes(k_int, compressed=True)
+                hc = h160(pub_c)
+                if hc in target_h160_set:
+                    hit = h160_to_target.get(hc, {})
+                    win_event.set()
+                    win_queue.put({
+                        'keyHex': priv_bytes.hex().lstrip('0') or '0',
+                        'targetId': hit.get('id', curr_tid),
+                        'targetAddr': hit.get('target_addr', ''),
+                        'reward': hit.get('reward', 'Bitcoin Odulu'),
+                        'isUncompressed': False
+                    })
+                    break
+
+                pub_u = get_pubkey_bytes(k_int, compressed=False)
                 hu = h160(pub_u)
                 if hu in target_h160_set:
                     hit = h160_to_target.get(hu, {})
