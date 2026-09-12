@@ -5155,23 +5155,12 @@ function initThreadCountUI() {
     }
     const isMobile = (typeof window !== 'undefined' && window.innerWidth <= 480);
     sel.innerHTML = '';
-
-    const gpuOpt = document.createElement('option');
-    gpuOpt.value = 'GPU';
-    gpuOpt.innerText = '🎮 GPU (Oto)';
-    gpuOpt.selected = true;
-    sel.appendChild(gpuOpt);
-
-    const hybridOpt = document.createElement('option');
-    hybridOpt.value = 'HYBRID';
-    hybridOpt.innerText = '🚀 CPU + GPU';
-    sel.appendChild(hybridOpt);
-
     baseList.forEach(count => {
         const opt = document.createElement('option');
         opt.value = count;
         if (count === detected) {
             opt.innerText = isMobile ? ('⚡ ' + count + 'T (Oto)') : ('⚡ ' + count + ' Thread (Cihaz)');
+            opt.selected = true;
         } else if (count >= 16) {
             opt.innerText = isMobile ? ('🌌 ' + count + 'T') : ('🌌 ' + count + ' Thread');
         } else if (count >= 8) {
@@ -5181,7 +5170,7 @@ function initThreadCountUI() {
         }
         sel.appendChild(opt);
     });
-    sel.value = 'GPU';
+    sel.value = detected;
 }
 
 function getCurrentWorkerConfig() {
