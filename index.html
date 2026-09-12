@@ -1180,8 +1180,8 @@
 
                 <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
                 <select id="threadCountSelect" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:115px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı / GPU Seçimi">
-                    <option value="HYBRID" selected>🚀 CPU + GPU</option>
-                    <option value="GPU">🎮 GPU (Oto)</option>
+                    <option value="GPU" selected>🎮 GPU (Oto)</option>
+                    <option value="HYBRID">🚀 CPU + GPU</option>
                     <option value="4">🚀 4T</option>
                     <option value="8">⚡ 8T (Cihaz)</option>
                     <option value="12">🔥 12T</option>
@@ -1490,6 +1490,9 @@ function onHexSliderChange(type) {
         }
 
         updateSliderUI(); broadcastWorkerConfig();
+        if (isPrefixAutoJump) {
+            pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
+        }
     } finally {
         isSliderSyncBusy = false;
     }
@@ -1550,6 +1553,9 @@ function onHexSliderInputChange(type) {
         }
 
         updateSliderUI(); broadcastWorkerConfig();
+        if (isPrefixAutoJump) {
+            pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
+        }
     } catch(e) {
     } finally {
         isSliderSyncBusy = false;
@@ -1580,6 +1586,9 @@ function setHexSliderBounds(sKey, eKey, labelText) {
     if (maxEl && total > 0n) maxEl.value = Number(((sliderMaxHex - tStart) * 1000000n) / total);
 
     updateSliderUI(); broadcastWorkerConfig();
+    if (isPrefixAutoJump) {
+        pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
+    }
     const logRangeEl = document.getElementById('logRange');
     if (logRangeEl) logRangeEl.innerText = `🎯 ${labelText} [Hex Uzayı: 0x${sliderMinHex.toString(16)} - 0x${sliderMaxHex.toString(16)}]`;
 }
@@ -2271,23 +2280,48 @@ function togglePrefixAutoJump(explicitVal) {
 }
 
 function pickNextRandomPrefix(targetStart, targetEnd) {
-    const sHex = targetStart.toString(16);
-    const eHex = targetEnd.toString(16);
-    const totalLen = eHex.length;
-    const prefixLen = getDynamicPrefixLength(totalLen);
-    
+    if (!targetEnd || targetEnd <= 0n) return;
+
+    let effStart = targetStart;
+    let effEnd = targetEnd;
+    // Çift Kaydıraç aktifse aralığı daraltılmış kaydıraç sınırlarına odakla
+    if (!isCircularMode && isDualSliderActive && sliderMinHex !== null && sliderMaxHex !== null) {
+        if (sliderMinHex > effStart && sliderMinHex < effEnd) effStart = sliderMinHex;
+        if (sliderMaxHex < effEnd && sliderMaxHex > effStart) effEnd = sliderMaxHex;
+        if (effEnd <= effStart) effEnd = effStart + 1n;
+    }
+
+    const sHex = effStart.toString(16);
+    const eHex = effEnd.toString(16);
+    const totalLen = (targetEnd.toString(16)).length;
     const sHexPadded = sHex.padStart(totalLen, '0');
+    const eHexPadded = eHex.padStart(totalLen, '0');
+
+    // Kaydıraç sınırlarının ortak kökünü (ortak ön ekini) tespit et
+    let commonLen = 0;
+    while (commonLen < totalLen && sHexPadded[commonLen] === eHexPadded[commonLen]) {
+        commonLen++;
+    }
+
+    let prefixLen;
+    if (commonLen > 0) {
+        // Kaydıraç daraltılmış: Ortak kökün üzerine 1 veya 2 dinamik atlama karakteri ekle
+        prefixLen = Math.min(totalLen - 1, commonLen + (totalLen - commonLen >= 3 ? 2 : 1));
+    } else {
+        prefixLen = getDynamicPrefixLength(totalLen);
+    }
+
     const sPrefixInt = parseInt(sHexPadded.substring(0, prefixLen), 16) || 0;
-    const ePrefixInt = parseInt(eHex.substring(0, prefixLen), 16) || 15;
-    
+    const ePrefixInt = parseInt(eHexPadded.substring(0, prefixLen), 16) || 15;
+
     const rangeSpan = Math.max(1, ePrefixInt - sPrefixInt + 1);
     const randPrefixVal = sPrefixInt + Math.floor(Math.random() * rangeSpan);
     userPrefix = randPrefixVal.toString(16).padStart(prefixLen, '0');
-    
+
     // Son ek de dinamik otomatik belirlenir
     let autoSuffix = '';
-    if (totalLen >= 4) {
-        const sLen = (totalLen >= 10) ? 2 : 1;
+    if (totalLen - prefixLen >= 4) {
+        const sLen = (totalLen - prefixLen >= 10) ? 2 : 1;
         autoSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
     }
 
@@ -2371,7 +2405,16 @@ function pickNextRandomGridCell() {
 function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '') {
     if (!prefixHex && !suffixHex) return randomBigIntInRange(targetStart, targetEnd);
     
-    const maxHex = targetEnd.toString(16);
+    // Çift kaydıraç aktifse sınırları daralt
+    let effStart = targetStart;
+    let effEnd = targetEnd;
+    if (!isCircularMode && isDualSliderActive && sliderMinHex !== null && sliderMaxHex !== null) {
+        if (sliderMinHex > effStart && sliderMinHex < effEnd) effStart = sliderMinHex;
+        if (sliderMaxHex < effEnd && sliderMaxHex > effStart) effEnd = sliderMaxHex;
+        if (effEnd <= effStart) effEnd = effStart + 1n;
+    }
+
+    const maxHex = effEnd.toString(16);
     const targetLen = maxHex.length;
     const p = prefixHex || '';
     const s = suffixHex || '';
@@ -2383,7 +2426,10 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '') {
         while (randPart.length < remainLen) {
             randPart += Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
         }
-        return BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+        let val = BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+        if (val < effStart) val = effStart;
+        if (val > effEnd) val = effEnd;
+        return val;
     }
 
     const middleLen = targetLen - p.length - s.length;
@@ -2395,9 +2441,9 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '') {
         randPart = randPart.slice(0, middleLen);
         const fullHex = p + randPart + s;
         const val = BigInt('0x' + (fullHex || '0'));
-        if (val >= targetStart && val <= targetEnd) return val;
+        if (val >= effStart && val <= effEnd) return val;
     }
-    return randomBigIntInRange(targetStart, targetEnd);
+    return randomBigIntInRange(effStart, effEnd);
 }
 
 // 🎯 DİNAMİK OTOMATİK ARALIK (%5 ZIPLAMA & ÖZEL DİLİMLER)
@@ -3571,8 +3617,8 @@ function huntBatch() {
 
             // 🌀 v13 BOYUTSAL FİZİK & GEOMETRİK MATRİS MODU
             if (activeRangeMode === 'PHYSICS' || activeFormula === 'PREFIX' || activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS') {
-                const tMin = BigInt(activeTarget.origStart || activeTarget.start);
-                const tMax = BigInt(activeTarget.origEnd   || activeTarget.end);
+                const tMin = boundMin;
+                const tMax = boundMax;
                 if (activeFormula === 'PREFIX') {
                     if (isPrefixAutoJump) {
                         prefixJumpCounter++;
@@ -4034,6 +4080,35 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward) {
     if (lastHandledWinKey === keyHex) return;
     lastHandledWinKey = keyHex;
 
+    // 🛑 ARAMAYI ANINDA VE EKSİKSİZ DURDUR (GPU, CPU Worker, Zamanlayıcı, UI Butonu)
+    isRunning = false;
+    stopGpuHunting(true);
+    stopWorkerPool();
+    if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+        try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
+    }
+    const btn = document.getElementById('btnToggle');
+    if (btn) {
+        btn.className = 'action-btn btn-start';
+        btn.innerText = '▶ Aramayı Başlat';
+    }
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (typeof releaseWakeLock === 'function') releaseWakeLock();
+
+    const btnUnsolved = document.getElementById('btnMainUnsolved');
+    const btnSolved = document.getElementById('btnMainSolved');
+    const btnCustomPool = document.getElementById('btnMainCustomPool');
+    if (btnUnsolved) btnUnsolved.classList.remove('locked');
+    if (btnSolved) btnSolved.classList.remove('locked');
+    if (btnCustomPool) btnCustomPool.classList.remove('locked');
+    ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
+    });
+
     playWinChime();
     foundKeyHex = keyHex;
     const wifComp = privkeyToWIF(keyHex, true);
@@ -4388,7 +4463,10 @@ function bgWorkerProcess() {
             while (randPart.length < remainLen) {
                 randPart += Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
             }
-            return BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+            let val = BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+            if (val < targetStart) val = targetStart;
+            if (val > targetEnd) val = targetEnd;
+            return val;
         }
 
         const middleLen = targetLen - p.length - s.length;
@@ -4555,13 +4633,14 @@ function bgWorkerProcess() {
             
             let boundMin = baseStart;
             let boundMax = baseEnd;
-            if (!cfg.isCircularMode && mode !== 'HEX' && mode !== 'PREFIX' && mode !== 'GRID' && cfg.isDualSliderActive && cfg.sliderMinHex && cfg.sliderMaxHex) {
+            if (!cfg.isCircularMode && mode !== 'HEX' && cfg.isDualSliderActive && cfg.sliderMinHex && cfg.sliderMaxHex) {
                 const sMin = BigInt('0x' + cfg.sliderMinHex);
                 const sMax = BigInt('0x' + cfg.sliderMaxHex);
                 if (sMin > boundMin && sMin < boundMax) boundMin = sMin;
                 if (sMax < boundMax && sMax > boundMin) boundMax = sMax;
                 if (boundMax <= boundMin) boundMax = boundMin + 1n;
             }
+            const effRange = boundMax - boundMin;
             
 
             if (mode === 'PREFIX' || f === 'PREFIX') {
@@ -4569,14 +4648,24 @@ function bgWorkerProcess() {
                     prefixJumpCounter++;
                     if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
                         const totalLen = baseEnd.toString(16).length;
-                        const pLen = getDynamicPrefixLength(totalLen);
-                        const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                        const sHexPadded = boundMin.toString(16).padStart(totalLen, '0');
+                        const eHexPadded = boundMax.toString(16).padStart(totalLen, '0');
+                        let commonLen = 0;
+                        while (commonLen < totalLen && sHexPadded[commonLen] === eHexPadded[commonLen]) {
+                            commonLen++;
+                        }
+                        let pLen;
+                        if (commonLen > 0) {
+                            pLen = Math.min(totalLen - 1, commonLen + (totalLen - commonLen >= 3 ? 2 : 1));
+                        } else {
+                            pLen = getDynamicPrefixLength(totalLen);
+                        }
                         const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
-                        const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                        const ePrefixInt = parseInt(eHexPadded.substring(0, pLen), 16) || 15;
                         const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
                         activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
-                        if (totalLen >= 4) {
-                            const sLen = (totalLen >= 10) ? 2 : 1;
+                        if (totalLen - pLen >= 4) {
+                            const sLen = (totalLen - pLen >= 10) ? 2 : 1;
                             activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
                         } else {
                             activeWorkerSuffix = '';
@@ -4586,7 +4675,7 @@ function bgWorkerProcess() {
                     activeWorkerPrefix = cfg.userPrefix || '';
                     activeWorkerSuffix = '';
                 }
-                currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                currentKey = generatePrefixKey(boundMin, boundMax, activeWorkerPrefix, activeWorkerSuffix);
                 currentRangeText = (cfg.isPrefixAutoJump ? '🔄 Oto Ön Ek: 0x' : '🧩 Sabit Ön Ek: 0x') + (activeWorkerPrefix || '') + '...' + (activeWorkerSuffix ? ('[' + activeWorkerSuffix + ']') : '');
             } else if (mode === 'GRID' || f === 'GRID') {
                 if (cfg.isGridAutoJump) {
@@ -4597,8 +4686,8 @@ function bgWorkerProcess() {
                 } else {
                     activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
                 }
-                const cellSize = totalR / 65536n;
-                const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                const cellSize = effRange / 65536n;
+                const cellStart = boundMin + (BigInt(activeWorkerGridCell) * cellSize);
                 currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                 currentRangeText = (cfg.isGridAutoJump ? '🔄 Oto Grid [Hücre #' : '🌀 Sabit Grid [Hücre #') + activeWorkerGridCell + ' / 65535]';
             } else if (mode === 'PHYSICS' || f === 'OMNI_CHAOS') {
@@ -4609,14 +4698,24 @@ function bgWorkerProcess() {
                             prefixJumpCounter++;
                             if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
                                 const totalLen = baseEnd.toString(16).length;
-                                const pLen = getDynamicPrefixLength(totalLen);
-                                const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                                const sHexPadded = boundMin.toString(16).padStart(totalLen, '0');
+                                const eHexPadded = boundMax.toString(16).padStart(totalLen, '0');
+                                let commonLen = 0;
+                                while (commonLen < totalLen && sHexPadded[commonLen] === eHexPadded[commonLen]) {
+                                    commonLen++;
+                                }
+                                let pLen;
+                                if (commonLen > 0) {
+                                    pLen = Math.min(totalLen - 1, commonLen + (totalLen - commonLen >= 3 ? 2 : 1));
+                                } else {
+                                    pLen = getDynamicPrefixLength(totalLen);
+                                }
                                 const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
-                                const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                                const ePrefixInt = parseInt(eHexPadded.substring(0, pLen), 16) || 15;
                                 const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
                                 activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
-                                if (totalLen >= 4) {
-                                    const sLen = (totalLen >= 10) ? 2 : 1;
+                                if (totalLen - pLen >= 4) {
+                                    const sLen = (totalLen - pLen >= 10) ? 2 : 1;
                                     activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
                                 } else {
                                     activeWorkerSuffix = '';
@@ -4626,7 +4725,7 @@ function bgWorkerProcess() {
                             activeWorkerPrefix = cfg.userPrefix || '';
                             activeWorkerSuffix = '';
                         }
-                        currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                        currentKey = generatePrefixKey(boundMin, boundMax, activeWorkerPrefix, activeWorkerSuffix);
                         currentRangeText = '💥 Hibrit [0x' + (activeWorkerPrefix || '') + '...]';
                     } else if (r < 0.70) {
                         if (cfg.isGridAutoJump) {
@@ -4637,8 +4736,8 @@ function bgWorkerProcess() {
                         } else {
                             activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
                         }
-                        const cellSize = totalR / 65536n;
-                        const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                        const cellSize = effRange / 65536n;
+                        const cellStart = boundMin + (BigInt(activeWorkerGridCell) * cellSize);
                         currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                         currentRangeText = '💥 Hibrit [🌀 #' + activeWorkerGridCell + ']';
                     } else if (r < 0.85) {
@@ -4684,14 +4783,24 @@ function bgWorkerProcess() {
                         prefixJumpCounter++;
                         if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
                             const totalLen = baseEnd.toString(16).length;
-                            const pLen = getDynamicPrefixLength(totalLen);
-                            const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                            const sHexPadded = boundMin.toString(16).padStart(totalLen, '0');
+                            const eHexPadded = boundMax.toString(16).padStart(totalLen, '0');
+                            let commonLen = 0;
+                            while (commonLen < totalLen && sHexPadded[commonLen] === eHexPadded[commonLen]) {
+                                commonLen++;
+                            }
+                            let pLen;
+                            if (commonLen > 0) {
+                                pLen = Math.min(totalLen - 1, commonLen + (totalLen - commonLen >= 3 ? 2 : 1));
+                            } else {
+                                pLen = getDynamicPrefixLength(totalLen);
+                            }
                             const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
-                            const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                            const ePrefixInt = parseInt(eHexPadded.substring(0, pLen), 16) || 15;
                             const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
                             activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
-                            if (totalLen >= 4) {
-                                const sLen = (totalLen >= 10) ? 2 : 1;
+                            if (totalLen - pLen >= 4) {
+                                const sLen = (totalLen - pLen >= 10) ? 2 : 1;
                                 activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
                             } else {
                                 activeWorkerSuffix = '';
@@ -4701,19 +4810,19 @@ function bgWorkerProcess() {
                         activeWorkerPrefix = cfg.userPrefix || '';
                         activeWorkerSuffix = '';
                     }
-                    currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                    currentKey = generatePrefixKey(boundMin, boundMax, activeWorkerPrefix, activeWorkerSuffix);
                     currentRangeText = '⚡ Kaos [0x' + (activeWorkerPrefix || '') + '...]';
                 } else if (chaosCurrentSubMode === 'GRID') {
                     if (cfg.isGridAutoJump) {
                         gridJumpCounter++;
-                        if (gridJumpCounter % 25 === 0) {
+                        if (gridJumpCounter % 25 === 0 || activeWorkerGridCell === undefined) {
                             activeWorkerGridCell = Math.floor(Math.random() * 65536);
                         }
                     } else {
                         activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
                     }
-                    const cellSize = totalR / 65536n;
-                    const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                    const cellSize = effRange / 65536n;
+                    const cellStart = boundMin + (BigInt(activeWorkerGridCell) * cellSize);
                     currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                     currentRangeText = '⚡ Kaos [🌀 #' + activeWorkerGridCell + ']';
                 } else if (chaosCurrentSubMode === 'OMNI_CHAOS') {
@@ -4733,16 +4842,25 @@ function bgWorkerProcess() {
                     prefixJumpCounter++;
                     if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
                         const totalLen = baseEnd.toString(16).length;
-                        const pLen = getDynamicPrefixLength(totalLen);
-                        const sHexPadded = baseStart.toString(16).padStart(totalLen, '0');
+                        const sHexPadded = boundMin.toString(16).padStart(totalLen, '0');
+                        const eHexPadded = boundMax.toString(16).padStart(totalLen, '0');
+                        let commonLen = 0;
+                        while (commonLen < totalLen && sHexPadded[commonLen] === eHexPadded[commonLen]) {
+                            commonLen++;
+                        }
+                        let pLen;
+                        if (commonLen > 0) {
+                            pLen = Math.min(totalLen - 1, commonLen + (totalLen - commonLen >= 3 ? 2 : 1));
+                        } else {
+                            pLen = getDynamicPrefixLength(totalLen);
+                        }
                         const sPrefixInt = parseInt(sHexPadded.substring(0, pLen), 16) || 0;
-                        const ePrefixInt = parseInt(baseEnd.toString(16).substring(0, pLen), 16) || 15;
+                        const ePrefixInt = parseInt(eHexPadded.substring(0, pLen), 16) || 15;
                         const span = Math.max(1, ePrefixInt - sPrefixInt + 1);
                         activeWorkerPrefix = (sPrefixInt + Math.floor(Math.random() * span)).toString(16).padStart(pLen, '0');
 
-                        // 🎯 SON EK DE OTOMATİK DİNAMİK VE FARKLI ÜRETİLİR (Ayrı menü olmadan)
-                        if (totalLen >= 4) {
-                            const sLen = (totalLen >= 10) ? 2 : 1;
+                        if (totalLen - pLen >= 4) {
+                            const sLen = (totalLen - pLen >= 10) ? 2 : 1;
                             activeWorkerSuffix = Math.floor(Math.random() * (1 << (sLen * 4))).toString(16).padStart(sLen, '0');
                         } else {
                             activeWorkerSuffix = '';
@@ -4752,19 +4870,19 @@ function bgWorkerProcess() {
                     activeWorkerPrefix = cfg.userPrefix || '';
                     activeWorkerSuffix = '';
                 }
-                currentKey = generatePrefixKey(baseStart, baseEnd, activeWorkerPrefix, activeWorkerSuffix);
+                currentKey = generatePrefixKey(boundMin, boundMax, activeWorkerPrefix, activeWorkerSuffix);
                 currentRangeText = (cfg.isPrefixAutoJump ? '🔄 Oto: 0x' : '🧩 Ön Ek: 0x') + (activeWorkerPrefix || '') + '...' + (activeWorkerSuffix ? ('[' + activeWorkerSuffix + ']') : '');
             } else if (mode === 'GRID') {
                 if (cfg.isGridAutoJump) {
                     gridJumpCounter++;
-                    if (gridJumpCounter % 25 === 0) {
+                    if (gridJumpCounter % 25 === 0 || activeWorkerGridCell === undefined) {
                         activeWorkerGridCell = Math.floor(Math.random() * 65536);
                     }
                 } else {
                     activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
                 }
-                const cellSize = totalR / 65536n;
-                const cellStart = baseStart + (BigInt(activeWorkerGridCell) * cellSize);
+                const cellSize = effRange / 65536n;
+                const cellStart = boundMin + (BigInt(activeWorkerGridCell) * cellSize);
                 currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                 currentRangeText = (cfg.isGridAutoJump ? '🔄 Oto Grid [Hücre #' : '🌀 Grid [Hücre #') + activeWorkerGridCell + ']';
             } else if (mode === 'PERCENT' && cfg.sliceModeActive && totalR > 10000n) {
@@ -4799,7 +4917,7 @@ function bgWorkerProcess() {
             }
             
             // Slider boundary clamp
-            if (!cfg.isCircularMode && mode !== 'HEX' && mode !== 'PREFIX' && mode !== 'GRID' && cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
+            if (!cfg.isCircularMode && mode !== 'HEX' && cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
                 if (currentKey < boundMin || currentKey > boundMax) {
                     currentKey = randomBigIntInRange(boundMin, boundMax);
                 }
@@ -5037,11 +5155,22 @@ function initThreadCountUI() {
     }
     const isMobile = (typeof window !== 'undefined' && window.innerWidth <= 480);
     sel.innerHTML = '';
+
+    const gpuOpt = document.createElement('option');
+    gpuOpt.value = 'GPU';
+    gpuOpt.innerText = '🎮 GPU (Oto)';
+    gpuOpt.selected = true;
+    sel.appendChild(gpuOpt);
+
+    const hybridOpt = document.createElement('option');
+    hybridOpt.value = 'HYBRID';
+    hybridOpt.innerText = '🚀 CPU + GPU';
+    sel.appendChild(hybridOpt);
+
     baseList.forEach(count => {
         const opt = document.createElement('option');
         opt.value = count;
         if (count === detected) {
-            opt.selected = true;
             opt.innerText = isMobile ? ('⚡ ' + count + 'T (Oto)') : ('⚡ ' + count + ' Thread (Cihaz)');
         } else if (count >= 16) {
             opt.innerText = isMobile ? ('🌌 ' + count + 'T') : ('🌌 ' + count + ' Thread');
@@ -5052,6 +5181,7 @@ function initThreadCountUI() {
         }
         sel.appendChild(opt);
     });
+    sel.value = 'GPU';
 }
 
 function getCurrentWorkerConfig() {
@@ -5149,24 +5279,25 @@ function updateThreadSelectWithGpu() {
     const gpuLabel = isMobile ? ('🎮 GPU (' + firstWord + ')') : ('🎮 GPU (' + gpuCardName + ')');
     const hybridLabel = '🚀 CPU + GPU';
 
-    let hybridOpt = Array.from(sel.options).find(o => o.value === 'HYBRID');
-    if (!hybridOpt) {
-        hybridOpt = document.createElement('option');
-        hybridOpt.value = 'HYBRID';
-        hybridOpt.innerText = hybridLabel;
-        sel.insertBefore(hybridOpt, sel.firstChild);
-    }
-
     let gpuOpt = Array.from(sel.options).find(o => o.value === 'GPU');
     if (!gpuOpt) {
         gpuOpt = document.createElement('option');
         gpuOpt.value = 'GPU';
         gpuOpt.innerText = gpuLabel;
-        sel.insertBefore(gpuOpt, hybridOpt.nextSibling);
+        sel.insertBefore(gpuOpt, sel.firstChild);
     } else {
         gpuOpt.innerText = gpuLabel;
     }
-    sel.value = 'HYBRID';
+
+    let hybridOpt = Array.from(sel.options).find(o => o.value === 'HYBRID');
+    if (!hybridOpt) {
+        hybridOpt = document.createElement('option');
+        hybridOpt.value = 'HYBRID';
+        hybridOpt.innerText = hybridLabel;
+        sel.insertBefore(hybridOpt, gpuOpt.nextSibling);
+    }
+
+    sel.value = 'GPU';
 }
 
 let gpuComputePipeline = null;
@@ -5304,12 +5435,13 @@ async function startGpuHunting() {
                     let boundMin = baseStart;
                     let boundMax = baseEnd;
                     const hasSliderLimit = !isCircularMode && isDualSliderActive && sliderMinHex !== null && sliderMaxHex !== null;
-                    if (hasSliderLimit && activeRangeMode !== 'HEX' && activeRangeMode !== 'PREFIX' && activeRangeMode !== 'GRID') {
+                    if (hasSliderLimit && activeRangeMode !== 'HEX') {
                         if (sliderMinHex > boundMin && sliderMinHex < boundMax) boundMin = sliderMinHex;
                         if (sliderMaxHex < boundMax && sliderMaxHex > boundMin) boundMax = sliderMaxHex;
                         if (boundMax <= boundMin) boundMax = boundMin + 1n;
                     }
-                    const isNarrowRange = (boundMax - boundMin) < totalR;
+                    const effRange = boundMax - boundMin;
+                    const isNarrowRange = effRange < totalR;
                     
                     attempts += BATCH_SIZE;
                     const stepCheck = Math.max(1, Math.floor(BATCH_SIZE / 64));
@@ -5318,26 +5450,30 @@ async function startGpuHunting() {
                         let currentRangeText = '';
 
                         // 🎯 1. ÖN EK (PREFIX) MODU KONTROLÜ
-                        if (activeRangeMode === 'PREFIX') {
+                        if (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX') {
                             if (isPrefixAutoJump) {
                                 prefixJumpCounter++;
                                 if (prefixJumpCounter % 25 === 0 || !userPrefix) {
-                                    pickNextRandomPrefix(baseStart, baseEnd);
+                                    pickNextRandomPrefix(boundMin, boundMax);
+                                    const pInput = document.getElementById('prefixInput');
+                                    if (pInput) { pInput.value = userPrefix; pInput.placeholder = userPrefix; }
                                 }
                             }
-                            currentKey = generatePrefixKey(baseStart, baseEnd, userPrefix);
+                            currentKey = generatePrefixKey(boundMin, boundMax, userPrefix);
                             currentRangeText = (isPrefixAutoJump ? '🔄 Oto Ön Ek: 0x' : '🧩 Ön Ek: 0x') + (userPrefix || '') + '...';
                         }
                         // 🌀 2. HILBERT GRID MODU KONTROLÜ
-                        else if (activeRangeMode === 'GRID') {
+                        else if (activeFormula === 'GRID' || activeRangeMode === 'GRID') {
                             if (isGridAutoJump) {
                                 gridJumpCounter++;
-                                if (gridJumpCounter % 25 === 0) {
+                                if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
                                     pickNextRandomGridCell();
+                                    const gInput = document.getElementById('gridCellInput');
+                                    if (gInput) gInput.value = userGridCell;
                                 }
                             }
-                            const cellSize = totalR / 65536n;
-                            const cellStart = baseStart + (BigInt(userGridCell || 0) * cellSize);
+                            const cellSize = effRange / 65536n;
+                            const cellStart = boundMin + (BigInt(userGridCell || 0) * cellSize);
                             currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                             currentRangeText = (isGridAutoJump ? '🔄 Oto Grid [#' : '🌀 Grid [#') + (userGridCell || 0) + ']';
                         }
@@ -5357,10 +5493,10 @@ async function startGpuHunting() {
                             } else if (chaosCurrentSubMode === 'HEX' && userHexStart && userHexEnd) {
                                 currentKey = randomBigIntInRange(BigInt('0x' + userHexStart), BigInt('0x' + userHexEnd));
                             } else if (chaosCurrentSubMode === 'PREFIX' && userPrefix) {
-                                currentKey = generatePrefixKey(baseStart, baseEnd, userPrefix);
+                                currentKey = generatePrefixKey(boundMin, boundMax, userPrefix);
                             } else if (chaosCurrentSubMode === 'GRID') {
-                                const cellSize = totalR / 65536n;
-                                const cellStart = baseStart + (BigInt(userGridCell || 0) * cellSize);
+                                const cellSize = effRange / 65536n;
+                                const cellStart = boundMin + (BigInt(userGridCell || 0) * cellSize);
                                 currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
                             } else if (activeFormula === 'BRAINWALLET') {
                                 currentKey = generateBrainwalletKey(boundMin, boundMax);
@@ -5368,12 +5504,32 @@ async function startGpuHunting() {
                                 currentKey = generateHexScramblerKey(boundMin, boundMax);
                             } else if (activeFormula === 'OMNI_CHAOS') {
                                 const r = Math.random();
-                                if (r < 0.20) currentKey = generateBrainwalletKey(boundMin, boundMax);
-                                else if (r < 0.40) currentKey = generateHexScramblerKey(boundMin, boundMax);
-                                else {
-                                    const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
-                                    const eBig = BigInt(Math.round((sliceEndPct || 100) * 100000000));
-                                    currentKey = randomBigIntInRange(baseStart + (totalR * sBig / 10000000000n), baseStart + (totalR * eBig / 10000000000n));
+                                if (r < 0.35) {
+                                    if (isPrefixAutoJump) {
+                                        prefixJumpCounter++;
+                                        if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                                            pickNextRandomPrefix(boundMin, boundMax);
+                                            const pInput = document.getElementById('prefixInput');
+                                            if (pInput) { pInput.value = userPrefix; pInput.placeholder = userPrefix; }
+                                        }
+                                    }
+                                    currentKey = generatePrefixKey(boundMin, boundMax, userPrefix);
+                                } else if (r < 0.70) {
+                                    if (isGridAutoJump) {
+                                        gridJumpCounter++;
+                                        if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
+                                            pickNextRandomGridCell();
+                                            const gInput = document.getElementById('gridCellInput');
+                                            if (gInput) gInput.value = userGridCell;
+                                        }
+                                    }
+                                    const cellSize = effRange / 65536n;
+                                    const cellStart = boundMin + (BigInt(userGridCell || 0) * cellSize);
+                                    currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                                } else if (r < 0.85) {
+                                    currentKey = generateHexScramblerKey(boundMin, boundMax);
+                                } else {
+                                    currentKey = generateBrainwalletKey(boundMin, boundMax);
                                 }
                             } else {
                                 const sBig = BigInt(Math.round((sliceStartPct || 0) * 100000000));
@@ -5384,32 +5540,74 @@ async function startGpuHunting() {
                         }
                         // 🌀 5. FİZİK FORMÜLLERİ
                         else if (activeRangeMode === 'PHYSICS') {
-                            const f = (typeof activeFormula !== 'undefined' && activeFormula) ? activeFormula : 'LORENZ';
+                            const f = (typeof activeFormula !== 'undefined' && activeFormula) ? activeFormula : 'OMNI_CHAOS';
                             if (f === 'BRAINWALLET') {
                                 currentKey = generateBrainwalletKey(boundMin, boundMax);
                                 currentRangeText = '🧠 Zayıf Entropi';
                             } else if (f === 'HEX_SCRAMBLER') {
                                 currentKey = generateHexScramblerKey(boundMin, boundMax);
                                 currentRangeText = '🔀 Hex / Bit Karıştırıcı';
+                            } else if (f === 'PREFIX') {
+                                if (isPrefixAutoJump) {
+                                    prefixJumpCounter++;
+                                    if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                                        pickNextRandomPrefix(boundMin, boundMax);
+                                        const pInput = document.getElementById('prefixInput');
+                                        if (pInput) { pInput.value = userPrefix; pInput.placeholder = userPrefix; }
+                                    }
+                                }
+                                currentKey = generatePrefixKey(boundMin, boundMax, userPrefix);
+                                currentRangeText = (isPrefixAutoJump ? '🔄 Oto Ön Ek: 0x' : '🧩 Ön Ek: 0x') + (userPrefix || '') + '...';
+                            } else if (f === 'GRID') {
+                                if (isGridAutoJump) {
+                                    gridJumpCounter++;
+                                    if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
+                                        pickNextRandomGridCell();
+                                        const gInput = document.getElementById('gridCellInput');
+                                        if (gInput) gInput.value = userGridCell;
+                                    }
+                                }
+                                const cellSize = effRange / 65536n;
+                                const cellStart = boundMin + (BigInt(userGridCell || 0) * cellSize);
+                                currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                                currentRangeText = (isGridAutoJump ? '🔄 Oto Grid [#' : '🌀 Grid [#') + (userGridCell || 0) + ']';
                             } else if (f === 'OMNI_CHAOS') {
                                 const r = Math.random();
-                                if (r < 0.20) {
-                                    currentKey = generateBrainwalletKey(boundMin, boundMax);
-                                    currentRangeText = '💥 Omni-Karma (🧠)';
-                                } else if (r < 0.40) {
-                                    currentKey = generateHexScramblerKey(boundMin, boundMax);
-                                    currentRangeText = '💥 Omni-Karma (🔀)';
-                                } else if (isNarrowRange) {
-                                    currentKey = randomBigIntInRange(boundMin, boundMax);
-                                    currentRangeText = '💥 Omni-Karma (Pencere)';
-                                } else {
+                                if (r < 0.35) {
+                                    if (isPrefixAutoJump) {
+                                        prefixJumpCounter++;
+                                        if (prefixJumpCounter % 25 === 0 || !userPrefix) {
+                                            pickNextRandomPrefix(boundMin, boundMax);
+                                            const pInput = document.getElementById('prefixInput');
+                                            if (pInput) { pInput.value = userPrefix; pInput.placeholder = userPrefix; }
+                                        }
+                                    }
+                                    currentKey = generatePrefixKey(boundMin, boundMax, userPrefix);
+                                    currentRangeText = '💥 Hibrit [0x' + (userPrefix || '') + '...]';
+                                } else if (r < 0.70) {
+                                    if (isGridAutoJump) {
+                                        gridJumpCounter++;
+                                        if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
+                                            pickNextRandomGridCell();
+                                            const gInput = document.getElementById('gridCellInput');
+                                            if (gInput) gInput.value = userGridCell;
+                                        }
+                                    }
+                                    const cellSize = effRange / 65536n;
+                                    const cellStart = boundMin + (BigInt(userGridCell || 0) * cellSize);
+                                    currentKey = randomBigIntInRange(cellStart, cellStart + (cellSize > 0n ? cellSize : 1n));
+                                    currentRangeText = '💥 Hibrit [🌀 #' + (userGridCell || 0) + ']';
+                                } else if (r < 0.85) {
                                     const centerPct = getNextPhysicsPercent();
                                     const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 100000000));
                                     const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
                                     const sK = baseStart + (totalR * sBig / 10000000000n);
                                     const eK = baseStart + (totalR * eBig / 10000000000n);
                                     currentKey = randomBigIntInRange(sK, eK);
-                                    currentRangeText = '💥 Omni-Karma -> %' + centerPct.toFixed(2);
+                                    currentRangeText = '💥 Hibrit [Lorenz -> %' + centerPct.toFixed(2) + ']';
+                                } else {
+                                    currentKey = generateBrainwalletKey(boundMin, boundMax);
+                                    currentRangeText = '💥 Hibrit [🧠 Zayıf Entropi]';
                                 }
                             } else if (isNarrowRange) {
                                 currentKey = randomBigIntInRange(boundMin, boundMax);
@@ -5464,7 +5662,7 @@ async function startGpuHunting() {
                         const targetH160 = activeTarget.targetHash160 || addressToHash160(activeTarget.addr);
 
                         if (targetH160 && compH160 === targetH160) {
-                            stopGpuHunting();
+                            stopGpuHunting(true);
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ']');
                             return;
                         }
@@ -5472,13 +5670,13 @@ async function startGpuHunting() {
                         // Sıkıştırılmamış adres kontrolü
                         const uncompH160 = privkeyToHash160Uncompressed(keyHex);
                         if (targetH160 && uncompH160 === targetH160) {
-                            stopGpuHunting();
+                            stopGpuHunting(true);
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, false), activeTarget.addr, activeTarget.reward + ' [🎮 GPU: ' + gpuCardName + ' - Uncompressed]');
                             return;
                         }
 
                         if (customAddressSet && customAddressSet.size > 0 && (customAddressSet.has(compH160) || customAddressSet.has(uncompH160))) {
-                            stopGpuHunting();
+                            stopGpuHunting(true);
                             const winningH160 = customAddressSet.has(compH160) ? compH160 : uncompH160;
                             const isComp = winningH160 === compH160;
                             handleWin(activeTarget.id, keyHex, privkeyToAddress(keyHex, isComp), customHashToAddress[winningH160] || activeTarget.addr, '🎯 İlave Havuz [🎮 GPU: ' + gpuCardName + ']');
@@ -5522,10 +5720,10 @@ async function startGpuHunting() {
                 console.warn('[WebGPU PASS ERR]:', passErr);
                 gpuPassErrorStreak++;
                 if (gpuPassErrorStreak > 5) {
-                    console.error('[WebGPU] Çok fazla GPU geçiş hatası alındı, CPU iş parçacıklarına geçiliyor.');
-                    stopGpuHunting();
+                    console.warn('[WebGPU] GPU geçiş hatası alındı, CPU iş parçacıkları kesintisiz devralıyor.');
+                    stopGpuHunting(false);
                     const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-                    if (window.Worker) startWorkerPool(fallbackCores);
+                    if (window.Worker && workerPool.length === 0) startWorkerPool(fallbackCores);
                     return;
                 }
             } finally {
@@ -5539,29 +5737,29 @@ async function startGpuHunting() {
 
         gpuPass();
     } catch(initErr) {
-        console.error('[WebGPU INIT ERR]:', initErr);
+        console.warn('[WebGPU INIT ERR]:', initErr);
         const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-        alert('WebGPU başlatılırken hata oluştu, ' + fallbackCores + ' çekirdekli CPU işlemcisine geçiliyor.');
-        stopGpuHunting();
-        startWorkerPool(fallbackCores);
+        stopGpuHunting(false);
+        if (window.Worker && workerPool.length === 0) startWorkerPool(fallbackCores);
     }
 }
 
-function stopGpuHunting() {
+function stopGpuHunting(stopEntireHunt = false) {
     gpuRunId++;
     isGpuRunning = false;
-    isRunning = false;
-    if (typeof timerInterval !== 'undefined' && timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-    if (typeof releaseWakeLock === 'function') releaseWakeLock();
+    if (stopEntireHunt) {
+        isRunning = false;
+        if (typeof timerInterval !== 'undefined' && timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        if (typeof releaseWakeLock === 'function') releaseWakeLock();
 
-    const btn = document.getElementById('btnToggle');
-    if (btn) {
-        btn.className = 'action-btn btn-start';
-        btn.innerText = '▶ Aramayı Başlat';
-    }
+        const btn = document.getElementById('btnToggle');
+        if (btn) {
+            btn.className = 'action-btn btn-start';
+            btn.innerText = '▶ Aramayı Başlat';
+        }
 
     const btnUnsolved = document.getElementById('btnMainUnsolved');
     const btnSolved = document.getElementById('btnMainSolved');
@@ -5582,6 +5780,7 @@ function stopGpuHunting() {
         rangeSel.style.opacity = '1';
         rangeSel.style.cursor = 'pointer';
     }
+}
 }
 
 function startWorkerPool(threadCount) {
@@ -6130,9 +6329,6 @@ function toggleHunter() {
             rangeSel.style.opacity = '1';
             rangeSel.style.cursor = 'pointer';
         }
-
-        // Mikrofon modu değilse durdur
-        
     } else {
         closePopups();
         const poolPanel = document.getElementById('customPoolPanel');
