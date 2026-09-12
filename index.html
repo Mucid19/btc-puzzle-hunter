@@ -1238,7 +1238,7 @@
                     <span id="lblSliderMin" style="color:#10b981; font-family:monospace; font-size:12px; font-weight:bold;">0x400000000000000000</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="range" id="rangeSliderMin" class="space-slider slider-min" min="0" max="1000000" step="1" value="0" oninput="onHexSliderChange('MIN')" style="flex:1; min-width:0;">
+                    <input type="range" id="rangeSliderMin" class="space-slider slider-min" min="0" max="1000000000000" step="1" value="0" oninput="onHexSliderChange('MIN')" style="flex:1; min-width:0;">
                     <input type="text" id="hexSliderMin" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #10b981; color:#34d399; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MIN')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
@@ -1254,7 +1254,7 @@
                     <span id="lblSliderMax" style="color:#ec4899; font-family:monospace; font-size:12px; font-weight:bold;">0x7fffffffffffffffff</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="range" id="rangeSliderMax" class="space-slider slider-max" min="0" max="1000000" step="1" value="1000000" oninput="onHexSliderChange('MAX')" style="flex:1; min-width:0;">
+                    <input type="range" id="rangeSliderMax" class="space-slider slider-max" min="0" max="1000000000000" step="1" value="1000000000000" oninput="onHexSliderChange('MAX')" style="flex:1; min-width:0;">
                     <input type="text" id="hexSliderMax" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #ec4899; color:#f472b6; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MAX')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
@@ -1423,12 +1423,12 @@ function updateSliderUI() {
     // Kaydıraç parmaklarını (thumb) değerle bit-perfect senkronize tut
     if (!isSliderSyncBusy && total > 0n) {
         if (minEl && document.activeElement !== minEl) {
-            const minStep = Number(((sliderMinHex - tStart) * 1000000n) / total);
-            minEl.value = Math.max(0, Math.min(1000000, Math.round(minStep)));
+            const minStep = Number(((sliderMinHex - tStart) * 1000000000000n) / total);
+            minEl.value = Math.max(0, Math.min(1000000000000, Math.round(minStep)));
         }
         if (maxEl && document.activeElement !== maxEl) {
-            const maxStep = Number(((sliderMaxHex - tStart) * 1000000n) / total);
-            maxEl.value = Math.max(0, Math.min(1000000, Math.round(maxStep)));
+            const maxStep = Number(((sliderMaxHex - tStart) * 1000000000000n) / total);
+            maxEl.value = Math.max(0, Math.min(1000000000000, Math.round(maxStep)));
         }
     }
 
@@ -1466,20 +1466,20 @@ function onHexSliderChange(type) {
     isSliderSyncBusy = true;
     try {
         let minStep = isNaN(parseInt(minEl.value)) ? 0 : parseInt(minEl.value);
-        let maxStep = isNaN(parseInt(maxEl.value)) ? 1000000 : parseInt(maxEl.value);
+        let maxStep = isNaN(parseInt(maxEl.value)) ? 1000000000000 : parseInt(maxEl.value);
 
         if (minStep >= maxStep) {
             if (type === 'MIN') {
                 minStep = Math.max(0, maxStep - 1);
                 minEl.value = minStep;
             } else {
-                maxStep = Math.min(1000000, minStep + 1);
+                maxStep = Math.min(1000000000000, minStep + 1);
                 maxEl.value = maxStep;
             }
         }
 
-        sliderMinHex = tStart + (total * BigInt(minStep) / 1000000n);
-        sliderMaxHex = tStart + (total * BigInt(maxStep) / 1000000n);
+        sliderMinHex = tStart + (total * BigInt(minStep) / 1000000000000n);
+        sliderMaxHex = tStart + (total * BigInt(maxStep) / 1000000000000n);
         if (sliderMaxHex <= sliderMinHex) {
             if (sliderMinHex + 1n <= tEnd) {
                 sliderMaxHex = sliderMinHex + 1n;
@@ -1522,8 +1522,8 @@ function onHexSliderInputChange(type) {
                 }
                 sliderMinHex = val;
                 if (minEl && total > 0n) {
-                    const step = Number(((sliderMinHex - tStart) * 1000000n) / total);
-                    minEl.value = Math.max(0, Math.min(1000000, Math.round(step)));
+                    const step = Number(((sliderMinHex - tStart) * 1000000000000n) / total);
+                    minEl.value = Math.max(0, Math.min(1000000000000, Math.round(step)));
                 }
             }
         } else if (type === 'MAX' && hexMaxInp) {
@@ -1537,8 +1537,8 @@ function onHexSliderInputChange(type) {
                 }
                 sliderMaxHex = val;
                 if (maxEl && total > 0n) {
-                    const step = Number(((sliderMaxHex - tStart) * 1000000n) / total);
-                    maxEl.value = Math.max(0, Math.min(1000000, Math.round(step)));
+                    const step = Number(((sliderMaxHex - tStart) * 1000000000000n) / total);
+                    maxEl.value = Math.max(0, Math.min(1000000000000, Math.round(step)));
                 }
             }
         }
@@ -1582,8 +1582,8 @@ function setHexSliderBounds(sKey, eKey, labelText) {
 
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
-    if (minEl && total > 0n) minEl.value = Number(((sliderMinHex - tStart) * 1000000n) / total);
-    if (maxEl && total > 0n) maxEl.value = Number(((sliderMaxHex - tStart) * 1000000n) / total);
+    if (minEl && total > 0n) minEl.value = Number(((sliderMinHex - tStart) * 1000000000000n) / total);
+    if (maxEl && total > 0n) maxEl.value = Number(((sliderMaxHex - tStart) * 1000000000000n) / total);
 
     updateSliderUI(); broadcastWorkerConfig();
     if (isPrefixAutoJump) {
@@ -2738,7 +2738,6 @@ function initEmbeddedCustomPool() {
 
 
 function toggleCustomPoolPanel() {
-    if (isRunning) return;
     closePopups();
     const panel = document.getElementById('customPoolPanel');
     if (!panel) return;
@@ -3041,7 +3040,6 @@ function setAlgorithm(algo) {
 
 function togglePopup(popupId, event) {
     if (event) event.stopPropagation();
-    if (isRunning) return;
 
     const pop = document.getElementById(popupId);
     const otherPop = popupId === 'popupUnsolved' ? document.getElementById('popupSolved') : document.getElementById('popupUnsolved');
@@ -3245,7 +3243,7 @@ function resetStats() {
 }
 
 function enableCircularMode() {
-    if (isRunning) toggleHunter();
+    if (isRunning && !cmdConnected) toggleHunter();
     resetStats();
     isCircularMode = true;
     currentTarget = null;
@@ -3255,7 +3253,7 @@ function enableCircularMode() {
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
     if (minEl) minEl.value = 0;
-    if (maxEl) maxEl.value = 1000000;
+    if (maxEl) maxEl.value = 1000000000000;
     document.getElementById('labelUnsolved').innerText = '🔁 Hepsi';
     document.getElementById('statPoolCount').innerText = 'TÜMÜ (77)';
     updateLogTargetLabel();
@@ -3264,7 +3262,7 @@ function enableCircularMode() {
 }
 
 function selectIlaveCustomTarget() {
-    if (isRunning) toggleHunter();
+    if (isRunning && !cmdConnected) toggleHunter();
     resetStats();
     isCircularMode = false;
     const SECP256K1_MAX = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140n;
@@ -3285,7 +3283,7 @@ function selectIlaveCustomTarget() {
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
     if (minEl) minEl.value = 0;
-    if (maxEl) maxEl.value = 1000000;
+    if (maxEl) maxEl.value = 1000000000000;
 
     isCustomPoolActive = true;
     const chk = document.getElementById('chkEnableCustomPool');
@@ -3317,7 +3315,7 @@ function selectSinglePuzzle(p) {
         selectIlaveCustomTarget();
         return;
     }
-    if (isRunning) toggleHunter();
+    if (isRunning && !cmdConnected) toggleHunter();
     resetStats();
     isCircularMode = false;
     currentTarget = p;
@@ -3329,7 +3327,7 @@ function selectSinglePuzzle(p) {
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
     if (minEl) minEl.value = 0;
-    if (maxEl) maxEl.value = 1000000;
+    if (maxEl) maxEl.value = 1000000000000;
 
     document.getElementById('labelUnsolved').innerText = `#${p.id}`;
     document.getElementById('statPoolCount').innerText = p.reward;
@@ -3572,7 +3570,7 @@ function huntBatch() {
 
             let currentKey = 0n;
 
-            // 🎚️ UZAY DARALTMA KAYDIRACI ENTEGRASYONU (6 Basamak Mikro/Nano Hassasiyet)
+            // 🎚️ UZAY DARALTMA KAYDIRACI ENTEGRASYONU (12 Basamak / 1 Trilyon Adım Pico-Hassasiyet)
             const baseStartKey = BigInt(activeTarget.origStart || activeTarget.start);
             const baseEndKey   = BigInt(activeTarget.origEnd   || activeTarget.end);
             const baseRange    = baseEndKey - baseStartKey;
@@ -3582,10 +3580,10 @@ function huntBatch() {
                 const minEl = document.getElementById('rangeSliderMin');
                 const maxEl = document.getElementById('rangeSliderMax');
                 const minStep = minEl ? BigInt(minEl.value || 0) : 0n;
-                const maxStep = maxEl ? BigInt(maxEl.value || 1000000) : 1000000n;
+                const maxStep = maxEl ? BigInt(maxEl.value || 1000000000000) : 1000000000000n;
 
-                boundMin = baseStartKey + (baseRange * minStep / 1000000n);
-                boundMax = baseStartKey + (baseRange * maxStep / 1000000n);
+                boundMin = baseStartKey + (baseRange * minStep / 1000000000000n);
+                boundMax = baseStartKey + (baseRange * maxStep / 1000000000000n);
                 if (boundMax <= boundMin) boundMax = boundMin + 1n;
             } else {
                 boundMin = (sliderMinHex !== null && isDualSliderActive) ? sliderMinHex : baseStartKey;
@@ -6190,17 +6188,27 @@ function broadcastWorkerConfig() {
 }
 
 function handleWorkerMessage(e) {
-    if (!isRunning) return;
     const data = e.data;
+    if (!data) return;
+    if (data.type !== 'win' && !isRunning) return;
     
     if (data.type === 'progress') {
-        attempts += data.count;
-        if (sliceModeActive) sliceAttempts += data.count;
+        if (data.totalScanned !== undefined && data.totalScanned > 0) {
+            attempts = data.totalScanned;
+        } else if (data.count) {
+            attempts += data.count;
+        }
+        if (sliceModeActive && data.count) sliceAttempts += data.count;
         
         const now = Date.now();
         if (now - lastProgressUI >= 80) {
             lastProgressUI = now;
-            document.getElementById('statAttempts').innerText = attempts.toLocaleString();
+            const attEl = document.getElementById('statAttempts');
+            if (attEl) attEl.innerText = attempts.toLocaleString();
+            if (data.rate !== undefined && data.rate > 0) {
+                const spEl = document.getElementById('statSpeed');
+                if (spEl) spEl.innerText = Math.round(data.rate).toLocaleString() + ' key/s';
+            }
             if (data.lastKey) {
                 const dbMode = document.getElementById('dbModeSelect') ? document.getElementById('dbModeSelect').value : 'offline';
                 if (dbMode === 'online' || dbMode === 'hybrid') {
@@ -6302,7 +6310,12 @@ function toggleHunter() {
         releaseWakeLock();
         btn.className = 'action-btn btn-start';
         btn.innerText = '▶ Aramayı Başlat';
-        clearInterval(timerInterval);
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        const spEl = document.getElementById('statSpeed');
+        if (spEl) spEl.innerText = '0 key/s';
 
         btnUnsolved.classList.remove('locked');
         btnSolved.classList.remove('locked');
@@ -6324,12 +6337,11 @@ function toggleHunter() {
         if (poolPanel) poolPanel.style.display = 'none';
         if (btnCustomPool) {
             btnCustomPool.classList.remove('active-pool');
-            btnCustomPool.classList.add('locked');
         }
-        ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) { el.disabled = true; el.style.opacity = '0.5'; el.style.cursor = 'not-allowed'; }
-        });
+        if (!cmdConnected) {
+            const threadEl = document.getElementById('threadCountSelect');
+            if (threadEl) { threadEl.disabled = true; threadEl.style.opacity = '0.5'; threadEl.style.cursor = 'not-allowed'; }
+        }
         requestWakeLock();
         if (!ec) ec = new elliptic.ec('secp256k1');
         isRunning = true;
@@ -6340,14 +6352,14 @@ function toggleHunter() {
         btn.className = 'action-btn btn-stop';
         btn.innerText = '⏹ Aramayı Durdur';
 
-        btnUnsolved.classList.add('locked');
-        btnSolved.classList.add('locked');
-        algoButtons.forEach(b => b.classList.add('locked'));
-        const rangeSel = document.getElementById('rangeSelect');
-        if (rangeSel) {
-            rangeSel.disabled = true;
-            rangeSel.style.opacity = '0.5';
-            rangeSel.style.cursor = 'not-allowed';
+        if (!cmdConnected) {
+            algoButtons.forEach(b => b.classList.add('locked'));
+            const rangeSel = document.getElementById('rangeSelect');
+            if (rangeSel) {
+                rangeSel.disabled = true;
+                rangeSel.style.opacity = '0.5';
+                rangeSel.style.cursor = 'not-allowed';
+            }
         }
 
         if (activeRangeMode === 'HEX') {
@@ -6367,9 +6379,11 @@ function toggleHunter() {
             const el = document.getElementById('statElapsed');
             if (el) el.innerText = hrs + ':' + mins + ':' + secs;
             
-            const speed = sec > 0 ? (attempts / sec).toFixed(1) : 0;
-            const spEl = document.getElementById('statSpeed');
-            if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
+            if (!cmdConnected) {
+                const speed = sec > 0 ? (attempts / sec).toFixed(1) : 0;
+                const spEl = document.getElementById('statSpeed');
+                if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
+            }
         }, 500);
 
         if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
@@ -6533,20 +6547,34 @@ function checkOrReconnectCmd() {
 }
 
 function initCmdMotorWebSocket() {
+    if (cmdSocket && (cmdSocket.readyState === WebSocket.OPEN || cmdSocket.readyState === WebSocket.CONNECTING)) {
+        return;
+    }
     if (cmdReconnectTimer) {
         clearTimeout(cmdReconnectTimer);
         cmdReconnectTimer = null;
     }
     try {
-        cmdSocket = new WebSocket('ws://127.0.0.1:8765');
+        if (cmdSocket) {
+            try { cmdSocket.close(); } catch(e) {}
+        }
+        const wsHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '127.0.0.1' : (window.location.hostname || '127.0.0.1');
+        cmdSocket = new WebSocket('ws://' + wsHost + ':8765');
         
         cmdSocket.onopen = function() {
             cmdConnected = true;
             cmdWasConnected = true;
-            cmdAutoReconnectCount = 0;
-            console.log('⚡ [CMD MOTOR] ws://127.0.0.1:8765 bağlantısı kuruldu.');
+            if (cmdReconnectTimer) {
+                clearTimeout(cmdReconnectTimer);
+                cmdReconnectTimer = null;
+            }
+            console.log('⚡ [CMD MOTOR] ' + wsHost + ':8765 bağlantısı kuruldu.');
             updateCmdBadge(true);
-            broadcastWorkerConfig();
+            if (isRunning) {
+                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
+            } else {
+                broadcastWorkerConfig();
+            }
         };
 
         cmdSocket.onmessage = function(event) {
@@ -6554,10 +6582,22 @@ function initCmdMotorWebSocket() {
                 const data = JSON.parse(event.data);
                 if (data.type === 'system_info') {
                     updateCmdBadge(true, data);
-                    if (data.isRunning && !isRunning) {
-                        syncGuiRunning(true);
+                    if (data.isRunning !== undefined) {
+                        syncGuiRunning(data.isRunning);
+                    }
+                    if (data.lastWin) {
+                        handleWorkerMessage({ data: data.lastWin });
+                    }
+                } else if (data.type === 'status') {
+                    if (data.isRunning !== undefined) {
+                        syncGuiRunning(data.isRunning);
                     }
                 } else if (data.type === 'progress' || data.type === 'win') {
+                    if (data.type === 'progress') {
+                        if (data.isRunning !== undefined && data.isRunning !== isRunning) {
+                            syncGuiRunning(data.isRunning);
+                        }
+                    }
                     handleWorkerMessage({ data: data });
                 }
             } catch(err) {
@@ -6568,13 +6608,25 @@ function initCmdMotorWebSocket() {
         cmdSocket.onclose = function() {
             cmdConnected = false;
             updateCmdBadge(false);
-            // Sadece bağlantı daha önce açıkken koptuysa sınırlı sayıda (max 2) dene
-            // CMD başlatılmamışsa konsolu sürekli kırmızı hata ile boğma
-            if (cmdWasConnected && cmdAutoReconnectCount < MAX_CMD_AUTO_RECONNECT) {
-                cmdAutoReconnectCount++;
-                cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+            if (cmdWasConnected) {
+                // Daha önce bağlıydıysa (yani CMD çalışırken sonradan kapandıysa), 3 sn sonra tekrar dene
+                if (!cmdReconnectTimer) {
+                    cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+                }
             } else {
-                cmdWasConnected = false;
+                // Sayfa ilk açıldığında CMD zaten kapalıysa, konsolu hatalarla doldurmamak için en fazla 2 kez dene ve dur
+                cmdAutoReconnectCount++;
+                if (cmdAutoReconnectCount < MAX_CMD_AUTO_RECONNECT) {
+                    if (!cmdReconnectTimer) {
+                        cmdReconnectTimer = setTimeout(initCmdMotorWebSocket, 3000);
+                    }
+                } else {
+                    if (cmdReconnectTimer) {
+                        clearTimeout(cmdReconnectTimer);
+                        cmdReconnectTimer = null;
+                    }
+                    console.log('⚪ [CMD MOTOR] CMD motoru çevrimdışı. Tarayıcı bağımsız (Web Worker / WebGPU) modunda çalışıyor. (CMD butonuna tıklayarak bağlanmayı tekrar deneyebilirsiniz)');
+                }
             }
         };
 
@@ -6590,6 +6642,12 @@ function initCmdMotorWebSocket() {
 
 function syncGuiRunning(running) {
     const btn = document.getElementById('btnToggle');
+    const btnUnsolved = document.getElementById('btnMainUnsolved');
+    const btnSolved = document.getElementById('btnMainSolved');
+    const btnCustomPool = document.getElementById('btnMainCustomPool');
+    const algoButtons = document.querySelectorAll('.algo-btn');
+    const rangeSel = document.getElementById('rangeSelect');
+
     if (running) {
         isRunning = true;
         if (btn) {
@@ -6617,11 +6675,27 @@ function syncGuiRunning(running) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        const spEl = document.getElementById('statSpeed');
+        if (spEl) spEl.innerText = '0 key/s';
+
+        if (btnUnsolved) btnUnsolved.classList.remove('locked');
+        if (btnSolved) btnSolved.classList.remove('locked');
+        if (btnCustomPool) btnCustomPool.classList.remove('locked');
+        ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
+        });
+        if (algoButtons) algoButtons.forEach(b => b.classList.remove('locked'));
+        if (rangeSel) {
+            rangeSel.disabled = false;
+            rangeSel.style.opacity = '1';
+            rangeSel.style.cursor = 'pointer';
+        }
     }
 }
 
 window.onload = function() {
-    updateCmdBadge(false);
+    initCmdMotorWebSocket();
     initThreadCountUI();
     detectWebGpuSupport();
     initEmbeddedCustomPool();
@@ -6635,6 +6709,15 @@ window.onload = function() {
         }).catch(() => {});
     }
 };
+
+// Sayfa yüklenmesini beklemeden CMD soket bağlantısını derhal başlat
+initCmdMotorWebSocket();
+
+window.addEventListener('beforeunload', function() {
+    if (cmdSocket) {
+        try { cmdSocket.close(); } catch(e) {}
+    }
+});
 </script>
 
 </body>
