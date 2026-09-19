@@ -245,15 +245,76 @@
             gap: 6px;
         }
 
+        .auto-slider-sweep-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            padding: 3px 6px;
+            background: rgba(15, 23, 42, 0.65);
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .auto-slider-speed-group {
+            display: inline-flex;
+            align-items: center;
+            background: #0b1320;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 1px;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .auto-speed-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            white-space: nowrap;
+            padding: 2px 8px;
+            height: 22px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+            cursor: pointer;
+            background: transparent;
+            color: #94a3b8;
+            border: none;
+            line-height: 1;
+            box-sizing: border-box;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .auto-slider-info-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            flex-shrink: 1;
+        }
+
         .slider-space-badge {
-            font-size: 11px;
+            display: none !important;
+        }
+
+        #badgeAutoSliderStatus {
             font-family: monospace;
-            background: #0369a1;
-            color: #f0f9ff;
-            padding: 3px 10px;
-            border-radius: 8px;
-            font-weight: 700;
-            border: 1px solid #38bdf8;
+            font-size: 10px;
+            color: #38bdf8;
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #1e293b;
+            font-weight: bold;
+            white-space: nowrap;
+            line-height: 1.2;
+            flex-shrink: 0;
         }
 
         .slider-control-row {
@@ -700,6 +761,49 @@
                 padding: 8px 8px;
                 margin-bottom: 8px;
             }
+            .auto-slider-sweep-bar {
+                flex-wrap: nowrap !important;
+                padding: 3px 6px !important;
+                gap: 6px !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+            }
+            .auto-slider-speed-group {
+                flex: 1 1 auto !important;
+                display: flex !important;
+                width: auto !important;
+                box-sizing: border-box !important;
+            }
+            .auto-speed-btn {
+                flex: 1 !important;
+                padding: 2px 4px !important;
+                font-size: 9.5px !important;
+                gap: 2px !important;
+                height: 24px !important;
+                justify-content: center !important;
+            }
+            .auto-slider-info-group {
+                flex: 0 0 auto !important;
+                display: inline-flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: auto !important;
+                gap: 0 !important;
+                box-sizing: border-box !important;
+            }
+            .slider-space-badge {
+                display: none !important;
+            }
+            #badgeAutoSliderStatus {
+                font-size: 9.5px !important;
+                padding: 2px 6px !important;
+                flex-shrink: 0 !important;
+                height: 24px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-sizing: border-box !important;
+            }
             .slider-item {
                 padding: 6px 8px;
             }
@@ -1057,12 +1161,15 @@
     <!-- SEÇİLEBİLİR ALGORİTMA ÇUBUĞU -->
         <!-- SEÇİLEBİLİR ALGORİTMA ÇUBUĞU (SAF VE OPTİMİZE MOTORLAR) -->
     <div class="algo-selector-bar" id="algoBar" style="display: none;">
-        <button id="btnAlgoAuto"    class="algo-btn active" onclick="setAlgorithm('AUTO')">🔄 Oto</button>
-        <button id="btnAlgoRandom"  class="algo-btn" onclick="setAlgorithm('RANDOM')">🎲 Rastgele</button>
-        <button id="btnAlgoSobol"   class="algo-btn" onclick="setAlgorithm('SOBOL')">📐 Sobol</button>
-        <button id="btnAlgoHilbert" class="algo-btn" onclick="setAlgorithm('HILBERT')">🌀 Hilbert</button>
-        <button id="btnAlgoWeak"    class="algo-btn" onclick="setAlgorithm('WEAK_ENTROPY')">⚡ Zayıf</button>
-        <button id="btnAlgoChaos"   class="algo-btn" onclick="setAlgorithm('CHAOS')">♾️ Kaos</button>
+        <button id="btnAlgoAuto"     class="algo-btn active" onclick="setAlgorithm('AUTO')">🔄 Oto</button>
+        <button id="btnAlgoRandom"   class="algo-btn" onclick="setAlgorithm('RANDOM')">🎲 Rastgele</button>
+        <button id="btnAlgoSobol"    class="algo-btn" onclick="setAlgorithm('SOBOL')">📐 Sobol</button>
+        <button id="btnAlgoVdCorput" class="algo-btn" onclick="setAlgorithm('VD_CORPUT')">📐 V.d.Corput</button>
+        <button id="btnAlgoWeyl"     class="algo-btn" onclick="setAlgorithm('WEYL_GOLDEN')">🌟 Weyl Altın</button>
+        <button id="btnAlgoCoprime"  class="algo-btn" onclick="setAlgorithm('COPRIME_STRIDE')">♾️ Asal Adım</button>
+        <button id="btnAlgoHilbert"  class="algo-btn" onclick="setAlgorithm('HILBERT')">🌀 Hilbert</button>
+        <button id="btnAlgoWeak"     class="algo-btn" onclick="setAlgorithm('WEAK_ENTROPY')">⚡ Zayıf</button>
+        <button id="btnAlgoChaos"    class="algo-btn" onclick="setAlgorithm('CHAOS')">♾️ Kaos</button>
     </div>
 
 
@@ -1158,7 +1265,7 @@
             <button id="tabModePhysics" class="active"></button>
             <button id="tabModeChaos"></button>
             <button id="tabModePrefix"></button>
-            <button id="tabModeGrid"></button>
+            
         </div>
 
         <!-- 🌟 BİRLEŞİK FİZİK & HİBRİT PANELİ (HEPSİ YANYANA) -->
@@ -1176,6 +1283,9 @@
                 <!-- ÇALIŞMA MODU / FORMÜL SEÇİCİ -->
                 <select id="physicsFormulaSelect" class="range-select" style="flex:1.4; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" onchange="onFormulaChange()">
                     <option value="GOLDEN_SINGULARITY" selected>🌟 Altın Oran</option>
+                    <option value="VD_CORPUT">📐 Van der Corput (Bit-Tersleme)</option>
+                    <option value="WEYL_GOLDEN">🌟 Weyl Altın Kafesi</option>
+                    <option value="COPRIME_STRIDE">♾️ Asal Modüler Adımlama</option>
                     <option value="DETERMINISTIC_CHAOS">♾️ Deterministik Kaos</option>
                     <option value="QUANTUM_TUNNEL">⚛️ Schrödinger</option>
                     <option value="RIEMANN_ZETA">🧬 Riemann Zeta</option>
@@ -1193,61 +1303,50 @@
 
             </div>
 
-            <!-- 2. SATIR: ÖN EK (0x) VE GRID (🌀) BAĞIMSIZ KONTROLLERİ -->
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
+            <!-- 2. SATIR: ALGORİTMA (📐), ENTROPİ (⚡) VE ÖN EK (0x) BİRLEŞİK KONTROL SATIRI -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap; margin-top:2px;">
                 
+                <!-- ALGORİTMA SEÇİCİ (📐 Sembollü) -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
+                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
+                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="setAlgorithm(this.value)">
+                        <option value="AUTO" selected>🔄 Oto (Karma)</option>
+                        <option value="VD_CORPUT">📐 Van der Corput</option>
+                        <option value="WEYL_GOLDEN">🌟 Weyl Kafesi</option>
+                        <option value="COPRIME_STRIDE">♾️ Asal Adımlı</option>
+                        <option value="RANDOM">🎲 Saf Rastgele</option>
+                        <option value="SOBOL">📐 Sobol / Quasi-RNG</option>
+                        <option value="HILBERT">🌀 Hilbert Fraktal</option>
+                        <option value="WEAK_ENTROPY">⚡ Zayıf / Kusurlu</option>
+                        <option value="CHAOS">♾️ Kaos</option>
+                    </select>
+                </div>
+
+                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+
+                <!-- ENTROPİ DERİNLİĞİ (⚡ Sembollü) -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Kusurlu Entropi Boyutu (Bit)">
+                    <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Kusurlu Entropi Boyutu (Bit)">⚡</span>
+                    <select id="entropyBitsSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onEntropyBitsChange()">
+                        <option value="-1">⛔ Kapalı</option>
+                        <option value="0" selected>🔄 Oto</option>
+                        <option value="32">⚡ 32-Bit</option>
+                        <option value="40">⚡ 40-Bit</option>
+                        <option value="48">⚡ 48-Bit</option>
+                        <option value="64">⚡ 64-Bit</option>
+                    </select>
+                </div>
+
+                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+
                 <!-- ÖN EK BLOĞU (Varsayılan Kapalı) -->
-                <div id="blockPrefix" onclick="togglePrefixFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Ön Ek Filtresi Aç/Kapat (Tıklayın)">
+                <div id="blockPrefix" onclick="togglePrefixFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1.1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Ön Ek Filtresi Aç/Kapat (Tıklayın)">
                     <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:10.5px; flex-shrink:0; opacity:0.45;" title="Ön Ek Filtresi">0x</span>
-                    <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; max-width:65px; border-radius:3px; opacity:0.5;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="isPrefixFilterActive=true; updateModeVisuals();" title="Ön Ek">
+                    <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; border-radius:3px; opacity:0.5;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="isPrefixFilterActive=true; updateModeVisuals();" title="Ön Ek">
                     <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#ef4444; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek Kapalı (Tıklayın: 🔄 Oto moda geçer)">
                         ⛔ Kapalı
                     </button>
                     <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
-                </div>
-
-                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
-
-                <!-- GRID BLOĞU (Varsayılan Kapalı) -->
-                <div id="blockGrid" onclick="toggleGridFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Grid Filtresi Aç/Kapat (Tıklayın)">
-                    <span id="badgeGridState" style="color:#64748b; font-weight:bold; font-size:10.5px; flex-shrink:0; opacity:0.45;" title="Hilbert Hücre">🌀</span>
-                    <input type="number" id="gridCellInput" class="grid-input-box" min="0" max="65535" value="57057" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; max-width:60px; border-radius:3px; opacity:0.5;" oninput="onGridCellInput()" onclick="event.stopPropagation()" onfocus="isGridFilterActive=true; updateModeVisuals();" title="Hücre No">
-                    <button type="button" id="btnGridAuto" onclick="event.stopPropagation(); toggleGridAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#ef4444; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Grid Kapalı (Tıklayın: 🔄 Oto moda geçer)">
-                        ⛔ Kapalı
-                    </button>
-                    <input type="checkbox" id="chkGridAutoJump" style="display:none;">
-                </div>
-
-            </div>
-
-            <!-- 3. SATIR: ALGORİTMA & KUSURLU ENTROPİ DERİNLİĞİ -->
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap; margin-top:1px;">
-                <!-- ALGORİTMA SEÇİCİ -->
-                <div style="display:inline-flex; align-items:center; gap:3px; flex:1; min-width:0;" title="Arama Algoritması">
-                    <span style="font-size:10px; color:#a855f7; font-weight:bold; white-space:nowrap;">Algoritma:</span>
-                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 3px; font-size:10px; height:23px; border-radius:3px;" onchange="setAlgorithm(this.value)">
-                        <option value="AUTO" selected>🔄 Oto (Karma)</option>
-                        <option value="RANDOM">🎲 Saf Rastgele</option>
-                        <option value="SOBOL">📐 Sobol / Quasi-RNG (Boşluksuz)</option>
-                        <option value="HILBERT">🌀 Hilbert Fraktal</option>
-                        <option value="WEAK_ENTROPY">⚡ Zayıf / Kusurlu</option>
-                        <option value="CHAOS">♾️ Deterministik Kaos (Lojistik/Çadır)</option>
-                    </select>
-                </div>
-
-                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
-
-                <!-- ENTROPİ DERİNLİĞİ (BİT) -->
-                <div style="display:inline-flex; align-items:center; gap:3px; flex:1.25; min-width:0;" title="Kusurlu Entropi Boyutu (Bit)">
-                    <span style="font-size:10px; color:#f59e0b; font-weight:bold; white-space:nowrap;">Entropi:</span>
-                    <select id="entropyBitsSelect" class="range-select" style="flex:1; min-width:0; padding:1px 3px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onEntropyBitsChange()">
-                        <option value="-1">⛔ Kapalı</option>
-                        <option value="0" selected>🔄 Oto (Tüm Kalıplar)</option>
-                        <option value="32">⚡ 32-Bit (4.2 Milyar - C/Time)</option>
-                        <option value="40">⚡ 40-Bit (1 Trilyon - İhracat)</option>
-                        <option value="48">⚡ 48-Bit (Java LCG / Randstorm)</option>
-                        <option value="64">⚡ 64-Bit (Sistem Zamanı / Taşma)</option>
-                    </select>
                 </div>
             </div>
         </div>
@@ -1255,13 +1354,18 @@
 
     <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI (Satoshi Cracker Style) -->
     <div class="dual-slider-bar">
-        <!-- Başlık & Kaydıraç Aktif Butonu Gizlendi (Varsayılan olarak daima aktif) -->
-        <div class="slider-header" style="display: none !important;">
-            <span id="badgeSpaceRatio" class="slider-space-badge">🎯 Kapsanan Hex Uzayı: Tam Uzay</span>
-            <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:#34d399; cursor:pointer; font-weight:bold;">
-                <input type="checkbox" id="chkEnableDualSlider" style="width:15px; height:15px; accent-color:#10b981; cursor:pointer;" checked onchange="onDualSliderToggle()">
-                Kaydıraç Aktif
-            </label>
+        <!-- 🎛️ OTO KAYDIRAÇ (SWEEP / RADAR) KONTROL ÇUBUĞU -->
+        <div class="auto-slider-sweep-bar">
+            <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
+                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Hızlı: Tıklayınca hemen çalıştırır (1 sn / %2.618 Altın Adım)">⚡ Hızlı</button>
+                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Orta: Tıklayınca hemen çalıştırır (3 sn / %1.618 Altın Adım)">⏱️ Orta</button>
+                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Yavaş: Tıklayınca hemen çalıştırır (8 sn / %1.236 Altın Adım)">🐢 Yavaş</button>
+            </div>
+            <div class="auto-slider-info-group">
+                <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Kapsanan: Tam Uzay</span>
+                <span id="badgeAutoSliderStatus">%0.0 - %100.0</span>
+                <input type="checkbox" id="chkEnableDualSlider" style="display:none;" checked onchange="onDualSliderToggle()">
+            </div>
         </div>
 
         <div class="slider-control-row">
@@ -1350,8 +1454,8 @@ const SATOSHI_HASH160_BLOB = "0004bedddcc11a3491aa9d9fd7c12cfb964439a900097050be
 
 const ALL_PUZZLES = [{"id": 1, "start": "1", "end": "1", "addr": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "status": "SOLVED", "reward": "0.1 BTC"}, {"id": 2, "start": "2", "end": "3", "addr": "1CUNEBjYrCn2y1SdiUMohaKUi4wpP326Lb", "status": "SOLVED", "reward": "0.2 BTC"}, {"id": 3, "start": "4", "end": "7", "addr": "19ZewH8Kk1PDbSNdJ97FP4EiCjTRaZMZQA", "status": "SOLVED", "reward": "0.3 BTC"}, {"id": 4, "start": "8", "end": "f", "addr": "1EhqbyUMvvs7BfL8goY6qcPbD6YKfPqb7e", "status": "SOLVED", "reward": "0.4 BTC"}, {"id": 5, "start": "10", "end": "1f", "addr": "1E6NuFjCi27W5zoXg8TRdcSRq84zJeBW3k", "status": "SOLVED", "reward": "0.5 BTC"}, {"id": 6, "start": "20", "end": "3f", "addr": "1PitScNLyp2HCygzadCh7FveTnfmpPbfp8", "status": "SOLVED", "reward": "0.6 BTC"}, {"id": 7, "start": "40", "end": "7f", "addr": "1McVt1vMtCC7yn5b9wgX1833yCcLXzueeC", "status": "SOLVED", "reward": "0.7 BTC"}, {"id": 8, "start": "80", "end": "ff", "addr": "1M92tSqNmQLYw33fuBvjmeadirh1ysMBxK", "status": "SOLVED", "reward": "0.8 BTC"}, {"id": 9, "start": "100", "end": "1ff", "addr": "1CQFwcjw1dwhtkVWBttNLDtqL7ivBonGPV", "status": "SOLVED", "reward": "0.9 BTC"}, {"id": 10, "start": "200", "end": "3ff", "addr": "1LeBZP5QCwwgXRtmVUvTVrraqPUokyLHqe", "status": "SOLVED", "reward": "1.0 BTC"}, {"id": 11, "start": "400", "end": "7ff", "addr": "1PgQVLmst3Z314JrQn5TNiys8Hc38TcXJu", "status": "SOLVED", "reward": "1.1 BTC"}, {"id": 12, "start": "800", "end": "fff", "addr": "1DBaumZxUkM4qMQRt2LVWyFJq5kDtSZQot", "status": "SOLVED", "reward": "1.2 BTC"}, {"id": 13, "start": "1000", "end": "1fff", "addr": "1Pie8JkxBT6MGPz9Nvi3fsPkr2D8q3GBc1", "status": "SOLVED", "reward": "1.3 BTC"}, {"id": 14, "start": "2000", "end": "3fff", "addr": "1ErZWg5cFCe4Vw5BzgfzB74VNLaXEiEkhk", "status": "SOLVED", "reward": "1.4 BTC"}, {"id": 15, "start": "4000", "end": "7fff", "addr": "1QCbW9HWnwQWiQqVo5exhAnmfqKRrCRsvW", "status": "SOLVED", "reward": "1.5 BTC"}, {"id": 16, "start": "8000", "end": "ffff", "addr": "1BDyrQ6WoF8VN3g9SAS1iKZcPzFfnDVieY", "status": "SOLVED", "reward": "1.6 BTC"}, {"id": 17, "start": "10000", "end": "1ffff", "addr": "1HduPEXZRdG26SUT5Yk83mLkPyjnZuJ7Bm", "status": "SOLVED", "reward": "1.7 BTC"}, {"id": 18, "start": "20000", "end": "3ffff", "addr": "1GnNTmTVLZiqQfLbAdp9DVdicEnB5GoERE", "status": "SOLVED", "reward": "1.8 BTC"}, {"id": 19, "start": "40000", "end": "7ffff", "addr": "1NWmZRpHH4XSPwsW6dsS3nrNWfL1yrJj4w", "status": "SOLVED", "reward": "1.9 BTC"}, {"id": 20, "start": "80000", "end": "fffff", "addr": "1HsMJxNiV7TLxmoF6uJNkydxPFDog4NQum", "status": "SOLVED", "reward": "2.0 BTC"}, {"id": 21, "start": "100000", "end": "1fffff", "addr": "14oFNXucftsHiUMY8uctg6N487riuyXs4h", "status": "SOLVED", "reward": "2.1 BTC"}, {"id": 22, "start": "200000", "end": "3fffff", "addr": "1CfZWK1QTQE3eS9qn61dQjV89KDjZzfNcv", "status": "SOLVED", "reward": "2.2 BTC"}, {"id": 23, "start": "400000", "end": "7fffff", "addr": "1L2GM8eE7mJWLdo3HZS6su1832NX2txaac", "status": "SOLVED", "reward": "2.3 BTC"}, {"id": 24, "start": "800000", "end": "ffffff", "addr": "1rSnXMr63jdCuegJFuidJqWxUPV7AtUf7", "status": "SOLVED", "reward": "2.4 BTC"}, {"id": 25, "start": "1000000", "end": "1ffffff", "addr": "15JhYXn6Mx3oF4Y7PcTAv2wVVAuCFFQNiP", "status": "SOLVED", "reward": "2.5 BTC"}, {"id": 26, "start": "2000000", "end": "3ffffff", "addr": "1JVnST957hGztonaWK6FougdtjxzHzRMMg", "status": "SOLVED", "reward": "2.6 BTC"}, {"id": 27, "start": "4000000", "end": "7ffffff", "addr": "128z5d7nN7PkCuX5qoA4Ys6pmxUYnEy86k", "status": "SOLVED", "reward": "2.7 BTC"}, {"id": 28, "start": "8000000", "end": "fffffff", "addr": "12jbtzBb54r97TCwW3G1gCFoumpckRAPdY", "status": "SOLVED", "reward": "2.8 BTC"}, {"id": 29, "start": "10000000", "end": "1fffffff", "addr": "19EEC52krRUK1RkUAEZmQdjTyHT7Gp1TYT", "status": "SOLVED", "reward": "2.9 BTC"}, {"id": 30, "start": "20000000", "end": "3fffffff", "addr": "1LHtnpd8nU5VHEMkG2TMYYNUjjLc992bps", "status": "SOLVED", "reward": "3.0 BTC"}, {"id": 31, "start": "40000000", "end": "7fffffff", "addr": "1LhE6sCTuGae42Axu1L1ZB7L96yi9irEBE", "status": "SOLVED", "reward": "3.1 BTC"}, {"id": 32, "start": "80000000", "end": "ffffffff", "addr": "1FRoHA9xewq7DjrZ1psWJVeTer8gHRqEvR", "status": "SOLVED", "reward": "3.2 BTC"}, {"id": 33, "start": "100000000", "end": "1ffffffff", "addr": "187swFMjz1G54ycVU56B7jZFHFTNVQFDiu", "status": "SOLVED", "reward": "3.3 BTC"}, {"id": 34, "start": "200000000", "end": "3ffffffff", "addr": "1PWABE7oUahG2AFFQhhvViQovnCr4rEv7Q", "status": "SOLVED", "reward": "3.4 BTC"}, {"id": 35, "start": "400000000", "end": "7ffffffff", "addr": "1PWCx5fovoEaoBowAvF5k91m2Xat9bMgwb", "status": "SOLVED", "reward": "3.5 BTC"}, {"id": 36, "start": "800000000", "end": "fffffffff", "addr": "1Be2UF9NLfyLFbtm3TCbmuocc9N1Kduci1", "status": "SOLVED", "reward": "3.6 BTC"}, {"id": 37, "start": "1000000000", "end": "1fffffffff", "addr": "14iXhn8bGajVWegZHJ18vJLHhntcpL4dex", "status": "SOLVED", "reward": "3.7 BTC"}, {"id": 38, "start": "2000000000", "end": "3fffffffff", "addr": "1HBtApAFA9B2YZw3G2YKSMCtb3dVnjuNe2", "status": "SOLVED", "reward": "3.8 BTC"}, {"id": 39, "start": "4000000000", "end": "7fffffffff", "addr": "122AJhKLEfkFBaGAd84pLp1kfE7xK3GdT8", "status": "SOLVED", "reward": "3.9 BTC"}, {"id": 40, "start": "8000000000", "end": "ffffffffff", "addr": "1EeAxcprB2PpCnr34VfZdFrkUWuxyiNEFv", "status": "SOLVED", "reward": "4.0 BTC"}, {"id": 41, "start": "10000000000", "end": "1ffffffffff", "addr": "1L5sU9qvJeuwQUdt4y1eiLmquFxKjtHr3E", "status": "SOLVED", "reward": "4.1 BTC"}, {"id": 42, "start": "20000000000", "end": "3ffffffffff", "addr": "1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N", "status": "SOLVED", "reward": "4.2 BTC"}, {"id": 43, "start": "40000000000", "end": "7ffffffffff", "addr": "1PiFuqGpG8yGM5v6rNHWS3TjsG6awgEGA1", "status": "SOLVED", "reward": "4.3 BTC"}, {"id": 44, "start": "80000000000", "end": "fffffffffff", "addr": "1CkR2uS7LmFwc3T2jV8C1BhWb5mQaoxedF", "status": "SOLVED", "reward": "4.4 BTC"}, {"id": 45, "start": "100000000000", "end": "1fffffffffff", "addr": "1NtiLNGegHWE3Mp9g2JPkgx6wUg4TW7bbk", "status": "SOLVED", "reward": "4.5 BTC"}, {"id": 46, "start": "200000000000", "end": "3fffffffffff", "addr": "1F3JRMWudBaj48EhwcHDdpeuy2jwACNxjP", "status": "SOLVED", "reward": "4.6 BTC"}, {"id": 47, "start": "400000000000", "end": "7fffffffffff", "addr": "1Pd8VvT49sHKsmqrQiP61RsVwmXCZ6ay7Z", "status": "SOLVED", "reward": "4.7 BTC"}, {"id": 48, "start": "800000000000", "end": "ffffffffffff", "addr": "1DFYhaB2J9q1LLZJWKTnscPWos9VBqDHzv", "status": "SOLVED", "reward": "4.8 BTC"}, {"id": 49, "start": "1000000000000", "end": "1ffffffffffff", "addr": "12CiUhYVTTH33w3SPUBqcpMoqnApAV4WCF", "status": "SOLVED", "reward": "4.9 BTC"}, {"id": 50, "start": "2000000000000", "end": "3ffffffffffff", "addr": "1MEzite4ReNuWaL5Ds17ePKt2dCxWEofwk", "status": "SOLVED", "reward": "5.0 BTC"}, {"id": 51, "start": "4000000000000", "end": "7ffffffffffff", "addr": "1NpnQyZ7x24ud82b7WiRNvPm6N8bqGQnaS", "status": "SOLVED", "reward": "5.1 BTC"}, {"id": 52, "start": "8000000000000", "end": "fffffffffffff", "addr": "15z9c9sVpu6fwNiK7dMAFgMYSK4GqsGZim", "status": "SOLVED", "reward": "5.2 BTC"}, {"id": 53, "start": "10000000000000", "end": "1fffffffffffff", "addr": "15K1YKJMiJ4fpesTVUcByoz334rHmknxmT", "status": "SOLVED", "reward": "5.3 BTC"}, {"id": 54, "start": "20000000000000", "end": "3fffffffffffff", "addr": "1KYUv7nSvXx4642TKeuC2SNdTk326uUpFy", "status": "SOLVED", "reward": "5.4 BTC"}, {"id": 55, "start": "40000000000000", "end": "7fffffffffffff", "addr": "1LzhS3k3e9Ub8i2W1V8xQFdB8n2MYCHPCa", "status": "SOLVED", "reward": "5.5 BTC"}, {"id": 56, "start": "80000000000000", "end": "ffffffffffffff", "addr": "17aPYR1m6pVAacXg1PTDDU7XafvK1dxvhi", "status": "SOLVED", "reward": "5.6 BTC"}, {"id": 57, "start": "100000000000000", "end": "1ffffffffffffff", "addr": "15c9mPGLku1HuW9LRtBf4jcHVpBUt8txKz", "status": "SOLVED", "reward": "5.7 BTC"}, {"id": 58, "start": "200000000000000", "end": "3ffffffffffffff", "addr": "1Dn8NF8qDyyfHMktmuoQLGyjWmZXgvosXf", "status": "SOLVED", "reward": "5.8 BTC"}, {"id": 59, "start": "400000000000000", "end": "7ffffffffffffff", "addr": "1HAX2n9Uruu9YDt4cqRgYcvtGvZj1rbUyt", "status": "SOLVED", "reward": "5.9 BTC"}, {"id": 60, "start": "800000000000000", "end": "fffffffffffffff", "addr": "1Kn5h2qpgw9mWE5jKpk8PP4qvvJ1QVy8su", "status": "SOLVED", "reward": "6.0 BTC"}, {"id": 61, "start": "1000000000000000", "end": "1fffffffffffffff", "addr": "1AVJKwzs9AskraJLGHAZPiaZcrpDr1U6AB", "status": "SOLVED", "reward": "6.1 BTC"}, {"id": 62, "start": "2000000000000000", "end": "3fffffffffffffff", "addr": "1Me6EfpwZK5kQziBwBfvLiHjaPGxCKLoJi", "status": "SOLVED", "reward": "6.2 BTC"}, {"id": 63, "start": "4000000000000000", "end": "7fffffffffffffff", "addr": "1NpYjtLira16LfGbGwZJ5JbDPh3ai9bjf4", "status": "SOLVED", "reward": "6.3 BTC"}, {"id": 64, "start": "8000000000000000", "end": "ffffffffffffffff", "addr": "16jY7qLJnxb7CHZyqBP8qca9d51gAjyXQN", "status": "SOLVED", "reward": "6.4 BTC"}, {"id": 65, "start": "10000000000000000", "end": "1ffffffffffffffff", "addr": "18ZMbwUFLMHoZBbfpCjUJQTCMCbktshgpe", "status": "SOLVED", "reward": "6.5 BTC"}, {"id": 66, "start": "20000000000000000", "end": "3ffffffffffffffff", "addr": "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so", "status": "SOLVED", "reward": "6.6 BTC"}, {"id": 67, "start": "40000000000000000", "end": "7ffffffffffffffff", "addr": "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9", "status": "SOLVED", "reward": "6.7 BTC"}, {"id": 68, "start": "80000000000000000", "end": "fffffffffffffffff", "addr": "1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ", "status": "SOLVED", "reward": "6.8 BTC"}, {"id": 69, "start": "100000000000000000", "end": "1fffffffffffffffff", "addr": "19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG", "status": "SOLVED", "reward": "6.9 BTC"}, {"id": 70, "start": "200000000000000000", "end": "3fffffffffffffffff", "addr": "19YZECXj3SxEZMoUeJ1yiPsw8xANe7M7QR", "status": "SOLVED", "reward": "7.0 BTC"}, {"id": 71, "start": "400000000000000000", "end": "7fffffffffffffffff", "addr": "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU", "status": "UNSOLVED", "reward": "7.1 BTC"}, {"id": 72, "start": "800000000000000000", "end": "ffffffffffffffffff", "addr": "1JTK7s9YVYywfm5XUH7RNhHJH1LshCaRFR", "status": "UNSOLVED", "reward": "7.2 BTC"}, {"id": 73, "start": "1000000000000000000", "end": "1ffffffffffffffffff", "addr": "12VVRNPi4SJqUTsp6FmqDqY5sGosDtysn4", "status": "UNSOLVED", "reward": "7.3 BTC"}, {"id": 74, "start": "2000000000000000000", "end": "3ffffffffffffffffff", "addr": "1FWGcVDK3JGzCC3WtkYetULPszMaK2Jksv", "status": "UNSOLVED", "reward": "7.4 BTC"}, {"id": 75, "start": "4000000000000000000", "end": "7ffffffffffffffffff", "addr": "1J36UjUByGroXcCvmj13U6uwaVv9caEeAt", "status": "SOLVED", "reward": "7.5 BTC"}, {"id": 76, "start": "8000000000000000000", "end": "fffffffffffffffffff", "addr": "1DJh2eHFYQfACPmrvpyWc8MSTYKh7w9eRF", "status": "UNSOLVED", "reward": "7.6 BTC"}, {"id": 77, "start": "10000000000000000000", "end": "1fffffffffffffffffff", "addr": "1Bxk4CQdqL9p22JEtDfdXMsng1XacifUtE", "status": "UNSOLVED", "reward": "7.7 BTC"}, {"id": 78, "start": "20000000000000000000", "end": "3fffffffffffffffffff", "addr": "15qF6X51huDjqTmF9BJgxXdt1xcj46Jmhb", "status": "UNSOLVED", "reward": "7.8 BTC"}, {"id": 79, "start": "40000000000000000000", "end": "7fffffffffffffffffff", "addr": "1ARk8HWJMn8js8tQmGUJeQHjSE7KRkn2t8", "status": "UNSOLVED", "reward": "7.9 BTC"}, {"id": 80, "start": "80000000000000000000", "end": "ffffffffffffffffffff", "addr": "1BCf6rHUW6m3iH2ptsvnjgLruAiPQQepLe", "status": "SOLVED", "reward": "8.0 BTC"}, {"id": 81, "start": "100000000000000000000", "end": "1ffffffffffffffffffff", "addr": "15qsCm78whspNQFydGJQk5rexzxTQopnHZ", "status": "UNSOLVED", "reward": "8.1 BTC"}, {"id": 82, "start": "200000000000000000000", "end": "3ffffffffffffffffffff", "addr": "13zYrYhhJxp6Ui1VV7pqa5WDhNWM45ARAC", "status": "UNSOLVED", "reward": "8.2 BTC"}, {"id": 83, "start": "400000000000000000000", "end": "7ffffffffffffffffffff", "addr": "14MdEb4eFcT3MVG5sPFG4jGLuHJSnt1Dk2", "status": "UNSOLVED", "reward": "8.3 BTC"}, {"id": 84, "start": "800000000000000000000", "end": "fffffffffffffffffffff", "addr": "1CMq3SvFcVEcpLMuuH8PUcNiqsK1oicG2D", "status": "UNSOLVED", "reward": "8.4 BTC"}, {"id": 85, "start": "1000000000000000000000", "end": "1fffffffffffffffffffff", "addr": "1Kh22PvXERd2xpTQk3ur6pPEqFeckCJfAr", "status": "SOLVED", "reward": "8.5 BTC"}, {"id": 86, "start": "2000000000000000000000", "end": "3fffffffffffffffffffff", "addr": "1K3x5L6G57Y494fDqBfrojD28UJv4s5JcK", "status": "UNSOLVED", "reward": "8.6 BTC"}, {"id": 87, "start": "4000000000000000000000", "end": "7fffffffffffffffffffff", "addr": "1PxH3K1Shdjb7gSEoTX7UPDZ6SH4qGPrvq", "status": "UNSOLVED", "reward": "8.7 BTC"}, {"id": 88, "start": "8000000000000000000000", "end": "ffffffffffffffffffffff", "addr": "16AbnZjZZipwHMkYKBSfswGWKDmXHjEpSf", "status": "UNSOLVED", "reward": "8.8 BTC"}, {"id": 89, "start": "10000000000000000000000", "end": "1ffffffffffffffffffffff", "addr": "19QciEHbGVNY4hrhfKXmcBBCrJSBZ6TaVt", "status": "UNSOLVED", "reward": "8.9 BTC"}, {"id": 90, "start": "20000000000000000000000", "end": "3ffffffffffffffffffffff", "addr": "1L12FHH2FHjvTviyanuiFVfmzCy46RRATU", "status": "SOLVED", "reward": "9.0 BTC"}, {"id": 91, "start": "40000000000000000000000", "end": "7ffffffffffffffffffffff", "addr": "1EzVHtmbN4fs4MiNk3ppEnKKhsmXYJ4s74", "status": "UNSOLVED", "reward": "9.1 BTC"}, {"id": 92, "start": "80000000000000000000000", "end": "fffffffffffffffffffffff", "addr": "1AE8NzzgKE7Yhz7BWtAcAAxiFMbPo82NB5", "status": "UNSOLVED", "reward": "9.2 BTC"}, {"id": 93, "start": "100000000000000000000000", "end": "1fffffffffffffffffffffff", "addr": "17Q7tuG2JwFFU9rXVj3uZqRtioH3mx2Jad", "status": "UNSOLVED", "reward": "9.3 BTC"}, {"id": 94, "start": "200000000000000000000000", "end": "3fffffffffffffffffffffff", "addr": "1K6xGMUbs6ZTXBnhw1pippqwK6wjBWtNpL", "status": "UNSOLVED", "reward": "9.4 BTC"}, {"id": 95, "start": "400000000000000000000000", "end": "7fffffffffffffffffffffff", "addr": "19eVSDuizydXxhohGh8Ki9WY9KsHdSwoQC", "status": "SOLVED", "reward": "9.5 BTC"}, {"id": 96, "start": "800000000000000000000000", "end": "ffffffffffffffffffffffff", "addr": "15ANYzzCp5BFHcCnVFzXqyibpzgPLWaD8b", "status": "UNSOLVED", "reward": "9.6 BTC"}, {"id": 97, "start": "1000000000000000000000000", "end": "1ffffffffffffffffffffffff", "addr": "18ywPwj39nGjqBrQJSzZVq2izR12MDpDr8", "status": "UNSOLVED", "reward": "9.7 BTC"}, {"id": 98, "start": "2000000000000000000000000", "end": "3ffffffffffffffffffffffff", "addr": "1CaBVPrwUxbQYYswu32w7Mj4HR4maNoJSX", "status": "UNSOLVED", "reward": "9.8 BTC"}, {"id": 99, "start": "4000000000000000000000000", "end": "7ffffffffffffffffffffffff", "addr": "1JWnE6p6UN7ZJBN7TtcbNDoRcjFtuDWoNL", "status": "UNSOLVED", "reward": "9.9 BTC"}, {"id": 100, "start": "8000000000000000000000000", "end": "fffffffffffffffffffffffff", "addr": "1KCgMv8fo2TPBpddVi9jqmMmcne9uSNJ5F", "status": "SOLVED", "reward": "10.0 BTC"}, {"id": 101, "start": "10000000000000000000000000", "end": "1fffffffffffffffffffffffff", "addr": "1CKCVdbDJasYmhswB6HKZHEAnNaDpK7W4n", "status": "UNSOLVED", "reward": "10.1 BTC"}, {"id": 102, "start": "20000000000000000000000000", "end": "3fffffffffffffffffffffffff", "addr": "1PXv28YxmYMaB8zxrKeZBW8dt2HK7RkRPX", "status": "UNSOLVED", "reward": "10.2 BTC"}, {"id": 103, "start": "40000000000000000000000000", "end": "7fffffffffffffffffffffffff", "addr": "1AcAmB6jmtU6AiEcXkmiNE9TNVPsj9DULf", "status": "UNSOLVED", "reward": "10.3 BTC"}, {"id": 104, "start": "80000000000000000000000000", "end": "ffffffffffffffffffffffffff", "addr": "1EQJvpsmhazYCcKX5Au6AZmZKRnzarMVZu", "status": "UNSOLVED", "reward": "10.4 BTC"}, {"id": 105, "start": "100000000000000000000000000", "end": "1ffffffffffffffffffffffffff", "addr": "1CMjscKB3QW7SDyQ4c3C3DEUHiHRhiZVib", "status": "SOLVED", "reward": "10.5 BTC"}, {"id": 106, "start": "200000000000000000000000000", "end": "3ffffffffffffffffffffffffff", "addr": "18KsfuHuzQaBTNLASyj15hy4LuqPUo1FNB", "status": "UNSOLVED", "reward": "10.6 BTC"}, {"id": 107, "start": "400000000000000000000000000", "end": "7ffffffffffffffffffffffffff", "addr": "15EJFC5ZTs9nhsdvSUeBXjLAuYq3SWaxTc", "status": "UNSOLVED", "reward": "10.7 BTC"}, {"id": 108, "start": "800000000000000000000000000", "end": "fffffffffffffffffffffffffff", "addr": "1HB1iKUqeffnVsvQsbpC6dNi1XKbyNuqao", "status": "UNSOLVED", "reward": "10.8 BTC"}, {"id": 109, "start": "1000000000000000000000000000", "end": "1fffffffffffffffffffffffffff", "addr": "1GvgAXVCbA8FBjXfWiAms4ytFeJcKsoyhL", "status": "UNSOLVED", "reward": "10.9 BTC"}, {"id": 110, "start": "2000000000000000000000000000", "end": "3fffffffffffffffffffffffffff", "addr": "12JzYkkN76xkwvcPT6AWKZtGX6w2LAgsJg", "status": "SOLVED", "reward": "11.0 BTC"}, {"id": 111, "start": "4000000000000000000000000000", "end": "7fffffffffffffffffffffffffff", "addr": "1824ZJQ7nKJ9QFTRBqn7z7dHV5EGpzUpH3", "status": "UNSOLVED", "reward": "11.1 BTC"}, {"id": 112, "start": "8000000000000000000000000000", "end": "ffffffffffffffffffffffffffff", "addr": "18A7NA9FTsnJxWgkoFfPAFbQzuQxpRtCos", "status": "UNSOLVED", "reward": "11.2 BTC"}, {"id": 113, "start": "10000000000000000000000000000", "end": "1ffffffffffffffffffffffffffff", "addr": "1NeGn21dUDDeqFQ63xb2SpgUuXuBLA4WT4", "status": "UNSOLVED", "reward": "11.3 BTC"}, {"id": 114, "start": "20000000000000000000000000000", "end": "3ffffffffffffffffffffffffffff", "addr": "174SNxfqpdMGYy5YQcfLbSTK3MRNZEePoy", "status": "UNSOLVED", "reward": "11.4 BTC"}, {"id": 115, "start": "40000000000000000000000000000", "end": "7ffffffffffffffffffffffffffff", "addr": "1NLbHuJebVwUZ1XqDjsAyfTRUPwDQbemfv", "status": "SOLVED", "reward": "11.5 BTC"}, {"id": 116, "start": "80000000000000000000000000000", "end": "fffffffffffffffffffffffffffff", "addr": "1MnJ6hdhvK37VLmqcdEwqC3iFxyWH2PHUV", "status": "UNSOLVED", "reward": "11.6 BTC"}, {"id": 117, "start": "100000000000000000000000000000", "end": "1fffffffffffffffffffffffffffff", "addr": "1KNRfGWw7Q9Rmwsc6NT5zsdvEb9M2Wkj5Z", "status": "UNSOLVED", "reward": "11.7 BTC"}, {"id": 118, "start": "200000000000000000000000000000", "end": "3fffffffffffffffffffffffffffff", "addr": "1PJZPzvGX19a7twf5HyD2VvNiPdHLzm9F6", "status": "UNSOLVED", "reward": "11.8 BTC"}, {"id": 119, "start": "400000000000000000000000000000", "end": "7fffffffffffffffffffffffffffff", "addr": "1GuBBhf61rnvRe4K8zu8vdQB3kHzwFqSy7", "status": "UNSOLVED", "reward": "11.9 BTC"}, {"id": 120, "start": "800000000000000000000000000000", "end": "ffffffffffffffffffffffffffffff", "addr": "17s2b9ksz5y7abUm92cHwG8jEPCzK3dLnT", "status": "SOLVED", "reward": "12.0 BTC"}, {"id": 121, "start": "1000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffff", "addr": "1GDSuiThEV64c166LUFC9uDcVdGjqkxKyh", "status": "UNSOLVED", "reward": "12.1 BTC"}, {"id": 122, "start": "2000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffff", "addr": "1Me3ASYt5JCTAK2XaC32RMeH34PdprrfDx", "status": "UNSOLVED", "reward": "12.2 BTC"}, {"id": 123, "start": "4000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffff", "addr": "1CdufMQL892A69KXgv6UNBD17ywWqYpKut", "status": "UNSOLVED", "reward": "12.3 BTC"}, {"id": 124, "start": "8000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffff", "addr": "1BkkGsX9ZM6iwL3zbqs7HWBV7SvosR6m8N", "status": "UNSOLVED", "reward": "12.4 BTC"}, {"id": 125, "start": "10000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffff", "addr": "1PXAyUB8ZoH3WD8n5zoAthYjN15yN5CVq5", "status": "SOLVED", "reward": "12.5 BTC"}, {"id": 126, "start": "20000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffff", "addr": "1AWCLZAjKbV1P7AHvaPNCKiB7ZWVDMxFiz", "status": "UNSOLVED", "reward": "12.6 BTC"}, {"id": 127, "start": "40000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffff", "addr": "1G6EFyBRU86sThN3SSt3GrHu1sA7w7nzi4", "status": "UNSOLVED", "reward": "12.7 BTC"}, {"id": 128, "start": "80000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffff", "addr": "1MZ2L1gFrCtkkn6DnTT2e4PFUTHw9gNwaj", "status": "UNSOLVED", "reward": "12.8 BTC"}, {"id": 129, "start": "100000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffff", "addr": "1Hz3uv3nNZzBVMXLGadCucgjiCs5W9vaGz", "status": "UNSOLVED", "reward": "12.9 BTC"}, {"id": 130, "start": "200000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffff", "addr": "1Fo65aKq8s8iquMt6weF1rku1moWVEd5Ua", "status": "SOLVED", "reward": "13.0 BTC"}, {"id": 131, "start": "400000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffff", "addr": "16zRPnT8znwq42q7XeMkZUhb1bKqgRogyy", "status": "UNSOLVED", "reward": "13.1 BTC"}, {"id": 132, "start": "800000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffff", "addr": "1KrU4dHE5WrW8rhWDsTRjR21r8t3dsrS3R", "status": "UNSOLVED", "reward": "13.2 BTC"}, {"id": 133, "start": "1000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffff", "addr": "17uDfp5r4n441xkgLFmhNoSW1KWp6xVLD", "status": "UNSOLVED", "reward": "13.3 BTC"}, {"id": 134, "start": "2000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffff", "addr": "13A3JrvXmvg5w9XGvyyR4JEJqiLz8ZySY3", "status": "UNSOLVED", "reward": "13.4 BTC"}, {"id": 135, "start": "4000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffff", "addr": "16RGFo6hjq9ym6Pj7N5H7L1NR1rVPJyw2v", "status": "SOLVED", "reward": "13.5 BTC"}, {"id": 136, "start": "8000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffff", "addr": "1UDHPdovvR985NrWSkdWQDEQ1xuRiTALq", "status": "UNSOLVED", "reward": "13.6 BTC"}, {"id": 137, "start": "10000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffff", "addr": "15nf31J46iLuK1ZkTnqHo7WgN5cARFK3RA", "status": "UNSOLVED", "reward": "13.7 BTC"}, {"id": 138, "start": "20000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffff", "addr": "1Ab4vzG6wEQBDNQM1B2bvUz4fqXXdFk2WT", "status": "UNSOLVED", "reward": "13.8 BTC"}, {"id": 139, "start": "40000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffff", "addr": "1Fz63c775VV9fNyj25d9Xfw3YHE6sKCxbt", "status": "UNSOLVED", "reward": "13.9 BTC"}, {"id": 140, "start": "80000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffff", "addr": "1QKBaU6WAeycb3DbKbLBkX7vJiaS8r42Xo", "status": "UNSOLVED", "reward": "14.0 BTC"}, {"id": 141, "start": "100000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffff", "addr": "1CD91Vm97mLQvXhrnoMChhJx4TP9MaQkJo", "status": "UNSOLVED", "reward": "14.1 BTC"}, {"id": 142, "start": "200000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffff", "addr": "15MnK2jXPqTMURX4xC3h4mAZxyCcaWWEDD", "status": "UNSOLVED", "reward": "14.2 BTC"}, {"id": 143, "start": "400000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffff", "addr": "13N66gCzWWHEZBxhVxG18P8wyjEWF9Yoi1", "status": "UNSOLVED", "reward": "14.3 BTC"}, {"id": 144, "start": "800000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffff", "addr": "1NevxKDYuDcCh1ZMMi6ftmWwGrZKC6j7Ux", "status": "UNSOLVED", "reward": "14.4 BTC"}, {"id": 145, "start": "1000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffff", "addr": "19GpszRNUej5yYqxXoLnbZWKew3KdVLkXg", "status": "UNSOLVED", "reward": "14.5 BTC"}, {"id": 146, "start": "2000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffff", "addr": "1M7ipcdYHey2Y5RZM34MBbpugghmjaV89P", "status": "UNSOLVED", "reward": "14.6 BTC"}, {"id": 147, "start": "4000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffff", "addr": "18aNhurEAJsw6BAgtANpexk5ob1aGTwSeL", "status": "UNSOLVED", "reward": "14.7 BTC"}, {"id": 148, "start": "8000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffff", "addr": "1FwZXt6EpRT7Fkndzv6K4b4DFoT4trbMrV", "status": "UNSOLVED", "reward": "14.8 BTC"}, {"id": 149, "start": "10000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffff", "addr": "1CXvTzR6qv8wJ7eprzUKeWxyGcHwDYP1i2", "status": "UNSOLVED", "reward": "14.9 BTC"}, {"id": 150, "start": "20000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffff", "addr": "1MUJSJYtGPVGkBCTqGspnxyHahpt5Te8jy", "status": "UNSOLVED", "reward": "15.0 BTC"}, {"id": 151, "start": "40000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffff", "addr": "13Q84TNNvgcL3HJiqQPvyBb9m4hxjS3jkV", "status": "UNSOLVED", "reward": "15.1 BTC"}, {"id": 152, "start": "80000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffff", "addr": "1LuUHyrQr8PKSvbcY1v1PiuGuqFjWpDumN", "status": "UNSOLVED", "reward": "15.2 BTC"}, {"id": 153, "start": "100000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffffff", "addr": "18192XpzzdDi2K11QVHR7td2HcPS6Qs5vg", "status": "UNSOLVED", "reward": "15.3 BTC"}, {"id": 154, "start": "200000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffffff", "addr": "1NgVmsCCJaKLzGyKLFJfVequnFW9ZvnMLN", "status": "UNSOLVED", "reward": "15.4 BTC"}, {"id": 155, "start": "400000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffffff", "addr": "1AoeP37TmHdFh8uN72fu9AqgtLrUwcv2wJ", "status": "UNSOLVED", "reward": "15.5 BTC"}, {"id": 156, "start": "800000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffffff", "addr": "1FTpAbQa4h8trvhQXjXnmNhqdiGBd1oraE", "status": "UNSOLVED", "reward": "15.6 BTC"}, {"id": 157, "start": "1000000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffffff", "addr": "14JHoRAdmJg3XR4RjMDh6Wed6ft6hzbQe9", "status": "UNSOLVED", "reward": "15.7 BTC"}, {"id": 158, "start": "2000000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffffff", "addr": "19z6waranEf8CcP8FqNgdwUe1QRxvUNKBG", "status": "UNSOLVED", "reward": "15.8 BTC"}, {"id": 159, "start": "4000000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffffff", "addr": "14u4nA5sugaswb6SZgn5av2vuChdMnD9E5", "status": "UNSOLVED", "reward": "15.9 BTC"}, {"id": 160, "start": "8000000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffffff", "addr": "1NBC8uXJy1GiJ6drkiZa1WuKn51ps7EPTv", "status": "UNSOLVED", "reward": "16.0 BTC"}];
 
-let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'SOBOL', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS'
-let autoAlgoList = ['RANDOM', 'SOBOL', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS'];
+let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS'
+let autoAlgoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS'];
 let autoAlgoIndex = 0;
 let autoAlgoStepCounter = 0; // 'RANDOM', 'HYBRID'
 
@@ -1475,7 +1579,7 @@ function updateSliderUI() {
             badge.style.background = '#475569';
         } else {
             const hexDiffStr = rangeDiff.toString(16);
-            badge.innerText = `🎯 Kapsanan Hex: 0x${hexDiffStr.length <= 14 ? hexDiffStr : hexDiffStr.substring(0, 12) + '...'}`;
+            badge.innerText = `🎯 Kapsanan: 0x${hexDiffStr.length <= 12 ? hexDiffStr : hexDiffStr.substring(0, 10) + '...'}`;
             badge.style.background = rangeDiff <= 0x1000000n ? '#be185d' : (rangeDiff <= (total / 100n) ? '#0284c7' : '#0369a1');
         }
     }
@@ -1487,6 +1591,7 @@ function updateSliderUI() {
     const eMinB = document.getElementById('lblHexEndMinBound');   if (eMinB) eMinB.innerText   = tEndShort;
     const sMaxB = document.getElementById('lblHexStartMaxBound'); if (sMaxB) sMaxB.innerText = tStartShort;
     const eMaxB = document.getElementById('lblHexEndMaxBound');   if (eMaxB) eMaxB.innerText   = tEndShort;
+    if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
 }
 
 function onHexSliderChange(type) {
@@ -1633,6 +1738,197 @@ function setHexSliderBounds(sKey, eKey, labelText) {
     }
     const logRangeEl = document.getElementById('logRange');
     if (logRangeEl) logRangeEl.innerText = `🎯 ${labelText} [Hex Uzayı: 0x${sliderMinHex.toString(16)} - 0x${sliderMaxHex.toString(16)}]`;
+}
+
+// ============================================================
+// 🎛️ OTO KAYDIRAÇ (RADAR / PENCERE TARAMASI) SİSTEMİ
+// ============================================================
+let isAutoSliderActive = false;
+let autoSliderSpeed = null; // 'FAST', 'MEDIUM', 'SLOW' or null when inactive
+let autoSliderInterval = null;
+let autoSliderDirection = 1; // 1: İleri (0 -> 100), -1: Geri (100 -> 0) [Ping-Pong Radar]
+
+const AUTO_SLIDER_SPEEDS = {
+    'FAST':   { intervalMs: 1000, stepPct: 2.618, label: '⚡ Hızlı' },
+    'MEDIUM': { intervalMs: 3000, stepPct: 1.618, label: '⏱️ Orta' },
+    'SLOW':   { intervalMs: 8000, stepPct: 1.236, label: '🐢 Yavaş' }
+};
+
+function toggleSpeedMode(speed) {
+    if (!AUTO_SLIDER_SPEEDS[speed]) return;
+
+    if (isAutoSliderActive && autoSliderSpeed === speed) {
+        // Zaten seçili olan hıza tekrar basıldı -> Kapat
+        isAutoSliderActive = false;
+        autoSliderSpeed = null;
+        stopAutoSliderTimer();
+        if (typeof showToast === 'function') {
+            showToast('⏸️ <strong>Kaydıraç Taraması Kapatıldı</strong>');
+        }
+    } else {
+        // Yeni bir hız seçildi veya kapalıyken tıklandı -> Başlat
+        isAutoSliderActive = true;
+        autoSliderSpeed = speed;
+        autoSliderDirection = 1;
+
+        // Eğer aralık tam uzay ise (%0 - %100) veya geçersizse, başlangıç için %5'lik tarama penceresi oluştur
+        const minEl = document.getElementById('rangeSliderMin');
+        const maxEl = document.getElementById('rangeSliderMax');
+        if (minEl && maxEl) {
+            const curSpan = BigInt(maxEl.value || 1000000000000) - BigInt(minEl.value || 0);
+            if (curSpan >= 950000000000n || curSpan <= 0n) {
+                minEl.value = 0;
+                maxEl.value = 50000000000; // %5 pencere
+                onHexSliderChange('MIN');
+                onHexSliderChange('MAX');
+            }
+        }
+
+        const spdCfg = AUTO_SLIDER_SPEEDS[speed];
+        if (typeof showToast === 'function') {
+            showToast(`🚀 <strong>Kaydıraç: ${spdCfg.label} (🏓 Git-Gel Radar)</strong><br><span style="font-size:10.5px; color:#94a3b8;">${spdCfg.intervalMs / 1000} sn aralıkla Altın Oran (%${spdCfg.stepPct}) adımla taranıyor.</span>`);
+        }
+
+        startAutoSliderTimer();
+    }
+
+    updateSpeedButtonStyles();
+    updateAutoSliderUI();
+}
+
+function updateSpeedButtonStyles() {
+    ['FAST', 'MEDIUM', 'SLOW'].forEach(s => {
+        const b = document.getElementById('btnSpeed' + (s === 'FAST' ? 'Fast' : (s === 'MEDIUM' ? 'Med' : 'Slow')));
+        if (b) {
+            if (isAutoSliderActive && s === autoSliderSpeed) {
+                b.style.background = (s === 'FAST' ? '#ea580c' : (s === 'MEDIUM' ? '#0284c7' : '#059669'));
+                b.style.color = '#ffffff';
+                b.style.boxShadow = (s === 'FAST' ? '0 0 8px rgba(234,88,12,0.6)' : (s === 'MEDIUM' ? '0 0 8px rgba(2,132,199,0.6)' : '0 0 8px rgba(5,150,105,0.6)'));
+            } else {
+                b.style.background = 'transparent';
+                b.style.color = '#94a3b8';
+                b.style.boxShadow = 'none';
+            }
+        }
+    });
+}
+
+// Geriye dönük uyumluluk takma adları
+function toggleAutoSlider() {
+    toggleSpeedMode(autoSliderSpeed || 'MEDIUM');
+}
+
+function setAutoSliderSpeed(speed) {
+    toggleSpeedMode(speed);
+}
+
+function startAutoSliderTimer() {
+    stopAutoSliderTimer();
+    if (!isAutoSliderActive) return;
+    const cfg = AUTO_SLIDER_SPEEDS[autoSliderSpeed] || AUTO_SLIDER_SPEEDS['MEDIUM'];
+    autoSliderInterval = setInterval(() => {
+        if (!isAutoSliderActive) {
+            stopAutoSliderTimer();
+            return;
+        }
+        stepAutoSlider();
+    }, cfg.intervalMs);
+}
+
+function stopAutoSliderTimer() {
+    if (autoSliderInterval) {
+        clearInterval(autoSliderInterval);
+        autoSliderInterval = null;
+    }
+}
+
+function stepAutoSlider() {
+    if (isSliderSyncBusy) return;
+    const bounds = getHexTargetBounds();
+    if (!bounds) return;
+    const { tStart, tEnd, total } = bounds;
+    if (total <= 0n) return;
+
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    if (!minEl || !maxEl) return;
+
+    const TOTAL_STEPS = 1000000000000n; // 1 Trilyon adım
+    let curMin = BigInt(minEl.value || 0);
+    let curMax = BigInt(maxEl.value || 1000000000000);
+    let span = curMax - curMin;
+    if (span <= 0n || span >= 950000000000n) {
+        span = 50000000000n; // Varsayılan %5 pencere
+        curMin = 0n;
+        curMax = span;
+    }
+
+    const cfg = AUTO_SLIDER_SPEEDS[autoSliderSpeed] || AUTO_SLIDER_SPEEDS['MEDIUM'];
+    const step = BigInt(Math.round(cfg.stepPct * 10000000000)); // %1 = 10 milyar adım
+
+    let nextMin, nextMax;
+
+    if (autoSliderDirection >= 1) {
+        // İleri Hareket (0% -> 100%)
+        nextMin = curMin + step;
+        nextMax = nextMin + span;
+
+        // Sona ulaştığında Ping-Pong: Ters yöne dön
+        if (nextMax >= TOTAL_STEPS) {
+            nextMax = TOTAL_STEPS;
+            nextMin = TOTAL_STEPS - span;
+            if (nextMin < 0n) nextMin = 0n;
+            autoSliderDirection = -1;
+        }
+    } else {
+        // Geri Hareket (100% -> 0%)
+        if (curMin <= step) {
+            nextMin = 0n;
+            nextMax = span;
+            if (nextMax > TOTAL_STEPS) nextMax = TOTAL_STEPS;
+            autoSliderDirection = 1;
+        } else {
+            nextMin = curMin - step;
+            nextMax = nextMin + span;
+        }
+    }
+
+    isSliderSyncBusy = true;
+    try {
+        minEl.value = Number(nextMin);
+        maxEl.value = Number(nextMax);
+
+        sliderMinHex = tStart + (total * nextMin / TOTAL_STEPS);
+        sliderMaxHex = tStart + (total * nextMax / TOTAL_STEPS);
+        if (sliderMaxHex <= sliderMinHex) {
+            sliderMaxHex = sliderMinHex + 1n;
+        }
+
+        updateSliderUI();
+        if (typeof isRunning !== 'undefined' && isRunning) {
+            broadcastWorkerConfig();
+        }
+
+        if (isPrefixAutoJump) {
+            pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
+        }
+    } finally {
+        isSliderSyncBusy = false;
+    }
+    updateAutoSliderUI();
+}
+
+function updateAutoSliderUI() {
+    const badge = document.getElementById('badgeAutoSliderStatus');
+    if (!badge) return;
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    if (minEl && maxEl) {
+        const pMin = (Number(minEl.value || 0) / 10000000000).toFixed(1);
+        const pMax = (Number(maxEl.value || 1000000000000) / 10000000000).toFixed(1);
+        const dirIcon = isAutoSliderActive ? (autoSliderDirection >= 1 ? '▶' : '◀') : '';
+        badge.innerText = `${dirIcon ? dirIcon + ' ' : ''}%${pMin} - %${pMax}`;
+    }
 }
 
 // 🎯 v24 ÖZEL 64-HANELİ HIZLI TEST (BİTTİ / ARŞİV BÖLÜMÜ)
@@ -1995,57 +2291,7 @@ function updateModeVisuals() {
         }
     }
 
-    if (bGrid) {
-        if (!gridOn) {
-            bGrid.style.border = '1px solid #334155';
-            bGrid.style.boxShadow = 'none';
-            bGrid.style.opacity = '0.45';
-            if (badgeGrid) {
-                badgeGrid.style.opacity = '0.45';
-                badgeGrid.style.color = '#64748b';
-            }
-            if (btnGrid) {
-                btnGrid.style.background = '#0f172a';
-                btnGrid.style.color = '#ef4444';
-                btnGrid.style.borderColor = '#334155';
-                btnGrid.innerText = '⛔ Kapalı';
-                btnGrid.title = 'Grid Kapalı (Tıklayın: 🔄 Oto moda geçer)';
-            }
-            if (inGrid) inGrid.style.opacity = '0.5';
-        } else if (isGridAutoJump) {
-            bGrid.style.border = '1px solid #38bdf8';
-            bGrid.style.boxShadow = '0 0 8px rgba(56,189,248,0.45)';
-            bGrid.style.opacity = '1';
-            if (badgeGrid) {
-                badgeGrid.style.opacity = '1';
-                badgeGrid.style.color = '#38bdf8';
-            }
-            if (btnGrid) {
-                btnGrid.style.background = '#0284c7';
-                btnGrid.style.color = '#ffffff';
-                btnGrid.style.borderColor = '#38bdf8';
-                btnGrid.innerText = '🔄 Oto';
-                btnGrid.title = 'Grid Otomatik (Tıklayın: 🔒 Sabit moda geçer)';
-            }
-            if (inGrid) inGrid.style.opacity = '1';
-        } else {
-            bGrid.style.border = '1px solid #38bdf8';
-            bGrid.style.boxShadow = '0 0 4px rgba(56,189,248,0.25)';
-            bGrid.style.opacity = '1';
-            if (badgeGrid) {
-                badgeGrid.style.opacity = '1';
-                badgeGrid.style.color = '#38bdf8';
-            }
-            if (btnGrid) {
-                btnGrid.style.background = '#1e293b';
-                btnGrid.style.color = '#38bdf8';
-                btnGrid.style.borderColor = '#0284c7';
-                btnGrid.innerText = '🔒 Sabit';
-                btnGrid.title = 'Grid Sabit (Tıklayın: ⛔ Kapalı konuma geçer)';
-            }
-            if (inGrid) inGrid.style.opacity = '1';
-        }
-    }
+
 }
 
 function onFormulaChange() {
@@ -2081,12 +2327,11 @@ function applyFormulaPreset(formula) {
     const sel = document.getElementById('physicsFormulaSelect');
     if (sel && sel.value !== formula) sel.value = formula;
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos'];
     const algoSel = document.getElementById('algoSelect');
     const entSel = document.getElementById('entropyBitsSelect');
     const chkPre = document.getElementById('chkPrefixAutoJump');
-    const chkGrid = document.getElementById('chkGridAutoJump');
-    const dbSel = document.getElementById('dbModeSelect');
+        const dbSel = document.getElementById('dbModeSelect');
     const lblApi = document.getElementById('apiStatusText');
     const logAlgo = document.getElementById('logAlgo');
 
@@ -2103,10 +2348,7 @@ function applyFormulaPreset(formula) {
     isPrefixAutoJump = false;
     if (chkPre) chkPre.checked = false;
 
-    isGridFilterActive = false;
-    isGridAutoJump = false;
-    if (chkGrid) chkGrid.checked = false;
-
+    
     const isIlaveActive = (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds.has('ilave')) ||
                           (typeof currentTarget !== 'undefined' && currentTarget && currentTarget.id === 'ilave');
     if (isIlaveActive) {
@@ -2139,7 +2381,7 @@ function applyFormulaPreset(formula) {
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🌟 <strong>Altın Oran</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Grid + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast('🌟 <strong>Altın Oran</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
     } else if (formula === 'DETERMINISTIC_CHAOS') {
         selectedAlgorithm = 'CHAOS';
         if (algoSel) algoSel.value = 'CHAOS';
@@ -2151,7 +2393,7 @@ function applyFormulaPreset(formula) {
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('♾️ <strong>Deterministik Kaos</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">♾️ Kaos + ⛔ Kapalı Grid + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast('♾️ <strong>Deterministik Kaos</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">♾️ Kaos + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
     } else if (formula === 'QUANTUM_TUNNEL') {
         selectedAlgorithm = 'SOBOL';
         if (algoSel) algoSel.value = 'SOBOL';
@@ -2176,6 +2418,39 @@ function applyFormulaPreset(formula) {
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
         showToast('🧬 <strong>Riemann Zeta</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Grid + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+    } else if (formula === 'VD_CORPUT') {
+        selectedAlgorithm = 'VD_CORPUT';
+        if (algoSel) algoSel.value = 'VD_CORPUT';
+        const b = document.getElementById('btnAlgoVdCorput'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '📐 Van der Corput (Bit-Tersleme Tam Kapsama)';
+            logAlgo.style.color = '#3b82f6';
+        }
+        if (typeof updateModeVisuals === 'function') updateModeVisuals();
+        broadcastWorkerConfig();
+        showToast('📐 <strong>Van der Corput</strong>: Bit-Tersleme Boşluksuz Tam Uzay Kapsama');
+    } else if (formula === 'WEYL_GOLDEN') {
+        selectedAlgorithm = 'WEYL_GOLDEN';
+        if (algoSel) algoSel.value = 'WEYL_GOLDEN';
+        const b = document.getElementById('btnAlgoWeyl'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '🌟 Weyl Altın Kafesi (Homojen Örtüşüm)';
+            logAlgo.style.color = '#eab308';
+        }
+        if (typeof updateModeVisuals === 'function') updateModeVisuals();
+        broadcastWorkerConfig();
+        showToast('🌟 <strong>Weyl Altın Kafesi</strong>: Homojen Boşluksuz Örtüşüm');
+    } else if (formula === 'COPRIME_STRIDE') {
+        selectedAlgorithm = 'COPRIME_STRIDE';
+        if (algoSel) algoSel.value = 'COPRIME_STRIDE';
+        const b = document.getElementById('btnAlgoCoprime'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '♾️ Asal Modüler Adımlama (Sıfır Tekrar)';
+            logAlgo.style.color = '#10b981';
+        }
+        if (typeof updateModeVisuals === 'function') updateModeVisuals();
+        broadcastWorkerConfig();
+        showToast('♾️ <strong>Asal Modüler Adımlama</strong>: Sıfır Tekrar Tam Kapsama');
     }
 }
 
@@ -2254,9 +2529,22 @@ function generateDeterministicChaosKey(rangeStart, rangeEnd) {
 function getNextPhysicsPercent() {
     let pct = 0;
 
-    if (activeFormula === 'GOLDEN_SINGULARITY') {
+    if (activeFormula === 'GOLDEN_SINGULARITY' || activeFormula === 'WEYL_GOLDEN') {
         riemannCounter++;
         pct = ((riemannCounter * 0.618033988749895) % 1.0) * 100.0;
+    } else if (activeFormula === 'VD_CORPUT') {
+        riemannCounter++;
+        let n = riemannCounter;
+        let q = 0, b = 0.5;
+        while (n > 0) {
+            q += (n & 1) * b;
+            n >>= 1;
+            b *= 0.5;
+        }
+        pct = q * 100.0;
+    } else if (activeFormula === 'COPRIME_STRIDE') {
+        riemannCounter++;
+        pct = ((riemannCounter * 0.3819660112501051) % 1.0) * 100.0;
     } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
         pct = stepDeterministicChaos();
     } else if (activeFormula === 'QUANTUM_TUNNEL') {
@@ -2281,8 +2569,7 @@ function switchRangeMode(mode) {
     const tPerc = document.getElementById('tabModePercent'); if (tPerc) tPerc.classList.toggle('active', mode === 'PERCENT');
     const tHex = document.getElementById('tabModeHex'); if (tHex) tHex.classList.toggle('active', mode === 'HEX');
     const tPre = document.getElementById('tabModePrefix'); if (tPre) tPre.classList.toggle('active', mode === 'PREFIX');
-    const tGrid = document.getElementById('tabModeGrid'); if (tGrid) tGrid.classList.toggle('active', mode === 'GRID');
-    const tChaos = document.getElementById('tabModeChaos'); if (tChaos) tChaos.classList.toggle('active', mode === 'CHAOS' || mode === 'PREFIX' || mode === 'GRID');
+        const tChaos = document.getElementById('tabModeChaos'); if (tChaos) tChaos.classList.toggle('active', mode === 'CHAOS' || mode === 'PREFIX' || mode === 'GRID');
     const tPhys = document.getElementById('tabModePhysics'); if (tPhys) tPhys.classList.toggle('active', mode === 'PHYSICS');
 
     const pPerc = document.getElementById('panelPercent'); if (pPerc) pPerc.style.display = mode === 'PERCENT' ? 'flex' : 'none';
@@ -2562,78 +2849,15 @@ function pickNextRandomPrefix(targetStart, targetEnd) {
     }
 }
 
-let isGridAutoJump = false;
-let gridJumpCounter = 0;
-
-function toggleGridAutoJump(explicitVal) {
-    if (typeof explicitVal === 'boolean') {
-        isGridAutoJump = explicitVal;
-        isGridFilterActive = true;
-    } else {
-        // 3 Aşamalı Döngü:
-        // Kapalı (Varsayılan) -> 1. Basış: Oto -> 2. Basış: Sabit -> 3. Basış: Kapalı
-        if (!isGridFilterActive) {
-            // Kapalı -> 1. Basış: Oto
-            isGridFilterActive = true;
-            isGridAutoJump = true;
-            pickNextRandomGridCell();
-            const gInput = document.getElementById('gridCellInput');
-            if (gInput) gInput.value = userGridCell;
-        } else if (isGridAutoJump) {
-            // Oto -> 2. Basış: Sabit
-            isGridFilterActive = true;
-            isGridAutoJump = false;
-        } else {
-            // Sabit -> 3. Basış: Kapalı
-            isGridFilterActive = false;
-            isGridAutoJump = false;
-        }
-    }
-    const chk = document.getElementById('chkGridAutoJump');
-    if (chk) chk.checked = isGridAutoJump;
-
-    updateModeVisuals();
-    broadcastWorkerConfig();
-}
-
-function updateModeVisualsOnStartup() {
-    updateModeVisuals();
-}
-
-function onGridCellInput() {
-    let c = parseInt(document.getElementById('gridCellInput').value) || 0;
-    c = Math.max(0, Math.min(65535, c));
-    userGridCell = c;
-    isGridFilterActive = true;
-    updateModeVisuals();
-
-    // Kullanıcı elle giriş yaptığında Sabit moda geçsin:
-    const chk = document.getElementById('chkGridAutoJump');
-    if (chk) chk.checked = false;
-    isGridAutoJump = false;
-    const btn = document.getElementById('btnGridAuto');
-    if (btn) {
-        btn.style.background = '#1e293b';
-        btn.style.color = '#94a3b8';
-        btn.style.borderColor = '#475569';
-        btn.innerText = '🔒 Sabit';
-    }
-
-    const cellX = userGridCell % 256;
-    const cellY = Math.floor(userGridCell / 256);
-    drawHilbertRadar(cellX, cellY);
-    broadcastWorkerConfig();
-}
-
-
-function pickNextRandomGridCell() {
-    userGridCell = Math.floor(Math.random() * 65536);
-    const input = document.getElementById('gridCellInput');
-    if (input) input.value = userGridCell;
-    const cellX = userGridCell % 256;
-    const cellY = Math.floor(userGridCell / 256);
-    drawHilbertRadar(cellX, cellY);
-}
+// Grid modu kaldırıldı - aralık tam kapsamlı taranır
+const isEffectiveGrid = false;
+isGridAutoJump = false;
+isGridFilterActive = false;
+userGridCell = null;
+function toggleGridAutoJump() {}
+function onGridCellInput() {}
+function pickNextRandomGridCell() {}
+function updateModeVisualsOnStartup() { updateModeVisuals(); }
 
 function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', algo = null, customTable = null, entBits = null) {
     const activeA = algo || (typeof selectedAlgorithm !== 'undefined' ? selectedAlgorithm : 'RANDOM');
@@ -2642,6 +2866,9 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
     if (!prefixHex && !suffixHex) {
         if (activeA === 'CHAOS') return generateDeterministicChaosKey(targetStart, targetEnd);
         if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
+        if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
+        if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
+        if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
         if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
@@ -2734,6 +2961,9 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
     
     if (activeA === 'CHAOS') return generateDeterministicChaosKey(effStart, effEnd);
     if (activeA === 'SOBOL') return generateSobolKey(effStart, effEnd);
+    if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(effStart, effEnd);
+    if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(effStart, effEnd);
+    if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(effStart, effEnd);
     if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(effStart, effEnd, bits);
     if (activeA === 'HILBERT') return generateHilbertKey(effStart, effEnd);
     return randomBigIntInRange(effStart, effEnd);
@@ -3351,7 +3581,7 @@ let selectedEntropyBits = 0;
 function setAlgorithm(algo) {
     selectedAlgorithm = algo;
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos'];
     btnIds.forEach(id => {
         const b = document.getElementById(id);
         if (b) b.classList.remove('active');
@@ -3365,7 +3595,7 @@ function setAlgorithm(algo) {
     if (algo === 'AUTO') {
         const b = document.getElementById('btnAlgoAuto'); if (b) b.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele + 📐 Sobol + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos)';
+            logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele + 📐 Sobol + 📐 V.d.Corput + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos)';
             logAlgo.style.color = '#38bdf8';
         }
         autoAlgoIndex = 0;
@@ -3380,6 +3610,24 @@ function setAlgorithm(algo) {
         const b = document.getElementById('btnAlgoSobol'); if (b) b.classList.add('active');
         if (logAlgo) {
             logAlgo.innerText = '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
+            logAlgo.style.color = '#10b981';
+        }
+    } else if (algo === 'VD_CORPUT') {
+        const b = document.getElementById('btnAlgoVdCorput'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '📐 Van der Corput (Bit-Tersleme Boşluksuz Tam Kapsama)';
+            logAlgo.style.color = '#3b82f6';
+        }
+    } else if (algo === 'WEYL_GOLDEN') {
+        const b = document.getElementById('btnAlgoWeyl'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '🌟 Weyl Altın Kafesi (Homojen Boşluksuz Örtüşüm)';
+            logAlgo.style.color = '#eab308';
+        }
+    } else if (algo === 'COPRIME_STRIDE') {
+        const b = document.getElementById('btnAlgoCoprime'); if (b) b.classList.add('active');
+        if (logAlgo) {
+            logAlgo.innerText = '♾️ Asal Modüler Adımlama (Sıfır Tekrar Tam Kapsama)';
             logAlgo.style.color = '#10b981';
         }
     } else if (algo === 'HILBERT') {
@@ -3905,12 +4153,20 @@ function selectIlaveCustomTarget() {
         targetHash160: '',
         reward: '(64 Hane)'
     };
-    sliderMinHex = 1n;
-    sliderMaxHex = SECP256K1_MAX;
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
-    if (minEl) minEl.value = 0;
-    if (maxEl) maxEl.value = 1000000000000;
+    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+        if (minEl) minEl.value = 0;
+        if (maxEl) maxEl.value = 50000000000;
+        sliderMinHex = 1n;
+        sliderMaxHex = 1n + (SECP256K1_MAX * 50000000000n / 1000000000000n);
+        startAutoSliderTimer();
+    } else {
+        sliderMinHex = 1n;
+        sliderMaxHex = SECP256K1_MAX;
+        if (minEl) minEl.value = 0;
+        if (maxEl) maxEl.value = 1000000000000;
+    }
 
     isCustomPoolActive = true;
     const chk = document.getElementById('chkEnableCustomPool');
@@ -3948,12 +4204,21 @@ function selectSinglePuzzle(p) {
 
     const pStart = toBigIntSafe(p.origStart || p.start);
     const pEnd   = toBigIntSafe(p.origEnd   || p.end);
-    sliderMinHex = pStart;
-    sliderMaxHex = pEnd;
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
-    if (minEl) minEl.value = 0;
-    if (maxEl) maxEl.value = 1000000000000;
+    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+        if (minEl) minEl.value = 0;
+        if (maxEl) maxEl.value = 50000000000;
+        sliderMinHex = pStart;
+        const pTotal = pEnd > pStart ? pEnd - pStart : 1n;
+        sliderMaxHex = pStart + (pTotal * 50000000000n / 1000000000000n);
+        startAutoSliderTimer();
+    } else {
+        sliderMinHex = pStart;
+        sliderMaxHex = pEnd;
+        if (minEl) minEl.value = 0;
+        if (maxEl) maxEl.value = 1000000000000;
+    }
 
     document.getElementById('labelUnsolved').innerText = `#${p.id}`;
     document.getElementById('statPoolCount').innerText = p.reward;
@@ -4010,6 +4275,43 @@ function generateSobolKey(rangeStart, rangeEnd) {
     const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
     const offset = (mix * totalRange) >> 64n;
     return rangeStart + offset;
+}
+
+let mainVdCorputStep = 1n;
+function generateVanDerCorputKey(rangeStart, rangeEnd) {
+    mainVdCorputStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    let n = mainVdCorputStep;
+    let rev = 0n;
+    let temp = n & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev = (rev << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    const offset = (rev * totalRange) >> 64n;
+    return rangeStart + offset;
+}
+
+let mainWeylStep = 1n;
+function generateWeylGoldenKey(rangeStart, rangeEnd) {
+    mainWeylStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    const weylFrac = (mainWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+    const offset = (weylFrac * totalRange) >> 64n;
+    return rangeStart + offset;
+}
+
+let mainCoprimeStep = 1n;
+function generateCoprimeStrideKey(rangeStart, rangeEnd) {
+    mainCoprimeStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    const mod = totalRange + 1n;
+    const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? (0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) : 0xC6A4A7935BD1E995n;
+    const offset = (mainCoprimeStep * (stride | 1n)) % mod;
+    return rangeStart + (offset < 0n ? -offset : offset);
 }
 
 function generateHilbertKey(rangeStart, rangeEnd) {
@@ -4276,8 +4578,7 @@ function huntBatch() {
         let lastBoundMin = 0n, lastBoundMax = 0n;
         let activeAlgo = selectedAlgorithm;
         let isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
-        let isEffectiveGrid   = (activeFormula === 'GRID'   || activeRangeMode === 'GRID'   || isGridFilterActive);
-
+        
         for (let i = 0; i < batchSize; i++) {
             if (isCircularMode) {
                 activeTarget = unsolvedList[circularIndex];
@@ -4379,26 +4680,7 @@ function huntBatch() {
             let subMax = boundMax;
 
             isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
-            isEffectiveGrid   = (activeFormula === 'GRID'   || activeRangeMode === 'GRID'   || isGridFilterActive);
-
-            // 1. Grid Filtresi: Arama uzayını 65536'lık Hilbert/Grid hücresine odaklar
-            if (isEffectiveGrid && activeFormula !== 'PREFIX') {
-                if (isGridAutoJump) {
-                    gridJumpCounter++;
-                    if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
-                        pickNextRandomGridCell();
-                        const gInput = document.getElementById('gridCellInput');
-                        if (gInput) gInput.value = userGridCell;
-                    }
-                }
-                const totalR = boundMax - boundMin;
-                if (totalR > 65536n) {
-                    const cellSize = totalR / 65536n;
-                    subMin = boundMin + (BigInt(userGridCell || 0) * cellSize);
-                    subMax = subMin + (cellSize > 0n ? cellSize : 1n);
-                    if (subMax > boundMax) subMax = boundMax;
-                }
-            }
+            // Grid modu devre dışı: [boundMin, boundMax] tam aralık olarak taranır
 
             // 2. Fizik ve Kaos Formülleri: [subMin, subMax] içerisinde mikroskobik dilim uygular
             if (activeFormula === 'PREFIX') {
@@ -4434,7 +4716,7 @@ function huntBatch() {
                 const endBig   = BigInt(Math.round(physicsSliceEndPct * 100000000));
                 subMin = baseMin + (curSpan * startBig / 10000000000n);
                 subMax = baseMin + (curSpan * endBig   / 10000000000n);
-            } else if (activeRangeMode === 'PHYSICS' || activeFormula === 'DETERMINISTIC_CHAOS' || activeFormula === 'QUANTUM_TUNNEL' || activeFormula === 'RIEMANN_ZETA' || activeFormula === 'GOLDEN_SINGULARITY') {
+            } else if (activeRangeMode === 'PHYSICS' || activeFormula === 'DETERMINISTIC_CHAOS' || activeFormula === 'QUANTUM_TUNNEL' || activeFormula === 'RIEMANN_ZETA' || activeFormula === 'GOLDEN_SINGULARITY' || activeFormula === 'VD_CORPUT' || activeFormula === 'WEYL_GOLDEN' || activeFormula === 'COPRIME_STRIDE') {
                 physicsStepCounter++;
                 if (physicsStepCounter % 25 === 0) {
                     const centerPct = getNextPhysicsPercent();
@@ -4456,6 +4738,12 @@ function huntBatch() {
             // ----------------------------------------------------
             if (activeAlgo === 'SOBOL') {
                 currentKey = generateSobolKey(subMin, subMax);
+            } else if (activeAlgo === 'VD_CORPUT') {
+                currentKey = generateVanDerCorputKey(subMin, subMax);
+            } else if (activeAlgo === 'WEYL_GOLDEN') {
+                currentKey = generateWeylGoldenKey(subMin, subMax);
+            } else if (activeAlgo === 'COPRIME_STRIDE') {
+                currentKey = generateCoprimeStrideKey(subMin, subMax);
             } else if (activeAlgo === 'HILBERT') {
                 currentKey = generateHilbertKey(subMin, subMax);
             } else if (activeAlgo === 'CHAOS') {
@@ -4641,6 +4929,12 @@ function huntBatch() {
                     algoPrefix = (selectedEntropyBits > 0 ? ('⚡ ' + selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
                 } else if (activeAlgo === 'SOBOL') {
                     algoPrefix = '📐 Sobol + ';
+                } else if (activeAlgo === 'VD_CORPUT') {
+                    algoPrefix = '📐 Van der Corput + ';
+                } else if (activeAlgo === 'WEYL_GOLDEN') {
+                    algoPrefix = '🌟 Weyl Kafesi + ';
+                } else if (activeAlgo === 'COPRIME_STRIDE') {
+                    algoPrefix = '♾️ Modüler Adım + ';
                 } else if (activeAlgo === 'HILBERT') {
                     algoPrefix = '🌀 Hilbert + ';
                 } else if (activeAlgo === 'CHAOS') {
@@ -4658,11 +4952,6 @@ function huntBatch() {
                     pParts.push(isPrefixAutoJump 
                         ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
                         : `🧩 Ön Ek: 0x${userPrefix}`);
-                }
-                if (isEffectiveGrid) {
-                    pParts.push(isGridAutoJump 
-                        ? `🔄 Oto Grid [#${userGridCell}]` 
-                        : `🌀 Grid [#${userGridCell}]`);
                 }
                 if (activeFormula === 'OMNI_CHAOS') {
                     pParts.push(`💥 Hibrit Kaos`);
@@ -4684,11 +4973,14 @@ function huntBatch() {
             }
             if (selectedAlgorithm === 'AUTO') {
                 const algoNames = {
-                    'RANDOM':        '🎲 Rastgele Modu',
-                    'SOBOL':         '📐 Sobol & Van der Corput',
-                    'HILBERT':       '🌀 Hilbert',
-                    'WEAK_ENTROPY':  '⚡ Zayıf Entropi',
-                    'CHAOS':         '♾️ Deterministik Kaos'
+                    'RANDOM':         '🎲 Rastgele Modu',
+                    'SOBOL':          '📐 Sobol',
+                    'VD_CORPUT':      '📐 Van der Corput',
+                    'WEYL_GOLDEN':    '🌟 Weyl Altın Kafesi',
+                    'COPRIME_STRIDE': '♾️ Asal Adımlama',
+                    'HILBERT':        '🌀 Hilbert Fraktal',
+                    'WEAK_ENTROPY':   '⚡ Zayıf Entropi',
+                    'CHAOS':          '♾️ Deterministik Kaos'
                 };
                 const currentAutoAlgoName = algoNames[autoAlgoList[autoAlgoIndex]] || autoAlgoList[autoAlgoIndex] || 'Rastgele';
                 document.getElementById('logAlgo').innerText = `🔄 Oto Geçiş [${currentAutoAlgoName}]`;
@@ -5135,6 +5427,9 @@ function bgWorkerProcess() {
             if (activeA === 'CHAOS') return generateDeterministicChaosKey(targetStart, targetEnd);
             if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
             if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
+            if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
+            if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
+            if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
             if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
             return randomBigIntInRange(targetStart, targetEnd);
         }
@@ -5203,6 +5498,9 @@ function bgWorkerProcess() {
         if (activeA === 'CHAOS') return generateDeterministicChaosKey(targetStart, targetEnd);
         if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
+        if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
+        if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
+        if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
     }
@@ -5223,6 +5521,43 @@ function bgWorkerProcess() {
         const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
         const offset = (mix * totalRange) >> 64n;
         return rangeStart + offset;
+    }
+
+    let workerVdCorputStep = 1n;
+    function generateVanDerCorputKey(rangeStart, rangeEnd) {
+        workerVdCorputStep++;
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        let n = workerVdCorputStep;
+        let rev = 0n;
+        let temp = n & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev = (rev << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        const offset = (rev * totalRange) >> 64n;
+        return rangeStart + offset;
+    }
+
+    let workerWeylStep = 1n;
+    function generateWeylGoldenKey(rangeStart, rangeEnd) {
+        workerWeylStep++;
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        const weylFrac = (workerWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        const offset = (weylFrac * totalRange) >> 64n;
+        return rangeStart + offset;
+    }
+
+    let workerCoprimeStep = 1n;
+    function generateCoprimeStrideKey(rangeStart, rangeEnd) {
+        workerCoprimeStep++;
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        const mod = totalRange + 1n;
+        const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? (0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) : 0xC6A4A7935BD1E995n;
+        const offset = (workerCoprimeStep * (stride | 1n)) % mod;
+        return rangeStart + (offset < 0n ? -offset : offset);
     }
 
     function generateHilbertKey(rangeStart, rangeEnd) {
@@ -5467,9 +5802,24 @@ function bgWorkerProcess() {
         if (formula === 'DETERMINISTIC_CHAOS') return stepDeterministicChaos();
         if (formula === 'QUANTUM' || formula === 'QUANTUM_TUNNEL') return getQuantumTunnelPercent();
         if (formula === 'RIEMANN' || formula === 'RIEMANN_ZETA') return getRiemannHarmonicPercent();
-        if (formula === 'GOLDEN_SINGULARITY') {
+        if (formula === 'GOLDEN_SINGULARITY' || formula === 'WEYL_GOLDEN') {
             riemannT += 1.0;
             return Math.max(0.001, Math.min(99.999, (((riemannT * 0.618033988749895) % 1.0) * 100.0)));
+        }
+        if (formula === 'VD_CORPUT') {
+            physicsStep++;
+            let n = physicsStep;
+            let q = 0, b = 0.5;
+            while (n > 0) {
+                q += (n & 1) * b;
+                n >>= 1;
+                b *= 0.5;
+            }
+            return Math.max(0.001, Math.min(99.999, q * 100.0));
+        }
+        if (formula === 'COPRIME_STRIDE') {
+            physicsStep++;
+            return Math.max(0.001, Math.min(99.999, (((physicsStep * 0.3819660112501051) % 1.0) * 100.0)));
         }
         const r = Math.random();
         if (r < 0.25) return stepDeterministicChaos();
@@ -5529,12 +5879,15 @@ function bgWorkerProcess() {
             if (cfg.selectedAlgorithm === 'AUTO') {
                 workerAutoStepCounter++;
                 if (workerAutoStepCounter % 25 === 0) {
-                    workerAutoIndex = (workerAutoIndex + 1) % 5;
+                    workerAutoIndex = (workerAutoIndex + 1) % 8;
                 }
-                if (workerAutoIndex === 1) workerActiveAlgo = 'HILBERT';
-                else if (workerAutoIndex === 2) workerActiveAlgo = 'SOBOL';
-                else if (workerAutoIndex === 3) workerActiveAlgo = 'WEAK_ENTROPY';
-                else if (workerAutoIndex === 4) workerActiveAlgo = 'CHAOS';
+                if (workerAutoIndex === 1) workerActiveAlgo = 'SOBOL';
+                else if (workerAutoIndex === 2) workerActiveAlgo = 'VD_CORPUT';
+                else if (workerAutoIndex === 3) workerActiveAlgo = 'WEYL_GOLDEN';
+                else if (workerAutoIndex === 4) workerActiveAlgo = 'COPRIME_STRIDE';
+                else if (workerAutoIndex === 5) workerActiveAlgo = 'HILBERT';
+                else if (workerAutoIndex === 6) workerActiveAlgo = 'WEAK_ENTROPY';
+                else if (workerAutoIndex === 7) workerActiveAlgo = 'CHAOS';
                 else workerActiveAlgo = 'RANDOM';
             }
             if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
@@ -5591,7 +5944,7 @@ function bgWorkerProcess() {
                 const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 100000000));
                 subMin = baseMin + (curSpan * sBig / 10000000000n);
                 subMax = baseMin + (curSpan * eBig / 10000000000n);
-            } else if (mode === 'PHYSICS' || f === 'QUANTUM_TUNNEL' || f === 'QUANTUM' || f === 'RIEMANN_ZETA' || f === 'RIEMANN' || f === 'GOLDEN_SINGULARITY' || f === 'DETERMINISTIC_CHAOS') {
+            } else if (mode === 'PHYSICS' || f === 'QUANTUM_TUNNEL' || f === 'QUANTUM' || f === 'RIEMANN_ZETA' || f === 'RIEMANN' || f === 'GOLDEN_SINGULARITY' || f === 'DETERMINISTIC_CHAOS' || f === 'VD_CORPUT' || f === 'WEYL_GOLDEN' || f === 'COPRIME_STRIDE') {
                 physicsStep++;
                 const centerPct = getNextPhysicsPercent(f);
                 const curSpan = (subMax > subMin) ? (subMax - subMin) : effRange;
@@ -5608,6 +5961,12 @@ function bgWorkerProcess() {
             // ----------------------------------------------------
             if (workerActiveAlgo === 'SOBOL') {
                 currentKey = generateSobolKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'VD_CORPUT') {
+                currentKey = generateVanDerCorputKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'WEYL_GOLDEN') {
+                currentKey = generateWeylGoldenKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
+                currentKey = generateCoprimeStrideKey(subMin, subMax);
             } else if (workerActiveAlgo === 'HILBERT') {
                 currentKey = generateHilbertKey(subMin, subMax);
             } else if (workerActiveAlgo === 'CHAOS') {
@@ -5659,9 +6018,6 @@ function bgWorkerProcess() {
             if (isEffectivePrefix) {
                 pParts.push(cfg.isPrefixAutoJump ? ('🔄 Oto Ön Ek: 0x' + (activeWorkerPrefix || '...')) : ('🧩 Ön Ek: 0x' + activeWorkerPrefix));
             }
-            if (isEffectiveGrid) {
-                pParts.push(cfg.isGridAutoJump ? ('🔄 Oto Grid [#' + activeWorkerGridCell + ']') : ('🌀 Grid [#' + activeWorkerGridCell + ']'));
-            }
             if (f === 'OMNI_CHAOS') pParts.push('💥 Hibrit Kaos');
             else if (f === 'DETERMINISTIC_CHAOS') pParts.push('♾️ Deterministik Kaos');
             else if (f !== 'PREFIX' && f !== 'GRID') pParts.push('🌀 Fizik [' + f + ']');
@@ -5670,6 +6026,12 @@ function bgWorkerProcess() {
             let algoPrefix = '';
             if (workerActiveAlgo === 'SOBOL') {
                 algoPrefix = '📐 Sobol + ';
+            } else if (workerActiveAlgo === 'VD_CORPUT') {
+                algoPrefix = '📐 Van der Corput + ';
+            } else if (workerActiveAlgo === 'WEYL_GOLDEN') {
+                algoPrefix = '🌟 Weyl Kafesi + ';
+            } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
+                algoPrefix = '♾️ Modüler Adım + ';
             } else if ((workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) || (cfg.selectedEntropyBits && cfg.selectedEntropyBits > 0)) {
                 algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
             } else if (workerActiveAlgo === 'HILBERT') {
@@ -6073,13 +6435,42 @@ function updateThreadSelectWithGpu() {
         if (savedThread && Array.from(sel.options).some(o => o.value === savedThread)) {
             sel.value = savedThread;
         } else {
-            sel.value = 'HYBRID';
+            sel.value = 'GPU';
         }
-        sel.addEventListener('change', () => {
-            try { localStorage.setItem('PREF_THREAD_COUNT', sel.value); } catch(e) {}
-        });
+        sel.onchange = onThreadCountSelectChange;
     } catch(e) {
-        sel.value = 'HYBRID';
+        sel.value = 'GPU';
+        sel.onchange = onThreadCountSelectChange;
+    }
+}
+
+function onThreadCountSelectChange() {
+    const sel = document.getElementById('threadCountSelect');
+    if (!sel) return;
+    const val = sel.value;
+    try { localStorage.setItem('PREF_THREAD_COUNT', val); } catch(e) {}
+    
+    if (isRunning) {
+        if (val === 'GPU') {
+            stopWorkerPool();
+            if (!isGpuRunning) startGpuHunting();
+        } else if (val === 'HYBRID') {
+            if (!isGpuRunning) startGpuHunting();
+            if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
+            } else {
+                const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+                startWorkerPool(fallbackCores);
+            }
+        } else {
+            stopGpuHunting(false);
+            const count = parseInt(val) || 8;
+            if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
+            } else {
+                startWorkerPool(count);
+            }
+        }
     }
 }
 
@@ -6088,13 +6479,30 @@ let gpuConfigBuffer = null;
 let gpuSeedCounter = 1;
 
 async function startGpuHunting() {
+    if (!gpuDevice && typeof navigator !== 'undefined' && navigator.gpu) {
+        try {
+            const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+            if (adapter) {
+                gpuDevice = await adapter.requestDevice();
+                isGpuSupported = true;
+                console.log('[WebGPU] 🎮 GPU Cihazı anında hazırlandı.');
+            }
+        } catch(e) {
+            console.warn('[WebGPU] Anlık cihaz alma uyarısı:', e);
+        }
+    }
+
     if (!gpuDevice) {
         console.warn('[WebGPU] WebGPU cihazı hazır değil veya desteklenmiyor, CPU modunda çalışılacak.');
+        if (typeof showToast === 'function') showToast('⚠️ WebGPU hazır değil, CPU moduna geçiliyor.', '#f59e0b');
+        const fallbackCores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
+        if (window.Worker) startWorkerPool(fallbackCores);
+        else huntBatch();
         return;
     }
     
     isGpuRunning = true;
-    console.log('[WebGPU] 🚀 GPU Hesaplama Motoru Devrede: ' + gpuCardName);
+    console.log('[WebGPU] 🚀 GPU Hesaplama Motoru Devrede: ' + (gpuCardName || 'Ekran Kartı'));
     
     try {
         const shaderModule = gpuDevice.createShaderModule({
@@ -6217,9 +6625,9 @@ async function startGpuHunting() {
                 if (isCircularMode && unsolvedList && unsolvedList.length > 0) {
                     circularIndex = (circularIndex + 1) % unsolvedList.length;
                 }
-                const activeTarget = isCircularMode 
+                const activeTarget = (isCircularMode 
                     ? (unsolvedList[circularIndex] || currentTarget) 
-                    : currentTarget;
+                    : currentTarget) || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
 
                 if (activeTarget) {
                     const baseStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
@@ -6278,23 +6686,7 @@ async function startGpuHunting() {
                         let baseDesc = '';
 
                         const isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
-                        const isEffectiveGrid   = (activeFormula === 'GRID'   || activeRangeMode === 'GRID'   || isGridFilterActive);
-
-                        // 1. Grid Filtresi: Arama uzayını 65536'lık Hilbert/Grid hücresine odaklar
-                        if (isEffectiveGrid && activeFormula !== 'PREFIX') {
-                            if (isGridAutoJump) {
-                                gridJumpCounter++;
-                                if (gridJumpCounter % 25 === 0 || userGridCell === undefined) {
-                                    pickNextRandomGridCell();
-                                    const gInput = document.getElementById('gridCellInput');
-                                    if (gInput) gInput.value = userGridCell;
-                                }
-                            }
-                            const cellSize = effRange / 65536n;
-                            subMin = boundMin + (BigInt(userGridCell || 0) * cellSize);
-                            subMax = subMin + (cellSize > 0n ? cellSize : 1n);
-                            if (subMax > boundMax) subMax = boundMax;
-                        }
+                        // Grid modu devre dışı: [boundMin, boundMax] tam aralık olarak taranır
 
                         // 2. Fizik ve Kaos Formülleri: [subMin, subMax] içerisinde mikroskobik dilim uygular
                         let physicsCenterPct = 0;
@@ -6400,9 +6792,6 @@ async function startGpuHunting() {
                         const pParts = [];
                         if (isEffectivePrefix) {
                             pParts.push(isPrefixAutoJump ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` : `🧩 Ön Ek: 0x${userPrefix}`);
-                        }
-                        if (isEffectiveGrid) {
-                            pParts.push(isGridAutoJump ? `🔄 Oto Grid [#${userGridCell}]` : `🌀 Grid [#${userGridCell}]`);
                         }
                         if (activeRangeMode === 'CHAOS') {
                             pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
@@ -6547,6 +6936,7 @@ function stopGpuHunting(stopEntireHunt = false) {
             timerInterval = null;
         }
         if (typeof releaseWakeLock === 'function') releaseWakeLock();
+        if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
 
         const btn = document.getElementById('btnToggle');
         if (btn) {
@@ -7040,10 +7430,14 @@ function handleWorkerMessage(e) {
         
         if (data.type === 'progress') {
             workerHasReceivedProgress = true;
-            if (data.totalScanned !== undefined && data.totalScanned > 0) {
-                attempts = data.totalScanned;
-            } else if (data.count) {
-                attempts += data.count;
+            if (isGpuRunning) {
+                if (data.count) attempts += data.count;
+            } else {
+                if (data.totalScanned !== undefined && data.totalScanned > 0) {
+                    attempts = data.totalScanned;
+                } else if (data.count) {
+                    attempts += data.count;
+                }
             }
             if (sliceModeActive && data.count) sliceAttempts += data.count;
             
@@ -7052,7 +7446,7 @@ function handleWorkerMessage(e) {
                 lastProgressUI = now;
                 const attEl = document.getElementById('statAttempts');
                 if (attEl) attEl.innerText = attempts.toLocaleString();
-                if (data.rate !== undefined && data.rate > 0) {
+                if (!isGpuRunning && data.rate !== undefined && data.rate > 0) {
                     const spEl = document.getElementById('statSpeed');
                     if (spEl) spEl.innerText = Math.round(data.rate).toLocaleString() + ' key/s';
                 }
@@ -7076,16 +7470,14 @@ function handleWorkerMessage(e) {
                 }
                 if (data.lastKey) {
                     const lk = document.getElementById('logKey');
-                    if (lk) lk.innerText = '0x' + data.lastKey;
+                    if (lk && !isGpuRunning) lk.innerText = '0x' + data.lastKey;
                     if (typeof drawHilbertRadar === 'function') {
                         drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
                     }
-
-
                 }
                 if (data.rangeText) {
                     const lr = document.getElementById('logRange');
-                    if (lr) lr.innerText = data.rangeText;
+                    if (lr && !isGpuRunning) lr.innerText = data.rangeText;
                 }
                 if (data.currentPrefix && isPrefixAutoJump && (activeFormula === 'PREFIX' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'PREFIX')) {
                     userPrefix = data.currentPrefix;
@@ -7171,6 +7563,7 @@ function toggleHunter() {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
         const spEl = document.getElementById('statSpeed');
         if (spEl) spEl.innerText = '0 key/s';
 
@@ -7212,6 +7605,10 @@ function toggleHunter() {
             parseAndApplyCustomAddresses();
         }
 
+        if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+            startAutoSliderTimer();
+        }
+
         if (!startTime) startTime = Date.now();
         
         timerInterval = setInterval(() => {
@@ -7222,46 +7619,42 @@ function toggleHunter() {
             const el = document.getElementById('statElapsed');
             if (el) el.innerText = hrs + ':' + mins + ':' + secs;
             
-            if (!cmdConnected) {
+            if (isGpuRunning || !cmdConnected) {
                 const speed = sec > 0 ? (attempts / sec).toFixed(1) : 0;
                 const spEl = document.getElementById('statSpeed');
                 if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
             }
         }, 500);
 
-        if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
-            console.log('🚀 [CMD MOTOR] Tarama komutu CMD motoruna iletildi.');
-            cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
-        } else {
-            const threadVal = document.getElementById('threadCountSelect')?.value;
-            if (threadVal === 'HYBRID') {
-                if (gpuDevice) {
-                    startGpuHunting();
-                }
-                const threadCount = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-                if (window.Worker) {
-                    startWorkerPool(threadCount);
-                } else {
-                    huntBatch();
-                }
-            } else if (threadVal === 'GPU') {
-                if (gpuDevice) {
-                    startGpuHunting();
-                } else {
-                    const threadCount = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8;
-                    if (window.Worker) {
-                        startWorkerPool(threadCount);
-                    } else {
-                        huntBatch();
-                    }
-                }
+        const threadVal = document.getElementById('threadCountSelect')?.value;
+        const wantsGpu = (threadVal === 'GPU' || threadVal === 'HYBRID');
+        const wantsCpu = (threadVal === 'HYBRID' || threadVal !== 'GPU');
+
+        // 1. WebGPU Donanım Motoru (AMD Radeon RX 550 - 17.5 MKey/s)
+        if (wantsGpu) {
+            console.log('🎮 [WebGPU] GPU motoru tam güç başlatılıyor...');
+            startGpuHunting();
+        }
+
+        // 2. CPU Motoru (CMD Motoru veya Tarayıcı Web Worker Havuzu)
+        if (wantsCpu) {
+            if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                console.log('🚀 [CMD MOTOR] CPU tarama komutu CMD motoruna iletildi.');
+                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
             } else {
-                const threadCount = parseInt(threadVal) || 8;
+                const threadCount = (threadVal === 'HYBRID' || !parseInt(threadVal))
+                    ? ((typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency : 8)
+                    : parseInt(threadVal);
                 if (window.Worker) {
                     startWorkerPool(threadCount);
                 } else {
                     huntBatch();
                 }
+            }
+        } else {
+            // Sadece GPU seçiliyse ve CMD bağlıysa, CMD'yi durdurarak CPU'yu GPU'ya yük olmaktan kurtar
+            if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
             }
         }
     }
@@ -7428,12 +7821,14 @@ function initCmdMotorWebSocket() {
                 const data = JSON.parse(event.data);
                 if (data.type === 'system_info') {
                     updateCmdBadge(true, data);
-                    // Sadece motor zaten çalışıyorsa UI'ı senkronize et, asla çalışan aramayı kapatma!
+                    const threadVal = document.getElementById('threadCountSelect')?.value;
                     if (data.isRunning && !isRunning) {
                         syncGuiRunning(true);
                     } else if (isRunning && !data.isRunning) {
-                        if (cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
-                            cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
+                        if (threadVal !== 'GPU' && !isGpuRunning) {
+                            if (cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
+                            }
                         }
                     }
                     if (data.lastWin) {
@@ -7441,7 +7836,10 @@ function initCmdMotorWebSocket() {
                     }
                 } else if (data.type === 'status') {
                     if (data.isRunning !== undefined) {
-                        syncGuiRunning(data.isRunning);
+                        const threadVal = document.getElementById('threadCountSelect')?.value;
+                        if (!isGpuRunning && threadVal !== 'GPU') {
+                            syncGuiRunning(data.isRunning);
+                        }
                     }
                 } else if (data.type === 'selectPuzzle') {
                     if (data.puzzleId && typeof allUnsolvedPool !== 'undefined') {
@@ -7512,6 +7910,10 @@ function syncGuiRunning(running) {
             btn.className = 'action-btn btn-stop';
             btn.innerText = '⏹ Aramayı Durdur';
         }
+        const threadVal = document.getElementById('threadCountSelect')?.value;
+        if ((threadVal === 'GPU' || threadVal === 'HYBRID') && !isGpuRunning) {
+            startGpuHunting();
+        }
         if (!startTime) startTime = Date.now();
         if (!timerInterval) {
             timerInterval = setInterval(() => {
@@ -7521,14 +7923,28 @@ function syncGuiRunning(running) {
                 const secs = String(sec % 60).padStart(2, '0');
                 const el = document.getElementById('statElapsed');
                 if (el) el.innerText = hrs + ':' + mins + ':' + secs;
+                if (isGpuRunning || !cmdConnected) {
+                    const speed = sec > 0 ? (attempts / sec).toFixed(1) : 0;
+                    const spEl = document.getElementById('statSpeed');
+                    if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
+                }
             }, 500);
         }
     } else {
+        const threadVal = document.getElementById('threadCountSelect')?.value;
+        if (isGpuRunning || threadVal === 'GPU') {
+            return;
+        }
+
         isRunning = false;
         if (btn) {
             btn.className = 'action-btn btn-start';
             btn.innerText = '▶ Aramayı Başlat';
         }
+        if (isGpuRunning) {
+            stopGpuHunting(false);
+        }
+        stopWorkerPool();
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
