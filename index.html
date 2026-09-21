@@ -1272,12 +1272,19 @@
         <div id="panelPhysics" class="mode-sub-panel" style="display:flex; flex-direction:column; gap:4px; background:#130b20; border:1px solid #a855f7; border-radius:6px; padding:4px 6px; box-shadow:0 0 10px rgba(168,85,247,0.25); box-sizing:border-box; width:100%;">
             
             <!-- 1. SATIR: HEPSİ YANYANA (CMD ROZETİ + ÇALIŞMA MODU / FORMÜL + DONANIM / THREAD / GPU) -->
+            <!-- 1. SATIR: HEPSİ YANYANA (CMD ROZETİ + AJAN + ÇALIŞMA MODU / FORMÜL + DONANIM / THREAD / GPU) -->
             <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
                 <!-- CMD ROZETİ (Çevrimdışı yazısız, kompakt) -->
                 <div id="cmdBadge" title="CMD Motoru (Tıklayarak Yeniden Bağlanın)" onclick="checkOrReconnectCmd()" style="display:inline-flex; align-items:center; gap:3px; padding:0 5px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e293b; border:1px solid #475569; color:#94a3b8; cursor:pointer;">
                     <span id="cmdBadgeDot" style="width:7px; height:7px; border-radius:50%; background:#94a3b8; display:inline-block; flex-shrink:0;"></span>
                     <span id="cmdBadgeText" style="white-space:nowrap; font-size:10px;">CMD</span>
+                </div>
+
+                <!-- 🤖 OTOPİLOT STRATEJİ AJANI BUTONU -->
+                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🤖 Otopilot Strateji Ajanı (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
+                    <span>🤖</span>
+                    <span id="agentToggleText">Ajan</span>
                 </div>
 
                 <!-- ÇALIŞMA MODU / FORMÜL SEÇİCİ -->
@@ -1309,7 +1316,8 @@
                 <!-- ALGORİTMA SEÇİCİ (📐 Sembollü) -->
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
                     <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
-                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="setAlgorithm(this.value)">
+                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
+                        <option value="AGENT">🤖 Otopilot Ajanı</option>
                         <option value="AUTO" selected>🔄 Oto (Karma)</option>
                         <option value="VD_CORPUT">📐 Van der Corput</option>
                         <option value="WEYL_GOLDEN">🌟 Weyl Kafesi</option>
@@ -1348,6 +1356,13 @@
                     </button>
                     <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
                 </div>
+            </div>
+
+            <!-- 3. SATIR: 🤖 OTOPİLOT AJANI (Panelde gizli çalışır) -->
+            <div id="agentBanner" style="display:none !important;">
+                <span id="agentPhaseText" style="display:none;">Faz 1/5: V8 Randstorm + Weyl</span>
+                <span id="agentProgressText" style="display:none;">Doygunluk: %0 (180s)</span>
+                <button type="button" onclick="toggleAutopilotAgent(false)" style="display:none;">Kapat</button>
             </div>
         </div>
     </div>
@@ -1864,7 +1879,15 @@ function stepAutoSlider() {
     }
 
     const cfg = AUTO_SLIDER_SPEEDS[autoSliderSpeed] || AUTO_SLIDER_SPEEDS['MEDIUM'];
-    const step = BigInt(Math.round(cfg.stepPct * 10000000000)); // %1 = 10 milyar adım
+    let stepPct = cfg.stepPct;
+
+    // 🧠 Ajan Hassas Mikro-Sweep (Kör Noktasız Süpürme):
+    // Ajan devredeyken adımlar devasa sıçramalar yerine arama uzayını boşluksuz
+    // süpüren hassas mikro-adımlarla (%0.08 - %0.03) akar.
+    if (typeof isAgentActive !== 'undefined' && isAgentActive) {
+        stepPct = autoSliderSpeed === 'FAST' ? 0.08 : 0.03;
+    }
+    const step = BigInt(Math.max(1, Math.round(stepPct * 10000000000))); // %1 = 10 milyar adım
 
     let nextMin, nextMax;
 
@@ -1924,10 +1947,11 @@ function updateAutoSliderUI() {
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
     if (minEl && maxEl) {
-        const pMin = (Number(minEl.value || 0) / 10000000000).toFixed(1);
-        const pMax = (Number(maxEl.value || 1000000000000) / 10000000000).toFixed(1);
+        const pMin = (Number(minEl.value || 0) / 10000000000).toFixed(3);
+        const pMax = (Number(maxEl.value || 1000000000000) / 10000000000).toFixed(3);
         const dirIcon = isAutoSliderActive ? (autoSliderDirection >= 1 ? '▶' : '◀') : '';
-        badge.innerText = `${dirIcon ? dirIcon + ' ' : ''}%${pMin} - %${pMax}`;
+        const modeTag = (typeof isAgentActive !== 'undefined' && isAgentActive) ? ' [🔬 Mikro]' : '';
+        badge.innerText = `${dirIcon ? dirIcon + ' ' : ''}%${pMin} - %${pMax}${modeTag}`;
     }
 }
 
@@ -3683,6 +3707,373 @@ function onEntropyBitsChange() {
     }
 }
 
+// ============================================================
+// 🤖 OTOPİLOT STRATEJİ VE KRİPTANALİZ AJANI (TAM KONTROL: ALGO + ENTROPİ + KAYDIRAÇ + ÖN EK)
+// ============================================================
+let isAgentActive = false;
+let agentTimer = null;
+let agentActivePhaseIndex = 0;
+let agentPhaseStartTime = 0;
+let agentPhaseStartAttempts = 0;
+
+const AGENT_TACTICS = [
+    {
+        phase: 1,
+        name: "V8 Randstorm + Weyl Kafesi",
+        algo: "WEYL_GOLDEN",
+        formula: "WEYL_GOLDEN",
+        bits: 48,
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "Tam Uzay",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Blockchain.info Chrome V8 48-bit homojen kafes taraması"
+    },
+    {
+        phase: 2,
+        name: "Android Uptime + Van der Corput",
+        algo: "VD_CORPUT",
+        formula: "VD_CORPUT",
+        bits: 32,
+        sliderMode: "SWEEP_FAST",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "🏓 Hızlı Radar",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Android 2013 PID & Uptime 32-bit bit-tersleme fraktal sıçrama"
+    },
+    {
+        phase: 3,
+        name: "Milisaniye Epoch + Asal Modüler",
+        algo: "COPRIME_STRIDE",
+        formula: "COPRIME_STRIDE",
+        bits: 40,
+        sliderMode: "WINDOW",
+        sliderMinPct: 15,
+        sliderMaxPct: 85,
+        prefixActive: true,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "0x Ön Ek Sıçrama",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "2009-2015 Zaman damgaları ve 40-bit asal adımlama"
+    },
+    {
+        phase: 4,
+        name: "Java 48-Bit + Deterministik Kaos",
+        algo: "CHAOS",
+        formula: "DETERMINISTIC_CHAOS",
+        bits: 48,
+        sliderMode: "SWEEP_MED",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "🏓 Orta Hız Radar",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Java 48-bit LCG tohumlarının kaotik haritalaması"
+    },
+    {
+        phase: 5,
+        name: "Fraktal Uzay + Schrödinger / Hilbert",
+        algo: "HILBERT",
+        formula: "QUANTUM_TUNNEL",
+        bits: 0,
+        sliderMode: "FULL",
+        prefixActive: true,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "0x Ön Ek + Hilbert",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Kuantum Tünelleme ve Hilbert uzay-dolduran eğrisi"
+    }
+];
+
+function recordAndOptimizePhasePerformance(prevIdx, elapsedSec, phaseKeys) {
+    if (elapsedSec < 5 || prevIdx < 0 || prevIdx >= AGENT_TACTICS.length) return;
+    const t = AGENT_TACTICS[prevIdx];
+    const measuredRate = phaseKeys / elapsedSec;
+
+    // Hareketli ağırlıklı ortalama (Exponential moving average)
+    if (!t.totalRuns || t.totalRuns === 0) {
+        t.avgRate = measuredRate;
+        t.totalRuns = 1;
+    } else {
+        t.avgRate = (t.avgRate * 0.5) + (measuredRate * 0.5);
+        t.totalRuns++;
+    }
+
+    // Tüm fazların en yüksek ortalama hızını bul
+    let maxRate = 1;
+    AGENT_TACTICS.forEach(tac => {
+        if (tac.avgRate && tac.avgRate > maxRate) maxRate = tac.avgRate;
+    });
+
+    // 📊 Multi-Armed Bandit Dinamik Süre Optimizasyonu:
+    // Donanımda akıcı ve yüksek hız üreten algoritmaya daha uzun süre (60s - 300s arası)
+    AGENT_TACTICS.forEach(tac => {
+        if (tac.totalRuns && tac.totalRuns > 0 && maxRate > 0) {
+            const ratio = Math.max(0.08, tac.avgRate / maxRate);
+            tac.durationSec = Math.round(60 + (ratio * 240));
+        } else {
+            tac.durationSec = tac.baseDurationSec || 180;
+        }
+    });
+
+    console.log(`[AJAN BANDIT] 📊 Faz ${t.phase} (${t.name}) Hız: ${Math.round(measuredRate)} k/s -> Yeni Dinamik Süre: ${t.durationSec}s`);
+}
+
+function setAgentSliderMode(mode, minPct, maxPct) {
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    if (!minEl || !maxEl) return;
+
+    if (mode === 'SWEEP_FAST') {
+        if (!isAutoSliderActive || autoSliderSpeed !== 'FAST') {
+            if (isAutoSliderActive) {
+                stopAutoSliderTimer();
+                isAutoSliderActive = false;
+            }
+            toggleSpeedMode('FAST');
+        }
+    } else if (mode === 'SWEEP_MED') {
+        if (!isAutoSliderActive || autoSliderSpeed !== 'MEDIUM') {
+            if (isAutoSliderActive) {
+                stopAutoSliderTimer();
+                isAutoSliderActive = false;
+            }
+            toggleSpeedMode('MEDIUM');
+        }
+    } else {
+        // Sweep radarını durdur, sabit pencere veya tam uzay uygula
+        if (isAutoSliderActive) {
+            stopAutoSliderTimer();
+            isAutoSliderActive = false;
+            autoSliderSpeed = null;
+            updateSpeedButtonStyles();
+            updateAutoSliderUI();
+        }
+        if (mode === 'WINDOW') {
+            const minVal = Math.round((minPct || 15) * 10000000000);
+            const maxVal = Math.round((maxPct || 85) * 10000000000);
+            minEl.value = minVal;
+            maxEl.value = maxVal;
+        } else {
+            // FULL (%0 - %100)
+            minEl.value = 0;
+            maxEl.value = 1000000000000;
+        }
+        if (typeof onHexSliderChange === 'function') {
+            onHexSliderChange('MIN');
+            onHexSliderChange('MAX');
+        }
+    }
+}
+
+function setAgentPrefixMode(active) {
+    if (active) {
+        if (!isPrefixAutoJump || !isPrefixFilterActive) {
+            isPrefixFilterActive = true;
+            isPrefixAutoJump = true;
+            const target = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined') ? (unsolvedList[circularIndex] || currentTarget) : currentTarget;
+            if (target && typeof pickNextRandomPrefix === 'function') {
+                const tStart = toBigIntSafe(target.origStart || target.start);
+                const tEnd   = toBigIntSafe(target.origEnd   || target.end);
+                pickNextRandomPrefix(tStart, tEnd);
+            }
+            const chk = document.getElementById('chkPrefixAutoJump');
+            if (chk) chk.checked = true;
+            if (typeof updateModeVisuals === 'function') updateModeVisuals();
+            if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
+        }
+    } else {
+        if (isPrefixFilterActive || isPrefixAutoJump) {
+            isPrefixFilterActive = false;
+            isPrefixAutoJump = false;
+            const chk = document.getElementById('chkPrefixAutoJump');
+            if (chk) chk.checked = false;
+            if (typeof updateModeVisuals === 'function') updateModeVisuals();
+            if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
+        }
+    }
+}
+
+function onAlgoSelectChange(val) {
+    if (val === 'AGENT') {
+        toggleAutopilotAgent(true);
+    } else {
+        if (isAgentActive) toggleAutopilotAgent(false);
+        setAlgorithm(val);
+    }
+}
+
+function toggleAutopilotAgent(forceState) {
+    if (forceState !== undefined) {
+        isAgentActive = forceState;
+    } else {
+        isAgentActive = !isAgentActive;
+    }
+
+    const btn = document.getElementById('btnAgentToggle');
+    const banner = document.getElementById('agentBanner');
+    const algoSel = document.getElementById('algoSelect');
+    if (isAgentActive) {
+        if (btn) {
+            btn.style.background = '#4f46e5';
+            btn.style.borderColor = '#818cf8';
+            btn.style.color = '#ffffff';
+            btn.style.boxShadow = '0 0 8px rgba(99,102,241,0.5)';
+            btn.title = '🤖 Otopilot Ajanı Aktif (Tıkla: Kapat)';
+        }
+        if (banner) banner.style.display = 'none';
+        if (algoSel) algoSel.value = 'AGENT';
+
+        agentActivePhaseIndex = 0;
+        applyAgentPhase(0);
+
+        if (!agentTimer) {
+            agentTimer = setInterval(updateAgentSupervisor, 1000);
+        }
+        console.log('[AJAN] 🤖 Otopilot Ajanı devreye alındı. Faz 1 devrede.');
+    } else {
+        if (btn) {
+            btn.style.background = '#1e1b4b';
+            btn.style.borderColor = '#6366f1';
+            btn.style.color = '#a5b4fc';
+            btn.style.boxShadow = 'none';
+            btn.title = '🤖 Otopilot Strateji Ajanı (Aç/Kapat)';
+        }
+        if (banner) banner.style.display = 'none';
+        if (algoSel && algoSel.value === 'AGENT') algoSel.value = selectedAlgorithm || 'AUTO';
+
+        if (agentTimer) {
+            clearInterval(agentTimer);
+            agentTimer = null;
+        }
+
+        // Kaydıraç ve Ön Ek kontrollerini güvenle normale sıfırla
+        setAgentSliderMode('FULL');
+        setAgentPrefixMode(false);
+
+        console.log('[AJAN] ⏹ Otopilot Ajanı durduruldu (Manuel moda dönüldü).');
+    }
+}
+
+function applyAgentPhase(idx) {
+    agentActivePhaseIndex = idx % AGENT_TACTICS.length;
+    const tactic = AGENT_TACTICS[agentActivePhaseIndex];
+
+    agentPhaseStartTime = Date.now();
+    agentPhaseStartAttempts = (typeof attempts !== 'undefined') ? attempts : 0;
+
+    // 1. Formülü ayarla
+    if (typeof selectModeFormula === 'function') {
+        selectModeFormula(tactic.formula);
+    } else {
+        const pf = document.getElementById('physicsFormulaSelect');
+        if (pf) { pf.value = tactic.formula; if (typeof onFormulaChange === 'function') onFormulaChange(); }
+    }
+
+    // 2. Algoritmayı ayarla
+    if (typeof setAlgorithm === 'function') {
+        setAlgorithm(tactic.algo);
+    }
+
+    // 3. Entropi bitini ayarla
+    selectedEntropyBits = tactic.bits;
+    const eb = document.getElementById('entropyBitsSelect');
+    if (eb) {
+        eb.value = String(tactic.bits);
+        if (typeof onEntropyBitsChange === 'function') onEntropyBitsChange();
+    }
+
+    // 4. 🎚️ Kaydıraç Modunu Ayarla (Tam Uzay / Git-Gel Radar / Daraltılmış Altın Pencere)
+    setAgentSliderMode(tactic.sliderMode, tactic.sliderMinPct, tactic.sliderMaxPct);
+
+    // 5. 0x Ön Ek Filtresi ve Otomatik Sıçramayı Ayarla
+    setAgentPrefixMode(tactic.prefixActive);
+
+    // 6. Worker'lara yeni konfigürasyonu aktar
+    if (typeof broadcastWorkerConfig === 'function') {
+        broadcastWorkerConfig();
+    }
+
+    // 7. UI metinlerini güncelle
+    const phaseEl = document.getElementById('agentPhaseText');
+    if (phaseEl) {
+        const badgeStr = tactic.badge ? ' [' + tactic.badge + ']' : '';
+        phaseEl.innerText = 'Faz ' + tactic.phase + '/5: ' + tactic.name + badgeStr;
+    }
+    const progEl = document.getElementById('agentProgressText');
+    if (progEl) {
+        progEl.innerText = 'Doygunluk: %0 (' + tactic.durationSec + 's)';
+    }
+
+    const logAlgo = document.getElementById('logAlgo');
+    if (logAlgo) {
+        const badgeStr = tactic.badge ? ' (' + tactic.badge + ')' : '';
+        logAlgo.innerText = '🤖 Otopilot [' + tactic.name + ']' + badgeStr;
+        logAlgo.style.color = '#818cf8';
+    }
+
+    console.log('[AJAN] 🚀 Yeni Strateji: Faz ' + tactic.phase + ' -> ' + tactic.name + ' | Kaydıraç: ' + tactic.sliderMode + ' | Ön Ek: ' + tactic.prefixActive);
+}
+
+function updateAgentSupervisor() {
+    if (!isAgentActive) return;
+    if (typeof isRunning !== 'undefined' && !isRunning) return;
+
+    const tactic = AGENT_TACTICS[agentActivePhaseIndex];
+    const now = Date.now();
+    const elapsedSec = Math.floor((now - agentPhaseStartTime) / 1000);
+    const remainSec = Math.max(0, tactic.durationSec - elapsedSec);
+
+    const currentAttempts = (typeof attempts !== 'undefined') ? attempts : 0;
+    const phaseKeys = Math.max(0, currentAttempts - agentPhaseStartAttempts);
+
+    const timeSat = Math.min(100, Math.floor((elapsedSec / tactic.durationSec) * 100));
+    const keySat = Math.min(100, Math.floor((phaseKeys / tactic.targetKeys) * 100));
+    const overallSat = Math.max(timeSat, keySat);
+
+    let banditTag = '';
+    if (tactic.totalRuns && tactic.totalRuns > 0) {
+        const base = tactic.baseDurationSec || 180;
+        if (tactic.durationSec > base) {
+            banditTag = ' [⚡+' + Math.round(((tactic.durationSec - base) / base) * 100) + '%]';
+        } else if (tactic.durationSec < base) {
+            banditTag = ' [⏳-' + Math.round(((base - tactic.durationSec) / base) * 100) + '%]';
+        }
+    }
+
+    const progEl = document.getElementById('agentProgressText');
+    if (progEl) {
+        progEl.innerText = 'Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ')';
+    }
+
+    const btnAgent = document.getElementById('btnAgentToggle');
+    if (btnAgent && isAgentActive) {
+        btnAgent.title = '🤖 Otopilot Ajanı Aktif: Faz ' + tactic.phase + '/5 (' + tactic.name + ') | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
+    }
+
+    if ((elapsedSec >= tactic.durationSec || phaseKeys >= tactic.targetKeys) && elapsedSec >= 10) {
+        recordAndOptimizePhasePerformance(agentActivePhaseIndex, elapsedSec, phaseKeys);
+        const nextIdx = (agentActivePhaseIndex + 1) % AGENT_TACTICS.length;
+        applyAgentPhase(nextIdx);
+    }
+}
+
 function togglePopup(popupId, event) {
     if (event) event.stopPropagation();
 
@@ -4400,38 +4791,68 @@ function generateWeakEntropyKey(rangeStart, rangeEnd, entropyBits) {
     // --- 1. SPESİFİK BİT DERİNLİKLERİ ---
     if (entBits === 32) {
         const sub = Number((c / 7n) % 3n);
-        let val = 0n;
+        let seed = 0n;
         if (sub === 0) {
-            val = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
+            seed = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
         } else if (sub === 1) {
             const ts = 1230940800n + (c % 220665600n);
-            val = (ts * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+            seed = (ts * 1664525n + 1013904223n) & 0xFFFFFFFFn;
         } else {
-            val = (c * 214013n + 2531011n) & 0xFFFFFFFFn;
+            seed = (c * 214013n + 2531011n) & 0xFFFFFFFFn;
+        }
+        let state = seed;
+        let val = 0n;
+        let bits = 0n;
+        while (bits < totalBits) {
+            state = (state * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+            val = (val << 32n) | state;
+            bits += 32n;
         }
         return rangeStart + (val % (span + 1n));
     } else if (entBits === 40) {
         const mW = (521288629n + c) & 0xFFFFFn;
         const mZ = (362436069n + (c >> 16n)) & 0xFFFFFn;
-        const val = ((mZ << 20n) | mW) & 0xFFFFFFFFFFn;
+        let state = ((mZ << 20n) | mW) & 0xFFFFFFFFFFn;
+        let val = 0n;
+        let bits = 0n;
+        while (bits < totalBits) {
+            state = (state * 25214903917n + 11n) & 0xFFFFFFFFFFn;
+            val = (val << 40n) | state;
+            bits += 40n;
+        }
         return rangeStart + (val % (span + 1n));
     } else if (entBits === 48) {
         const sub = Number((c / 7n) % 2n);
-        let val = 0n;
+        let seed = 0n;
         if (sub === 0) {
-            val = (c * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
+            seed = (c * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
         } else {
             const mW = (521288629n + c) & 0xFFFFn;
             const mZ = (362436069n + (c >> 16n)) & 0xFFFFn;
             const res32 = (((36969n * (mZ & 65535n) + (mZ >> 16n)) & 0xFFFFn) << 16n) + ((18000n * (mW & 65535n) + (mW >> 16n)) & 0xFFFFn);
-            val = ((c & 0xFFFFn) << 32n) | (res32 & 0xFFFFFFFFn);
+            seed = ((c & 0xFFFFn) << 32n) | (res32 & 0xFFFFFFFFn);
+        }
+        let state = seed;
+        let val = 0n;
+        let bits = 0n;
+        while (bits < totalBits) {
+            state = (state * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
+            val = (val << 48n) | state;
+            bits += 48n;
         }
         return rangeStart + (val % (span + 1n));
     } else if (entBits === 64) {
         let z = (c * 0x9e3779b97f4a7c15n + 1n) & 0xFFFFFFFFFFFFFFFFn;
-        z = ((z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
-        z = ((z ^ (z >> 27n)) * 0x94d049bb133111ebn) & 0xFFFFFFFFFFFFFFFFn;
-        const val = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+        let val = 0n;
+        let bits = 0n;
+        while (bits < totalBits) {
+            z = (z + 0x9e3779b97f4a7c15n) & 0xFFFFFFFFFFFFFFFFn;
+            let temp = z;
+            temp = ((temp ^ (temp >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+            temp = ((temp ^ (temp >> 27n)) * 0x94d049bb133111ebn) & 0xFFFFFFFFFFFFFFFFn;
+            val = (val << 64n) | ((temp ^ (temp >> 31n)) & 0xFFFFFFFFFFFFFFFFn);
+            bits += 64n;
+        }
         return rangeStart + (val % (span + 1n));
     }
 
@@ -5621,38 +6042,68 @@ function bgWorkerProcess() {
         // --- 1. SPESİFİK BİT DERİNLİKLERİ ---
         if (entBits === 32) {
             const sub = Number((c / 7n) % 3n);
-            let val = 0n;
+            let seed = 0n;
             if (sub === 0) {
-                val = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
+                seed = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
             } else if (sub === 1) {
                 const ts = 1230940800n + (c % 220665600n);
-                val = (ts * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+                seed = (ts * 1664525n + 1013904223n) & 0xFFFFFFFFn;
             } else {
-                val = (c * 214013n + 2531011n) & 0xFFFFFFFFn;
+                seed = (c * 214013n + 2531011n) & 0xFFFFFFFFn;
+            }
+            let state = seed;
+            let val = 0n;
+            let bits = 0n;
+            while (bits < totalBits) {
+                state = (state * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+                val = (val << 32n) | state;
+                bits += 32n;
             }
             return rangeStart + (val % (span + 1n));
         } else if (entBits === 40) {
             const mW = (521288629n + c) & 0xFFFFFn;
             const mZ = (362436069n + (c >> 16n)) & 0xFFFFFn;
-            const val = ((mZ << 20n) | mW) & 0xFFFFFFFFFFn;
+            let state = ((mZ << 20n) | mW) & 0xFFFFFFFFFFn;
+            let val = 0n;
+            let bits = 0n;
+            while (bits < totalBits) {
+                state = (state * 25214903917n + 11n) & 0xFFFFFFFFFFn;
+                val = (val << 40n) | state;
+                bits += 40n;
+            }
             return rangeStart + (val % (span + 1n));
         } else if (entBits === 48) {
             const sub = Number((c / 7n) % 2n);
-            let val = 0n;
+            let seed = 0n;
             if (sub === 0) {
-                val = (c * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
+                seed = (c * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
             } else {
                 const mW = (521288629n + c) & 0xFFFFn;
                 const mZ = (362436069n + (c >> 16n)) & 0xFFFFn;
                 const res32 = (((36969n * (mZ & 65535n) + (mZ >> 16n)) & 0xFFFFn) << 16n) + ((18000n * (mW & 65535n) + (mW >> 16n)) & 0xFFFFn);
-                val = ((c & 0xFFFFn) << 32n) | (res32 & 0xFFFFFFFFn);
+                seed = ((c & 0xFFFFn) << 32n) | (res32 & 0xFFFFFFFFn);
+            }
+            let state = seed;
+            let val = 0n;
+            let bits = 0n;
+            while (bits < totalBits) {
+                state = (state * 25214903917n + 11n) & 0xFFFFFFFFFFFFn;
+                val = (val << 48n) | state;
+                bits += 48n;
             }
             return rangeStart + (val % (span + 1n));
         } else if (entBits === 64) {
             let z = (c * 0x9e3779b97f4a7c15n + 1n) & 0xFFFFFFFFFFFFFFFFn;
-            z = ((z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
-            z = ((z ^ (z >> 27n)) * 0x94d049bb133111ebn) & 0xFFFFFFFFFFFFFFFFn;
-            const val = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+            let val = 0n;
+            let bits = 0n;
+            while (bits < totalBits) {
+                z = (z + 0x9e3779b97f4a7c15n) & 0xFFFFFFFFFFFFFFFFn;
+                let temp = z;
+                temp = ((temp ^ (temp >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+                temp = ((temp ^ (temp >> 27n)) * 0x94d049bb133111ebn) & 0xFFFFFFFFFFFFFFFFn;
+                val = (val << 64n) | ((temp ^ (temp >> 31n)) & 0xFFFFFFFFFFFFFFFFn);
+                bits += 64n;
+            }
             return rangeStart + (val % (span + 1n));
         }
 
@@ -7968,6 +8419,50 @@ function syncGuiRunning(running) {
     }
 }
 
+function initFineSliderControls() {
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    const hexMinInp = document.getElementById('hexSliderMin');
+    const hexMaxInp = document.getElementById('hexSliderMax');
+
+    // 1. Fare Tekerleği (Wheel) ile Mikro Adım:
+    // Kaydıraç üzerindeyken tekerlek %0.01 mikro adım, Shift basılıyken %0.001 nano adım kaydırır
+    function handleWheel(e, type) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 1n : -1n;
+        const el = type === 'MIN' ? minEl : maxEl;
+        if (!el) return;
+        const stepAmount = e.shiftKey ? 10000000n : 100000000n; // %0.001 veya %0.01
+        let val = BigInt(el.value || 0) + (delta * stepAmount);
+        if (val < 0n) val = 0n;
+        if (val > 1000000000000n) val = 1000000000000n;
+        el.value = Number(val);
+        if (typeof onHexSliderChange === 'function') onHexSliderChange(type);
+    }
+
+    if (minEl) minEl.addEventListener('wheel', (e) => handleWheel(e, 'MIN'), { passive: false });
+    if (maxEl) maxEl.addEventListener('wheel', (e) => handleWheel(e, 'MAX'), { passive: false });
+
+    // 2. Hex Metin Kutularında Yukarı/Aşağı Ok Tuşları ile Doğrudan Hex/Key Adımlama:
+    function handleHexKeys(e, type) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const delta = e.key === 'ArrowUp' ? 1n : -1n;
+            const mult = e.shiftKey ? 16n : (e.ctrlKey ? 256n : 1n);
+            if (type === 'MIN') {
+                if (sliderMinHex !== null) sliderMinHex = sliderMinHex + (delta * mult);
+            } else {
+                if (sliderMaxHex !== null) sliderMaxHex = sliderMaxHex + (delta * mult);
+            }
+            if (typeof updateSliderUI === 'function') updateSliderUI();
+            if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
+        }
+    }
+
+    if (hexMinInp) hexMinInp.addEventListener('keydown', (e) => handleHexKeys(e, 'MIN'));
+    if (hexMaxInp) hexMaxInp.addEventListener('keydown', (e) => handleHexKeys(e, 'MAX'));
+}
+
 window.onload = function() {
     initCmdMotorWebSocket();
     initThreadCountUI();
@@ -7975,6 +8470,7 @@ window.onload = function() {
     initEmbeddedCustomPool();
     buildCustomMenus();
     switchRangeMode('PHYSICS');
+    initFineSliderControls();
     if (typeof updateSliderUI === 'function') updateSliderUI(); broadcastWorkerConfig();
     checkSavedWins();
     if (typeof applyFormulaPreset === 'function') applyFormulaPreset(activeFormula);
