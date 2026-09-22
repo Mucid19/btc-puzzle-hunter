@@ -2948,8 +2948,8 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
         if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
         if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
         if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
-        if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
+        if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         return randomBigIntInRange(targetStart, targetEnd);
     }
     
@@ -3046,8 +3046,8 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
     if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(effStart, effEnd);
     if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(effStart, effEnd);
     if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(effStart, effEnd);
-    if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(effStart, effEnd, bits);
     if (activeA === 'HILBERT') return generateHilbertKey(effStart, effEnd);
+    if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(effStart, effEnd, bits);
     return randomBigIntInRange(effStart, effEnd);
 }
 
@@ -3670,13 +3670,20 @@ function setAlgorithm(algo) {
     });
 
     const algoSel = document.getElementById('algoSelect');
-    if (algoSel && algoSel.value !== algo) algoSel.value = algo;
+    if (algoSel) {
+        if (typeof isAgentActive !== 'undefined' && isAgentActive) {
+            algoSel.value = 'AGENT';
+        } else if (algoSel.value !== algo) {
+            algoSel.value = algo;
+        }
+    }
 
     const logAlgo = document.getElementById('logAlgo');
+    const isAgent = (typeof isAgentActive !== 'undefined' && isAgentActive);
 
     if (algo === 'AUTO') {
         const b = document.getElementById('btnAlgoAuto'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele + 📐 Sobol + 📐 V.d.Corput + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos)';
             logAlgo.style.color = '#38bdf8';
         }
@@ -3684,37 +3691,37 @@ function setAlgorithm(algo) {
         autoAlgoStepCounter = 0;
     } else if (algo === 'RANDOM') {
         const b = document.getElementById('btnAlgoRandom'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '🎲 Saf Rastgele (Monte Carlo Uniform RNG)';
             logAlgo.style.color = '#34d399';
         }
     } else if (algo === 'SOBOL') {
         const b = document.getElementById('btnAlgoSobol'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
             logAlgo.style.color = '#10b981';
         }
     } else if (algo === 'VD_CORPUT') {
         const b = document.getElementById('btnAlgoVdCorput'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '📐 Van der Corput (Bit-Tersleme Boşluksuz Tam Kapsama)';
             logAlgo.style.color = '#3b82f6';
         }
     } else if (algo === 'WEYL_GOLDEN') {
         const b = document.getElementById('btnAlgoWeyl'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '🌟 Weyl Altın Kafesi (Homojen Boşluksuz Örtüşüm)';
             logAlgo.style.color = '#eab308';
         }
     } else if (algo === 'COPRIME_STRIDE') {
         const b = document.getElementById('btnAlgoCoprime'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '♾️ Asal Modüler Adımlama (Sıfır Tekrar Tam Kapsama)';
             logAlgo.style.color = '#10b981';
         }
     } else if (algo === 'HILBERT') {
         const b = document.getElementById('btnAlgoHilbert'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '🌀 Tam Hilbert Fraktal Uzay (%100 Space-Filling)';
             logAlgo.style.color = '#818cf8';
         }
@@ -3726,13 +3733,13 @@ function setAlgorithm(algo) {
             if (entSel) entSel.value = '0';
         }
         const entDesc = selectedEntropyBits > 0 ? (selectedEntropyBits + '-Bit Kusurlu Tohum') : 'Kusurlu PRNG & Kalıp Modu';
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '⚡ Zayıf Entropi (' + entDesc + ')';
             logAlgo.style.color = '#f59e0b';
         }
     } else if (algo === 'CHAOS') {
         const b = document.getElementById('btnAlgoChaos'); if (b) b.classList.add('active');
-        if (logAlgo) {
+        if (logAlgo && !isAgent) {
             logAlgo.innerText = '♾️ Deterministik Kaos (Lojistik, Çadır & Çebışev Haritası)';
             logAlgo.style.color = '#ec4899';
         }
@@ -3746,13 +3753,18 @@ function onEntropyBitsChange() {
     selectedEntropyBits = parseInt(el.value);
     if (isNaN(selectedEntropyBits)) selectedEntropyBits = 0;
 
+    if (typeof isAgentActive !== 'undefined' && isAgentActive) {
+        broadcastWorkerConfig();
+        return;
+    }
+
     if (selectedEntropyBits === -1) {
         if (selectedAlgorithm === 'WEAK_ENTROPY') {
             setAlgorithm('AUTO');
         } else {
             broadcastWorkerConfig();
         }
-    } else if (selectedEntropyBits > 0 && selectedAlgorithm !== 'WEAK_ENTROPY') {
+    } else if (selectedEntropyBits > 0 && selectedAlgorithm !== 'WEAK_ENTROPY' && selectedAlgorithm !== 'AUTO') {
         setAlgorithm('WEAK_ENTROPY');
     } else {
         const logAlgo = document.getElementById('logAlgo');
@@ -3915,7 +3927,7 @@ const AGENT_TACTICS = [
         confidence: 0.96,
         algo: "WEYL_GOLDEN",
         formula: "WEYL_GOLDEN",
-        bits: 48,
+        bits: 0,
         popcountRange: [20, 32],
         sliderMode: "WINDOW",
         sliderMinPct: 20,
@@ -3936,7 +3948,7 @@ const AGENT_TACTICS = [
         confidence: 0.93,
         algo: "VD_CORPUT",
         formula: "VD_CORPUT",
-        bits: 32,
+        bits: 0,
         popcountRange: [22, 34],
         sliderMode: "SWEEP_FAST",
         prefixActive: false,
@@ -3955,7 +3967,7 @@ const AGENT_TACTICS = [
         confidence: 0.89,
         algo: "COPRIME_STRIDE",
         formula: "COPRIME_STRIDE",
-        bits: 40,
+        bits: 0,
         popcountRange: [26, 38],
         sliderMode: "WINDOW",
         sliderMinPct: 15,
@@ -3971,12 +3983,12 @@ const AGENT_TACTICS = [
     },
     {
         phase: 4,
-        name: "Satoshi Genesis & Erken Madencilik",
+        name: "Satoshi Genesis & Deterministik Kaos",
         zone: "Ocak 2009 - Mayıs 2010",
         confidence: 0.86,
         algo: "CHAOS",
         formula: "DETERMINISTIC_CHAOS",
-        bits: 48,
+        bits: 0,
         popcountRange: [16, 30],
         sliderMode: "WINDOW",
         sliderMinPct: 0,
@@ -4008,6 +4020,44 @@ const AGENT_TACTICS = [
         totalRuns: 0,
         avgRate: 0,
         desc: "Slashdot ilk topluluk akını basit tohumlar ve Hilbert uzay-dolduran eğrisi"
+    },
+    {
+        phase: 6,
+        name: "Kusurlu PRNG & Zayıf Entropi",
+        zone: "2011-2014 (Kusurlu Entropi Sızıntısı)",
+        confidence: 0.91,
+        algo: "WEAK_ENTROPY",
+        formula: "GOLDEN_SINGULARITY",
+        bits: 32,
+        popcountRange: [20, 36],
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "⚡ %91 Entropi Sızıntısı",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Kusurlu PRNG, LCG döngüleri ve zayıf tohum kalıpları taraması"
+    },
+    {
+        phase: 7,
+        name: "Quasi-Monte Carlo & Sobol Kafesi",
+        zone: "Düşük Tutarsızlık Kümesi",
+        confidence: 0.88,
+        algo: "SOBOL",
+        formula: "RIEMANN_ZETA",
+        bits: 0,
+        popcountRange: [22, 38],
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "📐 %88 Düşük Tutarsızlık",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Sobol quasi-random dizilimi ile boşluksuz ve homojen arama uzayı taraması"
     }
 ];
 
@@ -4209,11 +4259,10 @@ function applyAgentPhase(idx) {
     }
 
     // 3. Entropi bitini ayarla
-    selectedEntropyBits = tactic.bits;
+    selectedEntropyBits = (tactic.algo === 'WEAK_ENTROPY') ? (tactic.bits || 32) : (tactic.bits || 0);
     const eb = document.getElementById('entropyBitsSelect');
     if (eb) {
-        eb.value = String(tactic.bits);
-        if (typeof onEntropyBitsChange === 'function') onEntropyBitsChange();
+        eb.value = String(selectedEntropyBits);
     }
 
     // 4. 🎚️ Kaydıraç Modunu Ayarla (Tam Uzay / Git-Gel Radar / Daraltılmış Altın Pencere)
@@ -4232,7 +4281,7 @@ function applyAgentPhase(idx) {
     const phaseEl = document.getElementById('agentPhaseText');
     if (phaseEl) {
         const badgeStr = tactic.badge ? ' [' + tactic.badge + ']' : '';
-        phaseEl.innerText = 'Faz ' + tactic.phase + '/5: [' + tactic.zone + '] ' + tactic.name + badgeStr + popBadge;
+        phaseEl.innerText = 'Faz ' + tactic.phase + '/' + AGENT_TACTICS.length + ': [' + tactic.zone + '] ' + tactic.name + badgeStr + popBadge;
     }
     const progEl = document.getElementById('agentProgressText');
     if (progEl) {
@@ -4246,7 +4295,7 @@ function applyAgentPhase(idx) {
         logAlgo.style.color = '#818cf8';
     }
 
-    console.log('[AJAN] 🚀 Sezgisel Strateji: Faz ' + tactic.phase + ' -> ' + tactic.name + ' (' + tactic.zone + ')' + popBadge + ' | Kaydıraç: ' + tactic.sliderMode + ' | Ön Ek: ' + tactic.prefixActive);
+    console.log('[AJAN] 🚀 Sezgisel Strateji: Faz ' + tactic.phase + '/' + AGENT_TACTICS.length + ' -> ' + tactic.name + ' (' + tactic.zone + ')' + popBadge + ' | Algoritma: ' + tactic.algo + ' | Kaydıraç: ' + tactic.sliderMode + ' | Ön Ek: ' + tactic.prefixActive);
 }
 
 function updateAgentSupervisor() {
@@ -4308,7 +4357,7 @@ function updateAgentSupervisor() {
 
     const btnAgent = document.getElementById('btnAgentToggle');
     if (btnAgent && isAgentActive) {
-        btnAgent.title = '🧠 Sezgisel Isı Haritası Ajanı: Faz ' + tactic.phase + '/5 [' + tactic.zone + ']' + popStr + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
+        btnAgent.title = '🧠 Sezgisel Isı Haritası Ajanı: Faz ' + tactic.phase + '/' + AGENT_TACTICS.length + ' [' + tactic.zone + ']' + popStr + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
     }
 
     if ((elapsedSec >= tactic.durationSec || phaseKeys >= tactic.targetKeys) && elapsedSec >= 10) {
@@ -5410,7 +5459,7 @@ function huntBatch() {
                 currentKey = generateHilbertKey(subMin, subMax);
             } else if (activeAlgo === 'CHAOS') {
                 currentKey = generateDeterministicChaosKey(subMin, subMax);
-            } else if ((activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) || (selectedEntropyBits && selectedEntropyBits > 0)) {
+            } else if (activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) {
                 currentKey = generateWeakEntropyKey(subMin, subMax, selectedEntropyBits);
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
@@ -5605,7 +5654,7 @@ function huntBatch() {
                 const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
                 const isNarrowed = isDualSliderActive && (lastBoundMin && lastBoundMax && (lastBoundMin > baseStart || lastBoundMax < baseEnd));
                 let algoPrefix = '';
-                if ((activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) || (selectedEntropyBits && selectedEntropyBits > 0)) {
+                if (activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) {
                     algoPrefix = (selectedEntropyBits > 0 ? ('⚡ ' + selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
                 } else if (activeAlgo === 'SOBOL') {
                     algoPrefix = '📐 Sobol + ';
@@ -6169,12 +6218,12 @@ function bgWorkerProcess() {
 
         if (!prefixHex && !suffixHex) {
             if (activeA === 'CHAOS') return generateDeterministicChaosKey(targetStart, targetEnd);
-            if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
             if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
             if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
             if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
             if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
             if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
+            if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
             return randomBigIntInRange(targetStart, targetEnd);
         }
 
@@ -6240,12 +6289,12 @@ function bgWorkerProcess() {
             if (val >= targetStart && val <= targetEnd) return val;
         }
         if (activeA === 'CHAOS') return generateDeterministicChaosKey(targetStart, targetEnd);
-        if ((activeA === 'WEAK_ENTROPY' && bits !== -1) || bits > 0) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
         if (activeA === 'VD_CORPUT') return generateVanDerCorputKey(targetStart, targetEnd);
         if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
         if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
+        if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         return randomBigIntInRange(targetStart, targetEnd);
     }
 
@@ -6748,7 +6797,7 @@ function bgWorkerProcess() {
                 currentKey = generateHilbertKey(subMin, subMax);
             } else if (workerActiveAlgo === 'CHAOS') {
                 currentKey = generateDeterministicChaosKey(subMin, subMax);
-            } else if ((workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) || (cfg.selectedEntropyBits && cfg.selectedEntropyBits > 0)) {
+            } else if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) {
                 currentKey = generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
@@ -6809,12 +6858,12 @@ function bgWorkerProcess() {
                 algoPrefix = '🌟 Weyl Kafesi + ';
             } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
                 algoPrefix = '♾️ Modüler Adım + ';
-            } else if ((workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) || (cfg.selectedEntropyBits && cfg.selectedEntropyBits > 0)) {
-                algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
             } else if (workerActiveAlgo === 'HILBERT') {
                 algoPrefix = '🌀 Hilbert + ';
             } else if (workerActiveAlgo === 'CHAOS') {
                 algoPrefix = '♾️ Kaos + ';
+            } else if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) {
+                algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
             }
             currentRangeText = algoPrefix + baseDesc;
             
