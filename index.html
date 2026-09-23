@@ -1601,7 +1601,7 @@ function onHexSliderChange(type) {
     if (isSliderSyncBusy) return;
     const bounds = getHexTargetBounds();
     if (!bounds) return;
-    const { tStart, total } = bounds;
+    const { tStart, tEnd, total } = bounds;
 
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
@@ -5756,6 +5756,9 @@ function generateKangarooKey(rangeStart, rangeEnd) {
         }
     }
 
+    if (span <= 1n) {
+        return randomBigIntInRange(s, e > s ? e : s + 1000n);
+    }
     if (kangarooCurrentScalar < s || kangarooCurrentScalar > e) {
         kangarooCurrentScalar = s + ((kangarooCurrentScalar >= 0n ? kangarooCurrentScalar : -kangarooCurrentScalar) % span);
     }
@@ -7212,6 +7215,9 @@ function bgWorkerProcess() {
             }
         }
 
+        if (span <= 1n) {
+            return randomBigIntInRange(s, e > s ? e : s + 1000n);
+        }
         if (workerKangarooScalar < s || workerKangarooScalar > e) {
             workerKangarooScalar = s + ((workerKangarooScalar >= 0n ? workerKangarooScalar : -workerKangarooScalar) % span);
         }
@@ -7303,7 +7309,10 @@ function bgWorkerProcess() {
                     if (minStep > 0n || maxStep < 1000000000000n) {
                         boundMin = baseStart + (totalR * minStep / 1000000000000n);
                         boundMax = baseStart + (totalR * maxStep / 1000000000000n);
-                        if (boundMax <= boundMin) boundMax = boundMin + 1n;
+                        if (boundMax <= boundMin) {
+                            boundMax = (boundMin + (totalR / 100n) <= baseEnd) ? (boundMin + (totalR / 100n)) : baseEnd;
+                            if (boundMin >= boundMax) { boundMin = baseStart; boundMax = baseEnd; }
+                        }
                     }
                 } else if (cfg.sliderMinHex && cfg.sliderMaxHex) {
                     const sMin = toBigIntSafe(cfg.sliderMinHex);
@@ -8096,7 +8105,10 @@ async function startGpuHunting() {
                             if (minStep > 0n || maxStep < 1000000000000n) {
                                 boundMin = baseStart + (totalR * minStep / 1000000000000n);
                                 boundMax = baseStart + (totalR * maxStep / 1000000000000n);
-                                if (boundMax <= boundMin) boundMax = boundMin + 1n;
+                                if (boundMax <= boundMin) {
+                                    boundMax = (boundMin + (totalR / 100n) <= baseEnd) ? (boundMin + (totalR / 100n)) : baseEnd;
+                                    if (boundMin >= boundMax) { boundMin = baseStart; boundMax = baseEnd; }
+                                }
                             }
                         } else if (sliderMinHex !== null && sliderMaxHex !== null) {
                             if (sliderMinHex >= boundMin && sliderMinHex < boundMax &&
@@ -8557,14 +8569,14 @@ function handleWorkerMessage(e) {
                 // index0: API kontrolü devre dışı
                 if (data.lastKey) {
                     const lk = document.getElementById('logKey');
-                    if (lk && !isGpuRunning) lk.innerText = '0x' + data.lastKey;
+                    if (lk) lk.innerText = '0x' + data.lastKey;
                     if (typeof drawHilbertRadar === 'function') {
                         drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
                     }
                 }
                 if (data.rangeText) {
                     const lr = document.getElementById('logRange');
-                    if (lr && !isGpuRunning) lr.innerText = data.rangeText;
+                    if (lr) lr.innerText = data.rangeText;
                 }
                 if (data.currentPrefix && isPrefixAutoJump && (activeFormula === 'PREFIX' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'PREFIX')) {
                     userPrefix = data.currentPrefix;
