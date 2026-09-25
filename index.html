@@ -3589,15 +3589,15 @@ function initKangarooSwarmChannel() {
             });
         } catch(e) {}
 
-        // Düzenli Kalp Atışı (Heartbeat & Peer Pruning) - Her 2 saniyede bir
-        setInterval(function() {
+        // Düzenli Kalp Atışı (Web Worker Tabanlı: Chrome arka plandaki sekmeleri uyutsa bile Web Worker kesintisiz çalışır)
+        function sendHeartbeatTick() {
             if (!kangarooChannel) return;
             const now = Date.now();
             let changed = false;
 
-            // 60 saniyeden uzun süre yanıt vermeyen sekmeleri temizle (Chrome arka plan sekme kısıtlamalarına karşı dayanıklı)
+            // Yalnızca kullanıcı sekmesini gerçekten kapattığında ('LEAVE' ile) veya tarayıcı çöktüyse (12 saat) temizle
             Object.keys(kangarooPeers).forEach(id => {
-                if (id !== KANGAROO_TAB_ID && now - kangarooPeers[id].lastSeen > 60000) {
+                if (id !== KANGAROO_TAB_ID && now - kangarooPeers[id].lastSeen > 43200000) {
                     delete kangarooPeers[id];
                     changed = true;
                 }
@@ -3642,7 +3642,15 @@ function initKangarooSwarmChannel() {
             } catch(e) {}
 
             updateKangarooSwarmUI();
-        }, 2000);
+        }
+
+        try {
+            const tickerBlob = new Blob(['setInterval(function(){ postMessage("tick"); }, 2000);'], { type: 'application/javascript' });
+            const tickerWorker = new Worker(URL.createObjectURL(tickerBlob));
+            tickerWorker.onmessage = function() { sendHeartbeatTick(); };
+        } catch(e) {
+            setInterval(sendHeartbeatTick, 2000);
+        }
 
         window.addEventListener('beforeunload', function() {
             if (kangarooChannel) {
