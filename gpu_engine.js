@@ -4,14 +4,9 @@
  * GERÇEK implementasyon — hiçbir sahte kod yoktur.
  * WGSL 1.0 uyumlu: Sadece u32, bool, vec2<u32>. (64-bit tip YOK)
  *
- * Mimari v2:
- *   GPU: privkey (256-bit) → EC mul → Jacobian→Affine → SHA256(compressed pubkey)  [WGSL]
- *   CPU: GPU SHA256 digest → RIPEMD160  [CryptoJS — çok hafif]
- *
- *   Optimizasyonlar:
- *   - SHA256 GPU'da (WGSL): CPU SHA256 yükü tamamen sıfırlandı
- *   - Batch: 2048 → 8192 key/dispatch (128 workgroup × 64 thread)
- *   - Double-buffer: GPU N+1 çalışırken CPU N'i RIPEMD işliyor (pipeline overlap)
+ * Mimari:
+ *   GPU: privkey (256-bit) → compressed pubkey (33 byte)  [WGSL compute shader]
+ *   CPU: pubkey hex → SHA256 → RIPEMD160  [CryptoJS, zaten window'da]
  *
  * navigator.gpu yoksa → init() false döner. Çağıran kod CPU'ya fallback yapar.
  *
@@ -33,7 +28,7 @@ struct U256 { l: array<u32, 8> }
 struct U512 { lo: U256, hi: U256 }
 struct JacobianPoint { x: U256, y: U256, z: U256, is_inf: u32 }
 
-// Input: 8 u32 per key (LE), Output: 8 u32 per key (SHA256 digest of compressed pubkey)
+// Input: 8 u32 per key (LE), Output: 9 u32 per key (compressed pubkey)
 @group(0) @binding(0) var<storage, read>       privkeys: array<u32>;
 @group(0) @binding(1) var<storage, read_write> pubkeys:  array<u32>;
 
@@ -412,89 +407,36 @@ fn scalar_mul_G(k: U256) -> JacobianPoint {
     return result;
 }
 
-// ----------------------------------------------------------------------------
-// SHA256 — 33-byte compressed pubkey'i GPU'da hash'ler (CPU yükünü sıfırlar)
-// output: 8 u32 SHA256 digest → pubkeys[idx*8 .. idx*8+7]
-// ----------------------------------------------------------------------------
+// Jacobian → affine (inline, main içinde kullanılır — WGSL 1.0'da generic return yoktur)
 
-// SHA256 K sabitleri (64 adet)
-const sha256_K = array<u32, 64>(
-    0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u,
-    0x3956c25bu, 0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u,
-    0xd807aa98u, 0x12835b01u, 0x243185beu, 0x550c7dc3u,
-    0x72be5d74u, 0x80deb1feu, 0x9bdc06a7u, 0xc19bf174u,
-    0xe49b69c1u, 0xefbe4786u, 0x0fc19dc6u, 0x240ca1ccu,
-    0x2de92c6fu, 0x4a7484aau, 0x5cb0a9dcu, 0x76f988dau,
-    0x983e5152u, 0xa831c66du, 0xb00327c8u, 0xbf597fc7u,
-    0xc6e00bf3u, 0xd5a79147u, 0x06ca6351u, 0x14292967u,
-    0x27b70a85u, 0x2e1b2138u, 0x4d2c6dfcu, 0x53380d13u,
-    0x650a7354u, 0x766a0abbu, 0x81c2c92eu, 0x92722c85u,
-    0xa2bfe8a1u, 0xa81a664bu, 0xc24b8b70u, 0xc76c51a3u,
-    0xd192e819u, 0xd6990624u, 0xf40e3585u, 0x106aa070u,
-    0x19a4c116u, 0x1e376c08u, 0x2748774cu, 0x34b0bcb5u,
-    0x391c0cb3u, 0x4ed8aa4au, 0x5b9cca4fu, 0x682e6ff3u,
-    0x748f82eeu, 0x78a5636fu, 0x84c87814u, 0x8cc70208u,
-    0x90befffau, 0xa4506cebu, 0xbef9a3f7u, 0xc67178f2u
-);
-
-// SHA256(compressed_pubkey) hesapla ve pubkeys[idx*8..+7]'ye yaz
-fn store_sha256(idx: u32, ax: U256, ay: U256) {
-    let prefix = 2u + (ay.l[0] & 1u);  // 02=çift y, 03=tek y
-
-    // 33-byte compressed pubkey → 16-word SHA256 mesaj bloğu (big-endian)
-    // Byte 0 = prefix, Byte 1..32 = ax big-endian (limbs[7]..limbs[0])
-    var w: array<u32, 64>;
-    w[0]  = (prefix << 24u) | (ax.l[7] >> 8u);
-    w[1]  = (ax.l[7] << 24u) | (ax.l[6] >> 8u);
-    w[2]  = (ax.l[6] << 24u) | (ax.l[5] >> 8u);
-    w[3]  = (ax.l[5] << 24u) | (ax.l[4] >> 8u);
-    w[4]  = (ax.l[4] << 24u) | (ax.l[3] >> 8u);
-    w[5]  = (ax.l[3] << 24u) | (ax.l[2] >> 8u);
-    w[6]  = (ax.l[2] << 24u) | (ax.l[1] >> 8u);
-    w[7]  = (ax.l[1] << 24u) | (ax.l[0] >> 8u);
-    w[8]  = (ax.l[0] << 24u) | 0x800000u;  // son byte + SHA256 padding bit
-    w[9]  = 0u; w[10] = 0u; w[11] = 0u; w[12] = 0u; w[13] = 0u;
-    w[14] = 0u;    // uzunluk yüksek 32 bit (33 byte = 264 bit < 2^32)
-    w[15] = 264u;  // uzunluk düşük 32 bit: 33 * 8 = 264
-
-    // Mesaj zamanlaması genişletme (w[16]..w[63])
-    for (var i = 16u; i < 64u; i++) {
-        let s0 = rotr(w[i-15u], 7u) ^ rotr(w[i-15u], 18u) ^ (w[i-15u] >> 3u);
-        let s1 = rotr(w[i-2u],  17u) ^ rotr(w[i-2u],  19u) ^ (w[i-2u]  >> 10u);
-        w[i] = w[i-16u] + s0 + w[i-7u] + s1;
+// Store 33-byte compressed pubkey at output slot [base]
+// pubkeys buffer: 9 u32 per key = 36 bytes (33 used, 3 padding)
+fn store_pubkey(base: u32, x: U256, y: U256) {
+    let prefix = 2u + (y.l[0] & 1u);  // 02=even, 03=odd
+    let off = base * 9u;
+    // 33 bytes: [prefix, X_big_endian_32_bytes]
+    // X is little-endian limbs[0..7], we pack big-endian
+    // Byte layout: byte0=prefix, byte1..4=limbs[7] BE, byte5..8=limbs[6] BE, ...
+    // Pack 9 u32 words (big-endian within each word):
+    // word0: [prefix, limbs[7][31..24], limbs[7][23..16], limbs[7][15..8]]
+    // word1: [limbs[7][7..0], limbs[6][31..24], limbs[6][23..16], limbs[6][15..8]]
+    // ...etc
+    var bytes: array<u32, 33>;
+    bytes[0] = prefix;
+    for (var li=0u; li<8u; li++) {
+        let limb = x.l[7u - li];  // MSB limb first
+        bytes[1u + li*4u + 0u] = (limb >> 24u) & 0xFFu;
+        bytes[1u + li*4u + 1u] = (limb >> 16u) & 0xFFu;
+        bytes[1u + li*4u + 2u] = (limb >>  8u) & 0xFFu;
+        bytes[1u + li*4u + 3u] =  limb         & 0xFFu;
     }
-
-    // SHA256 başlangıç hash değerleri
-    var h0 = 0x6a09e667u; var h1 = 0xbb67ae85u;
-    var h2 = 0x3c6ef372u; var h3 = 0xa54ff53au;
-    var h4 = 0x510e527fu; var h5 = 0x9b05688cu;
-    var h6 = 0x1f83d9abu; var h7 = 0x5be0cd19u;
-
-    var a = h0; var b = h1; var c = h2; var d = h3;
-    var e = h4; var f = h5; var g = h6; var hh = h7;
-
-    // 64 tur SHA256 compression
-    for (var i = 0u; i < 64u; i++) {
-        let S1    = rotr(e, 6u) ^ rotr(e, 11u) ^ rotr(e, 25u);
-        let ch    = (e & f) ^ (~e & g);
-        let temp1 = hh + S1 + ch + sha256_K[i] + w[i];
-        let S0    = rotr(a, 2u) ^ rotr(a, 13u) ^ rotr(a, 22u);
-        let maj   = (a & b) ^ (a & c) ^ (b & c);
-        let temp2 = S0 + maj;
-        hh = g; g = f; f = e; e = d + temp1;
-        d  = c; c = b; b = a; a = temp1 + temp2;
+    for (var w=0u; w<9u; w++) {
+        let b0 = select(0u, bytes[w*4u+0u], w*4u+0u < 33u);
+        let b1 = select(0u, bytes[w*4u+1u], w*4u+1u < 33u);
+        let b2 = select(0u, bytes[w*4u+2u], w*4u+2u < 33u);
+        let b3 = select(0u, bytes[w*4u+3u], w*4u+3u < 33u);
+        pubkeys[off + w] = (b0 << 24u) | (b1 << 16u) | (b2 << 8u) | b3;
     }
-
-    // Final hash değerlerini output buffer'a yaz
-    let off = idx * 8u;
-    pubkeys[off + 0u] = h0 + a;
-    pubkeys[off + 1u] = h1 + b;
-    pubkeys[off + 2u] = h2 + c;
-    pubkeys[off + 3u] = h3 + d;
-    pubkeys[off + 4u] = h4 + e;
-    pubkeys[off + 5u] = h5 + f;
-    pubkeys[off + 6u] = h6 + g;
-    pubkeys[off + 7u] = h7 + hh;
 }
 
 // ----------------------------------------------------------------------------
@@ -522,7 +464,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let ax    = fp_mul(pt.x, zinv2);
     let ay    = fp_mul(pt.y, zinv3);
 
-    store_sha256(idx, ax, ay);
+    store_pubkey(idx, ax, ay);
 }
 `;
 
@@ -534,12 +476,11 @@ class GpuEngine {
     constructor() {
         this.device      = null;
         this.pipeline    = null;
-        // Double-buffer: 2 set (0 ve 1) — GPU + CPU pipeline'ını örtüştürür
-        this.privkeyBufs  = [null, null];
-        this.sha256Bufs   = [null, null];
-        this.readbackBufs = [null, null];
-        this.bindGroups   = [null, null];
-        this.batchSize    = 8192;   // 8192 key/dispatch — 128 workgroup × 64 thread
+        this.privkeyBuf  = null;
+        this.pubkeyBuf   = null;
+        this.readbackBuf = null;
+        this.bindGroup   = null;
+        this.batchSize   = 2048;   // 2048 key/dispatch — GPU çekirdeklerini tam güç doldurur
         this.isInitialized = false;
         this.adapterInfo = null;
     }
@@ -583,33 +524,29 @@ class GpuEngine {
                 compute: { module: shaderModule, entryPoint: 'main' }
             });
 
-            // Buffer boyutları: 8192 key × 8 u32 × 4 byte = 262,144 byte
-            const privBytes = this.batchSize * 8 * 4;   // privkey: 8 u32/key
-            const sha2Bytes = this.batchSize * 8 * 4;   // SHA256 output: 8 u32/key
+            const privBytes = this.batchSize * 8 * 4;  // 2048*8*4 = 65,536 bytes
+            const pubBytes  = this.batchSize * 9 * 4;  // 2048*9*4 = 73,728 bytes
 
-            // 2 set buffer oluştur (double-buffer)
-            for (let i = 0; i < 2; i++) {
-                this.privkeyBufs[i] = this.device.createBuffer({
-                    size: privBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-                });
-                this.sha256Bufs[i] = this.device.createBuffer({
-                    size: sha2Bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
-                });
-                this.readbackBufs[i] = this.device.createBuffer({
-                    size: sha2Bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-                });
-                this.bindGroups[i] = this.device.createBindGroup({
-                    layout: this.pipeline.getBindGroupLayout(0),
-                    entries: [
-                        { binding: 0, resource: { buffer: this.privkeyBufs[i] } },
-                        { binding: 1, resource: { buffer: this.sha256Bufs[i]  } }
-                    ]
-                });
-            }
+            this.privkeyBuf = this.device.createBuffer({
+                size: privBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+            });
+            this.pubkeyBuf = this.device.createBuffer({
+                size: pubBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+            });
+            this.readbackBuf = this.device.createBuffer({
+                size: pubBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+            });
+            this.bindGroup = this.device.createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(0),
+                entries: [
+                    { binding: 0, resource: { buffer: this.privkeyBuf } },
+                    { binding: 1, resource: { buffer: this.pubkeyBuf  } }
+                ]
+            });
 
             this.isInitialized = true;
-            console.log('[GPU] ✅ WebGPU v2 yüksek performansla başlatıldı! Adapter:', this.adapterInfo);
-            console.log('[GPU] Batch boyutu:', this.batchSize, 'key/dispatch (128 workgroup) | SHA256 GPU\'da | Double-buffer aktif');
+            console.log('[GPU] ✅ WebGPU yüksek performansla başlatıldı! Adapter:', this.adapterInfo);
+            console.log('[GPU] Batch boyutu:', this.batchSize, 'key/dispatch (32 workgroups)');
             return true;
         } catch(e) {
             console.error('[GPU] Init hatası:', e);
@@ -618,10 +555,9 @@ class GpuEngine {
     }
 
     /**
-     * Bir batch'i GPU'ya gönder — mapAsync Promise'ini döner (non-blocking).
-     * Double-buffer loop için: submitBatch(keys, 0) → await submitBatch(keys2, 1) vb.
+     * Ham Uint32Array olarak pubkey kelimelerini döner (sıfır ara nesne tahsisi)
      */
-    submitBatch(privkeysBig, bufIdx) {
+    async computePubkeysRaw(privkeysBig) {
         if (!this.isInitialized) throw new Error('GPU başlatılmamış');
         const n = privkeysBig.length;
 
@@ -636,61 +572,62 @@ class GpuEngine {
             }
         }
 
-        const sha2Bytes = n * 8 * 4;
-        this.device.queue.writeBuffer(this.privkeyBufs[bufIdx], 0, privData.buffer, 0, n * 32);
+        this.device.queue.writeBuffer(this.privkeyBuf, 0, privData.buffer, 0, n * 32);
 
         const encoder = this.device.createCommandEncoder();
-        encoder.clearBuffer(this.sha256Bufs[bufIdx], 0, sha2Bytes);
+        encoder.clearBuffer(this.pubkeyBuf, 0, n * 36);
 
         const pass = encoder.beginComputePass();
         pass.setPipeline(this.pipeline);
-        pass.setBindGroup(0, this.bindGroups[bufIdx]);
+        pass.setBindGroup(0, this.bindGroup);
         pass.dispatchWorkgroups(Math.ceil(n / 64));
         pass.end();
 
-        encoder.copyBufferToBuffer(this.sha256Bufs[bufIdx], 0, this.readbackBufs[bufIdx], 0, sha2Bytes);
+        encoder.copyBufferToBuffer(this.pubkeyBuf, 0, this.readbackBuf, 0, n * 36);
         this.device.queue.submit([encoder.finish()]);
 
-        // mapAsync Promise'ini döner — caller'ın await etmesi gerekir
-        return this.readbackBufs[bufIdx].mapAsync(GPUMapMode.READ, 0, sha2Bytes);
-    }
-
-    /**
-     * Geçmiş uyumluluk: tek seferlik çalıştırma → SHA256 Uint32Array döner
-     */
-    async computePubkeysRaw(privkeysBig) {
-        const n = privkeysBig.length;
-        const sha2Bytes = n * 8 * 4;
-        await this.submitBatch(privkeysBig, 0);
-        const raw = new Uint32Array(this.readbackBufs[0].getMappedRange(0, sha2Bytes).slice(0));
-        this.readbackBufs[0].unmap();
+        await this.readbackBuf.mapAsync(GPUMapMode.READ, 0, n * 36);
+        const raw = new Uint32Array(this.readbackBuf.getMappedRange(0, n * 36).slice(0));
+        this.readbackBuf.unmap();
         return raw;
     }
 
     /**
-     * Eski API uyumluluğu: SHA256 Uint32Array → sahte compressed pubkey sarmalayıcısı
-     * NOT: Bu metot artık SHA256 çıktısını döner (pubkey değil). Sadece testGpu için.
+     * Batch private key'leri GPU ile işle → 33-byte compressed pubkey dizisi
+     * (testGpu ve konsol uyumluluğu için)
+     * @param {BigInt[]} privkeysBig
+     * @returns {Uint8Array[]}
      */
     async computePubkeys(privkeysBig) {
-        // Geriye uyumluluk — artık SHA256 digest döner
         const raw = await this.computePubkeysRaw(privkeysBig);
-        return raw;
+        const n = privkeysBig.length;
+        const pubkeys = [];
+        for (let i = 0; i < n; i++) {
+            const bytes = new Uint8Array(33);
+            const base = i * 9;
+            for (let w = 0; w < 9; w++) {
+                const word = raw[base + w];
+                for (let b = 0; b < 4; b++) {
+                    const bi = w * 4 + b;
+                    if (bi < 33) bytes[bi] = (word >> (24 - b * 8)) & 0xFF;
+                }
+            }
+            pubkeys.push(bytes);
+        }
+        return pubkeys;
     }
 
     destroy() {
         try {
-            for (let i = 0; i < 2; i++) {
-                if (this.privkeyBufs[i])  this.privkeyBufs[i].destroy();
-                if (this.sha256Bufs[i])   this.sha256Bufs[i].destroy();
-                if (this.readbackBufs[i]) this.readbackBufs[i].destroy();
-            }
-            if (this.device) this.device.destroy();
+            if (this.privkeyBuf)  this.privkeyBuf.destroy();
+            if (this.pubkeyBuf)   this.pubkeyBuf.destroy();
+            if (this.readbackBuf) this.readbackBuf.destroy();
+            if (this.device)      this.device.destroy();
         } catch(e) {}
         this.isInitialized = false;
         this.device = null;
     }
 }
-
 
 // =============================================================================
 // GPU Hunt Loop
@@ -925,143 +862,113 @@ async function gpuHuntBatch() {
     const target     = cfg.activeTarget;
     const targetH160 = target.targetHash160 || '';
     const BATCH      = gpuEngine.batchSize;
-    const cjs        = window.CryptoJS;
-    if (!cjs) return;
-
-    ensureTargetWords(targetH160);
-
-    // SHA256 GPU'da yapılıyor → CPU'da yalnızca RIPEMD160 kalıyor
-    // WordArray: 8 kelime, 32 byte (GPU'dan gelen SHA256 digest)
-    const waWords = new Array(8).fill(0);
-    const wa = { words: waWords, sigBytes: 32 };
-
-    const t0 = performance.now();
+    const t0         = performance.now();
 
     try {
-        // ── İlk batch'i GPU'ya gönder (double-buffer: slot 0) ──
-        let batchInfo  = genBatchForGpu(cfg, BATCH);
-        let keys       = batchInfo.keys;
-        let mapPromise = gpuEngine.submitBatch(keys, 0);
-        let bufReady   = 0;   // hangi readbackBuf hazır olacak
+        const batchInfo = genBatchForGpu(cfg, BATCH);
+        const keys = batchInfo.keys;
+        const raw  = await gpuEngine.computePubkeysRaw(keys);
+
+        ensureTargetWords(targetH160);
+        const cjs = window.CryptoJS;
+        if (!cjs) return;
+
+        // Tek bir WordArray nesnesini yeniden kullanarak bellek çöpünü önleme
+        const waWords = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const wa = { words: waWords, sigBytes: 33 };
 
         let found = false;
+        for (let i = 0; i < BATCH && gpuHuntRunning; i++) {
+            const off = i * 9;
+            const w0 = raw[off];
+            const prefix = (w0 >>> 24) & 0xFF;
+            if (prefix !== 2 && prefix !== 3) continue;
 
-        while (gpuHuntRunning && !found) {
-            // Bir sonraki batch'i hazırla (CPU bu işi GPU çalışırken yapıyor)
-            const nextBufIdx    = 1 - bufReady;
-            const nextBatchInfo = genBatchForGpu(cfg, BATCH);
-            const nextKeys      = nextBatchInfo.keys;
-            // Bir önceki GPU sonucunu bekle
-            await mapPromise;
-            // Hemen sonraki batch'i GPU'ya gönder (overlap!)
-            const nextMapPromise = gpuEngine.submitBatch(nextKeys, nextBufIdx);
+            waWords[0] = w0;
+            waWords[1] = raw[off + 1];
+            waWords[2] = raw[off + 2];
+            waWords[3] = raw[off + 3];
+            waWords[4] = raw[off + 4];
+            waWords[5] = raw[off + 5];
+            waWords[6] = raw[off + 6];
+            waWords[7] = raw[off + 7];
+            waWords[8] = raw[off + 8] & 0xFF000000;
 
-            // Mevcut batch'i CPU'da işle (sadece RIPEMD160)
-            const sha2Bytes = BATCH * 8 * 4;
-            const raw = new Uint32Array(
-                gpuEngine.readbackBufs[bufReady].getMappedRange(0, sha2Bytes).slice(0)
-            );
-            gpuEngine.readbackBufs[bufReady].unmap();
+            const sha = cjs.SHA256(wa);
+            const rmd = cjs.RIPEMD160(sha);
+            const rw = rmd.words;
 
-            for (let i = 0; i < BATCH && gpuHuntRunning && !found; i++) {
-                const off = i * 8;
-                // GPU sıfır/sonsuz nokta döndürdüyse (privkey=0 vb.) tüm wordlar 0 olur
-                if (raw[off] === 0 && raw[off + 1] === 0) continue;
+            gpuTotalKeys++;
 
-                // GPU zaten SHA256 yaptı → sadece RIPEMD160
-                waWords[0] = raw[off];
-                waWords[1] = raw[off + 1];
-                waWords[2] = raw[off + 2];
-                waWords[3] = raw[off + 3];
-                waWords[4] = raw[off + 4];
-                waWords[5] = raw[off + 5];
-                waWords[6] = raw[off + 6];
-                waWords[7] = raw[off + 7];
+            // 🎯 Doğrudan 160-bit tamsayı karşılaştırması (sıfır string tahsisi!)
+            if (targetW0 !== 0 && rw[0] === targetW0 && rw[1] === targetW1 && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
+                const keyHex = keys[i].toString(16).padStart(64, '0');
+                console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
+                handleGpuWin(keyHex, target, targetH160, false);
+                gpuHuntRunning = false; found = true; break;
+            }
 
-                const rmd = cjs.RIPEMD160(wa);
-                const rw  = rmd.words;
-
-                gpuTotalKeys++;
-
-                // 🎯 Doğrudan 160-bit tamsayı karşılaştırması (sıfır string tahsisi!)
-                if (targetW0 !== 0 && rw[0] === targetW0 && rw[1] === targetW1
-                    && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
+            // Çoklu hedef / özel havuz kontrolü (yalnızca aktifse string üretir)
+            if (cfg.satoshiMultiTargetActive || cfg.isCustomPoolActive) {
+                const h160 = rmd.toString();
+                if (cfg.satoshiMultiTargetActive && cfg.unsolvedList && cfg.unsolvedList.some(p => p.targetHash160 === h160)) {
+                    const matched = cfg.unsolvedList.find(p => p.targetHash160 === h160);
                     const keyHex = keys[i].toString(16).padStart(64, '0');
-                    console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
-                    handleGpuWin(keyHex, target, targetH160, false);
+                    console.log('[GPU] 🎯 SATOSHI WIN! key=' + keyHex);
+                    handleGpuWin(keyHex, matched, h160, false);
                     gpuHuntRunning = false; found = true; break;
                 }
-
-                // Çoklu hedef / özel havuz kontrolü (yalnızca aktifse string üretir)
-                if (cfg.satoshiMultiTargetActive || cfg.isCustomPoolActive) {
-                    const h160 = rmd.toString();
-                    if (cfg.satoshiMultiTargetActive && cfg.unsolvedList
-                        && cfg.unsolvedList.some(p => p.targetHash160 === h160)) {
-                        const matched = cfg.unsolvedList.find(p => p.targetHash160 === h160);
-                        const keyHex = keys[i].toString(16).padStart(64, '0');
-                        console.log('[GPU] 🎯 SATOSHI WIN! key=' + keyHex);
-                        handleGpuWin(keyHex, matched, h160, false);
-                        gpuHuntRunning = false; found = true; break;
-                    }
-                    if (cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined'
-                        && customAddressSet && customAddressSet.has(h160)) {
-                        const keyHex = keys[i].toString(16).padStart(64, '0');
-                        console.log('[GPU] 🎯 CUSTOM POOL WIN! key=' + keyHex);
-                        handleGpuWin(keyHex, target, h160, false);
-                        gpuHuntRunning = false; found = true; break;
-                    }
+                if (cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined'
+                    && customAddressSet && customAddressSet.has(h160)) {
+                    const keyHex = keys[i].toString(16).padStart(64, '0');
+                    console.log('[GPU] 🎯 CUSTOM POOL WIN! key=' + keyHex);
+                    handleGpuWin(keyHex, target, h160, false);
+                    gpuHuntRunning = false; found = true; break;
                 }
             }
-
-            // Hız ve UI güncelleme (her batch'te)
-            const dt = (performance.now() - t0) / 1000;
-            gpuKeysPerSec = Math.round(gpuTotalKeys / (dt || 0.001));
-            window.gpuKeysPerSec = gpuKeysPerSec;
-
-            const pParts = [];
-            if (cfg.isDualSliderActive && (batchInfo.boundMin > batchInfo.baseStart || batchInfo.boundMax < batchInfo.baseEnd)) {
-                pParts.push('🎚️ [0x' + batchInfo.boundMin.toString(16).substring(0, 6) + '..-0x' + batchInfo.boundMax.toString(16).substring(0, 6) + '..]');
-            }
-            if (batchInfo.activePrefix) {
-                pParts.push('🧩 Ön Ek: 0x' + batchInfo.activePrefix);
-            }
-            let algoPrefix = '';
-            if (batchInfo.activeAlgo === 'SOBOL') algoPrefix = '📐 Sobol + ';
-            else if (batchInfo.activeAlgo === 'VD_CORPUT') algoPrefix = '📐 Van der Corput + ';
-            else if (batchInfo.activeAlgo === 'WEYL_GOLDEN') algoPrefix = '🌟 Weyl Kafesi + ';
-            else if (batchInfo.activeAlgo === 'COPRIME_STRIDE') algoPrefix = '♾️ Modüler Adım + ';
-            else if (batchInfo.activeAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
-            else if (batchInfo.activeAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
-            else if (batchInfo.activeAlgo === 'WEAK_ENTROPY') algoPrefix = '⚡ Zayıf Entropi + ';
-
-            const rangeDesc = algoPrefix + (pParts.join(' + ') || 'Standart');
-            const rangeText = '⚡ WebGPU v2 — ' + rangeDesc + ' (' + gpuKeysPerSec.toLocaleString() + ' key/s)';
-
-            const spEl = document.getElementById('statSpeed');
-            if (spEl) spEl.innerText = gpuKeysPerSec.toLocaleString() + ' key/s ⚡GPU';
-
-            if (typeof handleWorkerMessage === 'function') {
-                handleWorkerMessage({ data: {
-                    type: 'progress',
-                    workerId: 999,
-                    count: BATCH,
-                    lastKey: keys[BATCH - 1].toString(16).padStart(64, '0'),
-                    targetId: target.id,
-                    rangeText: rangeText
-                }});
-            }
-
-            // Bir sonraki iterasyona geç
-            batchInfo  = nextBatchInfo;
-            keys       = nextKeys;
-            mapPromise = nextMapPromise;
-            bufReady   = nextBufIdx;
         }
 
-        // Döngüden çıktıysak mapPromise'i temizle (unmap edilmemiş buffer'ı kapat)
-        if (!found) {
-            try { await mapPromise; gpuEngine.readbackBufs[bufReady].unmap(); } catch(e) {}
+        const dt = (performance.now() - t0) / 1000;
+        gpuKeysPerSec = Math.round(BATCH / (dt || 0.001));
+        window.gpuKeysPerSec = gpuKeysPerSec;
+
+        // UI için durum açıklama metni (Kaydıraç ve Algoritma gösterimi)
+        const pParts = [];
+        if (cfg.isDualSliderActive && (batchInfo.boundMin > batchInfo.baseStart || batchInfo.boundMax < batchInfo.baseEnd)) {
+            pParts.push('🎚️ [0x' + batchInfo.boundMin.toString(16).substring(0, 6) + '..-0x' + batchInfo.boundMax.toString(16).substring(0, 6) + '..]');
         }
+        if (batchInfo.activePrefix) {
+            pParts.push('🧩 Ön Ek: 0x' + batchInfo.activePrefix);
+        }
+        let algoPrefix = '';
+        if (batchInfo.activeAlgo === 'SOBOL') algoPrefix = '📐 Sobol + ';
+        else if (batchInfo.activeAlgo === 'VD_CORPUT') algoPrefix = '📐 Van der Corput + ';
+        else if (batchInfo.activeAlgo === 'WEYL_GOLDEN') algoPrefix = '🌟 Weyl Kafesi + ';
+        else if (batchInfo.activeAlgo === 'COPRIME_STRIDE') algoPrefix = '♾️ Modüler Adım + ';
+        else if (batchInfo.activeAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
+        else if (batchInfo.activeAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
+        else if (batchInfo.activeAlgo === 'WEAK_ENTROPY') algoPrefix = '⚡ Zayıf Entropi + ';
+
+        const rangeDesc = algoPrefix + (pParts.join(' + ') || 'Standart');
+        const rangeText = '⚡ WebGPU — ' + rangeDesc + ' (' + gpuKeysPerSec.toLocaleString() + ' key/s)';
+
+        // Speed UI
+        const spEl = document.getElementById('statSpeed');
+        if (spEl) spEl.innerText = gpuKeysPerSec.toLocaleString() + ' key/s ⚡GPU';
+
+        // Progress (UI'da denenen son anahtarı ve tam aralığı gösterir)
+        if (typeof handleWorkerMessage === 'function') {
+            handleWorkerMessage({ data: {
+                type: 'progress',
+                workerId: 999,
+                count: BATCH,
+                lastKey: keys[BATCH-1].toString(16).padStart(64, '0'),
+                targetId: target.id,
+                rangeText: rangeText
+            }});
+        }
+
+        if (!found && gpuHuntRunning) setTimeout(gpuHuntBatch, 0);
 
     } catch(e) {
         console.error('[GPU] gpuHuntBatch hatası:', e);
@@ -1070,7 +977,6 @@ async function gpuHuntBatch() {
         if (typeof huntBatch === 'function') huntBatch();
     }
 }
-
 
 function handleGpuWin(keyHex, target, matchedH160, isUncompressed) {
     if (typeof handleWorkerMessage === 'function') {
