@@ -1196,20 +1196,7 @@
     </div>
 
     <!-- 🦘 KANGAROO DAĞITIK SÜRÜ AĞI (CROSS-TAB HERD) BİLGİ & DURUM PANELİ -->
-    <div id="kangarooSwarmBar" style="display:none; margin: 8px 0 12px 0; padding: 6px 10px; background: rgba(6, 182, 212, 0.07); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: 8px; font-size: 11px; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 6px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);">
-        <div style="display: none !important;">
-            <span id="kangarooSwarmIcon" style="font-size: 14px;">🦘</span>
-            <span id="kangarooSwarmTitle" style="color: #06b6d4; font-weight: 800; letter-spacing: 0.3px;">SÜRÜ AĞI:</span>
-            <span id="kangarooSwarmTabRole" style="padding: 2px 7px; border-radius: 4px; font-weight: 800; background: #06b6d4; color: #020617; font-size: 10.5px;">TAME</span>
-            <span id="kangarooSwarmTabCount" style="color: #94a3b8; font-size: 10.5px; font-weight: 600;">1 Sekme</span>
-            
-            <span id="kangarooSwarmAgentCount" style="display:none; color: #a5b4fc; font-size: 10.5px; background: rgba(99, 102, 241, 0.18); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(99, 102, 241, 0.35); font-weight: 700;">🧠 0 Ajan</span>
-        </div>
-        <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:3px; color: #38bdf8; font-size: 10.5px; font-weight: 700; background: rgba(56, 189, 248, 0.16); padding: 2px 8px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.4); font-family: monospace; white-space: nowrap; margin-right: 4px;">📍 0 Tuzak</span>
-        <div id="kangarooSwarmPeersList" style="display: flex; gap: 6px; align-items: center; font-family: monospace; font-size: 11px; flex-wrap: wrap;">
-            <!-- Canlı bağlı sekmelerin rozetleri -->
-        </div>
-    </div>
+    
 
 
 
@@ -1266,23 +1253,11 @@
             <!-- 1. SATIR: HEPSİ YANYANA (CMD ROZETİ + AJAN + ÇALIŞMA MODU / FORMÜL + DONANIM / THREAD / GPU) -->
             <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
-                <!-- 🧠 SEZGİSEL ISI HARİTASI VE KRİPTANALİZ AJANI BUTONU -->
-                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🧠 Sezgisel Isı Haritası Ajanı (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
+                <!-- 🧠 OTOMATİK ARALIK VE STRATEJİ AJANI BUTONU -->
+                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🧠 Otomatik Aralık Ajanı (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
                     <span>🧠</span>
                     <span id="agentToggleText">Ajan</span>
                 </div>
-
-                <!-- ÇALIŞMA MODU / FORMÜL SEÇİCİ -->
-                <select id="physicsFormulaSelect" class="range-select" style="flex:1.4; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" onchange="onFormulaChange()">
-                    <option value="GOLDEN_SINGULARITY" selected>🌟 Altın Oran</option>
-                    <option value="VD_CORPUT">📐 Van der Corput (Bit-Tersleme)</option>
-                    <option value="WEYL_GOLDEN">🌟 Weyl Altın Kafesi</option>
-                    <option value="COPRIME_STRIDE">♾️ Asal Modüler Adımlama</option>
-                    <option value="DETERMINISTIC_CHAOS">♾️ Deterministik Kaos</option>
-                    <option value="OMNI_CHAOS">🌀 Omni-Kaos (Evrensel Sürü)</option>
-                    <option value="QUANTUM_TUNNEL">⚛️ Schrödinger</option>
-                    <option value="RIEMANN_ZETA">🧬 Riemann Zeta</option>
-                </select>
 
                 <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
                 <select id="threadCountSelect" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:130px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="CPU İş Parçacığı (Çekirdek) Seçimi">
@@ -1294,6 +1269,9 @@
                     <option value="2">🌱 2 Çekirdek</option>
                 </select>
 
+                <!-- KANGAROO TUZ & AKTİF SEKME SAYISI ROZETLERİ -->
+                <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Tuz Sayısı">📍 0 Tuz</span>
+                <span id="kangarooSwarmTabCountBadge" style="display:inline-flex; align-items:center; gap:2px; color: #34d399; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Açık Aktif Sekme Sayısı Toplamı">🟢 1 Sekme</span>
             </div>
 
             <!-- 2. SATIR: ALGORİTMA (📐), ENTROPİ (⚡) VE ÖN EK (0x) BİRLEŞİK KONTROL SATIRI -->
@@ -1303,7 +1281,7 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
                     <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
-                        <option value="AGENT">🧠 Sezgisel Ajan</option>
+                        <option value="AGENT">🧠 Otomatik Ajan</option>
                         <option value="AUTO" selected>🔄 Oto (Karma)</option>
                         <option value="VD_CORPUT">📐 Van der Corput</option>
                         <option value="WEYL_GOLDEN">🌟 Weyl Kafesi</option>
@@ -1612,12 +1590,12 @@ function onHexSliderChange(type) {
         let minStep = isNaN(parseInt(minEl.value)) ? 0 : parseInt(minEl.value);
         let maxStep = isNaN(parseInt(maxEl.value)) ? 1000000000000 : parseInt(maxEl.value);
 
-        if (minStep >= maxStep) {
+        if (minStep >= maxStep || (maxStep - minStep) < 100000000) {
             if (type === 'MIN') {
-                minStep = Math.max(0, maxStep - 1);
+                minStep = Math.max(0, maxStep - 50000000000);
                 minEl.value = minStep;
             } else {
-                maxStep = Math.min(1000000000000, minStep + 1);
+                maxStep = Math.min(1000000000000, minStep + 50000000000);
                 maxEl.value = maxStep;
             }
         }
@@ -1874,8 +1852,8 @@ function stepAutoSlider() {
     let curMin = BigInt(minEl.value || 0);
     let curMax = BigInt(maxEl.value || 1000000000000);
     let span = curMax - curMin;
-    if (span <= 0n || span >= 950000000000n) {
-        span = 50000000000n; // Varsayılan %5 pencere
+    if (span <= 100000000n || span >= 950000000000n) {
+        span = (autoSliderSpeed === 'MICRO' ? 20000000000n : 50000000000n); // Varsayılan %2 veya %5 pencere
         curMin = 0n;
         curMax = span;
     }
@@ -3535,20 +3513,7 @@ function initKangarooSwarmChannel() {
                     }
                     break;
 
-                case 'AGENT_ZOOM_ALERT':
-                    if (data.keyHex) {
-                        if (typeof addLogMsg === 'function') {
-                            addLogMsg(`🎯 [SÜRÜ RADAR SİNYALİ] Başka bir sekme 0x${data.keyHex.substring(0, 8)}... civarında yakınlık yakaladı!`, '#f59e0b');
-                        }
-                        if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && typeof kangarooHerdType !== 'undefined' && kangarooHerdType === 'WILD') {
-                            try {
-                                const zCenter = BigInt('0x' + data.keyHex);
-                                kangarooCurrentScalar = zCenter + 65537n;
-                                if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
-                            } catch(e) {}
-                        }
-                    }
-                    break;
+                // AGENT_ZOOM_ALERT removed
 
                 case 'LEAVE':
                     if (kangarooPeers[data.tabId]) {
@@ -3586,7 +3551,7 @@ function initKangarooSwarmChannel() {
                             };
                             kangarooTrapsCount++;
                             const trapEl = document.getElementById('kangarooSwarmTrapCount');
-                            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
+                            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuz`;
                         }
                     }
                     break;
@@ -3736,111 +3701,33 @@ function recalculateKangarooRoles() {
 }
 
 function updateKangarooSwarmUI() {
-    const bar = document.getElementById('kangarooSwarmBar');
-    if (!bar) return;
-
-    if (kangarooPeers[KANGAROO_TAB_ID]) {
+    if (typeof kangarooPeers !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
         kangarooPeers[KANGAROO_TAB_ID].agentActive = (typeof isAgentActive !== 'undefined' ? isAgentActive : false);
         kangarooPeers[KANGAROO_TAB_ID].agentPhaseIndex = (typeof agentActivePhaseIndex !== 'undefined' ? agentActivePhaseIndex : 0);
+        kangarooPeers[KANGAROO_TAB_ID].isRunning = (typeof isRunning !== 'undefined' ? isRunning : false);
     }
 
-    const isKangaroo = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
-    const totalTabs = Object.keys(kangarooPeers).length;
-    const activeAgents = Object.values(kangarooPeers).filter(p => p.agentActive);
-    const anyAgentActive = (typeof isAgentActive !== 'undefined' && isAgentActive) || activeAgents.length > 0;
+    const totalTabs = (typeof kangarooPeers !== 'undefined' ? Object.keys(kangarooPeers).length : 1) || 1;
 
-    if (isKangaroo || totalTabs > 1 || anyAgentActive) {
-        bar.style.display = 'flex';
-    } else {
-        bar.style.display = 'none';
-        return;
-    }
-
-    const titleEl = document.getElementById('kangarooSwarmTitle');
-    const iconEl = document.getElementById('kangarooSwarmIcon');
-    if (titleEl) {
-        if (anyAgentActive && isKangaroo) {
-            titleEl.innerText = 'SÜRÜ & AJAN:';
-            if (iconEl) iconEl.innerText = '🦘';
-        } else if (anyAgentActive) {
-            titleEl.innerText = 'SEKME AJANI:';
-            if (iconEl) iconEl.innerText = '🧠';
-        } else {
-            titleEl.innerText = 'SÜRÜ AĞI:';
-            if (iconEl) iconEl.innerText = '🦘';
-        }
-    }
-
-    const agentCountEl = document.getElementById('kangarooSwarmAgentCount');
-    if (agentCountEl) {
-        if (anyAgentActive) {
-            agentCountEl.style.display = 'inline-block';
-            agentCountEl.innerText = `🧠 ${activeAgents.length} Ajan`;
-        } else {
-            agentCountEl.style.display = 'none';
-        }
-    }
-
-    const roleEl = document.getElementById('kangarooSwarmTabRole');
-    if (roleEl) {
-        if (isKangaroo) {
-            roleEl.innerText = kangarooAssignedRole;
-            if (kangarooAssignedRole.startsWith('TAME')) {
-                roleEl.style.background = '#06b6d4';
-                roleEl.style.color = '#020617';
-            } else if (kangarooAssignedRole.includes('WILD-1')) {
-                roleEl.style.background = '#34d399';
-                roleEl.style.color = '#020617';
-            } else if (kangarooAssignedRole.includes('WILD-2')) {
-                roleEl.style.background = '#f59e0b';
-                roleEl.style.color = '#020617';
-            } else {
-                roleEl.style.background = '#a855f7';
-                roleEl.style.color = '#ffffff';
-            }
-        } else {
-            const sortedTabs = Object.values(kangarooPeers).sort((a, b) => a.birth - b.birth);
-            const myIndex = sortedTabs.findIndex(t => t.id === KANGAROO_TAB_ID);
-            roleEl.innerText = `S#${(myIndex >= 0 ? myIndex + 1 : 1)}`;
-            roleEl.style.background = '#4f46e5';
-            roleEl.style.color = '#ffffff';
-        }
-    }
-
-    const countEl = document.getElementById('kangarooSwarmTabCount');
-    if (countEl) {
-        countEl.innerText = `${totalTabs} Sekme`;
-        countEl.style.color = totalTabs > 1 ? '#38bdf8' : '#94a3b8';
-    }
-
+    // 1. Tuzak Sayacı: "Tuzak" yerine "Tuz" yazar
     const trapEl = document.getElementById('kangarooSwarmTrapCount');
     if (trapEl) {
-        if (isKangaroo || kangarooTrapsCount > 0 || anyAgentActive) {
-            trapEl.style.display = 'inline-flex';
-            trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
-        } else {
-            trapEl.style.display = 'none';
-        }
+        trapEl.innerText = `📍 ${kangarooTrapsCount} Tuz`;
     }
 
-    const listEl = document.getElementById('kangarooSwarmPeersList');
-    if (listEl) {
-        const sortedTabs = Object.values(kangarooPeers).sort((a, b) => a.birth - b.birth);
-        listEl.innerHTML = sortedTabs.map((t, idx) => {
-            const isMe = (t.id === KANGAROO_TAB_ID);
-            const bg = isMe ? 'rgba(6,182,212,0.3)' : 'rgba(15,23,42,0.6)';
-            const border = isMe ? '#06b6d4' : '#334155';
-            const statusDot = t.isRunning ? '🟢' : '⚪';
-            const roleTag = isKangaroo ? ` (${idx === 0 ? 'TAME' : 'W' + idx})` : '';
-            const meTag = isMe ? ' <strong>(Siz)</strong>' : '';
-            const agentTag = t.agentActive
-                ? `<span style="background:rgba(99,102,241,0.3); border:1px solid #818cf8; color:#a5b4fc; font-size:9.5px; padding:1px 4px; border-radius:4px; font-weight:700; margin-left:2px;" title="${t.agentPhaseName || ''}">🧠 F${(t.agentPhaseIndex !== undefined ? t.agentPhaseIndex + 1 : '?')}</span>`
-                : '';
-            return `<span style="background:${bg}; border:1px solid ${border}; border-radius:5px; padding:2px 5px; display:inline-flex; align-items:center; gap:3px; white-space:nowrap;">
-                ${statusDot} S${idx + 1}${roleTag}${meTag}${agentTag}
-            </span>`;
-        }).join('');
+    // 2. Açık Aktif Sekme Sayısı Toplamı: Ayrı ayrı yazmaz, toplamı yazar
+    const tabCountBadge = document.getElementById('kangarooSwarmTabCountBadge');
+    if (tabCountBadge) {
+        const anyRunning = (typeof isRunning !== 'undefined' && isRunning) || 
+                           (typeof kangarooPeers !== 'undefined' && Object.values(kangarooPeers).some(p => p.isRunning));
+        const dot = anyRunning ? '🟢' : '⚪';
+        tabCountBadge.innerText = `${dot} ${totalTabs} Sekme`;
+        tabCountBadge.style.color = anyRunning ? '#34d399' : '#94a3b8';
+        tabCountBadge.style.borderColor = anyRunning ? 'rgba(16, 185, 129, 0.35)' : 'rgba(148, 163, 184, 0.25)';
     }
+
+    const bar = document.getElementById('kangarooSwarmBar');
+    if (bar) bar.style.display = 'none';
 }
 
 function broadcastAgentState() {
@@ -3925,7 +3812,7 @@ function recordAndBroadcastKangarooTrap(scalar, herd) {
     kangarooSharedTraps[hex] = { herd: herd, tabId: KANGAROO_TAB_ID, time: now };
     kangarooTrapsCount++;
     const tEl = document.getElementById('kangarooSwarmTrapCount');
-    if (tEl) { tEl.style.display = 'inline-flex'; tEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`; }
+    if (tEl) { tEl.style.display = 'inline-flex'; tEl.innerText = `📍 ${kangarooTrapsCount} Tuz`; }
 
     if (kangarooTrapsCount > 10000) {
         const keys = Object.keys(kangarooSharedTraps);
@@ -4119,7 +4006,7 @@ function onEntropyBitsChange() {
 }
 
 // ============================================================
-// 🧠 SEZGİSEL ISI HARİTASI VE KRİPTANALİZ AJANI (HAMMING POPCOUNT + YAKINLIK RADARI)
+// 🧠 OTOMATİK ARALIK VE STRATEJİ AJANI (HAMMING POPCOUNT + YAKINLIK RADARI)
 // ============================================================
 let isAgentActive = false;
 let agentTimer = null;
@@ -4127,7 +4014,7 @@ let agentActivePhaseIndex = 0;
 let agentPhaseStartTime = 0;
 let agentPhaseStartAttempts = 0;
 
-// 🧬 Ultra Hızlı Popcount & Proximity Yardımcıları
+// 🧬 Ultra Hızlı Popcount Yardımcıları
 function popcount32(n) {
     n = n - ((n >>> 1) & 0x55555555);
     n = (n & 0x33333333) + ((n >>> 2) & 0x33333333);
@@ -4190,95 +4077,8 @@ function applyPopcountConstraint(key, minB, maxB, targetRange) {
     return (modified >= minB && modified <= maxB) ? modified : key;
 }
 
-// 🎯 Micro-Zoom & Yakınlık Durum Değişkenleri
-let agentIsMicroZooming = false;
-let agentPreZoomPhaseIndex = 0;
-let agentZoomStartTime = 0;
-let agentZoomStartAttempts = 0;
-let agentZoomDurationSec = 40;
-let agentZoomTargetKeys = 100000;
-let agentZoomCenterKey = null;
-let lastProximityAlertInfo = null;
-
-function handleProximityAlert(data) {
-    lastProximityAlertInfo = data;
-    const matchBits = data.matchLen * 4;
-    console.log(`%c[RADAR YAKINLIK] 🎯 %${data.matchPct} Benzerlik (${data.matchLen} hex hane / ${matchBits}-bit eşleşti)! Anahtar: 0x${data.keyHex} -> Hedef: ${(data.targetH160 || '').substring(0, 10)}...`, 'color:#10b981; font-weight:bold; font-size:11px;');
-    
-    const lr = document.getElementById('logRange');
-    if (lr && !isGpuRunning) {
-        lr.innerHTML = `<span style="color:#10b981; font-weight:bold;">🎯 RADAR YAKINLIK: %${data.matchPct} (${data.matchLen} hane) 0x${data.keyHex.substring(0, 8)}...</span>`;
-    }
-    
-    if (isAgentActive && !agentIsMicroZooming) {
-        triggerAgentMicroZoom(data.keyHex, data.matchLen);
-    }
-}
-
-function triggerAgentMicroZoom(keyHex, matchLen) {
-    if (agentIsMicroZooming) return;
-    agentIsMicroZooming = true;
-    agentPreZoomPhaseIndex = agentActivePhaseIndex;
-    agentZoomStartTime = Date.now();
-    agentZoomStartAttempts = (typeof attempts !== 'undefined') ? attempts : 0;
-    
-    try {
-        const center = BigInt('0x' + keyHex);
-        agentZoomCenterKey = center;
-        
-        const actT = currentTarget || getActiveTarget();
-        const pStart = actT ? BigInt('0x' + (actT.origStart || actT.start)) : 0n;
-        const pEnd = actT ? BigInt('0x' + (actT.origEnd || actT.end)) : 0n;
-        
-        const delta = 1048576n;
-        const zMin = (center > delta + pStart) ? (center - delta) : pStart;
-        const zMax = (center + delta < pEnd) ? (center + delta) : pEnd;
-        
-        if (pEnd > pStart) {
-            const totalSpan = pEnd - pStart;
-            const minPct = Number(((zMin - pStart) * 1000000n) / totalSpan) / 10000;
-            const maxPct = Number(((zMax - pStart) * 1000000n) / totalSpan) / 10000;
-            setAgentSliderMode('WINDOW', Math.max(0, minPct), Math.min(100, maxPct));
-        }
-        
-        if (typeof isKangarooModeActive === 'function' && isKangarooModeActive()) {
-            if (typeof selectedAlgorithm !== 'undefined') selectedAlgorithm = 'KANGAROO';
-            if (typeof kangarooHerdType !== 'undefined') kangarooHerdType = 'TAME';
-            if (typeof kangarooCurrentScalar !== 'undefined') kangarooCurrentScalar = center;
-        } else {
-            if (typeof setAlgorithm === 'function') setAlgorithm('WEYL_GOLDEN');
-            if (typeof selectModeFormula === 'function') selectModeFormula('WEYL_GOLDEN');
-        }
-        
-        if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
-        
-        if (typeof kangarooChannel !== 'undefined' && kangarooChannel) {
-            try {
-                kangarooChannel.postMessage({
-                    type: 'AGENT_ZOOM_ALERT',
-                    senderId: KANGAROO_TAB_ID,
-                    tabId: KANGAROO_TAB_ID,
-                    keyHex: keyHex,
-                    matchLen: matchLen,
-                    timestamp: Date.now()
-                });
-            } catch(e) {}
-        }
-        
-        const isKang = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
-        console.log(`[AJAN MICRO-ZOOM] 🎯 0x${keyHex} etrafında Lokal İnce Tarama başlatıldı! (${isKang ? '🦘 Kangaroo Evcil Sürü Tuzağı' : '±1M anahtar penceresi'}, süre: ${agentZoomDurationSec}s)`);
-    } catch (err) {
-        console.warn('[AJAN MICRO-ZOOM HATASI]:', err);
-        agentIsMicroZooming = false;
-    }
-}
-
-function finishAgentMicroZoom() {
-    if (!agentIsMicroZooming) return;
-    agentIsMicroZooming = false;
-    console.log('[AJAN MICRO-ZOOM] ⏹ Lokal İnce Tarama tamamlandı. Sezgisel plana kaldığı yerden dönülüyor.');
-    applyAgentPhase(agentPreZoomPhaseIndex);
-}
+// Micro-Zoom variables removed
+// Proximity alert & Micro-Zoom removed (heuristic fallacy)
 
 const AGENT_TACTICS = [
     {
@@ -4297,7 +4097,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 200,
         targetKeys: 250000,
-        badge: "🔥 %96 Isı Tepe Noktası",
+        badge: "Faz 1: V8 Randstorm",
         totalRuns: 0,
         avgRate: 0,
         desc: "Chrome V8 48-bit tohum zaafiyeti ve Satoshi Cracker Altın Penceresi (%20-%40)"
@@ -4316,7 +4116,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 190,
         targetKeys: 250000,
-        badge: "🔥 %93 Kriz Bölgesi",
+        badge: "Faz 2: Android SecureRandom",
         totalRuns: 0,
         avgRate: 0,
         desc: "Ağustos 2013 Android SecureRandom sıfır entropi krizi ve hızlı radar"
@@ -4337,7 +4137,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "🔥 %89 Boğa Dalgası",
+        badge: "Faz 3: 2013 Boğa Web Cüzdanları",
         totalRuns: 0,
         avgRate: 0,
         desc: "İlk büyük 1000$ patlaması acele açılan web cüzdanları ve asal modüler dengeli radar taraması"
@@ -4358,7 +4158,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 170,
         targetKeys: 200000,
-        badge: "🔥 %86 Genesis Kümesi",
+        badge: "Faz 4: Satoshi Genesis & LCG",
         totalRuns: 0,
         avgRate: 0,
         desc: "2009 Genesis ilk istemci tohumları ve düşük bit aralığında derin yavaş radar taraması (%0-%25)"
@@ -4379,7 +4179,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 160,
         targetKeys: 200000,
-        badge: "🔥 %80 Erken Topluluk",
+        badge: "Faz 5: Erken Brainwallet",
         totalRuns: 0,
         avgRate: 0,
         desc: "Slashdot ilk topluluk akını basit tohumlar ve Hilbert uzayında ultra-hassas mikroskobik arama"
@@ -4398,7 +4198,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "⚡ %91 Entropi Sızıntısı",
+        badge: "Faz 6: Kusurlu PRNG",
         totalRuns: 0,
         avgRate: 0,
         desc: "Kusurlu PRNG, LCG döngüleri ve zayıf tohum kalıpları taraması"
@@ -4417,7 +4217,7 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "📐 %88 Düşük Tutarsızlık",
+        badge: "Faz 7: Sobol Kafesi",
         totalRuns: 0,
         avgRate: 0,
         desc: "Sobol quasi-random dizilimi ile boşluksuz ve homojen arama uzayı taraması"
@@ -4448,10 +4248,10 @@ const AGENT_KANGAROO_TACTICS = [
         sliderMinPct: 25,
         sliderMaxPct: 75,
         prefixActive: false,
-        baseDurationSec: 150,
-        durationSec: 150,
+        baseDurationSec: 30,
+        durationSec: 30,
         targetKeys: 250000,
-        badge: "🦘 %98 Evcil Tuzak",
+        badge: "Faz 1: Pollard Evcil Tuzak",
         totalRuns: 0,
         avgRate: 0,
         desc: "Evcil kanguru sürüsü deterministik sıçramalarla aralığın merkezinde yoğun tuzak ağı (Distinguished Points) oluşturur."
@@ -4468,10 +4268,10 @@ const AGENT_KANGAROO_TACTICS = [
         popcountRange: null,
         sliderMode: "SWEEP_FAST",
         prefixActive: false,
-        baseDurationSec: 180,
-        durationSec: 180,
-        targetKeys: 300000,
-        badge: "🦘 %95 Vahşi Av",
+        baseDurationSec: 30,
+        durationSec: 30,
+        targetKeys: 250000,
+        badge: "Faz 2: Pollard Vahşi Av",
         totalRuns: 0,
         avgRate: 0,
         desc: "Rastgele konumlardan salınan vahşi kangurular hızlı sweep radarıyla evcil tuzak izleriyle O(√N) çarpışma arar."
@@ -4490,10 +4290,10 @@ const AGENT_KANGAROO_TACTICS = [
         sliderMinPct: 15,
         sliderMaxPct: 85,
         prefixActive: false,
-        baseDurationSec: 160,
-        durationSec: 160,
+        baseDurationSec: 30,
+        durationSec: 30,
         targetKeys: 250000,
-        badge: "🦘 %92 Barikat Dilimi",
+        badge: "Faz 3: Pollard Barikat Dilimi",
         totalRuns: 0,
         avgRate: 0,
         desc: "Sıçrama adımlarını orta hızlı radar süpürmesiyle katmanlara yayarak arama aralığını iki uçtan kıstırır."
@@ -4512,10 +4312,10 @@ const AGENT_KANGAROO_TACTICS = [
         sliderMinPct: 10,
         sliderMaxPct: 90,
         prefixActive: false,
-        baseDurationSec: 170,
-        durationSec: 170,
-        targetKeys: 280000,
-        badge: "🧬 %91 Popcount Filtresi",
+        baseDurationSec: 30,
+        durationSec: 30,
+        targetKeys: 250000,
+        badge: "Faz 4: Popcount Filtresi",
         totalRuns: 0,
         avgRate: 0,
         desc: "Hamming ağırlığı 20-36 bit aralığına kısıtlanmış vahşi kangurular ile yavaş ve derin radar taramasıyla çarpışma avlar."
@@ -4534,10 +4334,10 @@ const AGENT_KANGAROO_TACTICS = [
         sliderMinPct: 38.2,
         sliderMaxPct: 61.8,
         prefixActive: false,
-        baseDurationSec: 150,
-        durationSec: 150,
+        baseDurationSec: 30,
+        durationSec: 30,
         targetKeys: 250000,
-        badge: "📐 %90 Altın Pencere",
+        badge: "Faz 5: Altın Pencere",
         totalRuns: 0,
         avgRate: 0,
         desc: "Fibonacci / Altın Oran çekirdeğinde mikroskobik adımlarla ultra-hassas evcil tuzak radar taraması yürütür."
@@ -4554,10 +4354,10 @@ const AGENT_KANGAROO_TACTICS = [
         popcountRange: null,
         sliderMode: "FULL",
         prefixActive: true,
-        baseDurationSec: 160,
-        durationSec: 160,
-        targetKeys: 280000,
-        badge: "🎯 %94 Ön Ek Baskını",
+        baseDurationSec: 30,
+        durationSec: 30,
+        targetKeys: 250000,
+        badge: "Faz 6: Ön Ek Ada Baskını",
         totalRuns: 0,
         avgRate: 0,
         desc: "Kanguru sıçramalarını dinamik hex ön ek filtreleriyle birleştirerek rastgele alt adacıklara (Island-Hopping) yüksek frekanslı baskınlar yapar."
@@ -4574,10 +4374,10 @@ const AGENT_KANGAROO_TACTICS = [
         popcountRange: null,
         sliderMode: "FULL",
         prefixActive: false,
-        baseDurationSec: 200,
-        durationSec: 200,
-        targetKeys: 350000,
-        badge: "🦘 %89 Çapraz Tarama",
+        baseDurationSec: 35,
+        durationSec: 35,
+        targetKeys: 300000,
+        badge: "Faz 7: Çift Sürü Çapraz Tarama",
         totalRuns: 0,
         avgRate: 0,
         desc: "Evcil ve vahşi kanguruların tam arama uzayında yüksek frekanslı sıçrama döngüsüyle global çarpışma taraması."
@@ -4615,9 +4415,9 @@ function recordAndOptimizePhasePerformance(prevIdx, elapsedSec, phaseKeys) {
         if (tac.totalRuns && tac.totalRuns > 0 && maxRate > 0) {
             const speedRatio = Math.max(0.1, tac.avgRate / maxRate);
             const combinedScore = (speedRatio * 0.6) + (conf * 0.4);
-            tac.durationSec = Math.round(60 + (combinedScore * 240));
+            tac.durationSec = Math.round(20 + (combinedScore * 25));
         } else {
-            tac.durationSec = Math.round((tac.baseDurationSec || 180) * conf);
+            tac.durationSec = Math.round((tac.baseDurationSec || 30) * conf);
         }
     });
 
@@ -4636,15 +4436,17 @@ function setAgentSliderMode(mode, minPct, maxPct) {
         'SWEEP_MICRO': 'MICRO'
     };
 
+    isSliderSyncBusy = false;
+
     if (sweepSpeedMap[mode]) {
         const targetSpeed = sweepSpeedMap[mode];
-        if (typeof minPct === 'number' && typeof maxPct === 'number' && maxPct > minPct) {
-            minEl.value = Math.round(minPct * 10000000000);
-            maxEl.value = Math.round(maxPct * 10000000000);
-            if (typeof onHexSliderChange === 'function') {
-                onHexSliderChange('MIN');
-                onHexSliderChange('MAX');
-            }
+        const pMin = typeof minPct === 'number' ? minPct : 0;
+        const pMax = typeof maxPct === 'number' ? maxPct : 100;
+        minEl.value = Math.round(pMin * 10000000000);
+        maxEl.value = Math.round(pMax * 10000000000);
+        if (typeof onHexSliderChange === 'function') {
+            onHexSliderChange('MIN');
+            onHexSliderChange('MAX');
         }
         if (!isAutoSliderActive || autoSliderSpeed !== targetSpeed) {
             if (isAutoSliderActive) {
@@ -4652,6 +4454,9 @@ function setAgentSliderMode(mode, minPct, maxPct) {
                 isAutoSliderActive = false;
             }
             toggleSpeedMode(targetSpeed);
+        } else {
+            updateSpeedButtonStyles();
+            updateAutoSliderUI();
         }
     } else {
         // Sweep radarını durdur, sabit pencere veya tam uzay uygula
@@ -4659,14 +4464,12 @@ function setAgentSliderMode(mode, minPct, maxPct) {
             stopAutoSliderTimer();
             isAutoSliderActive = false;
             autoSliderSpeed = null;
-            updateSpeedButtonStyles();
-            updateAutoSliderUI();
         }
         if (mode === 'WINDOW') {
-            const minVal = Math.round((minPct || 15) * 10000000000);
-            const maxVal = Math.round((maxPct || 85) * 10000000000);
-            minEl.value = minVal;
-            maxEl.value = maxVal;
+            const pMin = typeof minPct === 'number' ? minPct : 25;
+            const pMax = typeof maxPct === 'number' ? maxPct : 75;
+            minEl.value = Math.round(pMin * 10000000000);
+            maxEl.value = Math.round(pMax * 10000000000);
         } else {
             // FULL (%0 - %100)
             minEl.value = 0;
@@ -4676,6 +4479,8 @@ function setAgentSliderMode(mode, minPct, maxPct) {
             onHexSliderChange('MIN');
             onHexSliderChange('MAX');
         }
+        updateSpeedButtonStyles();
+        updateAutoSliderUI();
     }
 }
 
@@ -4737,7 +4542,7 @@ function toggleAutopilotAgent(forceState) {
             btn.style.borderColor = isKangaroo ? '#06b6d4' : '#818cf8';
             btn.style.color = '#ffffff';
             btn.style.boxShadow = isKangaroo ? '0 0 8px rgba(6,182,212,0.6)' : '0 0 8px rgba(99,102,241,0.5)';
-            btn.title = isKangaroo ? '🦘 Pollard Kangaroo Ajanı Aktif (Tıkla: Kapat)' : '🧠 Sezgisel Ajan Aktif (Tıkla: Kapat)';
+            btn.title = isKangaroo ? '🦘 Pollard Kangaroo Ajanı Aktif (Tıkla: Kapat)' : '🧠 Otomatik Ajan Aktif (Tıkla: Kapat)';
         }
         const toggleText = document.getElementById('agentToggleText');
         if (toggleText) toggleText.innerText = isKangaroo ? 'Kanguru' : 'Ajan';
@@ -4753,14 +4558,14 @@ function toggleAutopilotAgent(forceState) {
             agentTimer = setInterval(updateAgentSupervisor, 1000);
         }
         broadcastAgentState();
-        console.log('[AJAN] ' + (isKangaroo ? '🦘 Pollard Kangaroo Sezgisel Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.' : '🧠 Sezgisel Isı Haritası Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.'));
+        console.log('[AJAN] ' + (isKangaroo ? '🦘 Pollard Kangaroo Sezgisel Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.' : '🧠 Otomatik Aralık Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.'));
     } else {
         if (btn) {
             btn.style.background = '#1e1b4b';
             btn.style.borderColor = '#6366f1';
             btn.style.color = '#a5b4fc';
             btn.style.boxShadow = 'none';
-            btn.title = '🧠 Sezgisel Isı Haritası Ajanı (Aç/Kapat)';
+            btn.title = '🧠 Otomatik Aralık Ajanı (Aç/Kapat)';
         }
         const toggleText = document.getElementById('agentToggleText');
         if (toggleText) toggleText.innerText = 'Ajan';
@@ -4773,10 +4578,7 @@ function toggleAutopilotAgent(forceState) {
             agentTimer = null;
         }
 
-        if (agentIsMicroZooming) {
-            finishAgentMicroZoom();
-            agentIsMicroZooming = false;
-        }
+        // Micro-zoom stop handler removed
 
         // Kaydıraç ve Ön Ek kontrollerini güvenle normale sıfırla
         setAgentSliderMode('FULL');
@@ -4857,7 +4659,7 @@ function applyAgentPhase(idx) {
     const logAlgo = document.getElementById('logAlgo');
     if (logAlgo) {
         const badgeStr = tactic.badge ? ' (' + tactic.badge + ')' : '';
-        logAlgo.innerText = (isKangaroo ? '🦘 Pollard Kangaroo Ajanı [' : '🧠 Sezgisel Ajan [') + tactic.name + ']' + badgeStr + popBadge + herdBadge + swarmBadge;
+        logAlgo.innerText = (isKangaroo ? '🦘 Pollard Kangaroo Şef Ajanı [' : '🧠 Otomatik Strateji Ajanı [') + tactic.name + ']' + badgeStr + popBadge + herdBadge + swarmBadge;
         logAlgo.style.color = isKangaroo ? '#06b6d4' : '#818cf8';
     }
     const toggleText = document.getElementById('agentToggleText');
@@ -4865,7 +4667,7 @@ function applyAgentPhase(idx) {
 
     broadcastAgentState();
 
-    console.log('[AJAN] 🚀 Sezgisel Strateji: Faz ' + tactic.phase + '/' + tacticsList.length + ' -> ' + tactic.name + ' (' + tactic.zone + ')' + popBadge + herdBadge + swarmBadge + ' | Algoritma: ' + tactic.algo + ' | Sürü: ' + (tactic.herd || 'N/A') + ' | Kaydıraç: ' + tactic.sliderMode);
+    console.log('[AJAN] 🚀 Ajan Stratejisi: Faz ' + tactic.phase + '/' + tacticsList.length + ' -> ' + tactic.name + ' (' + tactic.zone + ')' + popBadge + herdBadge + swarmBadge + ' | Algoritma: ' + tactic.algo + ' | Sürü: ' + (tactic.herd || 'N/A') + ' | Kaydıraç: ' + tactic.sliderMode);
 }
 
 function updateAgentSupervisor() {
@@ -4875,29 +4677,7 @@ function updateAgentSupervisor() {
     const tacticsList = getActiveAgentTactics();
     const isKangaroo = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
 
-    if (agentIsMicroZooming) {
-        const now = Date.now();
-        const elapsedSec = Math.floor((now - agentZoomStartTime) / 1000);
-        const remainSec = Math.max(0, agentZoomDurationSec - elapsedSec);
-        const currentAttempts = (typeof attempts !== 'undefined') ? attempts : 0;
-        const zoomKeys = Math.max(0, currentAttempts - agentZoomStartAttempts);
-        const sat = Math.min(100, Math.floor((zoomKeys / agentZoomTargetKeys) * 100));
-
-        const progEl = document.getElementById('agentProgressText');
-        if (progEl) {
-            progEl.innerText = (isKangaroo ? '🦘 KANGAROO LOKAL ÇARPIŞMA TUZAĞI: %' : '🎯 LOKAL ZOOM: %') + sat + ' | Hedef Yakınlığı (' + remainSec + 's)';
-        }
-        const btnAgent = document.getElementById('btnAgentToggle');
-        if (btnAgent && isAgentActive) {
-            const cStr = agentZoomCenterKey ? ('0x' + agentZoomCenterKey.toString(16).substring(0, 8) + '...') : '';
-            btnAgent.title = (isKangaroo ? '🦘 KANGAROO EVCİL TUZAK ODAKLANMASI (' : '🎯 LOKAL İNCE TARAMA AKTİF (') + cStr + ' ±1M) [Kalan: ' + remainSec + 's] [Tıkla: Kapat]';
-        }
-
-        if (elapsedSec >= agentZoomDurationSec || zoomKeys >= agentZoomTargetKeys) {
-            finishAgentMicroZoom();
-        }
-        return;
-    }
+    // Micro-zoom tick handler removed
 
     agentActivePhaseIndex = agentActivePhaseIndex % tacticsList.length;
     const tactic = tacticsList[agentActivePhaseIndex];
@@ -4914,7 +4694,7 @@ function updateAgentSupervisor() {
 
     let banditTag = '';
     if (tactic.totalRuns && tactic.totalRuns > 0) {
-        const base = tactic.baseDurationSec || 180;
+        const base = tactic.baseDurationSec || 30;
         if (tactic.durationSec > base) {
             banditTag = ' [⚡+' + Math.round(((tactic.durationSec - base) / base) * 100) + '%]';
         } else if (tactic.durationSec < base) {
@@ -4928,12 +4708,12 @@ function updateAgentSupervisor() {
 
     const progEl = document.getElementById('agentProgressText');
     if (progEl) {
-        progEl.innerText = 'Doygunluk: %' + overallSat + popStr + herdStr + kSteps + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ')';
+        progEl.innerText = (isKangaroo ? '🦘 Şeflik: ' : '🧠 Şeflik: ') + 'Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + '] %' + overallSat + popStr + herdStr + kSteps + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ')';
     }
 
     const btnAgent = document.getElementById('btnAgentToggle');
     if (btnAgent && isAgentActive) {
-        const prefixTitle = isKangaroo ? '🦘 Pollard Kangaroo Ajanı' : '🧠 Sezgisel Isı Haritası Ajanı';
+        const prefixTitle = isKangaroo ? '🦘 Pollard Kangaroo Şef Ajanı' : '🧠 Otomatik Strateji Ajanı';
         btnAgent.title = prefixTitle + ': Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + ']' + popStr + herdStr + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
     }
 
@@ -5816,35 +5596,7 @@ function generateKangarooKey(rangeStart, rangeEnd) {
     return retKey;
 }
 
-// 2D Neon Radar Çizici (Tüm 256x256 uzayı gösterir)
-let _cachedHilbertCanvas = undefined;
-function drawHilbertRadar(x, y) {
-    if (_cachedHilbertCanvas === undefined) {
-        _cachedHilbertCanvas = document.getElementById('hilbertCanvas');
-    }
-    if (!_cachedHilbertCanvas) return;
-    const canvas = _cachedHilbertCanvas;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    
-    ctx.fillStyle = 'rgba(3, 7, 18, 0.15)';
-    ctx.fillRect(0, 0, w, h);
-    
-    const drawX = (x / HILBERT_N) * w;
-    const drawY = (y / HILBERT_N) * h;
-    
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = '#38bdf8';
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(drawX, drawY, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    
-    const textEl = document.getElementById('radarCoordText');
-    if (textEl) textEl.innerText = "[X: " + x + ", Y: " + y + "]";
-}
+// drawHilbertRadar removed
 
 
 // ============================================================
@@ -6111,22 +5863,7 @@ function huntBatch() {
                 return;
             }
 
-            // 🎯 Hedefe Yakınlık Dedektörü (Micro-Zoom Radarı)
-            if (targetH160) {
-                const mLenComp = getHexPrefixMatchLength(currentH160, targetH160);
-                const mLenUncomp = getHexPrefixMatchLength(directUncompH160, targetH160);
-                const bestMatch = Math.max(mLenComp, mLenUncomp);
-                if (bestMatch >= 4) {
-                    handleProximityAlert({
-                        keyHex: lastKeyHex,
-                        compH160: mLenComp >= mLenUncomp ? currentH160 : directUncompH160,
-                        targetH160: targetH160,
-                        matchLen: bestMatch,
-                        matchPct: Math.round((bestMatch / 40) * 100),
-                        isUncompressed: mLenUncomp > mLenComp
-                    });
-                }
-            }
+            // Proximity detector removed
 
             // 🎯 v14 İLAVE ADRES HAVUZU KONTROLÜ (⚡ Bloom Filter + 3 Format: P2PKH 1..., P2SH 3..., Bech32 bc1q...)
             if ((isCustomPoolActive || (activeTarget && (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64'))) && customAddressSet.size > 0) {
@@ -6301,11 +6038,7 @@ function huntBatch() {
             }
                         if (lastKeyHex) {
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                if (window._lastHilbertCoords) {
-                    drawHilbertRadar(window._lastHilbertCoords.x, window._lastHilbertCoords.y);
-                } else {
-                    drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
-                }
+                // Radar animation removed
 
 
             }
@@ -6429,7 +6162,7 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
     const btnSolved = document.getElementById('btnMainSolved');
     if (btnUnsolved) btnUnsolved.classList.remove('locked');
     if (btnSolved) btnSolved.classList.remove('locked');
-    ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
+    ['threadCountSelect'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
     });
@@ -6622,8 +6355,6 @@ function bgWorkerProcess() {
     let activeWorkerPrefix = null;
     let activeWorkerSuffix = null;
     let activeWorkerGridCell = 0;
-    let workerBestMatchLen = 3;
-    let lastProximityAlertTime = 0;
     let workerKangarooScalar = 0n;
     let workerKangarooJumps = [];
     let workerKangarooHerdType = 'TAME';
@@ -7239,13 +6970,15 @@ function bgWorkerProcess() {
         workerKangarooStepCount = 0;
     }
 
+    let workerKangarooLastSpan = 0n;
     function workerGenerateKangarooKey(rangeStart, rangeEnd) {
-        if (!workerKangarooJumps || workerKangarooJumps.length === 0) {
-            workerResetKangarooWalk(rangeStart, rangeEnd);
-        }
         const s = rangeStart;
         const e = rangeEnd;
         const span = e > s ? e - s : 1n;
+        if (!workerKangarooJumps || workerKangarooJumps.length === 0 || workerKangarooLastSpan !== span) {
+            workerKangarooLastSpan = span;
+            workerResetKangarooWalk(rangeStart, rangeEnd);
+        }
 
         workerKangarooStepCount++;
         if (workerKangarooStepCount % 1024 === 0) {
@@ -7448,6 +7181,11 @@ function bgWorkerProcess() {
                 const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 100000000));
                 subMin = boundMin + (effRange * sBig / 10000000000n);
                 subMax = boundMin + (effRange * eBig / 10000000000n);
+            } else if (workerActiveAlgo === 'KANGAROO') {
+                // 🦘 Pollard's Kangaroo deterministik sıçrama uzayı: Fizik formülleriyle yapay 0.01% dilimlere parçalanmaz.
+                // Kaldıraç veya tam hedef sınırları [boundMin, boundMax] üzerinde serbestçe sıçrar.
+                subMin = boundMin;
+                subMax = boundMax;
             } else if (f === 'OMNI_CHAOS') {
                 physicsStep++;
                 const centerPct = getNextPhysicsPercent('GOLDEN_SINGULARITY');
@@ -7615,28 +7353,7 @@ function bgWorkerProcess() {
             }
 
             // 🎯 Hedefe Yakınlık Dedektörü (Micro-Zoom Radarı)
-            if (targetH160) {
-                const mLenComp = getHexPrefixMatchLength(compH160, targetH160);
-                const mLenUncomp = getHexPrefixMatchLength(uncompH160, targetH160);
-                const bestMatch = Math.max(mLenComp, mLenUncomp);
-                if (bestMatch >= 4) {
-                    const now = Date.now();
-                    if (bestMatch > workerBestMatchLen || (now - lastProximityAlertTime >= 15000)) {
-                        if (bestMatch > workerBestMatchLen) workerBestMatchLen = bestMatch;
-                        lastProximityAlertTime = now;
-                        self.postMessage({
-                            type: 'proximity',
-                            workerId: workerId,
-                            keyHex: lastKeyHex,
-                            compH160: mLenComp >= mLenUncomp ? compH160 : uncompH160,
-                            targetH160: targetH160,
-                            matchLen: bestMatch,
-                            matchPct: Math.round((bestMatch / 40) * 100),
-                            isUncompressed: mLenUncomp > mLenComp
-                        });
-                    }
-                }
-            }
+            // Worker proximity detector removed
             
             // 🏛️ 4. SATOSHI / PATOSHI HAVUZU KONTROLÜ (21.953 Adres)
             if (cfg.satoshiMultiTargetActive && satoshiSet && satoshiSet.size > 0) {
@@ -7816,6 +7533,28 @@ function initThreadCountUI() {
     } catch(e) {
         sel.value = '8';
     }
+    sel.onchange = function() {
+        try { localStorage.setItem('PREF_THREAD_COUNT', sel.value); } catch(e) {}
+    };
+}
+
+async function addGpuOptionIfSupported() {
+    if (!navigator.gpu) return;
+    try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) return;
+        const sel = document.getElementById('threadCountSelect');
+        if (!sel) return;
+        // GPU seçeneği zaten varsa tekrar ekleme
+        if (Array.from(sel.options).some(o => o.value === 'GPU')) return;
+        const gpuOpt = document.createElement('option');
+        gpuOpt.value = 'GPU';
+        gpuOpt.innerText = '⚡ GPU (WebGPU)';
+        sel.insertBefore(gpuOpt, sel.firstChild);
+        console.log('[GPU] WebGPU destekleniyor — dropdown\'a eklendi.');
+    } catch(e) {
+        console.warn('[GPU] requestAdapter hatası:', e);
+    }
 }
 
 function getCurrentWorkerConfig() {
@@ -7886,93 +7625,18 @@ function getCurrentWorkerConfig() {
 }
 
 
-// ============================================================
-// 🎮 WEBGPU GRAFİK KARTI (GPU) HESAPLAMA MOTORU
-// AMD Radeon, NVIDIA GeForce, Intel Arc/Iris/UHD Otomatik Algılama
-// ============================================================
-let gpuDevice = null;
-let gpuCardName = '';
+// GPU tamamen kaldırıldı (Saf CPU Web Worker)
 let isGpuSupported = false;
 let isGpuRunning = false;
-let gpuRunId = 0;
-let gpuAutoIndex = 0;
-let gpuAutoStepCounter = 0;
-
-async function detectWebGpuSupport() {
-    isGpuSupported = false;
-    isGpuRunning = false;
-}
-
-function updateThreadSelectWithGpu() {
-    // GPU tamamen devre dışı bırakıldı
-    return;
-}
 
 function onThreadCountSelectChange() {
     const sel = document.getElementById('threadCountSelect');
     if (!sel) return;
     const val = sel.value;
     try { localStorage.setItem('PREF_THREAD_COUNT', val); } catch(e) {}
-    
-    if (isRunning) {
-        stopGpuHunting(false);
-        const count = parseInt(val) || 8;
-        if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
-            cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
-        } else {
-            startWorkerPool(count);
-        }
-    }
 }
 
-let gpuComputePipeline = null;
-let gpuConfigBuffer = null;
-let gpuSeedCounter = 1;
-
-async function startGpuHunting() {
-    // GPU kapatıldı: 0% donanım yükü, sadece CPU Web Workerları çalışır
-    isGpuRunning = false;
-    return;
-}
-
-function stopGpuHunting(stopEntireHunt = false) {
-    gpuRunId++;
-    isGpuRunning = false;
-    if (stopEntireHunt) {
-        isRunning = false;
-        if (typeof timerInterval !== 'undefined' && timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-        if (typeof releaseWakeLock === 'function') releaseWakeLock();
-        if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
-        if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
-
-        const btn = document.getElementById('btnToggle');
-        if (btn) {
-            btn.className = 'action-btn btn-start';
-            btn.innerText = '▶ Aramayı Başlat';
-        }
-
-    const btnUnsolved = document.getElementById('btnMainUnsolved');
-    const btnSolved = document.getElementById('btnMainSolved');
-    if (btnUnsolved) btnUnsolved.classList.remove('locked');
-    if (btnSolved) btnSolved.classList.remove('locked');
-
-    ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
-    });
-    const algoButtons = document.querySelectorAll('.algo-btn');
-    algoButtons.forEach(b => b.classList.remove('locked'));
-    const rangeSel = document.getElementById('rangeSelect');
-    if (rangeSel) {
-        rangeSel.disabled = false;
-        rangeSel.style.opacity = '1';
-        rangeSel.style.cursor = 'pointer';
-    }
-}
-}
+function stopGpuHunting() {}
 
 let workerWatchdogTimer = null;
 let workerHasReceivedProgress = false;
@@ -8091,12 +7755,9 @@ function handleWorkerMessage(e) {
     try {
         const data = e.data;
         if (!data) return;
-        if (data.type !== 'win' && data.type !== 'proximity' && !isRunning) return;
+        if (data.type !== 'win' && !isRunning) return;
         
-        if (data.type === 'proximity') {
-            handleProximityAlert(data);
-            return;
-        }
+        // Proximity detector removed (mathematically unrelated to ECDSA private keys)
 
         if (data.type === 'progress') {
             workerHasReceivedProgress = true;
@@ -8124,9 +7785,7 @@ function handleWorkerMessage(e) {
                 if (data.lastKey) {
                     const lk = document.getElementById('logKey');
                     if (lk) lk.innerText = '0x' + data.lastKey;
-                    if (typeof drawHilbertRadar === 'function') {
-                        drawHilbertRadar(Math.floor(Math.random() * 256), Math.floor(Math.random() * 256));
-                    }
+                    // Fake radar removed
                 }
                 if (data.rangeText) {
                     const lr = document.getElementById('logRange');
@@ -8217,7 +7876,7 @@ function toggleHunter() {
 
         btnUnsolved.classList.remove('locked');
         btnSolved.classList.remove('locked');
-        ['physicsFormulaSelect', 'threadCountSelect'].forEach(id => {
+        ['threadCountSelect'].forEach(id => {
             const el = document.getElementById(id);
             if (el) { el.disabled = false; el.style.opacity = '1'; el.style.cursor = 'pointer'; }
         });
@@ -8267,11 +7926,33 @@ function toggleHunter() {
 
                         stopGpuHunting(false);
         const threadVal = document.getElementById('threadCountSelect')?.value;
-        const threadCount = parseInt(threadVal) || 8;
-        if (window.Worker) {
-            startWorkerPool(threadCount);
+
+        if (threadVal === 'GPU') {
+            // WebGPU modu
+            if (typeof initWebGpuEngine === 'function') {
+                initWebGpuEngine().then(ok => {
+                    if (ok) {
+                        startGpuHunting();
+                        console.log('[GPU] WebGPU hunting başladı.');
+                    } else {
+                        console.warn('[GPU] initWebGpuEngine() başarısız → CPU fallback');
+                        startWorkerPool(8);
+                    }
+                }).catch(err => {
+                    console.error('[GPU] hata:', err, '→ CPU fallback');
+                    startWorkerPool(8);
+                });
+            } else {
+                console.warn('[GPU] gpu_engine.js yüklenmemiş → CPU fallback');
+                startWorkerPool(8);
+            }
         } else {
-            huntBatch();
+            const threadCount = parseInt(threadVal) || 8;
+            if (window.Worker) {
+                startWorkerPool(threadCount);
+            } else {
+                huntBatch();
+            }
         }
     }
 }
@@ -8345,7 +8026,7 @@ function initFineSliderControls() {
 
 window.onload = function() {
     initThreadCountUI();
-    detectWebGpuSupport();
+    addGpuOptionIfSupported();
     if (typeof initKangarooSwarmChannel === 'function') initKangarooSwarmChannel();
     if (typeof updateKangarooSwarmUI === 'function') updateKangarooSwarmUI();
     buildCustomMenus();
@@ -8374,4 +8055,8 @@ window.addEventListener('beforeunload', function() {
 </script>
 
 </body>
+
+<!-- WebGPU Engine — gerçek GPU compute shader (WGSL 1.0 uyumlu) -->
+<script src="gpu_engine.js"></script>
+
 </html>
