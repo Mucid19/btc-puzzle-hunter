@@ -1260,7 +1260,7 @@
                 </div>
 
                 <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
-                <select id="threadCountSelect" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:130px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="CPU İş Parçacığı (Çekirdek) Seçimi">
+                <select id="threadCountSelect" onchange="onThreadCountSelectChange()" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:130px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="CPU İş Parçacığı (Çekirdek) Seçimi">
                     <option value="8" selected>🔥 8 Çekirdek (Önerilen)</option>
                     <option value="12">🔥 12 Çekirdek</option>
                     <option value="16">🌌 16 Çekirdek</option>
@@ -2326,24 +2326,24 @@ function applyFormulaPreset(formula) {
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Sobol & Van der Corput (Kuantum Dalga Kapsama)';
+            logAlgo.innerText = '📐 Sobol & Dalga Osilasyonu (Sin² Wave)';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('⚛️ <strong>Schrödinger (Kuantum)</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Grid + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast('〰️ <strong>Trigonometrik Dalga Salınımı (Sin² Wave)</strong>: Matematiksel osilatör uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Periyodik Sinüs Osilasyonu (Tam Kapsama)</span>');
     } else if (formula === 'RIEMANN_ZETA') {
         selectedAlgorithm = 'SOBOL';
         if (algoSel) algoSel.value = 'SOBOL';
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Sobol & Van der Corput (Riemann Harmonik Kapsama)';
+            logAlgo.innerText = '📐 Sobol & Çoklu Harmonik Dalga (Multi-Harmonic)';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🧬 <strong>Riemann Zeta</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Grid + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast('🌊 <strong>Çoklu Harmonik Dalga Salınımı</strong>: Harmonik frekans osilatörü uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Çoklu Harmonik Frekans (Tam Kapsama)</span>');
     } else if (formula === 'VD_CORPUT') {
         selectedAlgorithm = 'VD_CORPUT';
         if (algoSel) algoSel.value = 'VD_CORPUT';
@@ -3336,14 +3336,19 @@ function randomBigIntInRange(min, max) {
 // 135 - 160 Arası Açık Anahtarlı Bitcoin Bulmacaları İçin Özel Motor
 // ============================================================
 const EXPOSED_KANGAROO_PUBKEYS = {
+    19:  '03d63b4c692f6924c3c5690c764a61ff3da070eb87838ca27f57872f882f0a5991', // #19 Test (19-bit, key 0x4d048 - Solved)
     57:  '02a521a07e98f78b03fc1e039bc3a51408cd73119b5eb116e583fe57dc8db07aea', // #57 Test (5.7 BTC - Solved)
     135: '02145d2611c823a396ef6712ce0f712f09b9b4f3135e3e0aa3230fb9b6d08d1e16', // #135 (13.5 BTC)
     140: '031f6a332d3c5c4f2de2378c012f429cd109ba07d69690c6c701b6bb87860d6640', // #140 (14.0 BTC)
     145: '03afdda497369e219a2c1c369954a930e4d3740968e5e4352475bcffce3140dae5', // #145 (14.5 BTC)
     150: '03137807790ea7dc6e97901c2bc87411f45ed74a5629315c4e4b03a0a102250c49', // #150 (15.0 BTC)
     155: '035cd1854cae45391ca4ec428cc7e6c7d9984424b954209a8eea197b9e364c05f6', // #155 (15.5 BTC)
-    160: '02e0a8b039282faf6fe0fd769cfbc4b6b4cf8758ba68220eac420e32b91ddfa673'  // #160 (16.0 BTC)
+    160: '02e0a8b039282faf6fe0fd769cfbc4b6b4cf8758ba68220eac420e32b91ddfa673', // #160 (16.0 BTC)
+    'ilave': '0292dd5399fa75e786fa5c0f7f90abd1a8bb48ff43e54dac5a3b9990f627d90992', // #Test (0x7a3)
+    'TEST_64': '0292dd5399fa75e786fa5c0f7f90abd1a8bb48ff43e54dac5a3b9990f627d90992'
 };
+
+let kangarooRealEngine = null; // Gerçek Eliptik Eğri Pollard's Kangaroo Motoru (RealPollardKangaroo instance)
 
 // ============================================================
 // 🦘 KANGAROO DAĞITIK SÜRÜ AĞI (CROSS-TAB DISTRIBUTED HERD)
@@ -3536,22 +3541,34 @@ function initKangarooSwarmChannel() {
                     break;
 
                 case 'TRAP':
-                    if (data.scalarHex) {
-                        const existing = kangarooSharedTraps[data.scalarHex];
-                        if (existing && existing.herd !== data.herd) {
-                            if (typeof addLogMsg === 'function') {
-                                addLogMsg(`🔥 [KANGAROO ÇARPIŞMA!] Sürüde Evcil ve Vahşi kanguru çarpıştı! Koordinat: 0x${data.scalarHex}`, '#f59e0b');
+                    const ptKey = data.pointXHex || data.scalarHex;
+                    if (ptKey) {
+                        if (kangarooRealEngine && data.dist) {
+                            kangarooRealEngine.addRemoteTrap(ptKey, data.herd, data.dist);
+                            if (kangarooRealEngine.isSolved && kangarooRealEngine.solvedKey) {
+                                const keyHex = kangarooRealEngine.solvedKey.toString(16).padStart(64, '0');
+                                const actT = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
+                                if (actT) {
+                                    if (typeof stopHunting === 'function') stopHunting();
+                                    handleWin(actT.id, keyHex, privkeyToAddress(keyHex), actT.addr, '🦘 Sürü Ağı Çarpışması O(√N)');
+                                }
                             }
                         }
-                        if (!kangarooSharedTraps[data.scalarHex]) {
-                            kangarooSharedTraps[data.scalarHex] = {
+                        const existing = kangarooSharedTraps[ptKey];
+                        if (existing && existing.herd !== data.herd) {
+                            if (typeof addLogMsg === 'function') {
+                                addLogMsg(`⚡ [KANGAROO ÇARPIŞMA!] Sürüde Evcil ve Vahşi kanguru çarpıştı! Koordinat: 0x${ptKey}`, '#f59e0b');
+                            }
+                        }
+                        if (!kangarooSharedTraps[ptKey]) {
+                            kangarooSharedTraps[ptKey] = {
                                 herd: data.herd,
                                 tabId: data.senderId,
                                 time: now
                             };
                             kangarooTrapsCount++;
                             const trapEl = document.getElementById('kangarooSwarmTrapCount');
-                            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuz`;
+                            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
                         }
                     }
                     break;
@@ -3799,9 +3816,23 @@ function getNextDistributedPhaseIndex(currentIdx, tacticsList) {
     return (currentIdx + 1) % tacticsList.length;
 }
 
-function recordAndBroadcastKangarooTrap(scalar, herd) {
-    if (!scalar) return;
-    const hex = scalar.toString(16);
+function broadcastKangarooTrap(pointXHex, herd, dist) {
+    if (!kangarooChannel || !pointXHex) return;
+    try {
+        kangarooChannel.postMessage({
+            type: 'TRAP',
+            senderId: KANGAROO_TAB_ID,
+            pointXHex: pointXHex,
+            scalarHex: pointXHex,
+            herd: herd,
+            dist: dist ? dist.toString(16) : ''
+        });
+    } catch(e) {}
+}
+
+function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist) {
+    if (!scalarOrPoint) return;
+    const hex = scalarOrPoint.toString(16);
     const now = Date.now();
     
     // Tuzak anında anlık hedef kontrolü (Hafif ve kesin)
@@ -3817,10 +3848,10 @@ function recordAndBroadcastKangarooTrap(scalar, herd) {
 
     if (kangarooSharedTraps[hex]) return;
 
-    kangarooSharedTraps[hex] = { herd: herd, tabId: KANGAROO_TAB_ID, time: now };
+    kangarooSharedTraps[hex] = { herd: herd, tabId: KANGAROO_TAB_ID, time: now, dist: dist };
     kangarooTrapsCount++;
     const tEl = document.getElementById('kangarooSwarmTrapCount');
-    if (tEl) { tEl.style.display = 'inline-flex'; tEl.innerText = `📍 ${kangarooTrapsCount} Tuz`; }
+    if (tEl) { tEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`; }
 
     if (kangarooTrapsCount > 10000) {
         const keys = Object.keys(kangarooSharedTraps);
@@ -3830,16 +3861,7 @@ function recordAndBroadcastKangarooTrap(scalar, herd) {
         kangarooTrapsCount = Object.keys(kangarooSharedTraps).length;
     }
 
-    if (kangarooChannel && kangarooSwarmActive) {
-        try {
-            kangarooChannel.postMessage({
-                type: 'TRAP',
-                senderId: KANGAROO_TAB_ID,
-                scalarHex: hex,
-                herd: herd
-            });
-        } catch(e) {}
-    }
+    broadcastKangarooTrap(hex, herd, dist);
 }
 
 function broadcastKangarooWin(puzzleId, keyHex, addr, targetAddr, reward) {
@@ -4049,40 +4071,7 @@ function getHexPrefixMatchLength(h1, h2) {
 }
 
 function applyPopcountConstraint(key, minB, maxB, targetRange) {
-    if (!targetRange || !Array.isArray(targetRange) || targetRange.length < 2) return key;
-    const pMin = targetRange[0];
-    const pMax = targetRange[1];
-    let pop = getPopcountBig(key);
-    if (pop >= pMin && pop <= pMax) return key;
-
-    let modified = key;
-    const span = maxB - minB;
-    const bitLen = Math.min(256, Math.max(16, span.toString(2).length));
-    
-    let attempts = 0;
-    while ((pop < pMin || pop > pMax) && attempts < 25) {
-        attempts++;
-        const randBitPos = BigInt(Math.floor(Math.random() * (bitLen - 4)) + 2);
-        const mask = 1n << randBitPos;
-        if (pop < pMin) {
-            if ((modified & mask) === 0n) {
-                const cand = modified | mask;
-                if (cand >= minB && cand <= maxB) {
-                    modified = cand;
-                    pop++;
-                }
-            }
-        } else if (pop > pMax) {
-            if ((modified & mask) !== 0n) {
-                const cand = modified & (~mask);
-                if (cand >= minB && cand <= maxB) {
-                    modified = cand;
-                    pop--;
-                }
-            }
-        }
-    }
-    return (modified >= minB && modified <= maxB) ? modified : key;
+    return key;
 }
 
 // Micro-Zoom variables removed
@@ -4097,7 +4086,7 @@ const AGENT_TACTICS = [
         algo: "WEYL_GOLDEN",
         formula: "WEYL_GOLDEN",
         bits: 0,
-        popcountRange: [20, 32],
+        popcountRange: null,
         sliderMode: "WINDOW",
         sliderMinPct: 20,
         sliderMaxPct: 40,
@@ -4118,7 +4107,7 @@ const AGENT_TACTICS = [
         algo: "VD_CORPUT",
         formula: "VD_CORPUT",
         bits: 0,
-        popcountRange: [22, 34],
+        popcountRange: null,
         sliderMode: "SWEEP_FAST",
         prefixActive: false,
         baseDurationSec: 180,
@@ -4137,7 +4126,7 @@ const AGENT_TACTICS = [
         algo: "COPRIME_STRIDE",
         formula: "COPRIME_STRIDE",
         bits: 0,
-        popcountRange: [26, 38],
+        popcountRange: null,
         sliderMode: "SWEEP_MED",
         sliderMinPct: 15,
         sliderMaxPct: 85,
@@ -4158,7 +4147,7 @@ const AGENT_TACTICS = [
         algo: "CHAOS",
         formula: "DETERMINISTIC_CHAOS",
         bits: 0,
-        popcountRange: [16, 30],
+        popcountRange: null,
         sliderMode: "SWEEP_SLOW",
         sliderMinPct: 0,
         sliderMaxPct: 25,
@@ -4179,7 +4168,7 @@ const AGENT_TACTICS = [
         algo: "HILBERT",
         formula: "QUANTUM_TUNNEL",
         bits: 0,
-        popcountRange: [24, 40],
+        popcountRange: null,
         sliderMode: "SWEEP_MICRO",
         sliderMinPct: 20,
         sliderMaxPct: 40,
@@ -4200,7 +4189,7 @@ const AGENT_TACTICS = [
         algo: "WEAK_ENTROPY",
         formula: "GOLDEN_SINGULARITY",
         bits: 32,
-        popcountRange: [20, 36],
+        popcountRange: null,
         sliderMode: "FULL",
         prefixActive: false,
         baseDurationSec: 180,
@@ -4219,7 +4208,7 @@ const AGENT_TACTICS = [
         algo: "SOBOL",
         formula: "RIEMANN_ZETA",
         bits: 0,
-        popcountRange: [22, 38],
+        popcountRange: null,
         sliderMode: "FULL",
         prefixActive: false,
         baseDurationSec: 180,
@@ -4308,14 +4297,14 @@ const AGENT_KANGAROO_TACTICS = [
     },
     {
         phase: 4,
-        name: "Düşük Popcount Kangaroo Filtresi (Hamming Trap)",
-        zone: "Popcount Radarı (🐢 Yavaş)",
+        name: "Derin Aralık Kanguru Taraması (Deep Sweep Trap)",
+        zone: "Derin Sweep Radarı (🐢 Yavaş)",
         confidence: 0.91,
         algo: "KANGAROO",
         formula: "RIEMANN_ZETA",
         herd: "WILD",
         bits: 0,
-        popcountRange: [20, 36],
+        popcountRange: null,
         sliderMode: "SWEEP_SLOW",
         sliderMinPct: 10,
         sliderMaxPct: 90,
@@ -4323,10 +4312,10 @@ const AGENT_KANGAROO_TACTICS = [
         baseDurationSec: 30,
         durationSec: 30,
         targetKeys: 250000,
-        badge: "Faz 4: Popcount Filtresi",
+        badge: "Faz 4: Derin Sweep",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Hamming ağırlığı 20-36 bit aralığına kısıtlanmış vahşi kangurular ile yavaş ve derin radar taramasıyla çarpışma avlar."
+        desc: "Aralık geneline yayılan adımlarla derinleştirilmiş radar süpürmesiyle vahşi kanguru çarpışma avlar."
     },
     {
         phase: 5,
@@ -4661,7 +4650,7 @@ function applyAgentPhase(idx) {
     }
     const progEl = document.getElementById('agentProgressText');
     if (progEl) {
-        progEl.innerText = 'Doygunluk: %0' + popBadge + herdBadge + swarmBadge + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' (' + tactic.durationSec + 's)';
+        progEl.innerText = 'Doygunluk: %0' + popBadge + herdBadge + swarmBadge + ' | Ağırlık: %' + Math.round(tactic.confidence * 100) + ' (' + tactic.durationSec + 's)';
     }
 
     const logAlgo = document.getElementById('logAlgo');
@@ -4716,13 +4705,13 @@ function updateAgentSupervisor() {
 
     const progEl = document.getElementById('agentProgressText');
     if (progEl) {
-        progEl.innerText = (isKangaroo ? '🦘 Şeflik: ' : '🧠 Şeflik: ') + 'Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + '] %' + overallSat + popStr + herdStr + kSteps + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ')';
+        progEl.innerText = (isKangaroo ? '🦘 Şeflik: ' : '🧠 Şeflik: ') + 'Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + '] %' + overallSat + popStr + herdStr + kSteps + ' | Ağırlık: %' + Math.round(tactic.confidence * 100) + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ')';
     }
 
     const btnAgent = document.getElementById('btnAgentToggle');
     if (btnAgent && isAgentActive) {
         const prefixTitle = isKangaroo ? '🦘 Pollard Kangaroo Şef Ajanı' : '🧠 Otomatik Strateji Ajanı';
-        btnAgent.title = prefixTitle + ': Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + ']' + popStr + herdStr + ' | Güven: %' + Math.round(tactic.confidence * 100) + ' | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
+        btnAgent.title = prefixTitle + ': Faz ' + tactic.phase + '/' + tacticsList.length + ' [' + tactic.zone + ']' + popStr + herdStr + ' | Ağırlık: %' + Math.round(tactic.confidence * 100) + ' | Doygunluk: %' + overallSat + ' (' + remainSec + 's / ' + tactic.durationSec + 's' + banditTag + ') [Tıkla: Kapat]';
     }
 
     if ((elapsedSec >= tactic.durationSec || phaseKeys >= tactic.targetKeys) && elapsedSec >= 10) {
@@ -5505,103 +5494,91 @@ function generateWeakEntropyKey(rangeStart, rangeEnd, entropyBits) {
 function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
-    const span = e > s ? e - s : 1n;
-    const bitLen = span.toString(2).length;
-    const halfBits = Math.max(1, Math.floor(bitLen / 2));
-    const baseExp = Math.max(0, halfBits - 16);
-    kangarooJumps = [];
-    const maxPower = Math.min(32, Math.max(8, bitLen));
-    for (let i = 0; i < maxPower; i++) {
-        const jVal = 1n << BigInt(i % Math.max(1, bitLen - 1));
-        if (jVal < span && jVal > 0n) kangarooJumps.push(jVal);
-    }
-    const primes = [3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n, 41n, 43n, 47n];
-    for (let p of primes) {
-        if (p < span) kangarooJumps.push(p);
-    }
-    if (kangarooJumps.length === 0) kangarooJumps.push(1n);
-
     const pid = puzzleId || (currentTarget ? currentTarget.id : null);
     const pNum = pid !== null ? parseInt(pid, 10) : null;
-    kangarooTargetPubHex = (pid && EXPOSED_KANGAROO_PUBKEYS[pid]) ? EXPOSED_KANGAROO_PUBKEYS[pid] : ((pNum && EXPOSED_KANGAROO_PUBKEYS[pNum]) ? EXPOSED_KANGAROO_PUBKEYS[pNum] : '');
+    kangarooTargetPubHex = (pid && EXPOSED_KANGAROO_PUBKEYS[pid]) ? EXPOSED_KANGAROO_PUBKEYS[pid] 
+                         : ((pNum && EXPOSED_KANGAROO_PUBKEYS[pNum]) ? EXPOSED_KANGAROO_PUBKEYS[pNum] : '');
 
-    if (typeof kangarooAssignedRole !== 'undefined' && kangarooAssignedRole) {
-        if (kangarooAssignedRole.startsWith('TAME')) {
-            kangarooHerdType = 'TAME';
-            kangarooCurrentScalar = s + (span / 2n);
-        } else {
-            kangarooHerdType = 'WILD';
-            const m = kangarooAssignedRole.match(/WILD-(\d+)/);
-            const wIdx = m ? parseInt(m[1], 10) : 1;
-            const pct = BigInt(((wIdx * 30 + 15) % 85) + 5);
-            kangarooCurrentScalar = s + (span * pct / 100n);
+    // %100 GERÇEK Pollard Kangaroo Eliptik Eğri Motoru
+    if (typeof RealPollardKangaroo === 'function' && kangarooTargetPubHex) {
+        let herdRole = 'DUAL';
+        const hasMultipleTabs = (typeof kangarooSwarmActive !== 'undefined' && kangarooSwarmActive) && 
+                                (typeof kangarooPeers !== 'undefined' && Object.keys(kangarooPeers).length > 1);
+        if (hasMultipleTabs && typeof kangarooAssignedRole !== 'undefined' && kangarooAssignedRole) {
+            if (kangarooAssignedRole.startsWith('WILD')) herdRole = 'WILD';
+            else if (kangarooAssignedRole.startsWith('TAME')) herdRole = 'TAME';
         }
+        kangarooRealEngine = new RealPollardKangaroo(kangarooTargetPubHex, s, e, { role: herdRole });
+        console.log(`[Kangaroo] 🦘 %100 GERÇEK Pollard Kangaroo Eliptik Eğri Motoru Devrede! Hedef: #${pid} (${kangarooTargetPubHex.slice(0, 10)}...) [Rol: ${herdRole}]`);
     } else {
-        kangarooHerdType = (Math.random() > 0.5) ? 'TAME' : 'WILD';
-        if (kangarooHerdType === 'TAME') {
-            kangarooCurrentScalar = s + (span / 2n);
-        } else {
-            kangarooCurrentScalar = randomBigIntInRange(s, e);
+        kangarooRealEngine = null;
+        if (!kangarooTargetPubHex && selectedAlgorithm === 'KANGAROO') {
+            console.log(`[Kangaroo] ℹ️ #${pid} için blokzincirde ifşa edilmiş açık anahtar bulunamadı. Desteklenen açık anahtarlı bulmacalar: #19, #57, #135, #140, #145, #150, #155, #160`);
         }
     }
     kangarooStepCount = 0;
 }
 
 function generateKangarooKey(rangeStart, rangeEnd) {
-    if (!kangarooJumps || kangarooJumps.length === 0) {
+    const s = toBigIntSafe(rangeStart);
+    const e = toBigIntSafe(rangeEnd);
+
+    if (!kangarooRealEngine && kangarooTargetPubHex && typeof RealPollardKangaroo === 'function') {
         resetKangarooWalk(rangeStart, rangeEnd, currentTarget ? currentTarget.id : null);
     }
-    const s = rangeStart;
-    const e = rangeEnd;
-    const span = e > s ? e - s : 1n;
 
-    kangarooStepCount++;
-    // Belirli aralıklarla Evcil (Tame) ve Vahşi (Wild) kanguru sürüleri arasında geçiş yap
-    if (kangarooStepCount % 1024 === 0) {
-        let shouldToggle = true;
-        // Eğer çoklu sekme aktifse ve bu sekmenin atanmış bir görevi varsa rolünü sabit tut
-        if (typeof kangarooSwarmActive !== 'undefined' && kangarooSwarmActive && typeof kangarooAssignedRole !== 'undefined') {
-            shouldToggle = false;
+    if (kangarooRealEngine && kangarooRealEngine.isInitialized) {
+        // Gerçek eliptik eğri nokta toplaması (EC Point Addition) ile sıçrama yap (64 adım birden)
+        const res = kangarooRealEngine.step(64);
+        kangarooStepCount += 64;
+
+        // Yeni keşfedilen tuzakları sürü ağına (BroadcastChannel) yayınla
+        if (kangarooRealEngine.newTrapsToBroadcast.length > 0) {
+            kangarooRealEngine.newTrapsToBroadcast.forEach(t => {
+                if (typeof broadcastKangarooTrap === 'function') {
+                    broadcastKangarooTrap(t.pointXHex, t.herd, t.dist);
+                }
+            });
+            kangarooRealEngine.newTrapsToBroadcast = [];
+            kangarooTrapsCount = kangarooRealEngine.tameTraps.size + kangarooRealEngine.wildTraps.size;
+            const trapEl = document.getElementById('kangarooSwarmTrapCount');
+            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
         }
-        if (typeof isAgentActive !== 'undefined' && isAgentActive && typeof isKangarooModeActive === 'function' && isKangarooModeActive()) {
-            const curTactics = (typeof getActiveAgentTactics === 'function') ? getActiveAgentTactics() : null;
-            const curTactic = (curTactics && curTactics[agentActivePhaseIndex]) ? curTactics[agentActivePhaseIndex] : null;
-            if (curTactic && (curTactic.herd === 'TAME' || curTactic.herd === 'WILD')) {
-                kangarooHerdType = curTactic.herd;
-                shouldToggle = false;
+
+        if (res.status === 'WIN' && res.solvedKey) {
+            const keyHex = res.solvedKey.toString(16).padStart(64, '0');
+            console.log('🎉 [REAL KANGAROO WIN!] Özel Anahtar Bulundu:', keyHex);
+            const actT = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
+            if (actT) {
+                if (typeof stopHunting === 'function') stopHunting();
+                handleWin(actT.id, keyHex, privkeyToAddress(keyHex), actT.addr, '🦘 Gerçek Pollard Kangaroo Çarpışması O(√N)');
             }
+            return res.solvedKey;
         }
-        if (shouldToggle) {
-            kangarooHerdType = (kangarooHerdType === 'TAME') ? 'WILD' : 'TAME';
-        }
-        if (kangarooHerdType === 'TAME') {
-            const pct = BigInt(Math.floor(Math.random() * 90 + 5));
-            kangarooCurrentScalar = s + (span * pct / 100n);
-        } else {
-            kangarooCurrentScalar = randomBigIntInRange(s, e);
-        }
+
+        return BigInt('0x' + (res.lastKey || '1'));
     }
 
-    if (span <= 1n) {
-        return randomBigIntInRange(s, e > s ? e : s + 1000n);
-    }
-    if (kangarooCurrentScalar < s || kangarooCurrentScalar > e) {
-        kangarooCurrentScalar = s + ((kangarooCurrentScalar >= 0n ? kangarooCurrentScalar : -kangarooCurrentScalar) % span);
-    }
+    // Açık anahtar yoksa veya motor başlatılamadıysa: Güvenli rastgele / pseudo-random yürüyüş
+    return randomBigIntInRange(s, e);
+}
 
-    const retKey = kangarooCurrentScalar;
-
-    // Pollard's Kangaroo deterministik sıçrama: Skalerin alt bitlerine göre sıçrama tablosundan adım seç
-    const jumpIdx = Number((kangarooCurrentScalar ^ (kangarooCurrentScalar >> 7n)) & 0x1Fn);
-    const jump = kangarooJumps[jumpIdx] || 1n;
-    kangarooCurrentScalar += jump;
-
-    // Tuzak / Belirgin Nokta (Distinguished Point) tespiti ve sürü havuzuna aktarımı (~512 adımda bir)
-    if ((retKey & 0x1FFn) === 0n && typeof recordAndBroadcastKangarooTrap === 'function') {
-        recordAndBroadcastKangarooTrap(retKey, kangarooHerdType);
-    }
-
-    return retKey;
+// ============================================================
+// 🌐 WebGPU & Harici Motorlar İçin Algoritma Fonksiyonlarını Window'a Export Etme
+// ============================================================
+if (typeof window !== 'undefined') {
+    window.generateSobolKey = generateSobolKey;
+    window.generateVanDerCorputKey = generateVanDerCorputKey;
+    window.generateWeylGoldenKey = generateWeylGoldenKey;
+    window.generateCoprimeStrideKey = generateCoprimeStrideKey;
+    window.generateHilbertKey = generateHilbertKey;
+    window.generateDeterministicChaosKey = generateDeterministicChaosKey;
+    window.generateWeakEntropyKey = generateWeakEntropyKey;
+    window.generateKangarooKey = generateKangarooKey;
+    window.randomBigIntInRange = randomBigIntInRange;
+    window.getNextPhysicsPercent = (typeof getNextPhysicsPercent === 'function') ? getNextPhysicsPercent : null;
+    window.applyPopcountConstraint = (typeof applyPopcountConstraint === 'function') ? applyPopcountConstraint : null;
+    window.isKangarooModeActive = (typeof isKangarooModeActive === 'function') ? isKangarooModeActive : null;
 }
 
 // drawHilbertRadar removed
@@ -6394,40 +6371,7 @@ function bgWorkerProcess() {
     }
 
     function applyPopcountConstraint(key, minB, maxB, targetRange) {
-        if (!targetRange || !Array.isArray(targetRange) || targetRange.length < 2) return key;
-        const pMin = targetRange[0];
-        const pMax = targetRange[1];
-        let pop = getPopcountBig(key);
-        if (pop >= pMin && pop <= pMax) return key;
-
-        let modified = key;
-        const span = maxB - minB;
-        const bitLen = Math.min(256, Math.max(16, span.toString(2).length));
-        
-        let attempts = 0;
-        while ((pop < pMin || pop > pMax) && attempts < 25) {
-            attempts++;
-            const randBitPos = BigInt(Math.floor(Math.random() * (bitLen - 4)) + 2);
-            const mask = 1n << randBitPos;
-            if (pop < pMin) {
-                if ((modified & mask) === 0n) {
-                    const cand = modified | mask;
-                    if (cand >= minB && cand <= maxB) {
-                        modified = cand;
-                        pop++;
-                    }
-                }
-            } else if (pop > pMax) {
-                if ((modified & mask) !== 0n) {
-                    const cand = modified & (~mask);
-                    if (cand >= minB && cand <= maxB) {
-                        modified = cand;
-                        pop--;
-                    }
-                }
-            }
-        }
-        return (modified >= minB && modified <= maxB) ? modified : key;
+        return key;
     }
 
     function toBigIntSafe(val) {
@@ -6954,71 +6898,62 @@ function bgWorkerProcess() {
         }
     }
 
+    let workerKangarooEngine = null;
     function workerResetKangarooWalk(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
-        const span = e > s ? e - s : 1n;
-        const bitLen = span.toString(2).length;
-        const halfBits = Math.max(1, Math.floor(bitLen / 2));
-        const baseExp = Math.max(0, halfBits - 16);
-        workerKangarooJumps = [];
-        for (let i = 0; i < 32; i++) {
-            workerKangarooJumps.push(1n << BigInt(baseExp + i));
+        const pid = cfg && cfg.activeTarget ? cfg.activeTarget.id : null;
+        const pNum = pid !== null ? parseInt(pid, 10) : null;
+        const targetPub = (cfg && cfg.exposedKangarooPubkeys) ? (cfg.exposedKangarooPubkeys[pid] || cfg.exposedKangarooPubkeys[pNum]) : null;
+
+        let role = (workerId % 2 === 0) ? 'TAME' : 'WILD';
+        if (cfg && cfg.kangarooHerdType && (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD')) {
+            role = cfg.kangarooHerdType;
         }
-        if (typeof cfg !== 'undefined' && cfg && (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD')) {
-            workerKangarooHerdType = cfg.kangarooHerdType;
+
+        if (typeof RealPollardKangaroo === 'function' && targetPub) {
+            try {
+                workerKangarooEngine = new RealPollardKangaroo(targetPub, s, e, { role: role });
+            } catch(err) {
+                workerKangarooEngine = null;
+            }
         } else {
-            workerKangarooHerdType = (workerId % 2 === 0) ? 'TAME' : 'WILD';
-        }
-        if (workerKangarooHerdType === 'TAME') {
-            workerKangarooScalar = s + (span / 2n);
-        } else {
-            workerKangarooScalar = randomBigIntInRange(s, e);
+            workerKangarooEngine = null;
         }
         workerKangarooStepCount = 0;
     }
 
     let workerKangarooLastSpan = 0n;
     function workerGenerateKangarooKey(rangeStart, rangeEnd) {
-        const s = rangeStart;
-        const e = rangeEnd;
+        const s = toBigIntSafe(rangeStart);
+        const e = toBigIntSafe(rangeEnd);
         const span = e > s ? e - s : 1n;
-        if (!workerKangarooJumps || workerKangarooJumps.length === 0 || workerKangarooLastSpan !== span) {
+        if (!workerKangarooEngine || workerKangarooLastSpan !== span) {
             workerKangarooLastSpan = span;
             workerResetKangarooWalk(rangeStart, rangeEnd);
         }
 
-        workerKangarooStepCount++;
-        if (workerKangarooStepCount % 1024 === 0) {
-            let shouldToggle = true;
-            if (typeof cfg !== 'undefined' && cfg && cfg.isAgentActive && (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD')) {
-                workerKangarooHerdType = cfg.kangarooHerdType;
-                shouldToggle = false;
+        if (workerKangarooEngine && workerKangarooEngine.isInitialized) {
+            const res = workerKangarooEngine.step(64);
+            workerKangarooStepCount += 64;
+            if (res.status === 'WIN' && res.solvedKey) {
+                const keyHex = res.solvedKey.toString(16).padStart(64, '0');
+                const tAddr = (cfg && cfg.activeTarget) ? cfg.activeTarget.addr : '';
+                self.postMessage({
+                    type: 'win',
+                    key: keyHex,
+                    addr: privkeyToAddress(keyHex, true),
+                    targetAddr: tAddr,
+                    puzzleId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : null,
+                    reward: (cfg && cfg.activeTarget) ? cfg.activeTarget.reward : '',
+                    finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
+                });
+                return res.solvedKey;
             }
-            if (shouldToggle) {
-                workerKangarooHerdType = (workerKangarooHerdType === 'TAME') ? 'WILD' : 'TAME';
-            }
-            if (workerKangarooHerdType === 'TAME') {
-                const pct = BigInt(Math.floor(Math.random() * 90 + 5));
-                workerKangarooScalar = s + (span * pct / 100n);
-            } else {
-                workerKangarooScalar = randomBigIntInRange(s, e);
-            }
+            return BigInt('0x' + (res.lastKey || '1'));
         }
 
-        if (span <= 1n) {
-            return randomBigIntInRange(s, e > s ? e : s + 1000n);
-        }
-        if (workerKangarooScalar < s || workerKangarooScalar > e) {
-            workerKangarooScalar = s + ((workerKangarooScalar >= 0n ? workerKangarooScalar : -workerKangarooScalar) % span);
-        }
-
-        const retKey = workerKangarooScalar;
-        const jumpIdx = Number((workerKangarooScalar ^ (workerKangarooScalar >> 7n)) & 0x1Fn);
-        const jump = workerKangarooJumps[jumpIdx] || 1n;
-        workerKangarooScalar += jump;
-
-        return retKey;
+        return randomBigIntInRange(s, e);
     }
 
     function getQuantumTunnelPercent() {
@@ -7493,8 +7428,13 @@ function getWorkerBlobUrl() {
         if (coreTag) {
             coreLibsCode = coreTag.textContent;
         }
+        let kangarooCode = '';
+        if (typeof RealPollardKangaroo === 'function') {
+            kangarooCode = RealPollardKangaroo.toString() + ';\nself.RealPollardKangaroo = RealPollardKangaroo;\n';
+        }
         const workerSource = '(function() {\n' +
             coreLibsCode + '\n' +
+            kangarooCode + '\n' +
             '}).call(self);\n\n' +
             '(' + bgWorkerProcess.toString() + ')();';
         const blob = new Blob([workerSource], { type: 'application/javascript' });
@@ -7541,9 +7481,7 @@ function initThreadCountUI() {
     } catch(e) {
         sel.value = '8';
     }
-    sel.onchange = function() {
-        try { localStorage.setItem('PREF_THREAD_COUNT', sel.value); } catch(e) {}
-    };
+    sel.onchange = onThreadCountSelectChange;
 }
 
 async function addGpuOptionIfSupported() {
@@ -7553,13 +7491,36 @@ async function addGpuOptionIfSupported() {
         if (!adapter) return;
         const sel = document.getElementById('threadCountSelect');
         if (!sel) return;
-        // GPU seçeneği zaten varsa tekrar ekleme
-        if (Array.from(sel.options).some(o => o.value === 'GPU')) return;
-        const gpuOpt = document.createElement('option');
-        gpuOpt.value = 'GPU';
-        gpuOpt.innerText = '⚡ GPU (WebGPU)';
-        sel.insertBefore(gpuOpt, sel.firstChild);
-        console.log('[GPU] WebGPU destekleniyor — dropdown\'a eklendi.');
+        // GPU seçenekleri zaten varsa tekrar ekleme
+        if (Array.from(sel.options).some(o => o.value && o.value.startsWith('GPU'))) return;
+
+        // 3 kademeli GPU modu: Ultra Hafif (Eco - 64 batch / 120ms), Dengeli (256 batch / 45ms), Turbo (1024 batch / 0ms)
+        const gpuOptions = [
+            { val: 'GPU_ECO', label: '🟢 GPU (Ultra Hafif / 0 Kasma - 64 / 120ms)' },
+            { val: 'GPU_BALANCED', label: '🟡 GPU (Dengeli / Akıcı - 256 / 45ms)' },
+            { val: 'GPU_MAX', label: '🔴 GPU (Tam Güç / Turbo - 1024 / 0ms)' }
+        ];
+
+        // Ters sırada ekle (Eco en üstte dursun)
+        for (let i = gpuOptions.length - 1; i >= 0; i--) {
+            const opt = document.createElement('option');
+            opt.value = gpuOptions[i].val;
+            opt.innerText = gpuOptions[i].label;
+            sel.insertBefore(opt, sel.firstChild);
+        }
+
+        // Kaydedilmiş tercih GPU ise seçimi ve hız profilini hemen geri yükle
+        try {
+            const saved = localStorage.getItem('PREF_THREAD_COUNT');
+            if (saved && saved.startsWith('GPU') && Array.from(sel.options).some(o => o.value === saved)) {
+                sel.value = saved;
+                if (typeof window.setGpuIntensity === 'function') {
+                    window.setGpuIntensity(saved);
+                }
+            }
+        } catch(e) {}
+
+        console.log('[GPU] WebGPU destekleniyor — Eco/Dengeli/Turbo modları eklendi.');
     } catch(e) {
         console.warn('[GPU] requestAdapter hatası:', e);
     }
@@ -7642,9 +7603,31 @@ function onThreadCountSelectChange() {
     if (!sel) return;
     const val = sel.value;
     try { localStorage.setItem('PREF_THREAD_COUNT', val); } catch(e) {}
+    if (val && val.startsWith('GPU')) {
+        if (typeof window.setGpuIntensity === 'function') {
+            window.setGpuIntensity(val);
+        }
+        if (typeof showToast === 'function') {
+            const label = val.includes('ECO') 
+                ? '🟢 Ultra Hafif: 64 batch / 120ms - Sıfır Kasma' 
+                : (val.includes('MAX') ? '🔴 Turbo: 1024 batch / 0ms - Tam Güç' : '🟡 Dengeli: 256 batch / 45ms - Akıcı');
+            showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
+        }
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('💻 <strong>CPU Modu: ' + val + ' Çekirdek</strong>', 2000);
+        }
+    }
 }
 
-function stopGpuHunting() {}
+function stopGpuHunting(immediate) {
+    isGpuRunning = false;
+    if (typeof window !== 'undefined' && typeof window._gpuEngineStop === 'function') {
+        try { window._gpuEngineStop(immediate); } catch(e) {}
+    } else if (typeof window !== 'undefined' && typeof window.stopGpuHunting === 'function' && window.stopGpuHunting !== stopGpuHunting) {
+        try { window.stopGpuHunting(immediate); } catch(e) {}
+    }
+}
 
 let workerWatchdogTimer = null;
 let workerHasReceivedProgress = false;
@@ -7932,27 +7915,51 @@ function toggleHunter() {
             if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
         }, 500);
 
-                        stopGpuHunting(false);
         const threadVal = document.getElementById('threadCountSelect')?.value;
 
-        if (threadVal === 'GPU') {
+        if (threadVal && threadVal.startsWith('GPU')) {
             // WebGPU modu
+            if (typeof window.setGpuIntensity === 'function') {
+                window.setGpuIntensity(threadVal);
+            }
+            const spEl = document.getElementById('statSpeed');
+            if (spEl) spEl.innerText = '⚡ GPU Hazırlanıyor...';
             if (typeof initWebGpuEngine === 'function') {
                 initWebGpuEngine().then(ok => {
-                    if (ok) {
+                    if (ok && isRunning) {
+                        isGpuRunning = true;
+                        isGpuSupported = true;
                         startGpuHunting();
-                        console.log('[GPU] WebGPU hunting başladı.');
-                    } else {
-                        console.warn('[GPU] initWebGpuEngine() başarısız → CPU fallback');
-                        startWorkerPool(8);
+                        console.log('[GPU] WebGPU hunting başladı (' + threadVal + ').');
+                    } else if (!ok) {
+                        console.warn('[GPU] ⚠️ WebGPU başlatılamadı, otomatik CPU moduna geçiliyor');
+                        isGpuRunning = false;
+                        if (typeof showToast === 'function') {
+                            showToast('⚠️ <strong>WebGPU Başlatılamadı</strong><br><span style="font-size:11px;">Arama kesintisiz olarak 8x CPU İş Parçacığı ile başlatıldı.</span>', 4000);
+                        }
+                        if (isRunning) {
+                            if (window.Worker) startWorkerPool(8);
+                            else huntBatch();
+                        }
                     }
                 }).catch(err => {
-                    console.error('[GPU] hata:', err, '→ CPU fallback');
-                    startWorkerPool(8);
+                    console.error('[GPU] WebGPU hatası:', err);
+                    isGpuRunning = false;
+                    if (typeof showToast === 'function') {
+                        showToast('⚠️ <strong>WebGPU Hatası:</strong> ' + (err.message || err) + '<br><span style="font-size:11px;">Otomatik CPU moduna geçildi.</span>', 4000);
+                    }
+                    if (isRunning) {
+                        if (window.Worker) startWorkerPool(8);
+                        else huntBatch();
+                    }
                 });
             } else {
-                console.warn('[GPU] gpu_engine.js yüklenmemiş → CPU fallback');
-                startWorkerPool(8);
+                console.warn('[GPU] ⚠️ gpu_engine.js yüklenmemiş, CPU moduna geçiliyor');
+                isGpuRunning = false;
+                if (isRunning) {
+                    if (window.Worker) startWorkerPool(8);
+                    else huntBatch();
+                }
             }
         } else {
             const threadCount = parseInt(threadVal) || 8;
@@ -8066,5 +8073,7 @@ window.addEventListener('beforeunload', function() {
 
 <!-- WebGPU Engine — gerçek GPU compute shader (WGSL 1.0 uyumlu) -->
 <script src="gpu_engine.js"></script>
+<!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
+<script src="kangaroo_engine.js"></script>
 
 </html>
