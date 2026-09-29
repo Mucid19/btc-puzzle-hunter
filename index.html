@@ -217,7 +217,7 @@
         }
 
         
-        /* 🎚️ SATOSHI CRACKER TARZI ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI */
+        /* 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI */
         .dual-slider-bar {
             background: linear-gradient(135deg, #09121d, #0d1b2a);
             border: 1.5px solid #0ea5e9;
@@ -1254,9 +1254,9 @@
             <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
                 <!-- 🧠 OTOMATİK ARALIK VE STRATEJİ AJANI BUTONU -->
-                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🧠 Otomatik Aralık Ajanı (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
+                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🔄 Otomatik Strateji Döngüsü (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
                     <span>🧠</span>
-                    <span id="agentToggleText">Ajan</span>
+                    <span id="agentToggleText">Döngü</span>
                 </div>
 
                 <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
@@ -1271,7 +1271,7 @@
 
                 <!-- KANGAROO TUZ & AKTİF SEKME SAYISI ROZETLERİ -->
                 <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Tuz Sayısı">📍 0 Tuz</span>
-                <span id="kangarooSwarmTabCountBadge" style="display:inline-flex; align-items:center; gap:2px; color: #34d399; font-size: 10px; font-weight: 700; background: rgba(16, 185, 129, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Açık Aktif Sekme Sayısı Toplamı">🟢 1 Sekme</span>
+                <span id="kangarooSwarmTabCountBadge" style="display:none;" title="Sekme">🟢 1 Sekme</span>
             </div>
 
             <!-- 2. SATIR: ALGORİTMA (📐), ENTROPİ (⚡) VE ÖN EK (0x) BİRLEŞİK KONTROL SATIRI -->
@@ -1281,7 +1281,7 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
                     <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
-                        <option value="AGENT">🧠 Otomatik Ajan</option>
+                        <option value="AGENT">🔄 Strateji Döngüsü</option>
                         <option value="AUTO" selected>🔄 Oto (Karma)</option>
                         <option value="VD_CORPUT">📐 Van der Corput</option>
                         <option value="WEYL_GOLDEN">🌟 Weyl Kafesi</option>
@@ -1325,22 +1325,22 @@
 
             <!-- 3. SATIR: 🤖 OTOPİLOT AJANI (Panelde gizli çalışır) -->
             <div id="agentBanner" style="display:none !important;">
-                <span id="agentPhaseText" style="display:none;">Faz 1/5: V8 Randstorm + Weyl</span>
+                <span id="agentPhaseText" style="display:none;">Faz 1: Altın Oran Kademeli Tarama</span>
                 <span id="agentProgressText" style="display:none;">Doygunluk: %0 (180s)</span>
                 <button type="button" onclick="toggleAutopilotAgent(false)" style="display:none;">Kapat</button>
             </div>
         </div>
     </div>
 
-    <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI (Satoshi Cracker Style) -->
+    <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI -->
     <div class="dual-slider-bar">
         <!-- 🎛️ OTO KAYDIRAÇ (SWEEP / RADAR) KONTROL ÇUBUĞU -->
         <div class="auto-slider-sweep-bar">
             <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Hızlı: Tıklayınca hemen çalıştırır (1 sn / %2.618 Altın Adım)">⚡ Hızlı</button>
-                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Orta: Tıklayınca hemen çalıştırır (3 sn / %1.618 Altın Adım)">⏱️ Orta</button>
-                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Yavaş: Tıklayınca hemen çalıştırır (8 sn / %1.236 Altın Adım)">🐢 Yavaş</button>
-                <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Mikro: Ultra-hassas mikroskobik tarama (15 sn / %0.618 Altın Adım)">🔬 Mikro</button>
+                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Kaydıraç Otomatik Kayma Hızı: 1 saniye">⚡ Hızlı</button>
+                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Kaydıraç Otomatik Kayma Hızı: 3 saniye">⏱️ Orta</button>
+                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Kaydıraç Otomatik Kayma Hızı: 8 saniye">🐢 Yavaş</button>
+                <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Kaydıraç Otomatik Kayma Hızı: 15 saniye">🔬 Mikro</button>
             </div>
             <div class="auto-slider-info-group">
                 <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Kapsanan: Tam Uzay</span>
@@ -1425,6 +1425,19 @@
     <div class="btn-group">
         <button id="btnToggle" class="action-btn btn-start" onclick="toggleHunter()">▶ Aramayı Başlat</button>
     </div>
+
+    <!-- ☕ BAĞIŞ & DESTEK KUTUSU -->
+    <div style="margin-top: 14px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1;">
+            <span style="font-size: 11px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                ☕ Geliştiriciye Destek Ol (Bitcoin Bağış Adresi)
+            </span>
+            <span id="donationAddr" style="font-family: monospace; font-size: 11px; color: #94a3b8; word-break: break-all; user-select: all;">bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s</span>
+        </div>
+        <button type="button" onclick="navigator.clipboard.writeText('bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s').then(() => { if (typeof showToast === 'function') showToast('📋 Bağış adresi panoya kopyalandı!'); else alert('Kopyalandı!'); })" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+            📋 Kopyala
+        </button>
+    </div>
 </div>
 
 <script>
@@ -1483,7 +1496,13 @@ let isSliderSyncBusy = false;
 function onDualSliderToggle() {
     const chk = document.getElementById('chkEnableDualSlider');
     isDualSliderActive = chk ? chk.checked : true;
-    updateSliderUI(); broadcastWorkerConfig();
+    updateSliderUI();
+        if (typeof window !== 'undefined') {
+            window.uniqueKangarooTraps = new Set();
+            const tEl = document.getElementById('kangarooSwarmTrapCount');
+            if (tEl) tEl.innerText = '📍 0 Tuzak';
+        }
+        broadcastWorkerConfig();
 }
 
 function getActiveTarget() {
@@ -1573,6 +1592,18 @@ function updateSliderUI() {
     if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
 }
 
+
+function resetKangarooTrapsUI() {
+    if (typeof window !== 'undefined') {
+        window.uniqueKangarooTraps = new Set();
+        const trapEl = document.getElementById('kangarooSwarmTrapCount');
+        if (trapEl) trapEl.innerText = '📍 0 Tuzak';
+    }
+    kangarooTrapsCount = 0;
+    if (typeof kangarooSharedTraps !== 'undefined') kangarooSharedTraps = {};
+    if (typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine) kangarooRealEngine = null;
+}
+
 function onHexSliderChange(type) {
     if (isSliderSyncBusy) return;
     const bounds = getHexTargetBounds();
@@ -1609,6 +1640,7 @@ function onHexSliderChange(type) {
             }
         }
 
+        resetKangarooTrapsUI();
         updateSliderUI(); broadcastWorkerConfig();
         if (isPrefixAutoJump) {
             pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
@@ -1672,6 +1704,7 @@ function onHexSliderInputChange(type) {
             }
         }
 
+        resetKangarooTrapsUI();
         updateSliderUI(); broadcastWorkerConfig();
         if (isPrefixAutoJump) {
             pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
@@ -1711,7 +1744,8 @@ function setHexSliderBounds(sKey, eKey, labelText) {
     if (minEl && total > 0n) minEl.value = Number(((sliderMinHex - tStart) * 1000000000000n) / total);
     if (maxEl && total > 0n) maxEl.value = Number(((sliderMaxHex - tStart) * 1000000000000n) / total);
 
-    updateSliderUI(); broadcastWorkerConfig();
+    resetKangarooTrapsUI();
+        updateSliderUI(); broadcastWorkerConfig();
     if (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO' && typeof resetKangarooWalk === 'function') {
         resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget ? currentTarget.id : null);
     }
@@ -3995,13 +4029,25 @@ function setAlgorithm(algo) {
         }
     } else if (algo === 'KANGAROO') {
         const b = document.getElementById('btnAlgoKangaroo'); if (b) b.classList.add('active');
+        // Dürüst Kangaroo: Kaydıraç kapatılır, tam uzay kilitlenir
+        if (typeof isSliderSweepActive !== 'undefined' && isSliderSweepActive && typeof toggleSliderSweep === 'function') {
+            toggleSliderSweep();
+        }
+        if (typeof resetDualSlidersToFull === 'function') {
+            resetDualSlidersToFull();
+        }
         if (logAlgo && !isAgent) {
             const curId = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget.id : null;
             const curNum = curId !== null ? parseInt(curId, 10) : null;
             const pubHex = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
-            const pubInfo = pubHex ? ` [🔑 ${pubHex.substring(0, 10)}...${pubHex.substring(pubHex.length - 6)}]` : (curNum >= 135 && curNum <= 160 ? ' [🦘 135-160 Sıçrama Sürüsü]' : '');
-            logAlgo.innerText = "🦘 Pollard's Kangaroo (Eliptik Eğri Çarpışma Avcısı O(√N))" + pubInfo;
-            logAlgo.style.color = '#06b6d4';
+            if (pubHex) {
+                const pubInfo = ` [🔑 Açık Anahtar: ${pubHex.substring(0, 10)}...${pubHex.substring(pubHex.length - 6)}]`;
+                logAlgo.innerText = "🦘 Pollard's Kangaroo (Tam Aralık Eliptik Eğri Çarpışma Avcısı O(√N))" + pubInfo;
+                logAlgo.style.color = '#06b6d4';
+            } else {
+                logAlgo.innerText = "⚠️ Açık Anahtar Bilinmiyor! (Kangaroo açık anahtarı bilinen #135-#160 veya #19, #57 testlerinde çalışır)";
+                logAlgo.style.color = '#f59e0b';
+            }
         }
     }
     if (typeof updateKangarooSwarmUI === 'function') updateKangarooSwarmUI();
@@ -4081,9 +4127,9 @@ function applyPopcountConstraint(key, minB, maxB, targetRange) {
 const AGENT_TACTICS = [
     {
         phase: 1,
-        name: "V8 Randstorm + Weyl Altın Kafesi",
-        zone: "2011-2013 (Blockchain.info)",
-        confidence: 0.96,
+        name: "Altın Oran Kademeli Pencere Taraması",
+        zone: "Merkez Bölge (%20 - %40)",
+        
         algo: "WEYL_GOLDEN",
         formula: "WEYL_GOLDEN",
         bits: 0,
@@ -4095,16 +4141,16 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 200,
         targetKeys: 250000,
-        badge: "Faz 1: V8 Randstorm",
+        badge: "Faz 1: Altın Oran Pencere",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Chrome V8 48-bit tohum zaafiyeti ve Satoshi Cracker Altın Penceresi (%20-%40)"
+        desc: "Altın oran aralık penceresiyle (%20-%40) kademeli sıralı tarama"
     },
     {
         phase: 2,
-        name: "Android Uptime + Van der Corput",
-        zone: "Ağustos 2013 (Kriz Haftası)",
-        confidence: 0.93,
+        name: "Van der Corput Düşük Tutarsızlık",
+        zone: "Hızlı Radar Süpürmesi",
+        
         algo: "VD_CORPUT",
         formula: "VD_CORPUT",
         bits: 0,
@@ -4114,16 +4160,16 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 190,
         targetKeys: 250000,
-        badge: "Faz 2: Android SecureRandom",
+        badge: "Faz 2: Van der Corput",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Ağustos 2013 Android SecureRandom sıfır entropi krizi ve hızlı radar"
+        desc: "Van der Corput yarı-rastgele dizilimi ile aralıkta homojen sıçramalar"
     },
     {
         phase: 3,
-        name: "1000$ Boğası Epoch + Asal Modüler",
-        zone: "Sonbahar 2013 (⏱️ Orta Radar)",
-        confidence: 0.89,
+        name: "Asal Adımlı Modüler Tarama",
+        zone: "Orta Hızlı Radar (%15 - %85)",
+        
         algo: "COPRIME_STRIDE",
         formula: "COPRIME_STRIDE",
         bits: 0,
@@ -4135,16 +4181,16 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "Faz 3: 2013 Boğa Web Cüzdanları",
+        badge: "Faz 3: Asal Modüler",
         totalRuns: 0,
         avgRate: 0,
-        desc: "İlk büyük 1000$ patlaması acele açılan web cüzdanları ve asal modüler dengeli radar taraması"
+        desc: "Aralarında asal adımlarla modüler periyodik radar taraması"
     },
     {
         phase: 4,
-        name: "Satoshi Genesis & Deterministik Kaos",
-        zone: "Genesis Kümesi (🐢 Yavaş Radar)",
-        confidence: 0.86,
+        name: "Deterministik Kaotik Sıçrama (LCG)",
+        zone: "Alt Bölge (%0 - %25)",
+        
         algo: "CHAOS",
         formula: "DETERMINISTIC_CHAOS",
         bits: 0,
@@ -4156,18 +4202,18 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 170,
         targetKeys: 200000,
-        badge: "Faz 4: Satoshi Genesis & LCG",
+        badge: "Faz 4: LCG Kaotik",
         totalRuns: 0,
         avgRate: 0,
-        desc: "2009 Genesis ilk istemci tohumları ve düşük bit aralığında derin yavaş radar taraması (%0-%25)"
+        desc: "Doğrusal eşlik üreteci (LCG) ile deterministik kaos adımları (%0-%25)"
     },
     {
         phase: 5,
-        name: "Slashdot Akını & Hilbert Uzayı",
-        zone: "Hilbert Uzayı (🔬 Mikro Radar)",
-        confidence: 0.80,
+        name: "Hilbert Uzay Doldurma Taraması",
+        zone: "Mikro Radar (%20 - %40)",
+        
         algo: "HILBERT",
-        formula: "QUANTUM_TUNNEL",
+        formula: "HILBERT",
         bits: 0,
         popcountRange: null,
         sliderMode: "SWEEP_MICRO",
@@ -4177,16 +4223,16 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 160,
         targetKeys: 200000,
-        badge: "Faz 5: Erken Brainwallet",
+        badge: "Faz 5: Hilbert Taraması",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Slashdot ilk topluluk akını basit tohumlar ve Hilbert uzayında ultra-hassas mikroskobik arama"
+        desc: "Hilbert eğrisi koordinat eşlemesi ile boyutsal arama"
     },
     {
         phase: 6,
-        name: "Kusurlu PRNG & Zayıf Entropi",
-        zone: "2011-2014 (Kusurlu Entropi Sızıntısı)",
-        confidence: 0.91,
+        name: "Genişletilmiş Aralık Taraması",
+        zone: "Tam Aralık (%0 - %100)",
+        
         algo: "WEAK_ENTROPY",
         formula: "GOLDEN_SINGULARITY",
         bits: 32,
@@ -4196,18 +4242,18 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "Faz 6: Kusurlu PRNG",
+        badge: "Faz 6: Genişletilmiş Aralık",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Kusurlu PRNG, LCG döngüleri ve zayıf tohum kalıpları taraması"
+        desc: "Tüm aralık genelinde kademeli arama adımları"
     },
     {
         phase: 7,
-        name: "Quasi-Monte Carlo & Sobol Kafesi",
+        name: "Sobol Homojen Dağılım Taraması",
         zone: "Düşük Tutarsızlık Kümesi",
-        confidence: 0.88,
+        
         algo: "SOBOL",
-        formula: "RIEMANN_ZETA",
+        formula: "SOBOL",
         bits: 0,
         popcountRange: null,
         sliderMode: "FULL",
@@ -4215,10 +4261,10 @@ const AGENT_TACTICS = [
         baseDurationSec: 180,
         durationSec: 180,
         targetKeys: 200000,
-        badge: "Faz 7: Sobol Kafesi",
+        badge: "Faz 7: Sobol Dağılımı",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Sobol quasi-random dizilimi ile boşluksuz ve homojen arama uzayı taraması"
+        desc: "Sobol quasi-random dizilimi ile boşluksuz arama uzayı taraması"
     }
 ];
 
@@ -4235,152 +4281,92 @@ const AGENT_KANGAROO_TACTICS = [
     {
         phase: 1,
         name: "Evcil Sürü & Merkez Tuzak Ağı (Tame Trap)",
-        zone: "Merkez Bölge (%25 - %75)",
-        confidence: 0.98,
+        zone: "Tam Aralık (%0 - %100)",
         algo: "KANGAROO",
         formula: "OMNI_CHAOS",
         herd: "TAME",
         bits: 0,
         popcountRange: null,
-        sliderMode: "WINDOW",
-        sliderMinPct: 25,
-        sliderMaxPct: 75,
+        sliderMode: "FULL",
+        sliderMinPct: 0,
+        sliderMaxPct: 100,
         prefixActive: false,
-        baseDurationSec: 30,
-        durationSec: 30,
+        baseDurationSec: 60,
+        durationSec: 60,
         targetKeys: 250000,
         badge: "Faz 1: Pollard Evcil Tuzak",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Evcil kanguru sürüsü deterministik sıçramalarla aralığın merkezinde yoğun tuzak ağı (Distinguished Points) oluşturur."
+        desc: "Evcil kanguru sürüsü üst sınırdan başlayarak tam uzayda deterministik tuzak ağı (Distinguished Points) örer."
     },
     {
         phase: 2,
         name: "Vahşi Sürü Hızlı Çarpışma Avı (Wild Hunt)",
-        zone: "Dinamik Sweep Radarı (%0 - %100)",
-        confidence: 0.95,
+        zone: "Tam Aralık (%0 - %100)",
         algo: "KANGAROO",
         formula: "GOLDEN_SINGULARITY",
         herd: "WILD",
         bits: 0,
         popcountRange: null,
-        sliderMode: "SWEEP_FAST",
+        sliderMode: "FULL",
+        sliderMinPct: 0,
+        sliderMaxPct: 100,
         prefixActive: false,
-        baseDurationSec: 30,
-        durationSec: 30,
+        baseDurationSec: 60,
+        durationSec: 60,
         targetKeys: 250000,
         badge: "Faz 2: Pollard Vahşi Av",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Rastgele konumlardan salınan vahşi kangurular hızlı sweep radarıyla evcil tuzak izleriyle O(√N) çarpışma arar."
+        desc: "Açık anahtardan başlayarak tam uzayda evcil tuzaklarla O(√N) eliptik eğri çarpışması arar."
     },
     {
         phase: 3,
-        name: "Kademeli Çeyrek Dilim Barikatı (Stratified Trap)",
-        zone: "Barikat Radarı (⏱️ Orta)",
-        confidence: 0.92,
+        name: "Eşzamanlı Çift Sürü Çarpışma Ağı (Dual Herd)",
+        zone: "Tam Aralık (%0 - %100)",
         algo: "KANGAROO",
         formula: "OMNI_CHAOS",
-        herd: "TAME",
-        bits: 0,
-        popcountRange: null,
-        sliderMode: "SWEEP_MED",
-        sliderMinPct: 15,
-        sliderMaxPct: 85,
-        prefixActive: false,
-        baseDurationSec: 30,
-        durationSec: 30,
-        targetKeys: 250000,
-        badge: "Faz 3: Pollard Barikat Dilimi",
-        totalRuns: 0,
-        avgRate: 0,
-        desc: "Sıçrama adımlarını orta hızlı radar süpürmesiyle katmanlara yayarak arama aralığını iki uçtan kıstırır."
-    },
-    {
-        phase: 4,
-        name: "Derin Aralık Kanguru Taraması (Deep Sweep Trap)",
-        zone: "Derin Sweep Radarı (🐢 Yavaş)",
-        confidence: 0.91,
-        algo: "KANGAROO",
-        formula: "RIEMANN_ZETA",
-        herd: "WILD",
-        bits: 0,
-        popcountRange: null,
-        sliderMode: "SWEEP_SLOW",
-        sliderMinPct: 10,
-        sliderMaxPct: 90,
-        prefixActive: false,
-        baseDurationSec: 30,
-        durationSec: 30,
-        targetKeys: 250000,
-        badge: "Faz 4: Derin Sweep",
-        totalRuns: 0,
-        avgRate: 0,
-        desc: "Aralık geneline yayılan adımlarla derinleştirilmiş radar süpürmesiyle vahşi kanguru çarpışma avlar."
-    },
-    {
-        phase: 5,
-        name: "Altın Oran Odaklı Daraltılmış Tuzak (Golden Window)",
-        zone: "Altın Çekirdek Radarı (🔬 Mikro)",
-        confidence: 0.90,
-        algo: "KANGAROO",
-        formula: "GOLDEN_SINGULARITY",
-        herd: "TAME",
-        bits: 0,
-        popcountRange: null,
-        sliderMode: "SWEEP_MICRO",
-        sliderMinPct: 38.2,
-        sliderMaxPct: 61.8,
-        prefixActive: false,
-        baseDurationSec: 30,
-        durationSec: 30,
-        targetKeys: 250000,
-        badge: "Faz 5: Altın Pencere",
-        totalRuns: 0,
-        avgRate: 0,
-        desc: "Fibonacci / Altın Oran çekirdeğinde mikroskobik adımlarla ultra-hassas evcil tuzak radar taraması yürütür."
-    },
-    {
-        phase: 6,
-        name: "Dinamik Hex Ön Ek Ada Baskını (Island-Hopping Hex Raid)",
-        zone: "Ön Ek Adacıkları (⚡ Dinamik Baskın)",
-        confidence: 0.94,
-        algo: "KANGAROO",
-        formula: "OMNI_CHAOS",
-        herd: "WILD",
-        bits: 0,
-        popcountRange: null,
-        sliderMode: "FULL",
-        prefixActive: true,
-        baseDurationSec: 30,
-        durationSec: 30,
-        targetKeys: 250000,
-        badge: "Faz 6: Ön Ek Ada Baskını",
-        totalRuns: 0,
-        avgRate: 0,
-        desc: "Kanguru sıçramalarını dinamik hex ön ek filtreleriyle birleştirerek rastgele alt adacıklara (Island-Hopping) yüksek frekanslı baskınlar yapar."
-    },
-    {
-        phase: 7,
-        name: "Tam Uzay Çift Sürü Çapraz Tarama (Dual Herd Chaos)",
-        zone: "Tüm Aralık (%0 - %100)",
-        confidence: 0.89,
-        algo: "KANGAROO",
-        formula: "DETERMINISTIC_CHAOS",
         herd: "MIXED",
         bits: 0,
         popcountRange: null,
         sliderMode: "FULL",
+        sliderMinPct: 0,
+        sliderMaxPct: 100,
         prefixActive: false,
-        baseDurationSec: 35,
-        durationSec: 35,
-        targetKeys: 300000,
-        badge: "Faz 7: Çift Sürü Çapraz Tarama",
+        baseDurationSec: 60,
+        durationSec: 60,
+        targetKeys: 250000,
+        badge: "Faz 3: Çift Sürü (Dual)",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Evcil ve vahşi kanguruların tam arama uzayında yüksek frekanslı sıçrama döngüsüyle global çarpışma taraması."
+        desc: "Çekirdeklerin yarısı evcil, yarısı vahşi olarak tam aralıkta eşzamanlı çarpışma arar."
     }
 ];
+
+
+function getTargetBitLength() {
+    const actT = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
+    if (!actT) return 64;
+    const pid = parseInt(actT.id, 10);
+    if (!isNaN(pid) && pid > 0) return pid;
+    if (actT.startHex) return actT.startHex.length * 4;
+    if (actT.end) {
+        const eBig = toBigIntSafe(actT.end);
+        return eBig.toString(2).length;
+    }
+    return 64;
+}
+
+function getDynamicPhaseDurationSec() {
+    const bits = getTargetBitLength();
+    if (bits <= 24) return 60;        // 1 dakika (küçük testler #19 vb.)
+    if (bits <= 40) return 180;       // 3 dakika (#38 vb.)
+    if (bits <= 60) return 300;       // 5 dakika (#57 vb.)
+    if (bits <= 75) return 600;       // 10 dakika (#66, #71 vb.)
+    if (bits <= 100) return 900;      // 15 dakika
+    if (bits <= 130) return 1200;     // 20 dakika
+    return 1800;                      // 30 dakika (#135-#160 devasa bulmacalar)
+}
 
 function getActiveAgentTactics() {
     return isKangarooModeActive() ? AGENT_KANGAROO_TACTICS : AGENT_TACTICS;
@@ -4411,11 +4397,11 @@ function recordAndOptimizePhasePerformance(prevIdx, elapsedSec, phaseKeys) {
     tacticsList.forEach(tac => {
         const conf = tac.confidence || 0.85;
         if (tac.totalRuns && tac.totalRuns > 0 && maxRate > 0) {
-            const speedRatio = Math.max(0.1, tac.avgRate / maxRate);
-            const combinedScore = (speedRatio * 0.6) + (conf * 0.4);
-            tac.durationSec = Math.round(20 + (combinedScore * 25));
+            tac.durationSec = getDynamicPhaseDurationSec();
+            tac.targetKeys = tac.durationSec * 2500;
         } else {
-            tac.durationSec = Math.round((tac.baseDurationSec || 30) * conf);
+            tac.durationSec = getDynamicPhaseDurationSec();
+            tac.targetKeys = tac.durationSec * 2500;
         }
     });
 
@@ -4543,7 +4529,7 @@ function toggleAutopilotAgent(forceState) {
             btn.title = isKangaroo ? '🦘 Pollard Kangaroo Ajanı Aktif (Tıkla: Kapat)' : '🧠 Otomatik Ajan Aktif (Tıkla: Kapat)';
         }
         const toggleText = document.getElementById('agentToggleText');
-        if (toggleText) toggleText.innerText = isKangaroo ? 'Kanguru' : 'Ajan';
+        if (toggleText) toggleText.innerText = isKangaroo ? 'Kanguru' : 'Döngü';
 
         if (banner) banner.style.display = 'none';
         if (algoSel) algoSel.value = 'AGENT';
@@ -4595,6 +4581,9 @@ function applyAgentPhase(idx) {
 
     agentPhaseStartTime = Date.now();
     agentPhaseStartAttempts = (typeof attempts !== 'undefined') ? attempts : 0;
+    const dynamicDur = getDynamicPhaseDurationSec();
+    tactic.durationSec = dynamicDur;
+    tactic.targetKeys = dynamicDur * 2500;
 
     // 1. Formülü ayarla
     if (typeof selectModeFormula === 'function') {
@@ -4660,7 +4649,7 @@ function applyAgentPhase(idx) {
         logAlgo.style.color = isKangaroo ? '#06b6d4' : '#818cf8';
     }
     const toggleText = document.getElementById('agentToggleText');
-    if (toggleText && isAgentActive) toggleText.innerText = isKangaroo ? 'Kanguru' : 'Ajan';
+    if (toggleText && isAgentActive) toggleText.innerText = isKangaroo ? 'Kanguru' : 'Döngü';
 
     broadcastAgentState();
 
@@ -5193,16 +5182,26 @@ function generateSobolKey(rangeStart, rangeEnd) {
     mainSobolStep++;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
-    let n = BigInt(mainSobolStep);
-    let rev = 0n;
-    let temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev = (rev << 1n) | (temp & 1n);
-        temp >>= 1n;
+    const n = BigInt(mainSobolStep);
+    if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+        let rev = 0n;
+        let temp = n & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev = (rev << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        const g = n ^ (n >> 1n);
+        const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
+        const offset = (mix * totalRange) >> 64n;
+        return rangeStart + offset;
     }
-    const g = n ^ (n >> 1n);
-    const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
-    const offset = (mix * totalRange) >> 64n;
+    // 256-bit tam derinlikli yarı-rastgele: alt bitlerde donma/sıfır kilitlenmesi olmaz
+    const w0 = ((n * 0x9E3779B97F4A7C15n) ^ (n >> 17n)) & 0xFFFFFFFFFFFFFFFFn;
+    const w1 = ((n * 0xBF58476D1CE4E5B9n) ^ (n >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+    const w2 = ((n * 0x94D049BB133111EBn) ^ (n >> 13n)) & 0xFFFFFFFFFFFFFFFFn;
+    const w3 = ((n * 0xD6E8FEB86659FD93n) ^ (n >> 23n)) & 0xFFFFFFFFFFFFFFFFn;
+    const fullQuasi = (w3 << 192n) | (w2 << 128n) | (w1 << 64n) | w0;
+    const offset = fullQuasi % (totalRange + 1n);
     return rangeStart + offset;
 }
 
@@ -5211,14 +5210,30 @@ function generateVanDerCorputKey(rangeStart, rangeEnd) {
     mainVdCorputStep++;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
-    let n = mainVdCorputStep;
-    let rev = 0n;
-    let temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev = (rev << 1n) | (temp & 1n);
-        temp >>= 1n;
+    if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+        let n = mainVdCorputStep;
+        let rev = 0n;
+        let temp = n & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev = (rev << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        const offset = (rev * totalRange) >> 64n;
+        return rangeStart + offset;
     }
-    const offset = (rev * totalRange) >> 64n;
+    const n = mainVdCorputStep;
+    let rev0 = 0n, temp0 = n & 0xFFFFFFFFFFFFFFFFn;
+    let rev1 = 0n, temp1 = (n ^ 0x5555555555555555n) & 0xFFFFFFFFFFFFFFFFn;
+    let rev2 = 0n, temp2 = (n ^ 0xAAAAAAAAAAAAAAAAn) & 0xFFFFFFFFFFFFFFFFn;
+    let rev3 = 0n, temp3 = (n * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev0 = (rev0 << 1n) | (temp0 & 1n); temp0 >>= 1n;
+        rev1 = (rev1 << 1n) | (temp1 & 1n); temp1 >>= 1n;
+        rev2 = (rev2 << 1n) | (temp2 & 1n); temp2 >>= 1n;
+        rev3 = (rev3 << 1n) | (temp3 & 1n); temp3 >>= 1n;
+    }
+    const fullVd = (rev0 << 192n) | (rev1 << 128n) | (rev2 << 64n) | rev3;
+    const offset = fullVd % (totalRange + 1n);
     return rangeStart + offset;
 }
 
@@ -5227,8 +5242,18 @@ function generateWeylGoldenKey(rangeStart, rangeEnd) {
     mainWeylStep++;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
-    const weylFrac = (mainWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
-    const offset = (weylFrac * totalRange) >> 64n;
+    if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+        const weylFrac = (mainWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        const offset = (weylFrac * totalRange) >> 64n;
+        return rangeStart + offset;
+    }
+    const n = mainWeylStep;
+    const w0 = (n * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+    const w1 = (n * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
+    const w2 = (n * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
+    const w3 = (n * 0xD6E8FEB86659FD93n) & 0xFFFFFFFFFFFFFFFFn;
+    const fullWeyl = (w0 << 192n) | (w1 << 128n) | (w2 << 64n) | w3;
+    const offset = fullWeyl % (totalRange + 1n);
     return rangeStart + offset;
 }
 
@@ -5238,7 +5263,9 @@ function generateCoprimeStrideKey(rangeStart, rangeEnd) {
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
     const mod = totalRange + 1n;
-    const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? (0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) : 0xC6A4A7935BD1E995n;
+    const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) 
+        ? ((0xC6A4A7935BD1E995n << 128n) | (0x9E3779B97F4A7C15n << 64n) | 0xD6E8FEB86659FD93n) 
+        : 0xC6A4A7935BD1E995n;
     const offset = (mainCoprimeStep * (stride | 1n)) % mod;
     return rangeStart + (offset < 0n ? -offset : offset);
 }
@@ -5259,7 +5286,7 @@ function generateHilbertKey(rangeStart, rangeEnd) {
         return key;
     }
     
-    // Büyük uzaylar için: %100 Space-Filling Hilbert hücreleri ve mikro ofset
+    // Büyük uzaylar için: %100 Space-Filling Hilbert hücreleri ve tam entropili mikro ofset
     const cellIndex = (hilbertStep * HILBERT_STRIDE) % HILBERT_TOTAL_CELLS;
     const { x, y } = hilbertD2XY(HILBERT_ORDER, cellIndex);
     
@@ -5267,11 +5294,8 @@ function generateHilbertKey(rangeStart, rangeEnd) {
     const cellStart = rangeStart + (cellIndex * cellSize);
     
     let microOffset = 0n;
-    if (cellSize > 1000000n) {
-        const r = BigInt(Math.floor(Math.random() * 1000000));
-        microOffset = (cellSize * r) / 1000000n;
-    } else if (cellSize > 1n) {
-        microOffset = BigInt(Math.floor(Math.random() * Number(cellSize)));
+    if (cellSize > 1n) {
+        microOffset = randomBigIntInRange(0n, cellSize - 1n);
     }
     
     const key = cellStart + microOffset;
@@ -5562,6 +5586,9 @@ function generateKangarooKey(rangeStart, rangeEnd) {
             }
         }
 
+        if (res && res.lastKey) {
+            return BigInt('0x' + res.lastKey);
+        }
         return randomBigIntInRange(s, e);
     }
 
@@ -5780,13 +5807,13 @@ function huntBatch() {
             } else if (activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) {
                 currentKey = generateWeakEntropyKey(subMin, subMax, selectedEntropyBits);
             } else if (activeAlgo === 'KANGAROO') {
-                currentKey = generateKangarooKey(subMin, subMax);
+                currentKey = generateKangarooKey(boundMin, boundMax); attempts += 63; if (sliceModeActive) sliceAttempts += 63;
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
             }
 
             // 3. Ön Ek Filtresi: Üretilen anahtarı belirlenen 0x hex ön eki ile kilitler
-            if (isEffectivePrefix) {
+            if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
                 if (isPrefixAutoJump) {
                     prefixJumpCounter++;
                     if (prefixJumpCounter % 25 === 0 || !userPrefix) {
@@ -5985,7 +6012,7 @@ function huntBatch() {
                         const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
                         pParts.push(`🎚️ [0x${bMinHex.substring(0, 6)}..-0x${bMaxHex.substring(0, 6)}..]`);
                     }
-                    if (isEffectivePrefix) {
+                    if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
                         pParts.push(isPrefixAutoJump 
                             ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
                             : `🧩 Ön Ek: 0x${userPrefix}`);
@@ -6635,16 +6662,26 @@ function bgWorkerProcess() {
         workerSobolStep++;
         const totalRange = rangeEnd - rangeStart;
         if (totalRange <= 0n) return rangeStart;
-        let n = BigInt(workerSobolStep);
-        let rev = 0n;
-        let temp = n & 0xFFFFFFFFFFFFFFFFn;
-        for (let i = 0; i < 64; i++) {
-            rev = (rev << 1n) | (temp & 1n);
-            temp >>= 1n;
+        const n = BigInt(workerSobolStep);
+        if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+            let rev = 0n;
+            let temp = n & 0xFFFFFFFFFFFFFFFFn;
+            for (let i = 0; i < 64; i++) {
+                rev = (rev << 1n) | (temp & 1n);
+                temp >>= 1n;
+            }
+            const g = n ^ (n >> 1n);
+            const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
+            const offset = (mix * totalRange) >> 64n;
+            return rangeStart + offset;
         }
-        const g = n ^ (n >> 1n);
-        const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
-        const offset = (mix * totalRange) >> 64n;
+        // 256-bit tam derinlikli yarı-rastgele: alt bitlerde donma/sıfır kilitlenmesi olmaz
+        const w0 = ((n * 0x9E3779B97F4A7C15n) ^ (n >> 17n)) & 0xFFFFFFFFFFFFFFFFn;
+        const w1 = ((n * 0xBF58476D1CE4E5B9n) ^ (n >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+        const w2 = ((n * 0x94D049BB133111EBn) ^ (n >> 13n)) & 0xFFFFFFFFFFFFFFFFn;
+        const w3 = ((n * 0xD6E8FEB86659FD93n) ^ (n >> 23n)) & 0xFFFFFFFFFFFFFFFFn;
+        const fullQuasi = (w3 << 192n) | (w2 << 128n) | (w1 << 64n) | w0;
+        const offset = fullQuasi % (totalRange + 1n);
         return rangeStart + offset;
     }
 
@@ -6653,14 +6690,30 @@ function bgWorkerProcess() {
         workerVdCorputStep++;
         const totalRange = rangeEnd - rangeStart;
         if (totalRange <= 0n) return rangeStart;
-        let n = workerVdCorputStep;
-        let rev = 0n;
-        let temp = n & 0xFFFFFFFFFFFFFFFFn;
-        for (let i = 0; i < 64; i++) {
-            rev = (rev << 1n) | (temp & 1n);
-            temp >>= 1n;
+        if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+            let n = workerVdCorputStep;
+            let rev = 0n;
+            let temp = n & 0xFFFFFFFFFFFFFFFFn;
+            for (let i = 0; i < 64; i++) {
+                rev = (rev << 1n) | (temp & 1n);
+                temp >>= 1n;
+            }
+            const offset = (rev * totalRange) >> 64n;
+            return rangeStart + offset;
         }
-        const offset = (rev * totalRange) >> 64n;
+        const n = workerVdCorputStep;
+        let rev0 = 0n, temp0 = n & 0xFFFFFFFFFFFFFFFFn;
+        let rev1 = 0n, temp1 = (n ^ 0x5555555555555555n) & 0xFFFFFFFFFFFFFFFFn;
+        let rev2 = 0n, temp2 = (n ^ 0xAAAAAAAAAAAAAAAAn) & 0xFFFFFFFFFFFFFFFFn;
+        let rev3 = 0n, temp3 = (n * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev0 = (rev0 << 1n) | (temp0 & 1n); temp0 >>= 1n;
+            rev1 = (rev1 << 1n) | (temp1 & 1n); temp1 >>= 1n;
+            rev2 = (rev2 << 1n) | (temp2 & 1n); temp2 >>= 1n;
+            rev3 = (rev3 << 1n) | (temp3 & 1n); temp3 >>= 1n;
+        }
+        const fullVd = (rev0 << 192n) | (rev1 << 128n) | (rev2 << 64n) | rev3;
+        const offset = fullVd % (totalRange + 1n);
         return rangeStart + offset;
     }
 
@@ -6669,8 +6722,18 @@ function bgWorkerProcess() {
         workerWeylStep++;
         const totalRange = rangeEnd - rangeStart;
         if (totalRange <= 0n) return rangeStart;
-        const weylFrac = (workerWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
-        const offset = (weylFrac * totalRange) >> 64n;
+        if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+            const weylFrac = (workerWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+            const offset = (weylFrac * totalRange) >> 64n;
+            return rangeStart + offset;
+        }
+        const n = workerWeylStep;
+        const w0 = (n * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        const w1 = (n * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
+        const w2 = (n * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
+        const w3 = (n * 0xD6E8FEB86659FD93n) & 0xFFFFFFFFFFFFFFFFn;
+        const fullWeyl = (w0 << 192n) | (w1 << 128n) | (w2 << 64n) | w3;
+        const offset = fullWeyl % (totalRange + 1n);
         return rangeStart + offset;
     }
 
@@ -6680,7 +6743,9 @@ function bgWorkerProcess() {
         const totalRange = rangeEnd - rangeStart;
         if (totalRange <= 0n) return rangeStart;
         const mod = totalRange + 1n;
-        const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? (0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) : 0xC6A4A7935BD1E995n;
+        const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) 
+            ? ((0xC6A4A7935BD1E995n << 128n) | (0x9E3779B97F4A7C15n << 64n) | 0xD6E8FEB86659FD93n) 
+            : 0xC6A4A7935BD1E995n;
         const offset = (workerCoprimeStep * (stride | 1n)) % mod;
         return rangeStart + (offset < 0n ? -offset : offset);
     }
@@ -6697,11 +6762,8 @@ function bgWorkerProcess() {
         const cellSize = totalRange / HILBERT_TOTAL_CELLS;
         const cellStart = rangeStart + (cellIndex * cellSize);
         let microOffset = 0n;
-        if (cellSize > 1000000n) {
-            const r = BigInt(Math.floor(Math.random() * 1000000));
-            microOffset = (cellSize * r) / 1000000n;
-        } else if (cellSize > 1n) {
-            microOffset = BigInt(Math.floor(Math.random() * Number(cellSize)));
+        if (cellSize > 1n) {
+            microOffset = randomBigIntInRange(0n, cellSize - 1n);
         }
         const key = cellStart + microOffset;
         return (key >= rangeStart && key <= rangeEnd) ? key : rangeStart + (key % totalRange);
@@ -6953,7 +7015,7 @@ function bgWorkerProcess() {
 
         if (typeof RealPollardKangaroo === 'function' && targetPub) {
             try {
-                workerKangarooEngine = new RealPollardKangaroo(targetPub, s, e, { role: role });
+                workerKangarooEngine = new RealPollardKangaroo(targetPub, s, e, { role: role, workerId: workerId });
             } catch(err) {
                 workerKangarooEngine = null;
             }
@@ -6992,6 +7054,9 @@ function bgWorkerProcess() {
                     finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
                 });
                 return res.solvedKey;
+            }
+            if (res && res.lastKey) {
+                return BigInt('0x' + res.lastKey);
             }
             return randomBigIntInRange(s, e);
         }
@@ -7223,13 +7288,13 @@ function bgWorkerProcess() {
             } else if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) {
                 currentKey = generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
             } else if (workerActiveAlgo === 'KANGAROO') {
-                currentKey = workerGenerateKangarooKey(subMin, subMax);
+                currentKey = workerGenerateKangarooKey(boundMin, boundMax); count += 63; // 64 eliptik eğri adımını ve seçilen aralığı tam yansıt
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
             }
 
             // 3. Ön Ek Filtresi: Üretilen anahtarı belirlenen 0x hex ön eki ile kilitler
-            if (isEffectivePrefix) {
+            if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
                 if (cfg.isPrefixAutoJump) {
                     prefixJumpCounter++;
                     if (prefixJumpCounter % 25 === 0 || !activeWorkerPrefix) {
@@ -7266,7 +7331,7 @@ function bgWorkerProcess() {
             if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
                 pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 6) + '..-0x' + boundMax.toString(16).substring(0, 6) + '..]');
             }
-            if (isEffectivePrefix) {
+            if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
                 pParts.push(cfg.isPrefixAutoJump ? ('🔄 Oto Ön Ek: 0x' + (activeWorkerPrefix || '...')) : ('🧩 Ön Ek: 0x' + activeWorkerPrefix));
             }
             if (f === 'OMNI_CHAOS') pParts.push('💥 Hibrit Kaos');
@@ -7308,7 +7373,7 @@ function bgWorkerProcess() {
 
             // 🧬 Sezgisel Ajan Popcount Sınırlaması (Zayıf Bit Filtresi)
             if (cfg && cfg.agentPopcountRange) {
-                currentKey = applyPopcountConstraint(currentKey, boundMin, boundMax, cfg.agentPopcountRange);
+                // Popcount placebo removed
             }
             
             lastKeyHex = currentKey.toString(16).padStart(64, '0');
@@ -7354,44 +7419,17 @@ function bgWorkerProcess() {
 
             // 🎯 Hedefe Yakınlık Dedektörü (Micro-Zoom Radarı)
             // Worker proximity detector removed
-            
-            // 🏛️ 4. SATOSHI / PATOSHI HAVUZU KONTROLÜ (21.953 Adres)
-            if (cfg.satoshiMultiTargetActive && satoshiSet && satoshiSet.size > 0) {
-                if (satoshiSet.has(compH160)) {
-                    self.postMessage({
-                        type: 'win',
-                        workerId: workerId,
-                        keyHex: lastKeyHex,
-                        targetId: 'PATOSHI_SATOSHI',
-                        targetAddr: activeTarget.addr,
-                        reward: '🏛️ Satoshi/Patoshi Bloğu Eşleşmesi!',
-                        isUncompressed: false,
-                        matchType: 'SATOSHI_COMP'
-                    });
-                    isWorking = false;
-                    return;
-                }
-                if (satoshiSet.has(uncompH160)) {
-                    self.postMessage({
-                        type: 'win',
-                        workerId: workerId,
-                        keyHex: lastKeyHex,
-                        targetId: 'PATOSHI_SATOSHI',
-                        targetAddr: activeTarget.addr,
-                        reward: '🏛️ Satoshi/Patoshi Bloğu (Uncompressed)!',
-                        isUncompressed: true,
-                        matchType: 'SATOSHI_UNCOMP'
-                    });
-                    isWorking = false;
-                    return;
-                }
-            }
         }
         
+        const newTrapsList = (workerKangarooEngine && workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0)
+            ? workerKangarooEngine.newTrapsToBroadcast.splice(0)
+            : null;
+
         self.postMessage({
             type: 'progress',
             workerId: workerId,
             count: count,
+            newTraps: newTrapsList,
             lastKey: lastKeyHex,
             targetId: activeTarget ? activeTarget.id : '',
             rangeText: currentRangeText,
@@ -7453,6 +7491,9 @@ function bgWorkerProcess() {
             cfg = Object.assign(cfg, d.config || {});
             if (d.config && (d.config.selectedAlgorithm === 'KANGAROO' || d.config.activeTarget || d.config.sliderMinHex !== undefined || d.config.sliderMaxHex !== undefined)) {
                 workerKangarooJumps = [];
+                workerKangarooEngine = null;
+                workerKangarooLastStart = 0n;
+                workerKangarooLastEnd = 0n;
             }
             if (d.config && d.config.kangarooHerdType) {
                 if (d.config.kangarooHerdType === 'TAME' || d.config.kangarooHerdType === 'WILD') {
@@ -7694,6 +7735,9 @@ let workerWatchdogTimer = null;
 let workerHasReceivedProgress = false;
 
 function startWorkerPool(threadCount) {
+    window.uniqueKangarooTraps = new Set();
+    const trapEl = document.getElementById('kangarooSwarmTrapCount');
+    if (trapEl) trapEl.innerText = '📍 0 Tuzak';
     if (typeof requestTabKeepAlive === 'function') requestTabKeepAlive();
     stopWorkerPool();
     workerHasReceivedProgress = false;
@@ -7811,6 +7855,18 @@ function handleWorkerMessage(e) {
 
         if (data.type === 'progress') {
             workerHasReceivedProgress = true;
+            if (data.newTraps && data.newTraps.length > 0) {
+                if (!window.uniqueKangarooTraps) window.uniqueKangarooTraps = new Set();
+                for (let t of data.newTraps) {
+                    if (t && t.pointXHex) {
+                        window.uniqueKangarooTraps.add(t.pointXHex);
+                    }
+                }
+                const trapEl = document.getElementById('kangarooSwarmTrapCount');
+                if (trapEl) {
+                    trapEl.innerText = `📍 ${window.uniqueKangarooTraps.size.toLocaleString('tr-TR')} Tuzak`;
+                }
+            }
             if (isGpuRunning) {
                 if (data.count) attempts += data.count;
             } else {

@@ -1,0 +1,19 @@
+# Backups & Temporary files
+*.bak
+*.pure_bak
+*.original_backup
+*.tmp
+*~
+
+# Operating System Files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE & Editor Files
+.vscode/
+.idea/
+
+# Scratch & Logs
+*.log
+scratch/
