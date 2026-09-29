@@ -48,9 +48,6 @@ Doğrudan tarayıcınız üzerinden hiçbir şey indirmeden çalıştırabilirsi
 
 ### 5. 🛡️ %100 Çevrimdışı ve Sıfır Ağ İsteği
 * **Gömülü Kütüphaneler:** CryptoJS, secp256k1, BigInteger, Bech32, Base58 ve RIPEMD160 kütüphaneleri doğrudan tek bir dosya içine entegre edilmiştir.
-* **21.953 Satoshi / Patoshi Adres Havuzu** yerel RAM'de taranır.
-* **23.669 Özel Cüzdan Bloom Filtresi** yerel bellek üzerinde milisaniyeler içinde sorgulanır.
-* Dışarıya hiçbir veri göndermez; gizliliğiniz ve güvenliğiniz tamdır.
 
 ### 6. 🔑 Tam 256-Bit Standart Bitcoin Özel Anahtar Formatı
 * Bulunan ve aranan tüm anahtarlar standart 64 onaltılık karakter (`0x0000000000000000000000000000000000000000000000000...`) formatında sunulur.
