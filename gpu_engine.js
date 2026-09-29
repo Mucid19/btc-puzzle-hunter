@@ -409,33 +409,51 @@ fn scalar_mul_G(k: U256) -> JacobianPoint {
 
 // Jacobian → affine (inline, main içinde kullanılır — WGSL 1.0'da generic return yoktur)
 
-// Store 33-byte compressed pubkey at output slot [base]
-// pubkeys buffer: 9 u32 per key = 36 bytes (33 used, 3 padding)
+// Store 33-byte compressed + 65-byte uncompressed pubkey at output slot [base]
+// pubkeys buffer: 26 u32 per key = 104 bytes (9 words compressed, 17 words uncompressed)
 fn store_pubkey(base: u32, x: U256, y: U256) {
     let prefix = 2u + (y.l[0] & 1u);  // 02=even, 03=odd
-    let off = base * 9u;
-    // 33 bytes: [prefix, X_big_endian_32_bytes]
-    // X is little-endian limbs[0..7], we pack big-endian
-    // Byte layout: byte0=prefix, byte1..4=limbs[7] BE, byte5..8=limbs[6] BE, ...
-    // Pack 9 u32 words (big-endian within each word):
-    // word0: [prefix, limbs[7][31..24], limbs[7][23..16], limbs[7][15..8]]
-    // word1: [limbs[7][7..0], limbs[6][31..24], limbs[6][23..16], limbs[6][15..8]]
-    // ...etc
-    var bytes: array<u32, 33>;
-    bytes[0] = prefix;
+    let off = base * 26u;
+
+    // 1. Sıkıştırılmış (Compressed) 33-byte: [prefix, X (32 bytes)] -> 9 u32 kelimesi
+    var c_bytes: array<u32, 33>;
+    c_bytes[0] = prefix;
     for (var li=0u; li<8u; li++) {
         let limb = x.l[7u - li];  // MSB limb first
-        bytes[1u + li*4u + 0u] = (limb >> 24u) & 0xFFu;
-        bytes[1u + li*4u + 1u] = (limb >> 16u) & 0xFFu;
-        bytes[1u + li*4u + 2u] = (limb >>  8u) & 0xFFu;
-        bytes[1u + li*4u + 3u] =  limb         & 0xFFu;
+        c_bytes[1u + li*4u + 0u] = (limb >> 24u) & 0xFFu;
+        c_bytes[1u + li*4u + 1u] = (limb >> 16u) & 0xFFu;
+        c_bytes[1u + li*4u + 2u] = (limb >>  8u) & 0xFFu;
+        c_bytes[1u + li*4u + 3u] =  limb         & 0xFFu;
     }
     for (var w=0u; w<9u; w++) {
-        let b0 = select(0u, bytes[w*4u+0u], w*4u+0u < 33u);
-        let b1 = select(0u, bytes[w*4u+1u], w*4u+1u < 33u);
-        let b2 = select(0u, bytes[w*4u+2u], w*4u+2u < 33u);
-        let b3 = select(0u, bytes[w*4u+3u], w*4u+3u < 33u);
+        let b0 = select(0u, c_bytes[w*4u+0u], w*4u+0u < 33u);
+        let b1 = select(0u, c_bytes[w*4u+1u], w*4u+1u < 33u);
+        let b2 = select(0u, c_bytes[w*4u+2u], w*4u+2u < 33u);
+        let b3 = select(0u, c_bytes[w*4u+3u], w*4u+3u < 33u);
         pubkeys[off + w] = (b0 << 24u) | (b1 << 16u) | (b2 << 8u) | b3;
+    }
+
+    // 2. Sıkıştırılmamış (Uncompressed) 65-byte: [0x04, X (32 bytes), Y (32 bytes)] -> 17 u32 kelimesi
+    var u_bytes: array<u32, 65>;
+    u_bytes[0] = 4u; // 0x04 uncompressed
+    for (var li=0u; li<8u; li++) {
+        let lx = x.l[7u - li];
+        u_bytes[1u + li*4u + 0u] = (lx >> 24u) & 0xFFu;
+        u_bytes[1u + li*4u + 1u] = (lx >> 16u) & 0xFFu;
+        u_bytes[1u + li*4u + 2u] = (lx >>  8u) & 0xFFu;
+        u_bytes[1u + li*4u + 3u] =  lx         & 0xFFu;
+        let ly = y.l[7u - li];
+        u_bytes[33u + li*4u + 0u] = (ly >> 24u) & 0xFFu;
+        u_bytes[33u + li*4u + 1u] = (ly >> 16u) & 0xFFu;
+        u_bytes[33u + li*4u + 2u] = (ly >>  8u) & 0xFFu;
+        u_bytes[33u + li*4u + 3u] =  ly         & 0xFFu;
+    }
+    for (var w=0u; w<17u; w++) {
+        let b0 = select(0u, u_bytes[w*4u+0u], w*4u+0u < 65u);
+        let b1 = select(0u, u_bytes[w*4u+1u], w*4u+1u < 65u);
+        let b2 = select(0u, u_bytes[w*4u+2u], w*4u+2u < 65u);
+        let b3 = select(0u, u_bytes[w*4u+3u], w*4u+3u < 65u);
+        pubkeys[off + 9u + w] = (b0 << 24u) | (b1 << 16u) | (b2 << 8u) | b3;
     }
 }
 
@@ -480,7 +498,9 @@ class GpuEngine {
         this.pubkeyBuf   = null;
         this.readbackBuf = null;
         this.bindGroup   = null;
-        this.batchSize   = 2048;   // 2048 key/dispatch — GPU çekirdeklerini tam güç doldurur
+        this.maxBatchSize = 2048;
+        this.batchSize   = (typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'ECO') ? 64
+                         : ((typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'MAX') ? 1024 : 256);
         this.isInitialized = false;
         this.adapterInfo = null;
     }
@@ -491,7 +511,15 @@ class GpuEngine {
             return false;
         }
         try {
-            const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+            let adapter = null;
+            try {
+                adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+            } catch(e) {}
+            if (!adapter) {
+                try {
+                    adapter = await navigator.gpu.requestAdapter();
+                } catch(e) {}
+            }
             if (!adapter) {
                 console.log('[GPU] Adapter bulunamadı');
                 return false;
@@ -499,9 +527,15 @@ class GpuEngine {
             this.adapterInfo = (adapter.info && adapter.info.description) ? adapter.info.description
                              : (adapter.name || 'WebGPU GPU');
 
-            this.device = await adapter.requestDevice({
-                requiredLimits: { maxBufferSize: 64 * 1024 * 1024 }
-            });
+            let device = null;
+            try {
+                device = await adapter.requestDevice();
+            } catch(e) {
+                console.warn('[GPU] Standart requestDevice başarısız, temel limitler ile deneniyor:', e);
+                device = await adapter.requestDevice({ requiredLimits: {} });
+            }
+            this.device = device;
+
             this.device.lost.then(info => {
                 console.warn('[GPU] Device lost:', info.reason, info.message);
                 this.isInitialized = false;
@@ -519,13 +553,21 @@ class GpuEngine {
                 compileInfo.messages.forEach(m => console.warn('[GPU][WGSL]', m.type, 'line', m.lineNum, ':', m.message));
             }
 
-            this.pipeline = this.device.createComputePipeline({
-                layout: 'auto',
-                compute: { module: shaderModule, entryPoint: 'main' }
-            });
+            // Asenkron pipeline oluşturma (tarayıcıyı ve UI'ı dondurmaz)
+            if (typeof this.device.createComputePipelineAsync === 'function') {
+                this.pipeline = await this.device.createComputePipelineAsync({
+                    layout: 'auto',
+                    compute: { module: shaderModule, entryPoint: 'main' }
+                });
+            } else {
+                this.pipeline = this.device.createComputePipeline({
+                    layout: 'auto',
+                    compute: { module: shaderModule, entryPoint: 'main' }
+                });
+            }
 
-            const privBytes = this.batchSize * 8 * 4;  // 2048*8*4 = 65,536 bytes
-            const pubBytes  = this.batchSize * 9 * 4;  // 2048*9*4 = 73,728 bytes
+            const privBytes = this.maxBatchSize * 8 * 4;   // 2048*8*4 = 65,536 bytes
+            const pubBytes  = this.maxBatchSize * 26 * 4;  // 2048*26*4 = 212,992 bytes (33b comp + 65b uncomp)
 
             this.privkeyBuf = this.device.createBuffer({
                 size: privBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -545,6 +587,14 @@ class GpuEngine {
             });
 
             this.isInitialized = true;
+
+            // Isınma (Warmup) adımı: GPU driver JIT derlemesini ilk aramadan önce tamamlar
+            try {
+                await this.computePubkeysRaw([1n]);
+            } catch(we) {
+                console.warn('[GPU] Warmup uyarısı:', we);
+            }
+
             console.log('[GPU] ✅ WebGPU yüksek performansla başlatıldı! Adapter:', this.adapterInfo);
             console.log('[GPU] Batch boyutu:', this.batchSize, 'key/dispatch (32 workgroups)');
             return true;
@@ -575,7 +625,7 @@ class GpuEngine {
         this.device.queue.writeBuffer(this.privkeyBuf, 0, privData.buffer, 0, n * 32);
 
         const encoder = this.device.createCommandEncoder();
-        encoder.clearBuffer(this.pubkeyBuf, 0, n * 36);
+        encoder.clearBuffer(this.pubkeyBuf, 0, n * 104);
 
         const pass = encoder.beginComputePass();
         pass.setPipeline(this.pipeline);
@@ -583,11 +633,11 @@ class GpuEngine {
         pass.dispatchWorkgroups(Math.ceil(n / 64));
         pass.end();
 
-        encoder.copyBufferToBuffer(this.pubkeyBuf, 0, this.readbackBuf, 0, n * 36);
+        encoder.copyBufferToBuffer(this.pubkeyBuf, 0, this.readbackBuf, 0, n * 104);
         this.device.queue.submit([encoder.finish()]);
 
-        await this.readbackBuf.mapAsync(GPUMapMode.READ, 0, n * 36);
-        const raw = new Uint32Array(this.readbackBuf.getMappedRange(0, n * 36).slice(0));
+        await this.readbackBuf.mapAsync(GPUMapMode.READ, 0, n * 104);
+        const raw = new Uint32Array(this.readbackBuf.getMappedRange(0, n * 104).slice(0));
         this.readbackBuf.unmap();
         return raw;
     }
@@ -604,7 +654,7 @@ class GpuEngine {
         const pubkeys = [];
         for (let i = 0; i < n; i++) {
             const bytes = new Uint8Array(33);
-            const base = i * 9;
+            const base = i * 26;
             for (let w = 0; w < 9; w++) {
                 const word = raw[base + w];
                 for (let b = 0; b < 4; b++) {
@@ -724,18 +774,48 @@ function genBatchForGpu(cfg, size) {
     }
     if (boundMax <= boundMin) boundMax = boundMin + 1n;
 
-    // 2. Algoritma Seçimi
+    // 2. Fizik ve Kaos Formülleri Alt-Aralık Hesabı ([subMin, subMax])
+    let subMin = boundMin;
+    let subMax = boundMax;
+    const f = cfg.activeFormula;
+    const curSpan = (boundMax > boundMin) ? (boundMax - boundMin) : 1n;
+    const isNarrowRange = curSpan <= 10000000n; // 10M altı test ve dar aralıklarda mikro dilimleme YAPILMAZ!
+    const isPrefixMode  = (f === 'PREFIX' || cfg.activeRangeMode === 'PREFIX' || cfg.isPrefixFilterActive);
+    const isHexRange    = (cfg.activeRangeMode === 'HEX');
+
+    if (!isNarrowRange && !isPrefixMode && !isHexRange &&
+        (f === 'OMNI_CHAOS' || f === 'DETERMINISTIC_CHAOS' || f === 'QUANTUM_TUNNEL' || f === 'RIEMANN_ZETA' || f === 'GOLDEN_SINGULARITY' || cfg.activeRangeMode === 'PHYSICS')) {
+        if (typeof window.getNextPhysicsPercent === 'function') {
+            const centerPct = window.getNextPhysicsPercent();
+            const microWidth = 0.5; // Geniş uzayda anlamlı pencere genişliği
+            const sPct = Math.max(0.0, centerPct - microWidth);
+            const ePct = Math.min(100.0, centerPct + microWidth);
+            const startBig = BigInt(Math.round(sPct * 100000000));
+            const endBig   = BigInt(Math.round(ePct * 100000000));
+            subMin = boundMin + (curSpan * startBig / 10000000000n);
+            subMax = boundMin + (curSpan * endBig   / 10000000000n);
+            if (subMax <= subMin) subMax = subMin + 1n;
+        }
+    }
+
+    // 3. Algoritma Seçimi
     let activeAlgo = cfg.selectedAlgorithm || 'RANDOM';
     if (activeAlgo === 'AUTO') {
         gpuAutoStepCounter++;
+        const autoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'RANDOM'];
         if (gpuAutoStepCounter % 25 === 0) {
-            gpuAutoIndex = (gpuAutoIndex + 1) % 9;
+            gpuAutoIndex = (gpuAutoIndex + 1) % autoList.length;
         }
-        const autoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'RANDOM'];
         activeAlgo = autoList[gpuAutoIndex] || 'RANDOM';
     }
+    if (activeAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
+        activeAlgo = 'RANDOM';
+    }
+    if (activeAlgo === 'KANGAROO' && typeof window.isKangarooModeActive === 'function' && !window.isKangarooModeActive()) {
+        activeAlgo = 'RANDOM';
+    }
 
-    // 3. Ön Ek Hazırlığı (Prefix)
+    // 4. Ön Ek Hazırlığı (Prefix)
     const isEffectivePrefix = (cfg.isPrefixFilterActive !== false && (Boolean(cfg.userPrefix) || cfg.isPrefixAutoJump));
     if (isEffectivePrefix) {
         if (cfg.isPrefixAutoJump) {
@@ -757,9 +837,9 @@ function genBatchForGpu(cfg, size) {
         }
     }
 
-    // 4. Anahtarları Üret
+    // 5. Anahtarları Üret (Seçilen Algoritmaya Göre)
     const keys = new Array(size);
-    const effSpan = boundMax - boundMin;
+    const effSpan = subMax - subMin;
     const targetLen = baseEnd.toString(16).length;
 
     let rndBuf = null;
@@ -769,21 +849,23 @@ function genBatchForGpu(cfg, size) {
         let currentKey;
 
         if (activeAlgo === 'SOBOL' && typeof window.generateSobolKey === 'function') {
-            currentKey = window.generateSobolKey(boundMin, boundMax);
+            currentKey = window.generateSobolKey(subMin, subMax);
         } else if (activeAlgo === 'VD_CORPUT' && typeof window.generateVanDerCorputKey === 'function') {
-            currentKey = window.generateVanDerCorputKey(boundMin, boundMax);
+            currentKey = window.generateVanDerCorputKey(subMin, subMax);
         } else if (activeAlgo === 'WEYL_GOLDEN' && typeof window.generateWeylGoldenKey === 'function') {
-            currentKey = window.generateWeylGoldenKey(boundMin, boundMax);
+            currentKey = window.generateWeylGoldenKey(subMin, subMax);
         } else if (activeAlgo === 'COPRIME_STRIDE' && typeof window.generateCoprimeStrideKey === 'function') {
-            currentKey = window.generateCoprimeStrideKey(boundMin, boundMax);
+            currentKey = window.generateCoprimeStrideKey(subMin, subMax);
         } else if (activeAlgo === 'HILBERT' && typeof window.generateHilbertKey === 'function') {
-            currentKey = window.generateHilbertKey(boundMin, boundMax);
+            currentKey = window.generateHilbertKey(subMin, subMax);
         } else if (activeAlgo === 'CHAOS' && typeof window.generateDeterministicChaosKey === 'function') {
-            currentKey = window.generateDeterministicChaosKey(boundMin, boundMax);
+            currentKey = window.generateDeterministicChaosKey(subMin, subMax);
         } else if (activeAlgo === 'WEAK_ENTROPY' && typeof window.generateWeakEntropyKey === 'function' && cfg.selectedEntropyBits !== -1) {
-            currentKey = window.generateWeakEntropyKey(boundMin, boundMax, cfg.selectedEntropyBits);
+            currentKey = window.generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
+        } else if (activeAlgo === 'KANGAROO' && typeof window.generateKangarooKey === 'function') {
+            currentKey = window.generateKangarooKey(subMin, subMax);
         } else if (typeof window.randomBigIntInRange === 'function') {
-            currentKey = window.randomBigIntInRange(boundMin, boundMax);
+            currentKey = window.randomBigIntInRange(subMin, subMax);
         } else {
             if (!rndBuf || rndIdx >= rndBuf.length) {
                 rndBuf = new Uint8Array(256 * 32);
@@ -793,7 +875,7 @@ function genBatchForGpu(cfg, size) {
             let rand = 0n;
             for (let j = 0; j < 32; j++) rand = (rand << 8n) | BigInt(rndBuf[rndIdx + j]);
             rndIdx += 32;
-            currentKey = boundMin + (rand % (effSpan + 1n));
+            currentKey = subMin + (rand % (effSpan + 1n));
         }
 
         // Ön Ek Kilitleme
@@ -826,6 +908,8 @@ function genBatchForGpu(cfg, size) {
         keys: keys,
         boundMin: boundMin,
         boundMax: boundMax,
+        subMin: subMin,
+        subMax: subMax,
         activeAlgo: activeAlgo,
         activePrefix: isEffectivePrefix ? gpuActivePrefix : '',
         baseStart: baseStart,
@@ -877,9 +961,15 @@ async function gpuHuntBatch() {
         const waWords = [0, 0, 0, 0, 0, 0, 0, 0, 0];
         const wa = { words: waWords, sigBytes: 33 };
 
+        const waUWords = new Array(17);
+        const waU = { words: waUWords, sigBytes: 65 };
+
+        const isUncompTarget = Boolean(target && (target.id === 'ilave' || target.id === 'TEST_64' || (target.addr && target.addr.startsWith('1'))));
+        const checkUncomp = isUncompTarget || Boolean(cfg.isCustomPoolActive);
+
         let found = false;
         for (let i = 0; i < BATCH && gpuHuntRunning; i++) {
-            const off = i * 9;
+            const off = i * 26;
             const w0 = raw[off];
             const prefix = (w0 >>> 24) & 0xFF;
             if (prefix !== 2 && prefix !== 3) continue;
@@ -900,12 +990,39 @@ async function gpuHuntBatch() {
 
             gpuTotalKeys++;
 
-            // 🎯 Doğrudan 160-bit tamsayı karşılaştırması (sıfır string tahsisi!)
+            // 🎯 1. Sıkıştırılmış (Compressed) Hedef Eşleşme Kontrolü
             if (targetW0 !== 0 && rw[0] === targetW0 && rw[1] === targetW1 && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
                 const keyHex = keys[i].toString(16).padStart(64, '0');
                 console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
                 handleGpuWin(keyHex, target, targetH160, false);
                 gpuHuntRunning = false; found = true; break;
+            }
+
+            // 🎯 2. Sıkıştırılmamış (Uncompressed) Hedef Eşleşme Kontrolü (196ru37... ve Özel Havuz uncompressed adresler)
+            if (checkUncomp) {
+                for (let u = 0; u < 17; u++) waUWords[u] = raw[off + 9 + u];
+                waUWords[16] = waUWords[16] & 0xFF000000;
+
+                const shaU = cjs.SHA256(waU);
+                const rmdU = cjs.RIPEMD160(shaU);
+                const rwU = rmdU.words;
+
+                if (targetW0 !== 0 && rwU[0] === targetW0 && rwU[1] === targetW1 && rwU[2] === targetW2 && rwU[3] === targetW3 && rwU[4] === targetW4) {
+                    const keyHex = keys[i].toString(16).padStart(64, '0');
+                    console.log('[GPU] 🎯 UNCOMPRESSED WIN! key=' + keyHex + ' hash160=' + targetH160);
+                    handleGpuWin(keyHex, target, targetH160, true);
+                    gpuHuntRunning = false; found = true; break;
+                }
+
+                if (cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined' && customAddressSet) {
+                    const h160U = rmdU.toString();
+                    if (customAddressSet.has(h160U)) {
+                        const keyHex = keys[i].toString(16).padStart(64, '0');
+                        console.log('[GPU] 🎯 CUSTOM POOL (UNCOMPRESSED) WIN! key=' + keyHex);
+                        handleGpuWin(keyHex, target, h160U, true);
+                        gpuHuntRunning = false; found = true; break;
+                    }
+                }
             }
 
             // Çoklu hedef / özel havuz kontrolü (yalnızca aktifse string üretir)
@@ -948,13 +1065,19 @@ async function gpuHuntBatch() {
         else if (batchInfo.activeAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
         else if (batchInfo.activeAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
         else if (batchInfo.activeAlgo === 'WEAK_ENTROPY') algoPrefix = '⚡ Zayıf Entropi + ';
+        else if (batchInfo.activeAlgo === 'KANGAROO') algoPrefix = '🦘 Pollard Kangaroo + ';
+
+        if (cfg.activeFormula === 'OMNI_CHAOS') algoPrefix = '♾️ Omni-Kaos + ' + algoPrefix;
+        else if (cfg.activeFormula === 'GOLDEN_SINGULARITY') algoPrefix = '🌟 Altın Oran + ' + algoPrefix;
 
         const rangeDesc = algoPrefix + (pParts.join(' + ') || 'Standart');
         const rangeText = '⚡ WebGPU — ' + rangeDesc + ' (' + gpuKeysPerSec.toLocaleString() + ' key/s)';
 
         // Speed UI
         const spEl = document.getElementById('statSpeed');
-        if (spEl) spEl.innerText = gpuKeysPerSec.toLocaleString() + ' key/s ⚡GPU';
+        if (spEl) {
+            spEl.innerText = gpuKeysPerSec.toLocaleString() + ' key/s';
+        }
 
         // Progress (UI'da denenen son anahtarı ve tam aralığı gösterir)
         if (typeof handleWorkerMessage === 'function') {
@@ -968,13 +1091,38 @@ async function gpuHuntBatch() {
             }});
         }
 
-        if (!found && gpuHuntRunning) setTimeout(gpuHuntBatch, 0);
+        if (!found && gpuHuntRunning) setTimeout(gpuHuntBatch, gpuThrottleDelay);
 
     } catch(e) {
         console.error('[GPU] gpuHuntBatch hatası:', e);
         gpuHuntRunning = false;
         // CPU fallback
         if (typeof huntBatch === 'function') huntBatch();
+    }
+}
+
+let gpuThrottleDelay = 45; // Varsayılan: 45ms dinlenme payı (akıcı 60 FPS masaüstü)
+let gpuCurrentIntensity = 'BALANCED';
+
+function setGpuIntensity(level) {
+    if (!level) return;
+    const l = String(level).toUpperCase();
+    if (l.includes('ECO') || l.includes('LIGHT') || l.includes('LOW')) {
+        gpuCurrentIntensity = 'ECO';
+        gpuThrottleDelay = 120; // 120ms dinlenme payı: GPU ve CPU %95 boşta, sıfır kasma/donma
+        if (gpuEngine) gpuEngine.batchSize = 64;
+        console.log('[GPU] 🟢 Ultra Hafif / Eco moduna geçildi (Batch: 64, Gecikme: 120ms - Sıfır Kasma)');
+    } else if (l.includes('MAX') || l.includes('TURBO') || l.includes('HIGH')) {
+        gpuCurrentIntensity = 'MAX';
+        gpuThrottleDelay = 2; // 2ms: Tam güç, tarayıcı olay döngüsüne minimal nefes
+        if (gpuEngine) gpuEngine.batchSize = 1024;
+        console.log('[GPU] 🔴 Tam Güç moduna geçildi (Batch: 1024, Gecikme: 2ms)');
+    } else {
+        // BALANCED (Varsayılan)
+        gpuCurrentIntensity = 'BALANCED';
+        gpuThrottleDelay = 45; // 45ms: Akıcı 60 FPS masaüstü
+        if (gpuEngine) gpuEngine.batchSize = 256;
+        console.log('[GPU] 🟡 Dengeli moduna geçildi (Batch: 256, Gecikme: 45ms - 60 FPS akıcı)');
     }
 }
 
@@ -1000,7 +1148,7 @@ function startGpuHunting() {
         return false;
     }
     gpuHuntRunning = true;
-    console.log('[GPU] ⚡ Arama başladı — batch=' + gpuEngine.batchSize + ', adapter=' + gpuEngine.adapterInfo);
+    console.log('[GPU] ⚡ Arama başladı — batch=' + gpuEngine.batchSize + ', throttleDelay=' + gpuThrottleDelay + 'ms, adapter=' + gpuEngine.adapterInfo);
     gpuHuntBatch();
     return true;
 }
@@ -1019,5 +1167,18 @@ window.GpuEngine         = GpuEngine;
 window.initWebGpuEngine  = initWebGpuEngine;
 window.startGpuHunting   = startGpuHunting;
 window.stopGpuHunting    = stopGpuHunting;
+window._gpuEngineStop    = stopGpuHunting;
+window.genBatchForGpu    = genBatchForGpu;
+window.setGpuIntensity   = setGpuIntensity;
 window.gpuKeysPerSec     = gpuKeysPerSec;
 window.gpuTotalKeys      = gpuTotalKeys;
+Object.defineProperty(window, 'gpuThrottleDelay', {
+    get() { return gpuThrottleDelay; },
+    set(v) { gpuThrottleDelay = v; },
+    configurable: true
+});
+Object.defineProperty(window, 'gpuCurrentIntensity', {
+    get() { return gpuCurrentIntensity; },
+    set(v) { gpuCurrentIntensity = v; },
+    configurable: true
+});
