@@ -1465,8 +1465,6 @@ let chaosJumpFreq = 25;
 
 
 // ============================================================
-// ============================================================
-// ============================================================
 // 🎚️ SAF HEX UZAY DARALTMA KAYDIRAÇ MOTORU (BIT-PERFECT NATIVE BIGINT - NO PERCENT)
 // ============================================================
 function toBigIntSafe(val) {
@@ -3072,23 +3070,29 @@ function releaseWakeLock() {
 
 
 function base58Encode(buffer) {
-    let digits = [0];
+    if (!buffer || buffer.length === 0) return '';
+    const digits = [0];
     for (let i = 0; i < buffer.length; i++) {
-        for (let j = 0; j < digits.length; j++) digits[j] <<= 8;
-        digits[0] += buffer[i];
-        let carry = 0;
+        let carry = buffer[i];
         for (let j = 0; j < digits.length; j++) {
-            digits[j] += carry;
-            carry = (digits[j] / 58) | 0;
-            digits[j] %= 58;
+            carry += digits[j] * 256;
+            digits[j] = carry % 58;
+            carry = (carry / 58) | 0;
         }
-        while (carry) {
+        while (carry > 0) {
             digits.push(carry % 58);
             carry = (carry / 58) | 0;
         }
     }
-    for (let i = 0; i < buffer.length && buffer[i] === 0; i++) digits.push(0);
-    return digits.reverse().map(d => ALPHABET[d]).join('');
+    let leadingZeros = 0;
+    for (let i = 0; i < buffer.length && buffer[i] === 0; i++) {
+        leadingZeros++;
+    }
+    let res = '1'.repeat(leadingZeros);
+    for (let i = digits.length - 1; i >= 0; i--) {
+        res += ALPHABET[digits[i]];
+    }
+    return res;
 }
 
 function privkeyToAddress(privHex, compressed = true) {
@@ -3518,8 +3522,7 @@ function initKangarooSwarmChannel() {
                     }
                     break;
 
-                // AGENT_ZOOM_ALERT removed
-
+                
                 case 'LEAVE':
                     if (kangarooPeers[data.tabId]) {
                         delete kangarooPeers[data.tabId];
@@ -4074,8 +4077,6 @@ function applyPopcountConstraint(key, minB, maxB, targetRange) {
     return key;
 }
 
-// Micro-Zoom variables removed
-// Proximity alert & Micro-Zoom removed (heuristic fallacy)
 
 const AGENT_TACTICS = [
     {
@@ -4575,8 +4576,7 @@ function toggleAutopilotAgent(forceState) {
             agentTimer = null;
         }
 
-        // Micro-zoom stop handler removed
-
+        
         // Kaydıraç ve Ön Ek kontrollerini güvenle normale sıfırla
         setAgentSliderMode('FULL');
         setAgentPrefixMode(false);
@@ -4674,8 +4674,7 @@ function updateAgentSupervisor() {
     const tacticsList = getActiveAgentTactics();
     const isKangaroo = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
 
-    // Micro-zoom tick handler removed
-
+    
     agentActivePhaseIndex = agentActivePhaseIndex % tacticsList.length;
     const tactic = tacticsList[agentActivePhaseIndex];
     const now = Date.now();
@@ -5547,16 +5546,23 @@ function generateKangarooKey(rangeStart, rangeEnd) {
 
         if (res.status === 'WIN' && res.solvedKey) {
             const keyHex = res.solvedKey.toString(16).padStart(64, '0');
-            console.log('🎉 [REAL KANGAROO WIN!] Özel Anahtar Bulundu:', keyHex);
             const actT = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
             if (actT) {
-                if (typeof stopHunting === 'function') stopHunting();
-                handleWin(actT.id, keyHex, privkeyToAddress(keyHex), actT.addr, '🦘 Gerçek Pollard Kangaroo Çarpışması O(√N)');
+                const derivedComp = privkeyToAddress(keyHex, true);
+                const derivedUncomp = privkeyToAddress(keyHex, false);
+                if (derivedComp === actT.addr || derivedUncomp === actT.addr) {
+                    console.log('🎉 [REAL KANGAROO WIN!] Özel Anahtar Bulundu ve Doğrulandı:', keyHex);
+                    if (typeof stopHunting === 'function') stopHunting();
+                    handleWin(actT.id, keyHex, (derivedComp === actT.addr ? derivedComp : derivedUncomp), actT.addr, '🦘 Gerçek Pollard Kangaroo Çarpışması O(√N)');
+                    return res.solvedKey;
+                } else {
+                    console.warn('[Kangaroo] Çarpışma anahtarı hedef adres ile eşleşmedi (sahte alarm elendi):', derivedComp, 'beklenen:', actT.addr);
+                    if (kangarooRealEngine) kangarooRealEngine.isSolved = false;
+                }
             }
-            return res.solvedKey;
         }
 
-        return BigInt('0x' + (res.lastKey || '1'));
+        return randomBigIntInRange(s, e);
     }
 
     // Açık anahtar yoksa veya motor başlatılamadıysa: Güvenli rastgele / pseudo-random yürüyüş
@@ -5581,13 +5587,8 @@ if (typeof window !== 'undefined') {
     window.isKangarooModeActive = (typeof isKangarooModeActive === 'function') ? isKangarooModeActive : null;
 }
 
-// drawHilbertRadar removed
 
 
-// ============================================================
-// ============================================================
-// ============================================================
-// ============================================================
 // ============================================================
 function huntBatch() {
     if (!isRunning) return;
@@ -5820,9 +5821,7 @@ function huntBatch() {
                 currentKey = applyPopcountConstraint(currentKey, boundMin, boundMax, AGENT_TACTICS[agentActivePhaseIndex].popcountRange);
             }
 
-            lastKeyHex = (activeTarget && (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64'))
-                ? currentKey.toString(16).padStart(64, '0')
-                : currentKey.toString(16);
+            lastKeyHex = currentKey.toString(16).padStart(64, '0');
             const currentH160 = privkeyToHash160(lastKeyHex);
             attempts++;
             if (sliceModeActive) sliceAttempts++;
@@ -5848,8 +5847,7 @@ function huntBatch() {
                 return;
             }
 
-            // Proximity detector removed
-
+            
             // 🎯 v14 İLAVE ADRES HAVUZU KONTROLÜ (⚡ Bloom Filter + 3 Format: P2PKH 1..., P2SH 3..., Bech32 bc1q...)
             if ((isCustomPoolActive || (activeTarget && (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64'))) && customAddressSet.size > 0) {
                 // 1. Format: Sıkıştırılmış Legacy (1...) & Native SegWit (bc1q...)
@@ -5973,38 +5971,43 @@ function huntBatch() {
                 } else if (activeAlgo === 'CHAOS') {
                     algoPrefix = '♾️ Kaos + ';
                 } else if (activeAlgo === 'KANGAROO') {
-                    algoPrefix = '🦘 Kangaroo + ';
+                    algoPrefix = '🦘 Kangaroo';
                 }
 
-                let baseRangeDesc = '';
-                const pParts = [];
-                if (isNarrowed) {
-                    const bMinHex = lastBoundMin ? lastBoundMin.toString(16) : '';
-                    const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
-                    pParts.push(`🎚️ [0x${bMinHex.substring(0, 6)}..-0x${bMaxHex.substring(0, 6)}..]`);
+                if (activeAlgo === 'KANGAROO') {
+                    rangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
+                    document.getElementById('logRange').innerText = rangeText;
+                } else {
+                    let baseRangeDesc = '';
+                    const pParts = [];
+                    if (isNarrowed) {
+                        const bMinHex = lastBoundMin ? lastBoundMin.toString(16) : '';
+                        const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
+                        pParts.push(`🎚️ [0x${bMinHex.substring(0, 6)}..-0x${bMaxHex.substring(0, 6)}..]`);
+                    }
+                    if (isEffectivePrefix) {
+                        pParts.push(isPrefixAutoJump 
+                            ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
+                            : `🧩 Ön Ek: 0x${userPrefix}`);
+                    }
+                    if (activeFormula === 'OMNI_CHAOS') {
+                        pParts.push(`💥 Hibrit Kaos`);
+                    } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
+                        pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
+                    } else if (!isNarrowRange && activeRangeMode === 'CHAOS') {
+                        pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
+                    } else if (activeRangeMode === 'HEX') {
+                        const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
+                        pParts.push(`🔤 Hex: 0x${hMinStr.substring(0,8)}...`);
+                    } else if (activeRangeMode === 'PERCENT') {
+                        pParts.push(`% Dilim: %${sliceStartPct.toFixed(2)}`);
+                    } else if (activeFormula !== 'PREFIX' && activeFormula !== 'GRID') {
+                        pParts.push(`🌀 Fizik [${activeFormula}] %${physicsSliceStartPct.toFixed(2)}`);
+                    }
+                    baseRangeDesc = pParts.join(' + ') || 'Standart';
+                    rangeText = algoPrefix + baseRangeDesc;
+                    document.getElementById('logRange').innerText = rangeText;
                 }
-                if (isEffectivePrefix) {
-                    pParts.push(isPrefixAutoJump 
-                        ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
-                        : `🧩 Ön Ek: 0x${userPrefix}`);
-                }
-                if (activeFormula === 'OMNI_CHAOS') {
-                    pParts.push(`💥 Hibrit Kaos`);
-                } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
-                    pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
-                } else if (!isNarrowRange && activeRangeMode === 'CHAOS') {
-                    pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
-                } else if (activeRangeMode === 'HEX') {
-                    const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
-                    pParts.push(`🔤 Hex: 0x${hMinStr.substring(0,8)}...`);
-                } else if (activeRangeMode === 'PERCENT') {
-                    pParts.push(`% Dilim: %${sliceStartPct.toFixed(2)}`);
-                } else if (activeFormula !== 'PREFIX' && activeFormula !== 'GRID') {
-                    pParts.push(`🌀 Fizik [${activeFormula}] %${physicsSliceStartPct.toFixed(2)}`);
-                }
-                baseRangeDesc = pParts.join(' + ') || 'Standart';
-                rangeText = algoPrefix + baseRangeDesc;
-                document.getElementById('logRange').innerText = rangeText;
             }
             if (selectedAlgorithm === 'AUTO') {
                 const algoNames = {
@@ -6023,8 +6026,7 @@ function huntBatch() {
             }
                         if (lastKeyHex) {
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                // Radar animation removed
-
+                
 
             }
             lastUIUpdate = Date.now();
@@ -6124,8 +6126,46 @@ function playWinChime() {
 let lastHandledWinKey = '';
 
 function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = false, finderTabId = '') {
-    if (lastHandledWinKey === keyHex) return;
-    lastHandledWinKey = keyHex;
+    if (!keyHex) return;
+    const cleanHex = keyHex.toString().trim().replace(/^0x/i, '').padStart(64, '0');
+    if (/^0+$/.test(cleanHex)) return;
+
+    // 🔒 GÜVENLİK / SAHTE ALARM FİLTRESİ:
+    let verified = false;
+    let verifiedAddr = addr || '';
+
+    try {
+        const allFmt = (typeof privkeyToAddressesAll === 'function') ? privkeyToAddressesAll(cleanHex) : null;
+        if (allFmt) {
+            const tAddr = (targetAddr || '').trim();
+            const actT = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : null;
+            const tH160 = (actT && actT.targetHash160) ? actT.targetHash160.toLowerCase() : '';
+
+            if (tAddr && (allFmt.legacyComp === tAddr || allFmt.legacyUncomp === tAddr || allFmt.p2sh === tAddr || allFmt.bech32 === tAddr)) {
+                verified = true;
+                verifiedAddr = (allFmt.legacyComp === tAddr) ? allFmt.legacyComp : ((allFmt.legacyUncomp === tAddr) ? allFmt.legacyUncomp : ((allFmt.p2sh === tAddr) ? allFmt.p2sh : allFmt.bech32));
+            } else if (tH160 && (allFmt.compH160.toLowerCase() === tH160 || allFmt.uncompH160.toLowerCase() === tH160)) {
+                verified = true;
+                verifiedAddr = (allFmt.compH160.toLowerCase() === tH160) ? allFmt.legacyComp : allFmt.legacyUncomp;
+            } else if (typeof customAddressSet !== 'undefined' && customAddressSet && (customAddressSet.has(allFmt.compH160) || customAddressSet.has(allFmt.uncompH160))) {
+                verified = true;
+                verifiedAddr = customAddressSet.has(allFmt.compH160) ? allFmt.legacyComp : allFmt.legacyUncomp;
+            } else if (typeof satTargetSet !== 'undefined' && satTargetSet && (satTargetSet.has(allFmt.compH160) || satTargetSet.has(allFmt.uncompH160))) {
+                verified = true;
+                verifiedAddr = satTargetSet.has(allFmt.compH160) ? allFmt.legacyComp : allFmt.legacyUncomp;
+            }
+        }
+    } catch(verErr) {}
+
+    if (!verified) {
+        console.warn(`[GÜVENLİK ENGELİ] Sahte kazanım tespit edildi ve engellendi!`);
+        return;
+    }
+
+    if (lastHandledWinKey === cleanHex) return;
+    lastHandledWinKey = cleanHex;
+    keyHex = cleanHex;
+    addr = verifiedAddr || addr;
 
     // 🛑 ARAMAYI ANINDA VE EKSİKSİZ DURDUR (GPU, CPU Worker, Zamanlayıcı, UI Butonu)
     isRunning = false;
@@ -6941,16 +6981,19 @@ function bgWorkerProcess() {
                 const tAddr = (cfg && cfg.activeTarget) ? cfg.activeTarget.addr : '';
                 self.postMessage({
                     type: 'win',
+                    workerId: workerId,
+                    keyHex: keyHex,
                     key: keyHex,
-                    addr: privkeyToAddress(keyHex, true),
+                    targetId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : null,
                     targetAddr: tAddr,
-                    puzzleId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : null,
                     reward: (cfg && cfg.activeTarget) ? cfg.activeTarget.reward : '',
+                    isUncompressed: false,
+                    matchType: 'TARGET_COMP',
                     finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
                 });
                 return res.solvedKey;
             }
-            return BigInt('0x' + (res.lastKey || '1'));
+            return randomBigIntInRange(s, e);
         }
 
         return randomBigIntInRange(s, e);
@@ -7125,10 +7168,22 @@ function bgWorkerProcess() {
                 subMin = boundMin + (effRange * sBig / 10000000000n);
                 subMax = boundMin + (effRange * eBig / 10000000000n);
             } else if (workerActiveAlgo === 'KANGAROO') {
-                // 🦘 Pollard's Kangaroo deterministik sıçrama uzayı: Fizik formülleriyle yapay 0.01% dilimlere parçalanmaz.
-                // Kaldıraç veya tam hedef sınırları [boundMin, boundMax] üzerinde serbestçe sıçrar.
-                subMin = boundMin;
-                subMax = boundMax;
+                if (isEffectivePrefix && activeWorkerPrefix) {
+                    const targetLen = baseEnd.toString(16).length;
+                    const pLen = Math.min(activeWorkerPrefix.length, targetLen);
+                    const pMin = BigInt('0x' + (activeWorkerPrefix.substring(0, pLen) + '0'.repeat(Math.max(0, targetLen - pLen))));
+                    const pMax = BigInt('0x' + (activeWorkerPrefix.substring(0, pLen) + 'f'.repeat(Math.max(0, targetLen - pLen))));
+                    if (pMin >= boundMin && pMax <= boundMax && pMax > pMin) {
+                        subMin = pMin;
+                        subMax = pMax;
+                    } else {
+                        subMin = boundMin;
+                        subMax = boundMax;
+                    }
+                } else {
+                    subMin = boundMin;
+                    subMax = boundMax;
+                }
             } else if (f === 'OMNI_CHAOS') {
                 physicsStep++;
                 const centerPct = getNextPhysicsPercent('GOLDEN_SINGULARITY');
@@ -7235,9 +7290,13 @@ function bgWorkerProcess() {
             } else if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) {
                 algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
             } else if (workerActiveAlgo === 'KANGAROO') {
-                algoPrefix = '🦘 Kangaroo + ';
+                algoPrefix = '🦘 Kangaroo';
             }
-            currentRangeText = algoPrefix + baseDesc;
+            if (workerActiveAlgo === 'KANGAROO') {
+                currentRangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
+            } else {
+                currentRangeText = algoPrefix + baseDesc;
+            }
             
             // Slider boundary clamp & wrap
             if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
@@ -7252,9 +7311,7 @@ function bgWorkerProcess() {
                 currentKey = applyPopcountConstraint(currentKey, boundMin, boundMax, cfg.agentPopcountRange);
             }
             
-            lastKeyHex = (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64')
-                ? currentKey.toString(16).padStart(64, '0')
-                : currentKey.toString(16);
+            lastKeyHex = currentKey.toString(16).padStart(64, '0');
                 
             count++;
             
@@ -7422,24 +7479,28 @@ let workerBlobUrl = null;
 let lastProgressUI = 0;
 
 function getWorkerBlobUrl() {
-    if (!workerBlobUrl) {
-        let coreLibsCode = '';
-        const coreTag = document.getElementById('core-libs');
-        if (coreTag) {
-            coreLibsCode = coreTag.textContent;
-        }
-        let kangarooCode = '';
-        if (typeof RealPollardKangaroo === 'function') {
-            kangarooCode = RealPollardKangaroo.toString() + ';\nself.RealPollardKangaroo = RealPollardKangaroo;\n';
-        }
-        const workerSource = '(function() {\n' +
-            coreLibsCode + '\n' +
-            kangarooCode + '\n' +
-            '}).call(self);\n\n' +
-            '(' + bgWorkerProcess.toString() + ')();';
-        const blob = new Blob([workerSource], { type: 'application/javascript' });
-        workerBlobUrl = URL.createObjectURL(blob);
+    if (workerBlobUrl) {
+        try { URL.revokeObjectURL(workerBlobUrl); } catch(e) {}
+        workerBlobUrl = null;
     }
+    let coreLibsCode = '';
+    const coreTag = document.getElementById('core-libs');
+    if (coreTag) {
+        coreLibsCode = coreTag.textContent;
+    }
+    let kangarooCode = '';
+    if (typeof RealPollardKangaroo === 'function') {
+        kangarooCode = 'const SECP256K1_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;\n' +
+            'self.SECP256K1_N = SECP256K1_N;\n' +
+            RealPollardKangaroo.toString() + ';\nself.RealPollardKangaroo = RealPollardKangaroo;\n';
+    }
+    const workerSource = '(function() {\n' +
+        coreLibsCode + '\n' +
+        kangarooCode + '\n' +
+        '}).call(self);\n\n' +
+        '(' + bgWorkerProcess.toString() + ')();';
+    const blob = new Blob([workerSource], { type: 'application/javascript' });
+    workerBlobUrl = URL.createObjectURL(blob);
     return workerBlobUrl;
 }
 
@@ -7498,7 +7559,7 @@ async function addGpuOptionIfSupported() {
         const gpuOptions = [
             { val: 'GPU_ECO', label: '🟢 GPU (Ultra Hafif / 0 Kasma - 64 / 120ms)' },
             { val: 'GPU_BALANCED', label: '🟡 GPU (Dengeli / Akıcı - 256 / 45ms)' },
-            { val: 'GPU_MAX', label: '🔴 GPU (Tam Güç / Turbo - 1024 / 0ms)' }
+            { val: 'GPU_MAX', label: '🔴 GPU (Tam Güç - 1024 / 0ms)' }
         ];
 
         // Ters sırada ekle (Eco en üstte dursun)
@@ -7610,7 +7671,7 @@ function onThreadCountSelectChange() {
         if (typeof showToast === 'function') {
             const label = val.includes('ECO') 
                 ? '🟢 Ultra Hafif: 64 batch / 120ms - Sıfır Kasma' 
-                : (val.includes('MAX') ? '🔴 Turbo: 1024 batch / 0ms - Tam Güç' : '🟡 Dengeli: 256 batch / 45ms - Akıcı');
+                : (val.includes('MAX') ? '🔴 Tam Güç: 1024 batch / 0ms' : '🟡 Dengeli: 256 batch / 45ms - Akıcı');
             showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
         }
     } else {
@@ -7747,8 +7808,6 @@ function handleWorkerMessage(e) {
         const data = e.data;
         if (!data) return;
         if (data.type !== 'win' && !isRunning) return;
-        
-        // Proximity detector removed (mathematically unrelated to ECDSA private keys)
 
         if (data.type === 'progress') {
             workerHasReceivedProgress = true;
@@ -7775,8 +7834,7 @@ function handleWorkerMessage(e) {
                 // index0: API kontrolü devre dışı
                 if (data.lastKey) {
                     const lk = document.getElementById('logKey');
-                    if (lk) lk.innerText = '0x' + data.lastKey;
-                    // Fake radar removed
+                    if (lk) lk.innerText = '0x' + data.lastKey.padStart(64, '0');
                 }
                 if (data.rangeText) {
                     const lr = document.getElementById('logRange');
