@@ -1192,7 +1192,10 @@
         <button id="btnAlgoHilbert"  class="algo-btn" onclick="setAlgorithm('HILBERT')">🌀 Hilbert</button>
         <button id="btnAlgoWeak"     class="algo-btn" onclick="setAlgorithm('WEAK_ENTROPY')">⚡ Zayıf</button>
         <button id="btnAlgoChaos"    class="algo-btn" onclick="setAlgorithm('CHAOS')">♾️ Kaos</button>
-        <button id="btnAlgoKangaroo" class="algo-btn" onclick="setAlgorithm('KANGAROO')">🦘 Kangaroo</button>
+        <button id="btnAlgoKangaroo"     class="algo-btn" onclick="setAlgorithm('KANGAROO')">🦘 Kangaroo</button>
+        <button id="btnAlgoHalton"       class="algo-btn" onclick="setAlgorithm('HALTON')">🎲 Halton</button>
+        <button id="btnAlgoScrambledSobol" class="algo-btn" onclick="setAlgorithm('SCRAMBLED_SOBOL')">🔀 S.Sobol</button>
+        <button id="btnAlgoMCMC"         class="algo-btn" onclick="setAlgorithm('MCMC')">🎰 MCMC</button>
     </div>
 
     <!-- 🦘 KANGAROO DAĞITIK SÜRÜ AĞI (CROSS-TAB HERD) BİLGİ & DURUM PANELİ -->
@@ -1292,6 +1295,9 @@
                         <option value="WEAK_ENTROPY">⚡ Zayıf / Kusurlu</option>
                         <option value="CHAOS">♾️ Kaos</option>
                         <option value="KANGAROO">🦘 Pollard's Kangaroo</option>
+                        <option value="HALTON">🎲 Halton (Çok-Boyutlu)</option>
+                        <option value="SCRAMBLED_SOBOL">🔀 Scrambled Sobol</option>
+                        <option value="MCMC">🎰 MCMC (Markov Yürüyüş)</option>
                     </select>
                 </div>
 
@@ -1449,7 +1455,7 @@ const SATOSHI_HASH160_BLOB = "0004bedddcc11a3491aa9d9fd7c12cfb964439a900097050be
 const ALL_PUZZLES = [{"id": 1, "start": "1", "end": "1", "addr": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "status": "SOLVED", "reward": "0.1 BTC"}, {"id": 2, "start": "2", "end": "3", "addr": "1CUNEBjYrCn2y1SdiUMohaKUi4wpP326Lb", "status": "SOLVED", "reward": "0.2 BTC"}, {"id": 3, "start": "4", "end": "7", "addr": "19ZewH8Kk1PDbSNdJ97FP4EiCjTRaZMZQA", "status": "SOLVED", "reward": "0.3 BTC"}, {"id": 4, "start": "8", "end": "f", "addr": "1EhqbyUMvvs7BfL8goY6qcPbD6YKfPqb7e", "status": "SOLVED", "reward": "0.4 BTC"}, {"id": 5, "start": "10", "end": "1f", "addr": "1E6NuFjCi27W5zoXg8TRdcSRq84zJeBW3k", "status": "SOLVED", "reward": "0.5 BTC"}, {"id": 6, "start": "20", "end": "3f", "addr": "1PitScNLyp2HCygzadCh7FveTnfmpPbfp8", "status": "SOLVED", "reward": "0.6 BTC"}, {"id": 7, "start": "40", "end": "7f", "addr": "1McVt1vMtCC7yn5b9wgX1833yCcLXzueeC", "status": "SOLVED", "reward": "0.7 BTC"}, {"id": 8, "start": "80", "end": "ff", "addr": "1M92tSqNmQLYw33fuBvjmeadirh1ysMBxK", "status": "SOLVED", "reward": "0.8 BTC"}, {"id": 9, "start": "100", "end": "1ff", "addr": "1CQFwcjw1dwhtkVWBttNLDtqL7ivBonGPV", "status": "SOLVED", "reward": "0.9 BTC"}, {"id": 10, "start": "200", "end": "3ff", "addr": "1LeBZP5QCwwgXRtmVUvTVrraqPUokyLHqe", "status": "SOLVED", "reward": "1.0 BTC"}, {"id": 11, "start": "400", "end": "7ff", "addr": "1PgQVLmst3Z314JrQn5TNiys8Hc38TcXJu", "status": "SOLVED", "reward": "1.1 BTC"}, {"id": 12, "start": "800", "end": "fff", "addr": "1DBaumZxUkM4qMQRt2LVWyFJq5kDtSZQot", "status": "SOLVED", "reward": "1.2 BTC"}, {"id": 13, "start": "1000", "end": "1fff", "addr": "1Pie8JkxBT6MGPz9Nvi3fsPkr2D8q3GBc1", "status": "SOLVED", "reward": "1.3 BTC"}, {"id": 14, "start": "2000", "end": "3fff", "addr": "1ErZWg5cFCe4Vw5BzgfzB74VNLaXEiEkhk", "status": "SOLVED", "reward": "1.4 BTC"}, {"id": 15, "start": "4000", "end": "7fff", "addr": "1QCbW9HWnwQWiQqVo5exhAnmfqKRrCRsvW", "status": "SOLVED", "reward": "1.5 BTC"}, {"id": 16, "start": "8000", "end": "ffff", "addr": "1BDyrQ6WoF8VN3g9SAS1iKZcPzFfnDVieY", "status": "SOLVED", "reward": "1.6 BTC"}, {"id": 17, "start": "10000", "end": "1ffff", "addr": "1HduPEXZRdG26SUT5Yk83mLkPyjnZuJ7Bm", "status": "SOLVED", "reward": "1.7 BTC"}, {"id": 18, "start": "20000", "end": "3ffff", "addr": "1GnNTmTVLZiqQfLbAdp9DVdicEnB5GoERE", "status": "SOLVED", "reward": "1.8 BTC"}, {"id": 19, "start": "40000", "end": "7ffff", "addr": "1NWmZRpHH4XSPwsW6dsS3nrNWfL1yrJj4w", "status": "SOLVED", "reward": "1.9 BTC"}, {"id": 20, "start": "80000", "end": "fffff", "addr": "1HsMJxNiV7TLxmoF6uJNkydxPFDog4NQum", "status": "SOLVED", "reward": "2.0 BTC"}, {"id": 21, "start": "100000", "end": "1fffff", "addr": "14oFNXucftsHiUMY8uctg6N487riuyXs4h", "status": "SOLVED", "reward": "2.1 BTC"}, {"id": 22, "start": "200000", "end": "3fffff", "addr": "1CfZWK1QTQE3eS9qn61dQjV89KDjZzfNcv", "status": "SOLVED", "reward": "2.2 BTC"}, {"id": 23, "start": "400000", "end": "7fffff", "addr": "1L2GM8eE7mJWLdo3HZS6su1832NX2txaac", "status": "SOLVED", "reward": "2.3 BTC"}, {"id": 24, "start": "800000", "end": "ffffff", "addr": "1rSnXMr63jdCuegJFuidJqWxUPV7AtUf7", "status": "SOLVED", "reward": "2.4 BTC"}, {"id": 25, "start": "1000000", "end": "1ffffff", "addr": "15JhYXn6Mx3oF4Y7PcTAv2wVVAuCFFQNiP", "status": "SOLVED", "reward": "2.5 BTC"}, {"id": 26, "start": "2000000", "end": "3ffffff", "addr": "1JVnST957hGztonaWK6FougdtjxzHzRMMg", "status": "SOLVED", "reward": "2.6 BTC"}, {"id": 27, "start": "4000000", "end": "7ffffff", "addr": "128z5d7nN7PkCuX5qoA4Ys6pmxUYnEy86k", "status": "SOLVED", "reward": "2.7 BTC"}, {"id": 28, "start": "8000000", "end": "fffffff", "addr": "12jbtzBb54r97TCwW3G1gCFoumpckRAPdY", "status": "SOLVED", "reward": "2.8 BTC"}, {"id": 29, "start": "10000000", "end": "1fffffff", "addr": "19EEC52krRUK1RkUAEZmQdjTyHT7Gp1TYT", "status": "SOLVED", "reward": "2.9 BTC"}, {"id": 30, "start": "20000000", "end": "3fffffff", "addr": "1LHtnpd8nU5VHEMkG2TMYYNUjjLc992bps", "status": "SOLVED", "reward": "3.0 BTC"}, {"id": 31, "start": "40000000", "end": "7fffffff", "addr": "1LhE6sCTuGae42Axu1L1ZB7L96yi9irEBE", "status": "SOLVED", "reward": "3.1 BTC"}, {"id": 32, "start": "80000000", "end": "ffffffff", "addr": "1FRoHA9xewq7DjrZ1psWJVeTer8gHRqEvR", "status": "SOLVED", "reward": "3.2 BTC"}, {"id": 33, "start": "100000000", "end": "1ffffffff", "addr": "187swFMjz1G54ycVU56B7jZFHFTNVQFDiu", "status": "SOLVED", "reward": "3.3 BTC"}, {"id": 34, "start": "200000000", "end": "3ffffffff", "addr": "1PWABE7oUahG2AFFQhhvViQovnCr4rEv7Q", "status": "SOLVED", "reward": "3.4 BTC"}, {"id": 35, "start": "400000000", "end": "7ffffffff", "addr": "1PWCx5fovoEaoBowAvF5k91m2Xat9bMgwb", "status": "SOLVED", "reward": "3.5 BTC"}, {"id": 36, "start": "800000000", "end": "fffffffff", "addr": "1Be2UF9NLfyLFbtm3TCbmuocc9N1Kduci1", "status": "SOLVED", "reward": "3.6 BTC"}, {"id": 37, "start": "1000000000", "end": "1fffffffff", "addr": "14iXhn8bGajVWegZHJ18vJLHhntcpL4dex", "status": "SOLVED", "reward": "3.7 BTC"}, {"id": 38, "start": "2000000000", "end": "3fffffffff", "addr": "1HBtApAFA9B2YZw3G2YKSMCtb3dVnjuNe2", "status": "SOLVED", "reward": "3.8 BTC"}, {"id": 39, "start": "4000000000", "end": "7fffffffff", "addr": "122AJhKLEfkFBaGAd84pLp1kfE7xK3GdT8", "status": "SOLVED", "reward": "3.9 BTC"}, {"id": 40, "start": "8000000000", "end": "ffffffffff", "addr": "1EeAxcprB2PpCnr34VfZdFrkUWuxyiNEFv", "status": "SOLVED", "reward": "4.0 BTC"}, {"id": 41, "start": "10000000000", "end": "1ffffffffff", "addr": "1L5sU9qvJeuwQUdt4y1eiLmquFxKjtHr3E", "status": "SOLVED", "reward": "4.1 BTC"}, {"id": 42, "start": "20000000000", "end": "3ffffffffff", "addr": "1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N", "status": "SOLVED", "reward": "4.2 BTC"}, {"id": 43, "start": "40000000000", "end": "7ffffffffff", "addr": "1PiFuqGpG8yGM5v6rNHWS3TjsG6awgEGA1", "status": "SOLVED", "reward": "4.3 BTC"}, {"id": 44, "start": "80000000000", "end": "fffffffffff", "addr": "1CkR2uS7LmFwc3T2jV8C1BhWb5mQaoxedF", "status": "SOLVED", "reward": "4.4 BTC"}, {"id": 45, "start": "100000000000", "end": "1fffffffffff", "addr": "1NtiLNGegHWE3Mp9g2JPkgx6wUg4TW7bbk", "status": "SOLVED", "reward": "4.5 BTC"}, {"id": 46, "start": "200000000000", "end": "3fffffffffff", "addr": "1F3JRMWudBaj48EhwcHDdpeuy2jwACNxjP", "status": "SOLVED", "reward": "4.6 BTC"}, {"id": 47, "start": "400000000000", "end": "7fffffffffff", "addr": "1Pd8VvT49sHKsmqrQiP61RsVwmXCZ6ay7Z", "status": "SOLVED", "reward": "4.7 BTC"}, {"id": 48, "start": "800000000000", "end": "ffffffffffff", "addr": "1DFYhaB2J9q1LLZJWKTnscPWos9VBqDHzv", "status": "SOLVED", "reward": "4.8 BTC"}, {"id": 49, "start": "1000000000000", "end": "1ffffffffffff", "addr": "12CiUhYVTTH33w3SPUBqcpMoqnApAV4WCF", "status": "SOLVED", "reward": "4.9 BTC"}, {"id": 50, "start": "2000000000000", "end": "3ffffffffffff", "addr": "1MEzite4ReNuWaL5Ds17ePKt2dCxWEofwk", "status": "SOLVED", "reward": "5.0 BTC"}, {"id": 51, "start": "4000000000000", "end": "7ffffffffffff", "addr": "1NpnQyZ7x24ud82b7WiRNvPm6N8bqGQnaS", "status": "SOLVED", "reward": "5.1 BTC"}, {"id": 52, "start": "8000000000000", "end": "fffffffffffff", "addr": "15z9c9sVpu6fwNiK7dMAFgMYSK4GqsGZim", "status": "SOLVED", "reward": "5.2 BTC"}, {"id": 53, "start": "10000000000000", "end": "1fffffffffffff", "addr": "15K1YKJMiJ4fpesTVUcByoz334rHmknxmT", "status": "SOLVED", "reward": "5.3 BTC"}, {"id": 54, "start": "20000000000000", "end": "3fffffffffffff", "addr": "1KYUv7nSvXx4642TKeuC2SNdTk326uUpFy", "status": "SOLVED", "reward": "5.4 BTC"}, {"id": 55, "start": "40000000000000", "end": "7fffffffffffff", "addr": "1LzhS3k3e9Ub8i2W1V8xQFdB8n2MYCHPCa", "status": "SOLVED", "reward": "5.5 BTC"}, {"id": 56, "start": "80000000000000", "end": "ffffffffffffff", "addr": "17aPYR1m6pVAacXg1PTDDU7XafvK1dxvhi", "status": "SOLVED", "reward": "5.6 BTC"}, {"id": 57, "start": "100000000000000", "end": "1ffffffffffffff", "addr": "15c9mPGLku1HuW9LRtBf4jcHVpBUt8txKz", "status": "SOLVED", "reward": "5.7 BTC"}, {"id": 58, "start": "200000000000000", "end": "3ffffffffffffff", "addr": "1Dn8NF8qDyyfHMktmuoQLGyjWmZXgvosXf", "status": "SOLVED", "reward": "5.8 BTC"}, {"id": 59, "start": "400000000000000", "end": "7ffffffffffffff", "addr": "1HAX2n9Uruu9YDt4cqRgYcvtGvZj1rbUyt", "status": "SOLVED", "reward": "5.9 BTC"}, {"id": 60, "start": "800000000000000", "end": "fffffffffffffff", "addr": "1Kn5h2qpgw9mWE5jKpk8PP4qvvJ1QVy8su", "status": "SOLVED", "reward": "6.0 BTC"}, {"id": 61, "start": "1000000000000000", "end": "1fffffffffffffff", "addr": "1AVJKwzs9AskraJLGHAZPiaZcrpDr1U6AB", "status": "SOLVED", "reward": "6.1 BTC"}, {"id": 62, "start": "2000000000000000", "end": "3fffffffffffffff", "addr": "1Me6EfpwZK5kQziBwBfvLiHjaPGxCKLoJi", "status": "SOLVED", "reward": "6.2 BTC"}, {"id": 63, "start": "4000000000000000", "end": "7fffffffffffffff", "addr": "1NpYjtLira16LfGbGwZJ5JbDPh3ai9bjf4", "status": "SOLVED", "reward": "6.3 BTC"}, {"id": 64, "start": "8000000000000000", "end": "ffffffffffffffff", "addr": "16jY7qLJnxb7CHZyqBP8qca9d51gAjyXQN", "status": "SOLVED", "reward": "6.4 BTC"}, {"id": 65, "start": "10000000000000000", "end": "1ffffffffffffffff", "addr": "18ZMbwUFLMHoZBbfpCjUJQTCMCbktshgpe", "status": "SOLVED", "reward": "6.5 BTC"}, {"id": 66, "start": "20000000000000000", "end": "3ffffffffffffffff", "addr": "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so", "status": "SOLVED", "reward": "6.6 BTC"}, {"id": 67, "start": "40000000000000000", "end": "7ffffffffffffffff", "addr": "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9", "status": "SOLVED", "reward": "6.7 BTC"}, {"id": 68, "start": "80000000000000000", "end": "fffffffffffffffff", "addr": "1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ", "status": "SOLVED", "reward": "6.8 BTC"}, {"id": 69, "start": "100000000000000000", "end": "1fffffffffffffffff", "addr": "19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG", "status": "SOLVED", "reward": "6.9 BTC"}, {"id": 70, "start": "200000000000000000", "end": "3fffffffffffffffff", "addr": "19YZECXj3SxEZMoUeJ1yiPsw8xANe7M7QR", "status": "SOLVED", "reward": "7.0 BTC"}, {"id": 71, "start": "400000000000000000", "end": "7fffffffffffffffff", "addr": "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU", "status": "UNSOLVED", "reward": "7.1 BTC"}, {"id": 72, "start": "800000000000000000", "end": "ffffffffffffffffff", "addr": "1JTK7s9YVYywfm5XUH7RNhHJH1LshCaRFR", "status": "UNSOLVED", "reward": "7.2 BTC"}, {"id": 73, "start": "1000000000000000000", "end": "1ffffffffffffffffff", "addr": "12VVRNPi4SJqUTsp6FmqDqY5sGosDtysn4", "status": "UNSOLVED", "reward": "7.3 BTC"}, {"id": 74, "start": "2000000000000000000", "end": "3ffffffffffffffffff", "addr": "1FWGcVDK3JGzCC3WtkYetULPszMaK2Jksv", "status": "UNSOLVED", "reward": "7.4 BTC"}, {"id": 75, "start": "4000000000000000000", "end": "7ffffffffffffffffff", "addr": "1J36UjUByGroXcCvmj13U6uwaVv9caEeAt", "status": "SOLVED", "reward": "7.5 BTC"}, {"id": 76, "start": "8000000000000000000", "end": "fffffffffffffffffff", "addr": "1DJh2eHFYQfACPmrvpyWc8MSTYKh7w9eRF", "status": "UNSOLVED", "reward": "7.6 BTC"}, {"id": 77, "start": "10000000000000000000", "end": "1fffffffffffffffffff", "addr": "1Bxk4CQdqL9p22JEtDfdXMsng1XacifUtE", "status": "UNSOLVED", "reward": "7.7 BTC"}, {"id": 78, "start": "20000000000000000000", "end": "3fffffffffffffffffff", "addr": "15qF6X51huDjqTmF9BJgxXdt1xcj46Jmhb", "status": "UNSOLVED", "reward": "7.8 BTC"}, {"id": 79, "start": "40000000000000000000", "end": "7fffffffffffffffffff", "addr": "1ARk8HWJMn8js8tQmGUJeQHjSE7KRkn2t8", "status": "UNSOLVED", "reward": "7.9 BTC"}, {"id": 80, "start": "80000000000000000000", "end": "ffffffffffffffffffff", "addr": "1BCf6rHUW6m3iH2ptsvnjgLruAiPQQepLe", "status": "SOLVED", "reward": "8.0 BTC"}, {"id": 81, "start": "100000000000000000000", "end": "1ffffffffffffffffffff", "addr": "15qsCm78whspNQFydGJQk5rexzxTQopnHZ", "status": "UNSOLVED", "reward": "8.1 BTC"}, {"id": 82, "start": "200000000000000000000", "end": "3ffffffffffffffffffff", "addr": "13zYrYhhJxp6Ui1VV7pqa5WDhNWM45ARAC", "status": "UNSOLVED", "reward": "8.2 BTC"}, {"id": 83, "start": "400000000000000000000", "end": "7ffffffffffffffffffff", "addr": "14MdEb4eFcT3MVG5sPFG4jGLuHJSnt1Dk2", "status": "UNSOLVED", "reward": "8.3 BTC"}, {"id": 84, "start": "800000000000000000000", "end": "fffffffffffffffffffff", "addr": "1CMq3SvFcVEcpLMuuH8PUcNiqsK1oicG2D", "status": "UNSOLVED", "reward": "8.4 BTC"}, {"id": 85, "start": "1000000000000000000000", "end": "1fffffffffffffffffffff", "addr": "1Kh22PvXERd2xpTQk3ur6pPEqFeckCJfAr", "status": "SOLVED", "reward": "8.5 BTC"}, {"id": 86, "start": "2000000000000000000000", "end": "3fffffffffffffffffffff", "addr": "1K3x5L6G57Y494fDqBfrojD28UJv4s5JcK", "status": "UNSOLVED", "reward": "8.6 BTC"}, {"id": 87, "start": "4000000000000000000000", "end": "7fffffffffffffffffffff", "addr": "1PxH3K1Shdjb7gSEoTX7UPDZ6SH4qGPrvq", "status": "UNSOLVED", "reward": "8.7 BTC"}, {"id": 88, "start": "8000000000000000000000", "end": "ffffffffffffffffffffff", "addr": "16AbnZjZZipwHMkYKBSfswGWKDmXHjEpSf", "status": "UNSOLVED", "reward": "8.8 BTC"}, {"id": 89, "start": "10000000000000000000000", "end": "1ffffffffffffffffffffff", "addr": "19QciEHbGVNY4hrhfKXmcBBCrJSBZ6TaVt", "status": "UNSOLVED", "reward": "8.9 BTC"}, {"id": 90, "start": "20000000000000000000000", "end": "3ffffffffffffffffffffff", "addr": "1L12FHH2FHjvTviyanuiFVfmzCy46RRATU", "status": "SOLVED", "reward": "9.0 BTC"}, {"id": 91, "start": "40000000000000000000000", "end": "7ffffffffffffffffffffff", "addr": "1EzVHtmbN4fs4MiNk3ppEnKKhsmXYJ4s74", "status": "UNSOLVED", "reward": "9.1 BTC"}, {"id": 92, "start": "80000000000000000000000", "end": "fffffffffffffffffffffff", "addr": "1AE8NzzgKE7Yhz7BWtAcAAxiFMbPo82NB5", "status": "UNSOLVED", "reward": "9.2 BTC"}, {"id": 93, "start": "100000000000000000000000", "end": "1fffffffffffffffffffffff", "addr": "17Q7tuG2JwFFU9rXVj3uZqRtioH3mx2Jad", "status": "UNSOLVED", "reward": "9.3 BTC"}, {"id": 94, "start": "200000000000000000000000", "end": "3fffffffffffffffffffffff", "addr": "1K6xGMUbs6ZTXBnhw1pippqwK6wjBWtNpL", "status": "UNSOLVED", "reward": "9.4 BTC"}, {"id": 95, "start": "400000000000000000000000", "end": "7fffffffffffffffffffffff", "addr": "19eVSDuizydXxhohGh8Ki9WY9KsHdSwoQC", "status": "SOLVED", "reward": "9.5 BTC"}, {"id": 96, "start": "800000000000000000000000", "end": "ffffffffffffffffffffffff", "addr": "15ANYzzCp5BFHcCnVFzXqyibpzgPLWaD8b", "status": "UNSOLVED", "reward": "9.6 BTC"}, {"id": 97, "start": "1000000000000000000000000", "end": "1ffffffffffffffffffffffff", "addr": "18ywPwj39nGjqBrQJSzZVq2izR12MDpDr8", "status": "UNSOLVED", "reward": "9.7 BTC"}, {"id": 98, "start": "2000000000000000000000000", "end": "3ffffffffffffffffffffffff", "addr": "1CaBVPrwUxbQYYswu32w7Mj4HR4maNoJSX", "status": "UNSOLVED", "reward": "9.8 BTC"}, {"id": 99, "start": "4000000000000000000000000", "end": "7ffffffffffffffffffffffff", "addr": "1JWnE6p6UN7ZJBN7TtcbNDoRcjFtuDWoNL", "status": "UNSOLVED", "reward": "9.9 BTC"}, {"id": 100, "start": "8000000000000000000000000", "end": "fffffffffffffffffffffffff", "addr": "1KCgMv8fo2TPBpddVi9jqmMmcne9uSNJ5F", "status": "SOLVED", "reward": "10.0 BTC"}, {"id": 101, "start": "10000000000000000000000000", "end": "1fffffffffffffffffffffffff", "addr": "1CKCVdbDJasYmhswB6HKZHEAnNaDpK7W4n", "status": "UNSOLVED", "reward": "10.1 BTC"}, {"id": 102, "start": "20000000000000000000000000", "end": "3fffffffffffffffffffffffff", "addr": "1PXv28YxmYMaB8zxrKeZBW8dt2HK7RkRPX", "status": "UNSOLVED", "reward": "10.2 BTC"}, {"id": 103, "start": "40000000000000000000000000", "end": "7fffffffffffffffffffffffff", "addr": "1AcAmB6jmtU6AiEcXkmiNE9TNVPsj9DULf", "status": "UNSOLVED", "reward": "10.3 BTC"}, {"id": 104, "start": "80000000000000000000000000", "end": "ffffffffffffffffffffffffff", "addr": "1EQJvpsmhazYCcKX5Au6AZmZKRnzarMVZu", "status": "UNSOLVED", "reward": "10.4 BTC"}, {"id": 105, "start": "100000000000000000000000000", "end": "1ffffffffffffffffffffffffff", "addr": "1CMjscKB3QW7SDyQ4c3C3DEUHiHRhiZVib", "status": "SOLVED", "reward": "10.5 BTC"}, {"id": 106, "start": "200000000000000000000000000", "end": "3ffffffffffffffffffffffffff", "addr": "18KsfuHuzQaBTNLASyj15hy4LuqPUo1FNB", "status": "UNSOLVED", "reward": "10.6 BTC"}, {"id": 107, "start": "400000000000000000000000000", "end": "7ffffffffffffffffffffffffff", "addr": "15EJFC5ZTs9nhsdvSUeBXjLAuYq3SWaxTc", "status": "UNSOLVED", "reward": "10.7 BTC"}, {"id": 108, "start": "800000000000000000000000000", "end": "fffffffffffffffffffffffffff", "addr": "1HB1iKUqeffnVsvQsbpC6dNi1XKbyNuqao", "status": "UNSOLVED", "reward": "10.8 BTC"}, {"id": 109, "start": "1000000000000000000000000000", "end": "1fffffffffffffffffffffffffff", "addr": "1GvgAXVCbA8FBjXfWiAms4ytFeJcKsoyhL", "status": "UNSOLVED", "reward": "10.9 BTC"}, {"id": 110, "start": "2000000000000000000000000000", "end": "3fffffffffffffffffffffffffff", "addr": "12JzYkkN76xkwvcPT6AWKZtGX6w2LAgsJg", "status": "SOLVED", "reward": "11.0 BTC"}, {"id": 111, "start": "4000000000000000000000000000", "end": "7fffffffffffffffffffffffffff", "addr": "1824ZJQ7nKJ9QFTRBqn7z7dHV5EGpzUpH3", "status": "UNSOLVED", "reward": "11.1 BTC"}, {"id": 112, "start": "8000000000000000000000000000", "end": "ffffffffffffffffffffffffffff", "addr": "18A7NA9FTsnJxWgkoFfPAFbQzuQxpRtCos", "status": "UNSOLVED", "reward": "11.2 BTC"}, {"id": 113, "start": "10000000000000000000000000000", "end": "1ffffffffffffffffffffffffffff", "addr": "1NeGn21dUDDeqFQ63xb2SpgUuXuBLA4WT4", "status": "UNSOLVED", "reward": "11.3 BTC"}, {"id": 114, "start": "20000000000000000000000000000", "end": "3ffffffffffffffffffffffffffff", "addr": "174SNxfqpdMGYy5YQcfLbSTK3MRNZEePoy", "status": "UNSOLVED", "reward": "11.4 BTC"}, {"id": 115, "start": "40000000000000000000000000000", "end": "7ffffffffffffffffffffffffffff", "addr": "1NLbHuJebVwUZ1XqDjsAyfTRUPwDQbemfv", "status": "SOLVED", "reward": "11.5 BTC"}, {"id": 116, "start": "80000000000000000000000000000", "end": "fffffffffffffffffffffffffffff", "addr": "1MnJ6hdhvK37VLmqcdEwqC3iFxyWH2PHUV", "status": "UNSOLVED", "reward": "11.6 BTC"}, {"id": 117, "start": "100000000000000000000000000000", "end": "1fffffffffffffffffffffffffffff", "addr": "1KNRfGWw7Q9Rmwsc6NT5zsdvEb9M2Wkj5Z", "status": "UNSOLVED", "reward": "11.7 BTC"}, {"id": 118, "start": "200000000000000000000000000000", "end": "3fffffffffffffffffffffffffffff", "addr": "1PJZPzvGX19a7twf5HyD2VvNiPdHLzm9F6", "status": "UNSOLVED", "reward": "11.8 BTC"}, {"id": 119, "start": "400000000000000000000000000000", "end": "7fffffffffffffffffffffffffffff", "addr": "1GuBBhf61rnvRe4K8zu8vdQB3kHzwFqSy7", "status": "UNSOLVED", "reward": "11.9 BTC"}, {"id": 120, "start": "800000000000000000000000000000", "end": "ffffffffffffffffffffffffffffff", "addr": "17s2b9ksz5y7abUm92cHwG8jEPCzK3dLnT", "status": "SOLVED", "reward": "12.0 BTC"}, {"id": 121, "start": "1000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffff", "addr": "1GDSuiThEV64c166LUFC9uDcVdGjqkxKyh", "status": "UNSOLVED", "reward": "12.1 BTC"}, {"id": 122, "start": "2000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffff", "addr": "1Me3ASYt5JCTAK2XaC32RMeH34PdprrfDx", "status": "UNSOLVED", "reward": "12.2 BTC"}, {"id": 123, "start": "4000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffff", "addr": "1CdufMQL892A69KXgv6UNBD17ywWqYpKut", "status": "UNSOLVED", "reward": "12.3 BTC"}, {"id": 124, "start": "8000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffff", "addr": "1BkkGsX9ZM6iwL3zbqs7HWBV7SvosR6m8N", "status": "UNSOLVED", "reward": "12.4 BTC"}, {"id": 125, "start": "10000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffff", "addr": "1PXAyUB8ZoH3WD8n5zoAthYjN15yN5CVq5", "status": "SOLVED", "reward": "12.5 BTC"}, {"id": 126, "start": "20000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffff", "addr": "1AWCLZAjKbV1P7AHvaPNCKiB7ZWVDMxFiz", "status": "UNSOLVED", "reward": "12.6 BTC"}, {"id": 127, "start": "40000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffff", "addr": "1G6EFyBRU86sThN3SSt3GrHu1sA7w7nzi4", "status": "UNSOLVED", "reward": "12.7 BTC"}, {"id": 128, "start": "80000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffff", "addr": "1MZ2L1gFrCtkkn6DnTT2e4PFUTHw9gNwaj", "status": "UNSOLVED", "reward": "12.8 BTC"}, {"id": 129, "start": "100000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffff", "addr": "1Hz3uv3nNZzBVMXLGadCucgjiCs5W9vaGz", "status": "UNSOLVED", "reward": "12.9 BTC"}, {"id": 130, "start": "200000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffff", "addr": "1Fo65aKq8s8iquMt6weF1rku1moWVEd5Ua", "status": "SOLVED", "reward": "13.0 BTC"}, {"id": 131, "start": "400000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffff", "addr": "16zRPnT8znwq42q7XeMkZUhb1bKqgRogyy", "status": "UNSOLVED", "reward": "13.1 BTC"}, {"id": 132, "start": "800000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffff", "addr": "1KrU4dHE5WrW8rhWDsTRjR21r8t3dsrS3R", "status": "UNSOLVED", "reward": "13.2 BTC"}, {"id": 133, "start": "1000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffff", "addr": "17uDfp5r4n441xkgLFmhNoSW1KWp6xVLD", "status": "UNSOLVED", "reward": "13.3 BTC"}, {"id": 134, "start": "2000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffff", "addr": "13A3JrvXmvg5w9XGvyyR4JEJqiLz8ZySY3", "status": "UNSOLVED", "reward": "13.4 BTC"}, {"id": 135, "start": "4000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffff", "addr": "16RGFo6hjq9ym6Pj7N5H7L1NR1rVPJyw2v", "status": "SOLVED", "reward": "13.5 BTC"}, {"id": 136, "start": "8000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffff", "addr": "1UDHPdovvR985NrWSkdWQDEQ1xuRiTALq", "status": "UNSOLVED", "reward": "13.6 BTC"}, {"id": 137, "start": "10000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffff", "addr": "15nf31J46iLuK1ZkTnqHo7WgN5cARFK3RA", "status": "UNSOLVED", "reward": "13.7 BTC"}, {"id": 138, "start": "20000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffff", "addr": "1Ab4vzG6wEQBDNQM1B2bvUz4fqXXdFk2WT", "status": "UNSOLVED", "reward": "13.8 BTC"}, {"id": 139, "start": "40000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffff", "addr": "1Fz63c775VV9fNyj25d9Xfw3YHE6sKCxbt", "status": "UNSOLVED", "reward": "13.9 BTC"}, {"id": 140, "start": "80000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffff", "addr": "1QKBaU6WAeycb3DbKbLBkX7vJiaS8r42Xo", "status": "UNSOLVED", "reward": "14.0 BTC"}, {"id": 141, "start": "100000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffff", "addr": "1CD91Vm97mLQvXhrnoMChhJx4TP9MaQkJo", "status": "UNSOLVED", "reward": "14.1 BTC"}, {"id": 142, "start": "200000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffff", "addr": "15MnK2jXPqTMURX4xC3h4mAZxyCcaWWEDD", "status": "UNSOLVED", "reward": "14.2 BTC"}, {"id": 143, "start": "400000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffff", "addr": "13N66gCzWWHEZBxhVxG18P8wyjEWF9Yoi1", "status": "UNSOLVED", "reward": "14.3 BTC"}, {"id": 144, "start": "800000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffff", "addr": "1NevxKDYuDcCh1ZMMi6ftmWwGrZKC6j7Ux", "status": "UNSOLVED", "reward": "14.4 BTC"}, {"id": 145, "start": "1000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffff", "addr": "19GpszRNUej5yYqxXoLnbZWKew3KdVLkXg", "status": "UNSOLVED", "reward": "14.5 BTC"}, {"id": 146, "start": "2000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffff", "addr": "1M7ipcdYHey2Y5RZM34MBbpugghmjaV89P", "status": "UNSOLVED", "reward": "14.6 BTC"}, {"id": 147, "start": "4000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffff", "addr": "18aNhurEAJsw6BAgtANpexk5ob1aGTwSeL", "status": "UNSOLVED", "reward": "14.7 BTC"}, {"id": 148, "start": "8000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffff", "addr": "1FwZXt6EpRT7Fkndzv6K4b4DFoT4trbMrV", "status": "UNSOLVED", "reward": "14.8 BTC"}, {"id": 149, "start": "10000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffff", "addr": "1CXvTzR6qv8wJ7eprzUKeWxyGcHwDYP1i2", "status": "UNSOLVED", "reward": "14.9 BTC"}, {"id": 150, "start": "20000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffff", "addr": "1MUJSJYtGPVGkBCTqGspnxyHahpt5Te8jy", "status": "UNSOLVED", "reward": "15.0 BTC"}, {"id": 151, "start": "40000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffff", "addr": "13Q84TNNvgcL3HJiqQPvyBb9m4hxjS3jkV", "status": "UNSOLVED", "reward": "15.1 BTC"}, {"id": 152, "start": "80000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffff", "addr": "1LuUHyrQr8PKSvbcY1v1PiuGuqFjWpDumN", "status": "UNSOLVED", "reward": "15.2 BTC"}, {"id": 153, "start": "100000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffffff", "addr": "18192XpzzdDi2K11QVHR7td2HcPS6Qs5vg", "status": "UNSOLVED", "reward": "15.3 BTC"}, {"id": 154, "start": "200000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffffff", "addr": "1NgVmsCCJaKLzGyKLFJfVequnFW9ZvnMLN", "status": "UNSOLVED", "reward": "15.4 BTC"}, {"id": 155, "start": "400000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffffff", "addr": "1AoeP37TmHdFh8uN72fu9AqgtLrUwcv2wJ", "status": "UNSOLVED", "reward": "15.5 BTC"}, {"id": 156, "start": "800000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffffff", "addr": "1FTpAbQa4h8trvhQXjXnmNhqdiGBd1oraE", "status": "UNSOLVED", "reward": "15.6 BTC"}, {"id": 157, "start": "1000000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffffff", "addr": "14JHoRAdmJg3XR4RjMDh6Wed6ft6hzbQe9", "status": "UNSOLVED", "reward": "15.7 BTC"}, {"id": 158, "start": "2000000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffffff", "addr": "19z6waranEf8CcP8FqNgdwUe1QRxvUNKBG", "status": "UNSOLVED", "reward": "15.8 BTC"}, {"id": 159, "start": "4000000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffffff", "addr": "14u4nA5sugaswb6SZgn5av2vuChdMnD9E5", "status": "UNSOLVED", "reward": "15.9 BTC"}, {"id": 160, "start": "8000000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffffff", "addr": "1NBC8uXJy1GiJ6drkiZa1WuKn51ps7EPTv", "status": "UNSOLVED", "reward": "16.0 BTC"}];
 
 let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO'
-let autoAlgoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO'];
+let autoAlgoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'HALTON', 'SCRAMBLED_SOBOL', 'MCMC'];
 let autoAlgoIndex = 0;
 let autoAlgoStepCounter = 0; // 'RANDOM', 'HYBRID'
 
@@ -2302,7 +2308,7 @@ function applyFormulaPreset(formula) {
         }
     }
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'];
     const algoSel = document.getElementById('algoSelect');
     const entSel = document.getElementById('entropyBitsSelect');
     const chkPre = document.getElementById('chkPrefixAutoJump');
@@ -2415,7 +2421,7 @@ function applyFormulaPreset(formula) {
         if (isKangaroo) {
             selectedAlgorithm = 'KANGAROO';
             if (algoSel) algoSel.value = 'KANGAROO';
-            const bKang = document.getElementById('btnAlgoKangaroo'); if (bKang) bKang.classList.add('active');
+            const bKang = document.getElementById('btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'); if (bKang) bKang.classList.add('active');
             if (logAlgo) {
                 logAlgo.innerText = '🦘 Pollard Kangaroo (Tuzak & Vahşi Sürü)';
                 logAlgo.style.color = '#10b981';
@@ -2486,7 +2492,7 @@ function generateDeterministicChaosKey(rangeStart, rangeEnd) {
 
     const highInt = BigInt(Math.floor(chaosX * 4294967296)) & 0xFFFFFFFFn;
     const lowInt = BigInt(Math.floor(chaosY * 4294967296)) & 0xFFFFFFFFn;
-    const mixInt = (BigInt(chaosKeyStep * 0x9e3779b9) ^ (highInt << 32n) | lowInt) & 0xFFFFFFFFFFFFFFFFn;
+    const mixInt = (BigInt(chaosKeyStep) * 0x9e3779b9n ^ ((highInt << 32n) | lowInt)) & 0xFFFFFFFFFFFFFFFFn;
 
     let candidate = 0n;
     const hexLen = span.toString(16).length;
@@ -2856,6 +2862,9 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'KANGAROO') return generateKangarooKey(targetStart, targetEnd);
+        if (activeA === 'HALTON') return generateHaltonKey(targetStart, targetEnd);
+        if (activeA === 'SCRAMBLED_SOBOL') return generateScrambledSobolKey(targetStart, targetEnd);
+        if (activeA === 'MCMC') return generateMCMCKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
     }
     
@@ -3962,7 +3971,7 @@ let selectedEntropyBits = 0;
 function setAlgorithm(algo) {
     selectedAlgorithm = algo;
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'];
     btnIds.forEach(id => {
         const b = document.getElementById(id);
         if (b) b.classList.remove('active');
@@ -3990,7 +3999,7 @@ function setAlgorithm(algo) {
     if (algo === 'AUTO') {
         const b = document.getElementById('btnAlgoAuto'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rastgele + 📐 Sobol + 📐 V.d.Corput + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos + 🦘 Kangaroo)';
+            logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rast + 📐 Sobol + 📐 VdC + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos + 🦘 Kang + 🎲 Halton + 🔀 S.Sobol + 🎰 MCMC)';
             logAlgo.style.color = '#38bdf8';
         }
         autoAlgoIndex = 0;
@@ -4050,7 +4059,7 @@ function setAlgorithm(algo) {
             logAlgo.style.color = '#ec4899';
         }
     } else if (algo === 'KANGAROO') {
-        const b = document.getElementById('btnAlgoKangaroo'); if (b) b.classList.add('active');
+        const b = document.getElementById('btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'); if (b) b.classList.add('active');
         // Dürüst Kangaroo: Kaydıraç kapatılır, tam uzay kilitlenir
         if (typeof isSliderSweepActive !== 'undefined' && isSliderSweepActive && typeof toggleSliderSweep === 'function') {
             toggleSliderSweep();
@@ -4065,6 +4074,24 @@ function setAlgorithm(algo) {
             if (typeof showToast === 'function') {
                 showToast('🦘 <strong>Pollard Kangaroo İpucu:</strong> Kangaroo eliptik eğri zincirleme yürüyüşü tek hedefe kilitlendiğinde en yüksek hıza ulaşır. Çoklu hedefler için Sobol, Weyl veya Kaos algoritmaları önerilir.', 4500);
             }
+        }
+    } else if (algo === 'HALTON') {
+        const b = document.getElementById('btnAlgoHalton'); if (b) b.classList.add('active');
+        if (logAlgo && !isAgent) {
+            logAlgo.innerText = '🎲 Halton Dizisi (Baz-2×3×5×7, Gerçek Düşük-Diskrepanslı)';
+            logAlgo.style.color = '#06b6d4';
+        }
+    } else if (algo === 'SCRAMBLED_SOBOL') {
+        const b = document.getElementById('btnAlgoScrambledSobol'); if (b) b.classList.add('active');
+        if (logAlgo && !isAgent) {
+            logAlgo.innerText = '🔀 Scrambled Sobol (Owen Sayısal Kaydırma, Gerçek Sobol Garantisi)';
+            logAlgo.style.color = '#8b5cf6';
+        }
+    } else if (algo === 'MCMC') {
+        const b = document.getElementById('btnAlgoMCMC'); if (b) b.classList.add('active');
+        if (logAlgo && !isAgent) {
+            logAlgo.innerText = '🎰 MCMC — Markov Zinciri (Lévy Adımlar + Uyarlanabilir Sıcaklık)';
+            logAlgo.style.color = '#f97316';
         }
     }
     if (typeof updateKangarooSwarmUI === 'function') updateKangarooSwarmUI();
@@ -4247,22 +4274,22 @@ const AGENT_TACTICS = [
     },
     {
         phase: 6,
-        name: "Genişletilmiş Aralık Taraması",
+        name: "Saf Rastgele Monte Carlo Taraması",
         zone: "Tam Aralık (%0 - %100)",
         
-        algo: "WEAK_ENTROPY",
-        formula: "GOLDEN_SINGULARITY",
-        bits: 32,
+        algo: "RANDOM",
+        formula: "OMNI_CHAOS",
+        bits: 0,
         popcountRange: null,
         sliderMode: "FULL",
         prefixActive: false,
         baseDurationSec: 180,
         durationSec: 180,
-        targetKeys: 200000,
-        badge: "Faz 6: Genişletilmiş Aralık",
+        targetKeys: 250000,
+        badge: "Faz 6: Saf Monte Carlo",
         totalRuns: 0,
         avgRate: 0,
-        desc: "Tüm aralık genelinde kademeli arama adımları"
+        desc: "Sıfır önyargılı (uniform) kriptografik rastgelelikle tüm aralık genelinde global tarama"
     },
     {
         phase: 7,
@@ -4282,6 +4309,60 @@ const AGENT_TACTICS = [
         totalRuns: 0,
         avgRate: 0,
         desc: "Sobol quasi-random dizilimi ile boşluksuz arama uzayı taraması"
+    },
+    {
+        phase: 8,
+        name: "Halton Çok Boyutlu Düşük Tutarsızlık",
+        zone: "Asal Tabanlı Homojen Dağılım",
+        algo: "HALTON",
+        formula: "OMNI_CHAOS",
+        bits: 0,
+        popcountRange: null,
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 250000,
+        badge: "Faz 8: Halton Çok Boyutlu",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "2, 3, 5, 7 asal tabanları ile çok boyutlu düşük-diskrepanslı homojen arama"
+    },
+    {
+        phase: 9,
+        name: "Scrambled Sobol Sayısal Kaydırma",
+        zone: "Owen Scrambling Dinamik Örtüşüm",
+        algo: "SCRAMBLED_SOBOL",
+        formula: "SOBOL",
+        bits: 0,
+        popcountRange: null,
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 250000,
+        badge: "Faz 9: Scrambled Sobol",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Rastgele sayısal XOR kaydırması ile döngü her başa sardığında taze koordinat taraması"
+    },
+    {
+        phase: 10,
+        name: "MCMC Uyarlanabilir Markov Yürüyüşü",
+        zone: "Lévy Sıçramalı Yerel Keşif",
+        algo: "MCMC",
+        formula: "OMNI_CHAOS",
+        bits: 0,
+        popcountRange: null,
+        sliderMode: "FULL",
+        prefixActive: false,
+        baseDurationSec: 180,
+        durationSec: 180,
+        targetKeys: 200000,
+        badge: "Faz 10: MCMC Uyarlanabilir",
+        totalRuns: 0,
+        avgRate: 0,
+        desc: "Metropolis-Hastings ve Lévy uçuşuyla ara boşlukları dolduran adaptif yürüyüş"
     }
 ];
 
@@ -5322,17 +5403,6 @@ function generateHilbertKey(rangeStart, rangeEnd) {
 
 let weakEntropyCounter = 0;
 const WEAK_REPETITIVE_CHARS = '0123456789abcdef';
-const WEAK_RHYTHMIC_PATTERNS = [
-    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-    'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',
-    'deadbeefcafebabedeadbeefcafebabedeadbeefcafebabedeadbeefcafebabe',
-    'cafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe',
-    '1337133713371337133713371337133713371337133713371337133713371337',
-    '0000000000000001000000000000000200000000000000030000000000000004',
-    'badc0ffeebadc0ffeebadc0ffeebadc0ffeebadc0ffeebadc0ffeebadc0ffeed',
-    '112233445566778899aabbccddeeff00112233445566778899aabbccddeeff',
-    'aaaaaaaa55555555aaaaaaaa55555555aaaaaaaa55555555aaaaaaaa55555555'
-];
 
 const WEAK_PATS = [
     '0123456789abcdef',
@@ -5525,6 +5595,123 @@ function generateWeakEntropyKey(rangeStart, rangeEnd, entropyBits) {
 }
 
 // ============================================================
+// 🎲 HALTON DİZİSİ — Gerçek Çok-Boyutlu Düşük-Diskrepanslı
+// Baz-2 ve Baz-3 Halton kombinasyonu (2D → 1D projeksiyon)
+// ============================================================
+let mainHaltonStep = 1;
+
+function _haltonFrac64(n, base) {
+    const b = BigInt(base);
+    let denom = 1n;
+    let result = 0n;
+    let num = BigInt(n);
+    while (num > 0n) {
+        denom *= b;
+        result = result * b + (num % b);
+        num = num / b;
+    }
+    if (denom === 0n) return 0n;
+    return (result << 64n) / denom;
+}
+
+function generateHaltonKey(rangeStart, rangeEnd) {
+    mainHaltonStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+        const h2 = _haltonFrac64(mainHaltonStep, 2);
+        const h3 = _haltonFrac64(mainHaltonStep, 3);
+        const combined = (h2 ^ (h3 * 0x9E3779B97F4A7C15n >> 64n)) & 0xFFFFFFFFFFFFFFFFn;
+        return rangeStart + (combined * totalRange >> 64n);
+    }
+    const h2 = _haltonFrac64(mainHaltonStep, 2);
+    const h3 = _haltonFrac64(mainHaltonStep, 3);
+    const h5 = _haltonFrac64(mainHaltonStep, 5);
+    const h7 = _haltonFrac64(mainHaltonStep, 7);
+    const full = (h2 << 192n) | (h3 << 128n) | (h5 << 64n) | h7;
+    return rangeStart + (full % (totalRange + 1n));
+}
+
+// ============================================================
+// 🔀 SCRAMBLED SOBOL — Digital Shift ile Owen Tarzı Karıştırma
+// ============================================================
+let mainScrambledSobolStep = 1;
+let mainScrambledSobolShift = null;
+
+function generateScrambledSobolKey(rangeStart, rangeEnd) {
+    mainScrambledSobolStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    if (mainScrambledSobolShift === null) {
+        mainScrambledSobolShift = randomBigIntInRange(0n, 0xFFFFFFFFFFFFFFFFn);
+    }
+    const n = BigInt(mainScrambledSobolStep);
+    let rev = 0n;
+    let temp = n & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev = (rev << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    const g = n ^ (n >> 1n);
+    const s0 = (rev ^ mainScrambledSobolShift) & 0xFFFFFFFFFFFFFFFFn;
+    if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+        return rangeStart + (s0 * totalRange >> 64n);
+    }
+    const shift = mainScrambledSobolShift;
+    const s1 = ((rev ^ (g * 0xBF58476D1CE4E5B9n)) ^ (shift >> 7n))  & 0xFFFFFFFFFFFFFFFFn;
+    const s2 = ((rev ^ (g * 0x94D049BB133111EBn)) ^ (shift >> 13n)) & 0xFFFFFFFFFFFFFFFFn;
+    const s3 = ((g  * 0xD6E8FEB86659FD93n)        ^ (shift >> 19n)) & 0xFFFFFFFFFFFFFFFFn;
+    const full = (s0 << 192n) | (s1 << 128n) | (s2 << 64n) | s3;
+    return rangeStart + (full % (totalRange + 1n));
+}
+
+// ============================================================
+// 🎰 MCMC — Markov Zinciri Monte Carlo (Uyarlanabilir Rastgele Yürüyüş)
+// Metropolis-Hastings: Lévy-tipi adımlar, sınır yansıması
+// ============================================================
+let mainMCMCCurrent   = null;
+let mainMCMCStepSize  = null;
+let mainMCMCStepCount = 0;
+
+function generateMCMCKey(rangeStart, rangeEnd) {
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    mainMCMCStepCount++;
+    if (mainMCMCCurrent === null || mainMCMCCurrent < rangeStart || mainMCMCCurrent > rangeEnd) {
+        mainMCMCCurrent  = randomBigIntInRange(rangeStart, rangeEnd);
+        mainMCMCStepSize = totalRange >> 10n;
+        if (mainMCMCStepSize <= 0n) mainMCMCStepSize = 1n;
+    }
+    const r = Math.random();
+    if (r < 0.08) {
+        mainMCMCCurrent  = randomBigIntInRange(rangeStart, rangeEnd);
+        const bits = BigInt(Math.floor(Math.random() * 8) + 4);
+        mainMCMCStepSize = totalRange >> bits;
+        if (mainMCMCStepSize <= 0n) mainMCMCStepSize = 1n;
+        return mainMCMCCurrent;
+    }
+    const direction = Math.random() < 0.5 ? 1n : -1n;
+    const u = Math.random();
+    const stepMult = u < 0.7
+        ? BigInt(Math.floor(Math.random() * 10) + 1)
+        : BigInt(Math.floor(Math.random() * 100) + 10);
+    let step = (mainMCMCStepSize * stepMult) >> 3n;
+    if (step <= 0n) step = 1n;
+    let proposal = mainMCMCCurrent + direction * step;
+    if (proposal < rangeStart) proposal = rangeStart + (rangeStart - proposal) % (totalRange + 1n);
+    if (proposal > rangeEnd)   proposal = rangeEnd   - (proposal - rangeEnd)   % (totalRange + 1n);
+    if (proposal < rangeStart) proposal = rangeStart;
+    if (proposal > rangeEnd)   proposal = rangeEnd;
+    mainMCMCCurrent = proposal;
+    if (mainMCMCStepCount % 200 === 0) {
+        mainMCMCStepSize = totalRange >> 10n;
+        if (mainMCMCStepSize <= 0n) mainMCMCStepSize = 1n;
+    }
+    return mainMCMCCurrent;
+}
+
+
+// ============================================================
 // 🦘 POLLARD'S KANGAROO (LAMBDA) ELİPTİK EĞRİ ÇARPIŞMA MOTORU O(√N)
 // 135 - 160 Arası Açık Anahtarlı Bitcoin Bulmacaları İçin Özel Motor
 // ============================================================
@@ -5624,6 +5811,9 @@ if (typeof window !== 'undefined') {
     window.generateDeterministicChaosKey = generateDeterministicChaosKey;
     window.generateWeakEntropyKey = generateWeakEntropyKey;
     window.generateKangarooKey = generateKangarooKey;
+    window.generateHaltonKey = generateHaltonKey;
+    window.generateScrambledSobolKey = generateScrambledSobolKey;
+    window.generateMCMCKey = generateMCMCKey;
     window.randomBigIntInRange = randomBigIntInRange;
     window.getNextPhysicsPercent = (typeof getNextPhysicsPercent === 'function') ? getNextPhysicsPercent : null;
     window.applyPopcountConstraint = (typeof applyPopcountConstraint === 'function') ? applyPopcountConstraint : null;
@@ -5730,7 +5920,7 @@ function huntBatch() {
             if (selectedAlgorithm === 'AUTO') {
                 autoAlgoStepCounter++;
                 // Her 25 denemede bir diğer algoritmaya dinamik geçiş yap
-                if (autoAlgoStepCounter % 25 === 0) {
+                if (autoAlgoStepCounter % 75 === 0) {
                     autoAlgoIndex = (autoAlgoIndex + 1) % autoAlgoList.length;
                 }
                 activeAlgo = autoAlgoList[autoAlgoIndex];
@@ -5739,6 +5929,9 @@ function huntBatch() {
                 }
                 if (activeAlgo === 'KANGAROO' && (typeof isKangarooModeActive === 'function' && !isKangarooModeActive())) {
                     activeAlgo = 'RANDOM';
+                }
+                if (activeAlgo === 'HALTON') {
+                    if (typeof generateHaltonKey === 'undefined') activeAlgo = 'RANDOM';
                 }
             }
 
@@ -5824,6 +6017,12 @@ function huntBatch() {
                 currentKey = generateWeakEntropyKey(subMin, subMax, selectedEntropyBits);
             } else if (activeAlgo === 'KANGAROO') {
                 currentKey = generateKangarooKey(boundMin, boundMax); attempts += 63; if (sliceModeActive) sliceAttempts += 63;
+            } else if (activeAlgo === 'HALTON') {
+                currentKey = generateHaltonKey(subMin, subMax);
+            } else if (activeAlgo === 'SCRAMBLED_SOBOL') {
+                currentKey = generateScrambledSobolKey(subMin, subMax);
+            } else if (activeAlgo === 'MCMC') {
+                currentKey = generateMCMCKey(subMin, subMax);
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
             }
@@ -6030,6 +6229,12 @@ function huntBatch() {
                     algoPrefix = '♾️ Kaos + ';
                 } else if (activeAlgo === 'KANGAROO') {
                     algoPrefix = '🦘 Kangaroo';
+                } else if (activeAlgo === 'HALTON') {
+                    algoPrefix = '🎲 Halton + ';
+                } else if (activeAlgo === 'SCRAMBLED_SOBOL') {
+                    algoPrefix = '🔀 S.Sobol + ';
+                } else if (activeAlgo === 'MCMC') {
+                    algoPrefix = '🎰 MCMC + ';
                 }
 
                 if (activeAlgo === 'KANGAROO') {
@@ -6077,7 +6282,10 @@ function huntBatch() {
                     'HILBERT':        '🌀 Hilbert Fraktal',
                     'WEAK_ENTROPY':   '⚡ Zayıf Entropi',
                     'CHAOS':          '♾️ Deterministik Kaos',
-                    'KANGAROO':       '🦘 Pollard Kangaroo'
+                    'KANGAROO':       '🦘 Pollard Kangaroo',
+                    'HALTON':         '🎲 Halton (Çok-Boyutlu)',
+                    'SCRAMBLED_SOBOL':'🔀 Scrambled Sobol',
+                    'MCMC':           '🎰 MCMC (Markov Yürüyüş)'
                 };
                 const currentAutoAlgoName = algoNames[autoAlgoList[autoAlgoIndex]] || autoAlgoList[autoAlgoIndex] || 'Rastgele';
                 document.getElementById('logAlgo').innerText = `🔄 Oto Geçiş [${currentAutoAlgoName}]`;
@@ -6626,6 +6834,9 @@ function bgWorkerProcess() {
             if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
             if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
             if (activeA === 'KANGAROO') return workerGenerateKangarooKey(targetStart, targetEnd);
+        if (activeA === 'HALTON') return generateHaltonKey(targetStart, targetEnd);
+        if (activeA === 'SCRAMBLED_SOBOL') return generateScrambledSobolKey(targetStart, targetEnd);
+        if (activeA === 'MCMC') return generateMCMCKey(targetStart, targetEnd);
             return randomBigIntInRange(targetStart, targetEnd);
         }
 
@@ -6698,6 +6909,9 @@ function bgWorkerProcess() {
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'KANGAROO') return workerGenerateKangarooKey(targetStart, targetEnd);
+        if (activeA === 'HALTON') return generateHaltonKey(targetStart, targetEnd);
+        if (activeA === 'SCRAMBLED_SOBOL') return generateScrambledSobolKey(targetStart, targetEnd);
+        if (activeA === 'MCMC') return generateMCMCKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
     }
 
@@ -7007,10 +7221,130 @@ function bgWorkerProcess() {
         else {
             const word = WORKER_BRAIN_WORDS[Number((c / 5n) % BigInt(WORKER_BRAIN_WORDS.length))];
             const phrase = word + '_' + Number(c % 10000n);
-            const hashHex = CryptoJS.SHA256(phrase).toString();
-            const val = BigInt('0x' + hashHex);
+            let _wkHashHex = '';
+            if (typeof CryptoJS !== 'undefined' && CryptoJS.SHA256) {
+                _wkHashHex = CryptoJS.SHA256(phrase).toString();
+            } else {
+                _wkHashHex = ((c * 0x517CC1B727220A95n) & 0xFFFFFFFFFFFFFFFFn).toString(16).repeat(4);
+            }
+            const val = BigInt('0x' + _wkHashHex);
             return rangeStart + (val % (span + 1n));
         }
+    }
+
+
+    // ============================================================
+    // 🎲 WORKER — HALTON DİZİSİ
+    // ============================================================
+    let workerHaltonStep = 1;
+
+    function _haltonFrac64w(n, base) {
+        const b = BigInt(base);
+        let denom = 1n;
+        let result = 0n;
+        let num = BigInt(n);
+        while (num > 0n) {
+            denom *= b;
+            result = result * b + (num % b);
+            num = num / b;
+        }
+        if (denom === 0n) return 0n;
+        return (result << 64n) / denom;
+    }
+
+    function generateHaltonKey(rangeStart, rangeEnd) {
+        workerHaltonStep++;
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+            const h2 = _haltonFrac64w(workerHaltonStep, 2);
+            const h3 = _haltonFrac64w(workerHaltonStep, 3);
+            const combined = (h2 ^ (h3 * 0x9E3779B97F4A7C15n >> 64n)) & 0xFFFFFFFFFFFFFFFFn;
+            return rangeStart + (combined * totalRange >> 64n);
+        }
+        const h2 = _haltonFrac64w(workerHaltonStep, 2);
+        const h3 = _haltonFrac64w(workerHaltonStep, 3);
+        const h5 = _haltonFrac64w(workerHaltonStep, 5);
+        const h7 = _haltonFrac64w(workerHaltonStep, 7);
+        const full = (h2 << 192n) | (h3 << 128n) | (h5 << 64n) | h7;
+        return rangeStart + (full % (totalRange + 1n));
+    }
+
+    // ============================================================
+    // 🔀 WORKER — SCRAMBLED SOBOL
+    // ============================================================
+    let workerScrambledSobolStep = 1;
+    let workerScrambledSobolShift = null;
+
+    function generateScrambledSobolKey(rangeStart, rangeEnd) {
+        workerScrambledSobolStep++;
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        if (workerScrambledSobolShift === null) {
+            workerScrambledSobolShift = randomBigIntInRange(0n, 0xFFFFFFFFFFFFFFFFn);
+        }
+        const n = BigInt(workerScrambledSobolStep);
+        let rev = 0n;
+        let temp = n & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev = (rev << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        const g = n ^ (n >> 1n);
+        const s0 = (rev ^ workerScrambledSobolShift) & 0xFFFFFFFFFFFFFFFFn;
+        if (totalRange <= 0xFFFFFFFFFFFFFFFFn) {
+            return rangeStart + (s0 * totalRange >> 64n);
+        }
+        const shift = workerScrambledSobolShift;
+        const s1 = ((rev ^ (g * 0xBF58476D1CE4E5B9n)) ^ (shift >> 7n))  & 0xFFFFFFFFFFFFFFFFn;
+        const s2 = ((rev ^ (g * 0x94D049BB133111EBn)) ^ (shift >> 13n)) & 0xFFFFFFFFFFFFFFFFn;
+        const s3 = ((g  * 0xD6E8FEB86659FD93n)        ^ (shift >> 19n)) & 0xFFFFFFFFFFFFFFFFn;
+        const full = (s0 << 192n) | (s1 << 128n) | (s2 << 64n) | s3;
+        return rangeStart + (full % (totalRange + 1n));
+    }
+
+    // ============================================================
+    // 🎰 WORKER — MCMC (Markov Zinciri Monte Carlo)
+    // ============================================================
+    let workerMCMCCurrent   = null;
+    let workerMCMCStepSize  = null;
+    let workerMCMCStepCount = 0;
+
+    function generateMCMCKey(rangeStart, rangeEnd) {
+        const totalRange = rangeEnd - rangeStart;
+        if (totalRange <= 0n) return rangeStart;
+        workerMCMCStepCount++;
+        if (workerMCMCCurrent === null || workerMCMCCurrent < rangeStart || workerMCMCCurrent > rangeEnd) {
+            workerMCMCCurrent  = randomBigIntInRange(rangeStart, rangeEnd);
+            workerMCMCStepSize = totalRange >> 10n;
+            if (workerMCMCStepSize <= 0n) workerMCMCStepSize = 1n;
+        }
+        const r = Math.random();
+        if (r < 0.08) {
+            workerMCMCCurrent  = randomBigIntInRange(rangeStart, rangeEnd);
+            const bits = BigInt(Math.floor(Math.random() * 8) + 4);
+            workerMCMCStepSize = totalRange >> bits;
+            if (workerMCMCStepSize <= 0n) workerMCMCStepSize = 1n;
+            return workerMCMCCurrent;
+        }
+        const direction = Math.random() < 0.5 ? 1n : -1n;
+        const u = Math.random();
+        const stepMult = u < 0.7
+            ? BigInt(Math.floor(Math.random() * 10) + 1)
+            : BigInt(Math.floor(Math.random() * 100) + 10);
+        let step = (workerMCMCStepSize * stepMult) >> 3n;
+        if (step <= 0n) step = 1n;
+        let proposal = workerMCMCCurrent + direction * step;
+        if (proposal < rangeStart) proposal = rangeStart + (rangeStart - proposal) % (totalRange + 1n);
+        if (proposal > rangeEnd)   proposal = rangeEnd   - (proposal - rangeEnd)   % (totalRange + 1n);
+        if (proposal < rangeStart) proposal = rangeStart;
+        if (proposal > rangeEnd)   proposal = rangeEnd;
+        workerMCMCCurrent = proposal;
+        if (workerMCMCStepCount % 200 === 0) {
+            workerMCMCStepSize = totalRange >> 10n;
+            if (workerMCMCStepSize <= 0n) workerMCMCStepSize = 1n;
+        }
+        return workerMCMCCurrent;
     }
 
     function stepDeterministicChaos() {
@@ -7081,12 +7415,15 @@ function bgWorkerProcess() {
     }
 
     let workerKangarooLastSpan = 0n;
+    let workerKangarooLastTargetId = '';
     function workerGenerateKangarooKey(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const span = e > s ? e - s : 1n;
-        if (!workerKangarooEngine || workerKangarooLastSpan !== span) {
+        const _wkTargetId = cfg && cfg.activeTarget ? String(cfg.activeTarget.id) : '';
+        if (!workerKangarooEngine || workerKangarooLastSpan !== span || workerKangarooLastTargetId !== _wkTargetId) {
             workerKangarooLastSpan = span;
+            workerKangarooLastTargetId = _wkTargetId;
             workerResetKangarooWalk(rangeStart, rangeEnd);
         }
 
@@ -7104,8 +7441,8 @@ function bgWorkerProcess() {
                     targetId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : null,
                     targetAddr: tAddr,
                     reward: (cfg && cfg.activeTarget) ? cfg.activeTarget.reward : '',
-                    isUncompressed: false,
-                    matchType: 'TARGET_COMP',
+                    isUncompressed: (cfg && cfg.activeTarget) ? !!cfg.activeTarget.isUncompressed : false,
+                    matchType: (cfg && cfg.activeTarget && cfg.activeTarget.isUncompressed) ? 'TARGET_UNCOMP' : 'TARGET_COMP',
                     finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
                 });
                 return res.solvedKey;
@@ -7159,9 +7496,9 @@ function bgWorkerProcess() {
         }
         const r = Math.random();
         if (r < 0.25) return stepDeterministicChaos();
-        if (r < 0.50) return stepDeterministicChaos();
-        if (r < 0.75) return getQuantumTunnelPercent();
-        return getRiemannHarmonicPercent();
+        if (r < 0.50) return getQuantumTunnelPercent();
+        if (r < 0.75) return getRiemannHarmonicPercent();
+        return stepDeterministicChaos();
     }
 
     function workBatch() {
@@ -7222,8 +7559,8 @@ function bgWorkerProcess() {
             let workerActiveAlgo = cfg.selectedAlgorithm;
             if (cfg.selectedAlgorithm === 'AUTO') {
                 workerAutoStepCounter++;
-                if (workerAutoStepCounter % 25 === 0) {
-                    workerAutoIndex = (workerAutoIndex + 1) % 9;
+                if (workerAutoStepCounter % 75 === 0) {
+                    workerAutoIndex = (workerAutoIndex + 1) % 12;
                 }
                 if (workerAutoIndex === 1) workerActiveAlgo = 'SOBOL';
                 else if (workerAutoIndex === 2) workerActiveAlgo = 'VD_CORPUT';
@@ -7233,6 +7570,9 @@ function bgWorkerProcess() {
                 else if (workerAutoIndex === 6) workerActiveAlgo = 'WEAK_ENTROPY';
                 else if (workerAutoIndex === 7) workerActiveAlgo = 'CHAOS';
                 else if (workerAutoIndex === 8) workerActiveAlgo = 'KANGAROO';
+                else if (workerAutoIndex === 9) workerActiveAlgo = 'HALTON';
+                else if (workerAutoIndex === 10) workerActiveAlgo = 'SCRAMBLED_SOBOL';
+                else if (workerAutoIndex === 11) workerActiveAlgo = 'MCMC';
                 else workerActiveAlgo = 'RANDOM';
             }
             if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
@@ -7346,6 +7686,12 @@ function bgWorkerProcess() {
                 currentKey = generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
             } else if (workerActiveAlgo === 'KANGAROO') {
                 currentKey = workerGenerateKangarooKey(boundMin, boundMax); count += 63; // 64 eliptik eğri adımını ve seçilen aralığı tam yansıt
+            } else if (workerActiveAlgo === 'HALTON') {
+                currentKey = generateHaltonKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
+                currentKey = generateScrambledSobolKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'MCMC') {
+                currentKey = generateMCMCKey(subMin, subMax);
             } else {
                 currentKey = randomBigIntInRange(subMin, subMax);
             }
@@ -7413,6 +7759,12 @@ function bgWorkerProcess() {
                 algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
             } else if (workerActiveAlgo === 'KANGAROO') {
                 algoPrefix = '🦘 Kangaroo';
+            } else if (workerActiveAlgo === 'HALTON') {
+                algoPrefix = '🎲 Halton + ';
+            } else if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
+                algoPrefix = '🔀 S.Sobol + ';
+            } else if (workerActiveAlgo === 'MCMC') {
+                algoPrefix = '🎰 MCMC + ';
             }
             if (workerActiveAlgo === 'KANGAROO') {
                 currentRangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
@@ -7515,7 +7867,7 @@ function bgWorkerProcess() {
             prefixJumpCounter = workerId * 7;
             gridJumpCounter = workerId * 11;
             workerAutoStepCounter = workerId * 13;
-            workerAutoIndex = workerId % 9;
+            workerAutoIndex = workerId % 12;
             workerKangarooStepCount = workerId * 31;
             workerKangarooJumps = [];
             workerKangarooScalar = 0n;

@@ -8,6 +8,8 @@
 [![Hardware Accel](https://img.shields.io/badge/Hardware%20Accel-WebGPU-purple)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+![BTC Puzzle Hunter Preview](ui_preview.png)
+
 **`index.html`**, Bitcoin Puzzle işlemlerini çözmek için geliştirilmiş; **%100 bağımsız, sıfır dış bağımlılık (Zero External Dependency)** içeren ve doğrudan tarayıcı üzerinden çalışan tek dosyalık (single-file), yüksek performanslı bir arama ve kriptografik analiz aracıdır.
 
 Herhangi bir sunucu kurulumu, `npm`, Node.js veya internet bağlantısı gerektirmez. Dosyayı tarayıcınızda açtığınız anda tüm secp256k1 ve hash kütüphaneleri cihazınızın yerel RAM belleğinde tamamen bağımsız çalışır.
@@ -34,17 +36,21 @@ Doğrudan tarayıcınız üzerinden hiçbir şey indirmeden çalıştırabilirsi
 * Dinamik önbellek geçersiz kılma (Revoke Blob URL) ile her başlatmada güncel motor kodunu temiz olarak devreye alır.
 
 ### 3. 🚀 WebGPU Donanım Hızlandırma
-* Uyumlu tarayıcı ve GPU'larda saniyede milyonlarca anahtar kombinasyonunu doğrudan grafik kartı çekirdeklerinde işleme opsiyonu.
+* Uyumlu tarayıcı ve GPU'larda saniyede milyonlarca anahtar kombinasyonunu doğrudan grafik kartı çekirdeklerinde işleme opsiyonu (`gpu_engine.js`).
 
-### 4. 🎯 8+ Zengin Matematiksel Arama Algoritması
-* **🎲 Rastgele (Random / PRNG):** Kriptografik güvenli homojen dağılım.
+### 4. 🎯 12+ Zengin Matematiksel Arama Algoritması
+* **🎲 Saf Rastgele (Random / Uniform RNG):** Kriptografik güvenli homojen global tarama.
 * **📐 Sobol Düşük Tutarsızlık (Quasi-Random):** Boşluk bırakmayan alan örtüşümü.
-* **📏 Van der Corput:** Sayı teorisi tabanlı taban-2 dağılımı.
-* **🌟 Weyl Altın Oran ($\phi$):** İrrasyonel adım frekans modülasyonu.
-* **♾️ Asal Adım (Coprime Stride):** Modüler döngüsüz tarama adımları.
-* **🌀 Hilbert Uzay Doldurma Eğrisi:** Yüksek boyutlu topolojik yakınlık taraması.
-* **⚡ Zayıf Entropi (Weak Entropy):** Düşük popcount / zayıf rastgelelik filtreleri.
-* **🌌 Deterministik Kaos (Deterministic Chaos):** Doğrusal olmayan karmaşık dinamik yürüyüş.
+* **📏 Van der Corput:** Sayı teorisi tabanlı taban-2 bit tersleme dağılımı.
+* **🌟 Weyl Altın Oran ($\phi$):** İrrasyonel adım frekans modülasyonlu altın kafes.
+* **♾️ Asal Adım (Coprime Stride):** Modüler döngüsüz tam kapsama taraması.
+* **🌀 Hilbert Uzay Doldurma Eğrisi:** %100 space-filling topolojik yakınlık taraması.
+* **⚡ Zayıf Entropi (Weak Entropy):** Kusurlu PRNG ve zayıf tohum kalıpları.
+* **🌌 Deterministik Kaos (Deterministic Chaos):** Lojistik ve çadır haritalı dinamik yürüyüş.
+* **🦘 Pollard's Kangaroo:** Eliptik eğri tuzak ve çarpışma ağı $O(\sqrt{N})$.
+* **🎲 Halton Dizisi:** 2, 3, 5, 7 asal tabanlı çok boyutlu homojen dağılım.
+* **🔀 Scrambled Sobol:** Owen sayısal kaydırmalı dinamik boşluk örtüşümü.
+* **🎰 MCMC (Markov Zinciri):** Metropolis-Hastings ve Lévy sıçramalı uyarlanabilir arama.
 
 ### 5. 🛡️ %100 Çevrimdışı ve Sıfır Ağ İsteği
 * **Gömülü Kütüphaneler:** CryptoJS, secp256k1, BigInteger, Bech32, Base58 ve RIPEMD160 kütüphaneleri doğrudan tek bir dosya içine entegre edilmiştir.
@@ -76,9 +82,9 @@ Doğrudan tarayıcınız üzerinden hiçbir şey indirmeden çalıştırabilirsi
    * Sol paneldeki listeden aramak istediğiniz Bitcoin Puzzle numarasını seçin (örneğin `#57`, `#66` vb.).
    * İsterseniz **"Özel Aralık / Hex"** veya **"Yüzde Dilimi"** sekmesinden kendi aralığınızı girin.
 2. **Algoritma Seçimi:**
-   * Üst menüden arama metodolojinizi belirleyin (örn: `🦘 Kangaroo`, `🎲 Rastgele`, `📐 Sobol`, `🌌 Kaos`).
+   * Üst menüden arama metodolojinizi belirleyin (örn: `🔄 Strateji Döngüsü`, `🦘 Kangaroo`, `🎲 Rastgele`, `📐 Sobol`, `🎲 Halton`, `🎰 MCMC`).
 3. **Thread / Donanım Ayarı:**
-   * Cihazınızın çekirdek sayısına göre dilediğiniz iş parçacığı (Worker) sayısını seçin.
+   * Cihazınızın çekirdek sayısına göre dilediğiniz iş parçacığı (Worker) sayısını seçin veya GPU motorunu devreye alın.
 4. **Aramayı Başlatın:**
    * **`▶ Aramayı Başlat`** butonuna tıklayın.
    * Hedef anahtar bulunduğunda sesli ve görsel bildirimle ekranda 64 karakter tam özel anahtarı ve cüzdan adresi listelenecektir.
@@ -87,14 +93,21 @@ Doğrudan tarayıcınız üzerinden hiçbir şey indirmeden çalıştırabilirsi
 
 ## 📂 Dosya Yapısı
 
-Depo tamamen yalın ve tek dosyadan ibarettir:
+Depo tamamen optimize edilmiş ve yüklemeye hazır temiz bir yapıdadır:
 
 | Dosya | Açıklama |
 | :--- | :--- |
-| **`index.html`** | %100 bağımsız, sıfır dış bağımlılıklı tek dosya (single-file) uygulama |
-| **`manifest.json`** | PWA (Progressive Web App) mobil/masaüstü uygulama manifestosu |
-| **`icon-192.png`** / **`icon-512.png`** | Uygulama ikonları |
-| **`README.md`** | GitHub proje dokümantasyonu |
+| **`index.html`** | %100 bağımsız, sıfır dış bağımlılıklı ana web uygulaması |
+| **`gpu_engine.js`** | WebGPU donanım hızlandırma ve paralel anahtar üretim motoru |
+| **`kangaroo_engine.js`** | Pollard's Kangaroo eliptik eğri çarpışma ve tuzak kütüphanesi |
+| **`all_160_puzzles.json`** | Tüm 160 Bitcoin bulmacasının hedef aralık ve adres veri seti |
+| **`manifest.json`** | PWA (Progressive Web App) masaüstü ve mobil kurulum manifestosu |
+| **`sw.js`** | %100 çevrimdışı önbellekleme sağlayan Service Worker |
+| **`icon-192.png`** / **`icon-512.png`** | Yüksek çözünürlüklü PWA uygulama ikonları |
+| **`ui_preview.png`** | GitHub proje arayüz önizleme görseli |
+| **`LICENSE`** | MIT Açık Kaynak Lisansı |
+| **`.gitignore`** | Git geçici ve yedek dosya hariç tutma kuralları |
+| **`README.md`** | GitHub proje tanıtım ve kullanım dokümantasyonu |
 
 ---
 

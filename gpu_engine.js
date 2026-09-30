@@ -803,7 +803,7 @@ function genBatchForGpu(cfg, size) {
     let activeAlgo = cfg.selectedAlgorithm || 'RANDOM';
     if (activeAlgo === 'AUTO') {
         gpuAutoStepCounter++;
-        const autoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO'];
+        const autoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'HALTON', 'SCRAMBLED_SOBOL', 'MCMC'];
         if (gpuAutoStepCounter % 25 === 0) {
             gpuAutoIndex = (gpuAutoIndex + 1) % autoList.length;
         }
@@ -865,6 +865,12 @@ function genBatchForGpu(cfg, size) {
             currentKey = window.generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
         } else if (activeAlgo === 'KANGAROO' && typeof window.generateKangarooKey === 'function') {
             currentKey = window.generateKangarooKey(subMin, subMax);
+        } else if (activeAlgo === 'HALTON' && typeof window.generateHaltonKey === 'function') {
+            currentKey = window.generateHaltonKey(subMin, subMax);
+        } else if (activeAlgo === 'SCRAMBLED_SOBOL' && typeof window.generateScrambledSobolKey === 'function') {
+            currentKey = window.generateScrambledSobolKey(subMin, subMax);
+        } else if (activeAlgo === 'MCMC' && typeof window.generateMCMCKey === 'function') {
+            currentKey = window.generateMCMCKey(subMin, subMax);
         } else if (typeof window.randomBigIntInRange === 'function') {
             currentKey = window.randomBigIntInRange(subMin, subMax);
         } else {
@@ -1085,6 +1091,9 @@ async function gpuHuntBatch() {
         else if (batchInfo.activeAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
         else if (batchInfo.activeAlgo === 'WEAK_ENTROPY') algoPrefix = '⚡ Zayıf Entropi + ';
         else if (batchInfo.activeAlgo === 'KANGAROO') algoPrefix = '🦘 Pollard Kangaroo + ';
+        else if (batchInfo.activeAlgo === 'HALTON') algoPrefix = '🎲 Halton + ';
+        else if (batchInfo.activeAlgo === 'SCRAMBLED_SOBOL') algoPrefix = '🔀 S.Sobol + ';
+        else if (batchInfo.activeAlgo === 'MCMC') algoPrefix = '🎰 MCMC + ';
 
         if (cfg.activeFormula === 'OMNI_CHAOS') algoPrefix = '♾️ Omni-Kaos + ' + algoPrefix;
         else if (cfg.activeFormula === 'GOLDEN_SINGULARITY') algoPrefix = '🌟 Altın Oran + ' + algoPrefix;

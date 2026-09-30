@@ -1,7 +1,9 @@
-const CACHE_NAME = 'btc-puzzle-v4';
+const CACHE_NAME = 'btc-puzzle-v5';
 const ASSETS = [
   './',
   './index.html',
+  './gpu_engine.js',
+  './kangaroo_engine.js',
   './all_160_puzzles.json',
   './manifest.json',
   './icon-192.png',
