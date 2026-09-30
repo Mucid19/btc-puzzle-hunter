@@ -1395,7 +1395,7 @@
         </div>
         <div class="stat-card">
             <div class="label">Ödül</div>
-            <div class="value" id="statPoolCount" style="color: #34d399;">TÜMÜ (77)</div>
+            <div class="value" id="statPoolCount" style="color: #34d399;">TÜMÜ</div>
         </div>
         <div class="stat-card">
             <div class="label">Süre</div>
@@ -1467,6 +1467,7 @@ let userHexStart = null;
 let userHexEnd   = null;
 let userPrefix   = '';
 let userGridCell = 57057;
+let isGridAutoJump = false;
 
 // Kaos Modu Değişkenleri
 let chaosModeList = ['PERCENT', 'PREFIX', 'GRID'];
@@ -2204,7 +2205,7 @@ function updateModeVisuals() {
     const inPre = document.getElementById('prefixInput');
     const inGrid = document.getElementById('gridCellInput');
     
-    const preOn = (f === 'PREFIX') ? true : isPrefixFilterActive;
+    const preOn = (f === 'PREFIX' || isPrefixFilterActive || isPrefixAutoJump);
     const gridOn = (f === 'GRID') ? true : isGridFilterActive;
 
     if (bPre) {
@@ -3293,6 +3294,26 @@ function applyPuzzleToHexRange(puzzleId) {
     setHexSliderBounds(p.start, p.end, `#${p.id}`);
 }
 
+
+function updateKangarooAlgoLabel() {
+    if (typeof selectedAlgorithm === 'undefined' || selectedAlgorithm !== 'KANGAROO') return;
+    const logAlgo = document.getElementById('logAlgo');
+    if (!logAlgo || (typeof isAgentActive !== 'undefined' && isAgentActive)) return;
+
+    const curTarget = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
+    const curId = curTarget ? curTarget.id : null;
+    const curNum = curId !== null ? parseInt(curId, 10) : null;
+    const pubHex = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
+    if (pubHex) {
+        const pubInfo = ` [🔑 Açık Anahtar: ${pubHex.substring(0, 10)}...${pubHex.substring(pubHex.length - 6)}]`;
+        logAlgo.innerText = "🦘 Pollard's Kangaroo (Tam Aralık Eliptik Eğri Çarpışma Avcısı O(√N))" + pubInfo;
+        logAlgo.style.color = '#06b6d4';
+    } else {
+        logAlgo.innerText = "⚠️ Açık Anahtar Bilinmiyor! (Kangaroo açık anahtarı bilinen #135, #140, #145, #150, #155, #160 veya #19, #57 testlerinde çalışır)";
+        logAlgo.style.color = '#f59e0b';
+    }
+}
+
 function updateLogTargetLabel() {
     const targetEl = document.getElementById('logTarget');
     if (!targetEl) return;
@@ -3301,6 +3322,7 @@ function updateLogTargetLabel() {
     } else if (currentTarget) {
         targetEl.innerHTML = `#${currentTarget.id} -> ${currentTarget.addr}`;
     }
+    if (typeof updateKangarooAlgoLabel === 'function') updateKangarooAlgoLabel();
 }
 
 function decodeAddressToHash(addr) {
@@ -3774,7 +3796,7 @@ function updateKangarooSwarmUI() {
     // 1. Tuzak Sayacı: "Tuzak" yerine "Tuz" yazar
     const trapEl = document.getElementById('kangarooSwarmTrapCount');
     if (trapEl) {
-        trapEl.innerText = `📍 ${kangarooTrapsCount} Tuz`;
+        trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
     }
 
     // 2. Açık Aktif Sekme Sayısı Toplamı: Ayrı ayrı yazmaz, toplamı yazar
@@ -4036,17 +4058,12 @@ function setAlgorithm(algo) {
         if (typeof resetDualSlidersToFull === 'function') {
             resetDualSlidersToFull();
         }
-        if (logAlgo && !isAgent) {
-            const curId = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget.id : null;
-            const curNum = curId !== null ? parseInt(curId, 10) : null;
-            const pubHex = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
-            if (pubHex) {
-                const pubInfo = ` [🔑 Açık Anahtar: ${pubHex.substring(0, 10)}...${pubHex.substring(pubHex.length - 6)}]`;
-                logAlgo.innerText = "🦘 Pollard's Kangaroo (Tam Aralık Eliptik Eğri Çarpışma Avcısı O(√N))" + pubInfo;
-                logAlgo.style.color = '#06b6d4';
-            } else {
-                logAlgo.innerText = "⚠️ Açık Anahtar Bilinmiyor! (Kangaroo açık anahtarı bilinen #135-#160 veya #19, #57 testlerinde çalışır)";
-                logAlgo.style.color = '#f59e0b';
+        if (typeof updateKangarooAlgoLabel === 'function') {
+            updateKangarooAlgoLabel();
+        }
+        if (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList.length > 1) {
+            if (typeof showToast === 'function') {
+                showToast('🦘 <strong>Pollard Kangaroo İpucu:</strong> Kangaroo eliptik eğri zincirleme yürüyüşü tek hedefe kilitlendiğinde en yüksek hıza ulaşır. Çoklu hedefler için Sobol, Weyl veya Kaos algoritmaları önerilir.', 4500);
             }
         }
     }
@@ -4273,7 +4290,6 @@ function isKangarooModeActive() {
     const curId = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget.id : null;
     const curNum = curId !== null ? parseInt(curId, 10) : null;
     if (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum])) return true;
-    if (!isNaN(curNum) && curNum >= 135 && curNum <= 160) return true;
     return false;
 }
 
@@ -4812,7 +4828,7 @@ function buildCustomMenus() {
             <span id="puzzleSelectedBadge" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;">${selectedPuzzleIds.size}</span>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-            <button type="button" id="btnSelectAllPuzzles" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Tüm 77 açık bulmacayı seçer">Tümü</button>
+            <button type="button" id="btnSelectAllPuzzles" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Tüm ${allUnsolvedPool ? allUnsolvedPool.length : ''} açık bulmacayı seçer">Tümü</button>
             <button type="button" id="btnClearAllPuzzles" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Seçimleri temizler">Temizle</button>
             <button type="button" id="btnSelectSameRange" style="background: rgba(245, 158, 11, 0.22); border: 1px solid #f59e0b; color: #fbbf24; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Mevcut bulmaca ile aynı basamak/aralıktaki açık bulmacaları seçer (Tekrar basıldığında sonraki aralığa geçer)">📏 Aynı Aralık</button>
             <button type="button" id="btnApplySelectedSearch" style="background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; cursor: pointer;" title="Seçili bulmacaları dairesel aramaya alır">🔁 Seçilenleri Ara</button>
@@ -5071,7 +5087,7 @@ function enableCircularMode() {
     updateActiveUnsolvedList();
 
     const count = unsolvedList.length;
-    const total = allUnsolvedPool ? allUnsolvedPool.length : 77;
+    const total = (allUnsolvedPool && allUnsolvedPool.length > 0) ? allUnsolvedPool.length : count;
     if (count === total) {
         document.getElementById('labelUnsolved').innerText = '🔁 Hepsi';
         document.getElementById('statPoolCount').innerText = `TÜMÜ (${count})`;
@@ -5633,7 +5649,7 @@ function huntBatch() {
         let activeTarget = null;
         let lastBoundMin = 0n, lastBoundMax = 0n;
         let activeAlgo = selectedAlgorithm;
-        let isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
+        let isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || (isPrefixFilterActive !== false && (Boolean(userPrefix) || isPrefixAutoJump)));
         
         for (let i = 0; i < batchSize; i++) {
             if (isCircularMode) {
@@ -5735,7 +5751,7 @@ function huntBatch() {
             let subMin = boundMin;
             let subMax = boundMax;
 
-            isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
+            isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || (isPrefixFilterActive !== false && (Boolean(userPrefix) || isPrefixAutoJump)));
             // Grid modu devre dışı: [boundMin, boundMax] tam aralık olarak taranır
 
             // 2. Fizik ve Kaos Formülleri: [subMin, subMax] içerisinde mikroskobik dilim uygular
@@ -5813,7 +5829,7 @@ function huntBatch() {
             }
 
             // 3. Ön Ek Filtresi: Üretilen anahtarı belirlenen 0x hex ön eki ile kilitler
-            if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
+            if (isEffectivePrefix && activeAlgo !== 'KANGAROO') {
                 if (isPrefixAutoJump) {
                     prefixJumpCounter++;
                     if (prefixJumpCounter % 25 === 0 || !userPrefix) {
@@ -5853,24 +5869,39 @@ function huntBatch() {
             attempts++;
             if (sliceModeActive) sliceAttempts++;
 
-            // YÜKSEK HIZLI HASH160 KARŞILAŞTIRMA (Base58 yükü olmadan 2x-3x daha hızlı)
+            // EŞZAMANLI ÇOKLU HEDEF KONTROLÜ (Multi-Target Lookup O(1))
             const targetH160 = activeTarget.targetHash160 || addressToHash160(activeTarget.addr);
+            let mainHitTarget = null;
+            let mainHitUncomp = false;
 
             if (currentH160 === targetH160) {
-                const winAddr = privkeyToAddress(lastKeyHex);
-                document.getElementById('statAttempts').innerText = attempts.toLocaleString();
-                document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                const inPoolNote = (isCustomPoolActive && customAddressSet.has(currentH160)) ? ' (🎯 İlave Adres Havuzunda da Eşleşti)' : '';
-                handleWin(activeTarget.id, lastKeyHex, winAddr, activeTarget.addr, activeTarget.reward + inPoolNote);
-                return;
+                mainHitTarget = activeTarget;
+                mainHitUncomp = false;
+            } else {
+                const directUncompH160 = privkeyToHash160Uncompressed(lastKeyHex);
+                if (directUncompH160 && directUncompH160 === targetH160) {
+                    mainHitTarget = activeTarget;
+                    mainHitUncomp = true;
+                } else if (isCircularMode && unsolvedList && unsolvedList.length > 0) {
+                    const matchItemComp = unsolvedList.find(t => (t.targetHash160 || addressToHash160(t.addr)).toLowerCase() === currentH160.toLowerCase());
+                    if (matchItemComp) {
+                        mainHitTarget = matchItemComp;
+                        mainHitUncomp = false;
+                    } else if (directUncompH160) {
+                        const matchItemUncomp = unsolvedList.find(t => (t.targetHash160 || addressToHash160(t.addr)).toLowerCase() === directUncompH160.toLowerCase());
+                        if (matchItemUncomp) {
+                            mainHitTarget = matchItemUncomp;
+                            mainHitUncomp = true;
+                        }
+                    }
+                }
             }
-            // Uncompressed adres kontrolü (196ru37... uncompressed adresler için)
-            const directUncompH160 = privkeyToHash160Uncompressed(lastKeyHex);
-            if (directUncompH160 && directUncompH160 === targetH160) {
-                const winAddr = privkeyToAddress(lastKeyHex, false);
+
+            if (mainHitTarget) {
+                const winAddr = privkeyToAddress(lastKeyHex, !mainHitUncomp);
                 document.getElementById('statAttempts').innerText = attempts.toLocaleString();
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                handleWin(activeTarget.id, lastKeyHex, winAddr, activeTarget.addr, activeTarget.reward + ' (Uncompressed)');
+                handleWin(mainHitTarget.id, lastKeyHex, winAddr, mainHitTarget.addr, mainHitTarget.reward + (mainHitUncomp ? ' (Uncompressed)' : ''));
                 return;
             }
 
@@ -5878,7 +5909,7 @@ function huntBatch() {
             // 🎯 v14 İLAVE ADRES HAVUZU KONTROLÜ (⚡ Bloom Filter + 3 Format: P2PKH 1..., P2SH 3..., Bech32 bc1q...)
             if ((isCustomPoolActive || (activeTarget && (activeTarget.id === 'ilave' || activeTarget.id === 'TEST_64'))) && customAddressSet.size > 0) {
                 // 1. Format: Sıkıştırılmış Legacy (1...) & Native SegWit (bc1q...)
-                if (customBloomFilter.hasHex160(currentH160)) {
+                if (!customBloomFilter || customBloomFilter.hasHex160(currentH160)) {
                     if (customAddressSet.has(currentH160)) {
                         const winAddr = customHashToAddress[currentH160] || privkeyToAddress(lastKeyHex);
                         document.getElementById('statAttempts').innerText = attempts.toLocaleString();
@@ -5894,7 +5925,7 @@ function huntBatch() {
                 }
                 // 2. Format: Uncompressed Legacy (1...)
                 const uncompH160 = privkeyToHash160Uncompressed(lastKeyHex);
-                if (customBloomFilter.hasHex160(uncompH160)) {
+                if (!customBloomFilter || customBloomFilter.hasHex160(uncompH160)) {
                     if (customAddressSet.has(uncompH160)) {
                         const winAddr = customHashToAddress[uncompH160] || privkeyToAddress(lastKeyHex, false);
                         document.getElementById('statAttempts').innerText = attempts.toLocaleString();
@@ -5909,7 +5940,7 @@ function huntBatch() {
                 }
                 // 3. Format: Nested SegWit P2SH-P2WPKH (3...)
                 const p2shH160 = hash160ToP2SHHash160(currentH160);
-                if (customBloomFilter.hasHex160(p2shH160)) {
+                if (!customBloomFilter || customBloomFilter.hasHex160(p2shH160)) {
                     if (customAddressSet.has(p2shH160)) {
                         const winAddr = customHashToAddress[p2shH160] || hash160ToP2SHAddress(currentH160);
                         document.getElementById('statAttempts').innerText = attempts.toLocaleString();
@@ -6012,7 +6043,7 @@ function huntBatch() {
                         const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
                         pParts.push(`🎚️ [0x${bMinHex.substring(0, 6)}..-0x${bMaxHex.substring(0, 6)}..]`);
                     }
-                    if (isEffectivePrefix && workerActiveAlgo !== 'KANGAROO') {
+                    if (isEffectivePrefix && activeAlgo !== 'KANGAROO') {
                         pParts.push(isPrefixAutoJump 
                             ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
                             : `🧩 Ön Ek: 0x${userPrefix}`);
@@ -6021,7 +6052,7 @@ function huntBatch() {
                         pParts.push(`💥 Hibrit Kaos`);
                     } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
                         pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
-                    } else if (!isNarrowRange && activeRangeMode === 'CHAOS') {
+                    } else if (!isNarrowed && activeRangeMode === 'CHAOS') {
                         pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
                     } else if (activeRangeMode === 'HEX') {
                         const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
@@ -6150,7 +6181,9 @@ function playWinChime() {
     } catch(e) {}
 }
 
+let isWinHandled = false;
 let lastHandledWinKey = '';
+let winTitleInterval = null;
 
 function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = false, finderTabId = '') {
     if (!keyHex) return;
@@ -6233,9 +6266,13 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
     downloadWinFile(puzzleId, keyHex, addr, targetAddr, reward);
 
     // 3. Tarayıcı Sekmesini (Tab) Yanıp Sönen Uyarıya Çevir
+    if (winTitleInterval) {
+        clearInterval(winTitleInterval);
+        winTitleInterval = null;
+    }
     const winTitlePrefix = isRemoteWin ? `🎉 SÜRÜ BAŞARISI! #${puzzleId}` : `🎉 BULDUM! #${puzzleId}`;
     document.title = winTitlePrefix;
-    setInterval(() => {
+    winTitleInterval = setInterval(() => {
         document.title = document.title === winTitlePrefix ? "🚨 DİKKAT 🚨" : winTitlePrefix;
     }, 1000);
 
@@ -6324,6 +6361,10 @@ function resetWinDetailsState() {
 function clearWinAlert() {
     isWinHandled = false;
     lastHandledWinKey = '';
+    if (winTitleInterval) {
+        clearInterval(winTitleInterval);
+        winTitleInterval = null;
+    }
     const winBox = document.getElementById('winAlert');
     if (winBox) winBox.style.display = 'none';
     resetWinDetailsState();
@@ -6411,6 +6452,9 @@ function bgWorkerProcess() {
     let workerKangarooJumps = [];
     let workerKangarooHerdType = 'TAME';
     let workerKangarooStepCount = 0;
+    let workerHexScrambleCounter = 0;
+    let workerKangarooLastStart = 0n;
+    let workerKangarooLastEnd = 0n;
 
     function popcount32(n) {
         n = n - ((n >>> 1) & 0x55555555);
@@ -6657,6 +6701,17 @@ function bgWorkerProcess() {
         return randomBigIntInRange(targetStart, targetEnd);
     }
 
+    let circularTargetMap = new Map();
+    function rebuildCircularTargetMap() {
+        circularTargetMap.clear();
+        if (cfg && cfg.isCircularMode && cfg.unsolvedList && cfg.unsolvedList.length > 0) {
+            for (let t of cfg.unsolvedList) {
+                if (t && t.targetHash160) {
+                    circularTargetMap.set(t.targetHash160.toLowerCase(), t);
+                }
+            }
+        }
+    }
     let workerSobolStep = 1;
     function generateSobolKey(rangeStart, rangeEnd) {
         workerSobolStep++;
@@ -7116,6 +7171,8 @@ function bgWorkerProcess() {
         let lastKeyHex = '';
         let activeTarget = null;
         let currentRangeText = '';
+        let baseDesc = '';
+        let isEffectivePrefix = false;
         const mode = cfg.activeRangeMode || 'PERCENT';
         const f = cfg.activeFormula || 'OMNI_CHAOS';
         
@@ -7198,7 +7255,7 @@ function bgWorkerProcess() {
             let subMin = boundMin;
             let subMax = boundMax;
 
-            const isEffectivePrefix = (f === 'PREFIX' || mode === 'PREFIX' || (cfg.isPrefixFilterActive !== false && (Boolean(cfg.userPrefix) || cfg.isPrefixAutoJump)));
+            isEffectivePrefix = (f === 'PREFIX' || mode === 'PREFIX' || (cfg.isPrefixFilterActive !== false && (Boolean(cfg.userPrefix) || cfg.isPrefixAutoJump)));
             const isEffectiveGrid   = (f === 'GRID'   || mode === 'GRID'   || (cfg.isGridFilterActive !== false && (cfg.userGridCell !== undefined && cfg.userGridCell !== null || cfg.isGridAutoJump)));
 
             // 1. Grid Filtresi: Arama uzayını 65536'lık Hilbert/Grid hücresine odaklar
@@ -7378,47 +7435,49 @@ function bgWorkerProcess() {
             
             lastKeyHex = currentKey.toString(16).padStart(64, '0');
                 
-            count++;
+                        count++;
             
             const bothH160 = privkeyToBothHash160(lastKeyHex);
             const compH160 = bothH160.comp;
             const uncompH160 = bothH160.uncomp;
             const targetH160 = activeTarget.targetHash160;
             
-            // 🎯 1. HEDEF KONTROLÜ (Sıkıştırılmış)
+            // 🎯 EŞZAMANLI ÇOKLU HEDEF KONTROLÜ (Multi-Target Lookup O(1))
+            let hitTarget = null;
+            let hitUncomp = false;
+
             if (targetH160 && compH160 === targetH160) {
-                self.postMessage({
-                    type: 'win',
-                    workerId: workerId,
-                    keyHex: lastKeyHex,
-                    targetId: activeTarget.id,
-                    targetAddr: activeTarget.addr,
-                    reward: activeTarget.reward,
-                    isUncompressed: false,
-                    matchType: 'TARGET_COMP'
-                });
-                isWorking = false;
-                return;
-            }
-            
-            // 🎯 2. HEDEF KONTROLÜ (Sıkıştırılmamış - Uncompressed)
-            if (targetH160 && uncompH160 === targetH160) {
-                self.postMessage({
-                    type: 'win',
-                    workerId: workerId,
-                    keyHex: lastKeyHex,
-                    targetId: activeTarget.id,
-                    targetAddr: activeTarget.addr,
-                    reward: (activeTarget.reward || '') + ' (Uncompressed)',
-                    isUncompressed: true,
-                    matchType: 'TARGET_UNCOMP'
-                });
-                isWorking = false;
-                return;
+                hitTarget = activeTarget;
+                hitUncomp = false;
+            } else if (targetH160 && uncompH160 === targetH160) {
+                hitTarget = activeTarget;
+                hitUncomp = true;
+            } else if (circularTargetMap.size > 0) {
+                const lowComp = compH160.toLowerCase();
+                const lowUncomp = uncompH160.toLowerCase();
+                if (circularTargetMap.has(lowComp)) {
+                    hitTarget = circularTargetMap.get(lowComp);
+                    hitUncomp = false;
+                } else if (circularTargetMap.has(lowUncomp)) {
+                    hitTarget = circularTargetMap.get(lowUncomp);
+                    hitUncomp = true;
+                }
             }
 
-            // 🎯 Hedefe Yakınlık Dedektörü (Micro-Zoom Radarı)
-            // Worker proximity detector removed
+            if (hitTarget) {
+                self.postMessage({
+                    type: 'win',
+                    workerId: workerId,
+                    keyHex: lastKeyHex,
+                    targetId: hitTarget.id,
+                    targetAddr: hitTarget.addr,
+                    reward: (hitTarget.reward || '') + (hitUncomp ? ' (Uncompressed)' : ''),
+                    isUncompressed: hitUncomp,
+                    matchType: hitUncomp ? 'TARGET_UNCOMP' : 'TARGET_COMP'
+                });
+                isWorking = false;
+                return;
+            }
         }
         
         const newTrapsList = (workerKangarooEngine && workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0)
@@ -7433,7 +7492,7 @@ function bgWorkerProcess() {
             lastKey: lastKeyHex,
             targetId: activeTarget ? activeTarget.id : '',
             rangeText: currentRangeText,
-            currentPrefix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerPrefix : null,
+            currentPrefix: (isEffectivePrefix || cfg.isPrefixAutoJump || cfg.isPrefixFilterActive) ? activeWorkerPrefix : null,
             currentSuffix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerSuffix : null,
             currentGridCell: (mode === 'GRID' || f === 'GRID' || f === 'OMNI_CHAOS') ? activeWorkerGridCell : null
         });
@@ -7466,6 +7525,7 @@ function bgWorkerProcess() {
             quantumPhase = (workerId * 0.6180339887) % (Math.PI * 2);
             riemannT = 14.134725 + (workerId * 1.41421356);
             cfg = d.config || {};
+            rebuildCircularTargetMap();
             if (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD') {
                 workerKangarooHerdType = cfg.kangarooHerdType;
             } else {
@@ -7485,10 +7545,12 @@ function bgWorkerProcess() {
                     satoshiSet.add(d.satoshiBlob.substr(i, 40));
                 }
             }
+            rebuildCircularTargetMap();
             isWorking = true;
             workBatch();
         } else if (d.cmd === 'updateConfig') {
             cfg = Object.assign(cfg, d.config || {});
+            rebuildCircularTargetMap();
             if (d.config && (d.config.selectedAlgorithm === 'KANGAROO' || d.config.activeTarget || d.config.sliderMinHex !== undefined || d.config.sliderMaxHex !== undefined)) {
                 workerKangarooJumps = [];
                 workerKangarooEngine = null;
@@ -7658,8 +7720,6 @@ function getCurrentWorkerConfig() {
         sliceEndPct: sliceEndPct,
         userHexStart: (userHexStart !== null && userHexStart !== undefined) ? userHexStart.toString(16) : null,
         userHexEnd: (userHexEnd !== null && userHexEnd !== undefined) ? userHexEnd.toString(16) : null,
-        activeFormula: activeFormula,
-        activeRangeMode: activeRangeMode,
         isPrefixFilterActive: isPrefixFilterActive,
         isGridFilterActive: isGridFilterActive,
         userPrefix: userPrefix || (document.getElementById('prefixInput')?.value.trim().replace(/^0x/i, '') || ''),
@@ -7890,16 +7950,19 @@ function handleWorkerMessage(e) {
                 // index0: API kontrolü devre dışı
                 if (data.lastKey) {
                     const lk = document.getElementById('logKey');
-                    if (lk) lk.innerText = '0x' + data.lastKey.padStart(64, '0');
+                    if (lk) lk.innerText = '0x' + String(data.lastKey).replace(/^0x/i, '').padStart(64, '0');
                 }
                 if (data.rangeText) {
                     const lr = document.getElementById('logRange');
                     if (lr) lr.innerText = data.rangeText;
                 }
-                if (data.currentPrefix && isPrefixAutoJump && (activeFormula === 'PREFIX' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'PREFIX')) {
+                if (data.currentPrefix && (isPrefixAutoJump || isPrefixFilterActive || (typeof isAgentActive !== 'undefined' && isAgentActive))) {
                     userPrefix = data.currentPrefix;
                     const pInput = document.getElementById('prefixInput');
-                    if (pInput) pInput.value = data.currentPrefix;
+                    if (pInput) {
+                        pInput.value = data.currentPrefix;
+                        pInput.placeholder = data.currentPrefix;
+                    }
                 }
                 if (data.currentGridCell !== null && data.currentGridCell !== undefined && isGridAutoJump && (activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'GRID')) {
                     userGridCell = data.currentGridCell;
