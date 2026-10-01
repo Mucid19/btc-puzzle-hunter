@@ -10,82 +10,77 @@
 
 ![BTC Puzzle Hunter Preview](ui_preview.png)
 
-**`index.html`** is an ultra-fast, 100% offline, zero-dependency browser-based cryptographic analysis and search engine designed to solve Bitcoin Puzzle transactions. Runs entirely in your local browser RAM via parallel Web Workers and WebGPU hardware acceleration.
-
-**[TR]** *Bitcoin Puzzle işlemlerini çözmek için geliştirilmiş; %100 bağımsız, sıfır dış bağımlılık (Zero External Dependency) içeren ve doğrudan tarayıcı üzerinden çalışan tek dosyalık (single-file), çift dilli (EN/TR), yüksek performanslı arama ve kriptografik analiz aracı.*
+**`index.html`** is an ultra-fast, 100% offline, zero-dependency browser-based cryptographic analysis and search engine designed to solve Bitcoin Puzzle transactions. It runs entirely inside your local browser memory using parallel Web Workers and WebGPU hardware acceleration.
 
 ---
 
-## 🌐 Live Demo / Canlı Kullanım (GitHub Pages)
+## 🌐 Live Demo (GitHub Pages)
 
 Run directly in your browser with zero installation:  
 👉 **[https://mucid19.github.io/btc-puzzle-hunter/](https://mucid19.github.io/btc-puzzle-hunter/)**
 
 ---
 
-## ⚡ Highlights & Key Features (English)
+## ⚡ Highlights & Key Features
 
 ### 1. 🦘 Pollard's Kangaroo Engine ($O(\sqrt{N})$)
-* Solves elliptic curve discrete logarithm problems in $O(\sqrt{N})$ time complexity instead of exponential brute-force.
-* **Hybrid Candidate Verification**: Validates candidate private keys against secp256k1 Hash160 addresses simultaneously while computing elliptic curve trap points.
-* Utilizes exposed public keys for known puzzles (#19, #57, #135, #140, #145, #150, #155, #160).
+* Solves elliptic curve discrete logarithm problems in $O(\sqrt{N})$ time complexity instead of exponential brute force.
+* **Elliptic Curve Collision Search**: Computes deterministic pseudorandom jumps and trap points across the puzzle's search space.
+* Built-in support for puzzles with exposed public keys (#19, #57, #135, #140, #145, #150, #155, #160).
 
 ### 2. ⚡ Multi-Thread Web Workers
-* Automatically detects your hardware CPU concurrency (`navigator.hardwareConcurrency`).
-* Spawns 1 to 32+ independent Web Workers running in parallel with 100% CPU utilization.
+* Automatically detects your CPU core count (`navigator.hardwareConcurrency`).
+* Spawns parallel Web Workers with 100% CPU utilization.
 * Dynamic cache busting via Blob URLs ensures clean memory allocation on every run.
 
 ### 3. 🚀 WebGPU Hardware Acceleration
-* Process millions of key combinations per second directly on your graphics card cores using WebGPU (`gpu_engine.js`).
+* Harness the raw parallel computing power of your GPU cores directly through WebGPU (`gpu_engine.js`) to process key combinations at maximum throughput.
 
 ### 4. 🎯 12+ Specialized Search Algorithms
+* **🔄 Strategy Cycle (Agent)**: Automatically cycles through search strategies dynamically.
+* **🔄 Auto (Hybrid)**: Blends low-discrepancy and chaotic sequences for uniform coverage.
 * **🎲 Pure Random**: Cryptographically secure uniform global exploration.
 * **📐 Sobol (Quasi-RNG)**: Low-discrepancy space-filling sequence.
 * **📏 Van der Corput**: Number-theoretic bit-reversal sequence.
-* **🌟 Weyl Golden Ratio ($\phi$)**: Irrational stride lattice for zero overlapping.
-* **♾️ Coprime Stride**: Modular non-repeating cycle traversal.
+* **🌟 Weyl Golden Ratio ($\phi$)**: Irrational stride lattice for non-overlapping traversal.
+* **♾️ Coprime Stride**: Modular non-repeating cycle walk.
 * **🌀 Hilbert Curve**: Multi-dimensional space-filling topological walk.
 * **⚡ Weak Entropy**: Targets defective PRNG seeds and low-entropy keys.
 * **🌌 Deterministic Chaos**: Logistic and tent map dynamic trajectory.
-* **🦘 Pollard's Kangaroo**: Elliptic curve trap and collision network $O(\sqrt{N})$.
+* **🦘 Pollard's Kangaroo**: Elliptic curve trap and collision network.
 * **🎲 Halton Sequence**: Prime-based multi-dimensional uniform coverage.
 * **🔀 Scrambled Sobol**: Owen-scrambled dynamic space filling.
 * **🎰 MCMC (Markov Chain)**: Adaptive Metropolis-Hastings walk.
 
-### 5. 🌐 Bilingual Interface (EN / TR)
-* Instant 1-click language switcher (`🌐 EN | TR`) in the header.
-* Fully translated buttons, labels, algorithms, and real-time statistics.
+### 5. 🔁 Target Management: Circular & Single Puzzle Modes
+* **Full Pool & Multi-Select**: Hunt across all active unsolved puzzles simultaneously in circular rotation, or pick a custom subset.
+* **Archive & Verification**: Solved puzzles (#1 to #65, etc.) are kept in a dedicated Archive dropdown for test validation and algorithm verification.
+* **Space Range Sliders**: Interactive dual hex sliders to focus the search window on specific sections of the keyspace.
 
-### 6. 🛡️ 100% Air-Gapped & Offline Safe
-* Embedded standalone libraries: CryptoJS, secp256k1, BigInteger, Bech32, Base58, and RIPEMD160.
-* Zero network requests, zero telemetry, zero analytics.
+### 6. 🌐 Bilingual Interface (EN / TR)
+* Instant 1-click language switcher (`🌐 Türkçe` / `🌐 English`) in the navigation bar.
+* Fully translated controls, algorithm names, live statistics, and notifications.
+
+### 7. 🛡️ 100% Air-Gapped & Offline Safe
+* Embedded cryptographic modules: secp256k1 elliptic curve, BigInteger, SHA-256, and RIPEMD-160.
+* Zero external API calls, zero telemetry, zero server-side dependencies. Works completely offline.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 How to Use
 
-1. Clone or download this repository:
+1. **Clone or Download:**
    ```bash
    git clone https://github.com/Mucid19/btc-puzzle-hunter.git
    ```
-2. Double-click **`index.html`** in any modern web browser (Chrome, Brave, Edge, Firefox, Safari).
-3. Select your target puzzle (#66, #71, #72, etc.), choose your preferred algorithm, adjust thread count, and click **▶ Start Hunting**!
-
----
-
-## 🌟 Türkçe Özellikler ve Kullanım Rehberi
-
-### 1. Hedef Belirleme
-* Sol açılır listeden aramak istediğiniz Bitcoin Puzzle numarasını seçin (örneğin `#66`, `#71`, `#72` vb.).
-* Çözülmüş tüm bulmacalar otomatik olarak Arşiv listesinde ayrı tutulur.
-
-### 2. Algoritma ve Donanım Ayarı
-* Arama yönteminizi belirleyin (`🔄 Strateji Döngüsü`, `🦘 Kangaroo`, `🎲 Rastgele`, `📐 Sobol`, vb.).
-* Donanımınıza uygun iş parçacığı (Worker) sayısını seçin veya WebGPU motorunu etkinleştirin.
-
-### 3. Çoklu Havuz ve Format Desteği
-* Üretilen her aday anahtar eşzamanlı olarak hem seçili hedefte hem de **İlave Adres Havuzunda (22.000+ adres)** test edilir.
-* Sıkıştırılmış (`1...`, `bc1q...`), sıkıştırılmamış ve Nested SegWit (`3...`) formatları anında taranır.
+2. **Open:**
+   Double-click **`index.html`** in any modern web browser (Chrome, Brave, Edge, Firefox, Opera).
+3. **Configure:**
+   * Select your target puzzle (#66, #71, #72, or use **All Puzzles**).
+   * Choose your algorithm (e.g., `🔄 Auto (Hybrid)`, `🦘 Pollard's Kangaroo`, `📐 Sobol`).
+   * Select your CPU core count or enable WebGPU.
+4. **Start:**
+   Click **`▶ Start Hunting`** to begin the search.
 
 ---
 
@@ -93,24 +88,23 @@ Run directly in your browser with zero installation:
 
 | File | Description |
 | :--- | :--- |
-| **`index.html`** | %100 standalone, zero-dependency bilingual web application |
+| **`index.html`** | 100% standalone, zero-dependency browser application |
 | **`gpu_engine.js`** | WebGPU hardware acceleration engine |
 | **`kangaroo_engine.js`** | Pollard's Kangaroo elliptic curve collision library |
 | **`all_160_puzzles.json`** | All 160 Bitcoin puzzle target ranges and addresses dataset |
-| **`manifest.json`** | PWA (Progressive Web App) installation manifest |
-| **`sw.js`** | Offline Service Worker caching |
+| **`manifest.json`** | Progressive Web App (PWA) manifest |
+| **`sw.js`** | Offline Service Worker caching script |
 | **`icon-192.png`** / **`icon-512.png`** | High-resolution PWA application icons |
-| **`ui_preview.png`** | Project interface preview image |
+| **`ui_preview.png`** | Interface preview screenshot |
 | **`LICENSE`** | MIT Open-Source License |
-| **`README.md`** | Bilingual project documentation |
+| **`README.md`** | Project documentation |
 
 ---
 
-## ☕ Support & Donations / Bağış
+## ☕ Support & Donations
 
-If this project helped you or supported your research, voluntary contributions are warmly appreciated:
+If this open-source tool helped your research or cryptographic experiments, voluntary Bitcoin donations are warmly appreciated:
 
-### 🪙 Bitcoin (BTC) Donation Address:
 ```text
 bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s
 ```
