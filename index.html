@@ -1428,6 +1428,19 @@
         </div>
     </div>
 
+    <div id="fatalErrorAlert" style="display:none; margin: 12px 0; padding: 14px 18px; border-radius: 10px; background: rgba(239, 68, 68, 0.18); border: 2px solid #ef4444; color: #fee2e2; font-size: 13px; line-height: 1.5; box-shadow: 0 0 25px rgba(239,68,68,0.35);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <span style="font-size:26px; line-height:1;">🚨</span>
+                <div>
+                    <strong id="fatalErrorTitle" style="color:#fca5a5; font-size:15px; display:block; margin-bottom:4px; font-weight:800; letter-spacing:0.5px;">KRİTİK HATA</strong>
+                    <div id="fatalErrorMsg" style="color:#fecaca;">Hata detayı burada görünecek.</div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('fatalErrorAlert').style.display='none'" style="background:rgba(239,68,68,0.25); border:1px solid #ef4444; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; padding:2px 8px; border-radius:6px; line-height:1;">✕</button>
+        </div>
+    </div>
+
     <div class="btn-group">
         <button id="btnToggle" class="action-btn btn-start" onclick="toggleHunter()">▶ Aramayı Başlat</button>
     </div>
@@ -2294,6 +2307,25 @@ function showToast(msg, duration = 3500) {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(15px)';
     }, duration);
+}
+
+function showFatalErrorUI(title, msg) {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById('fatalErrorAlert');
+    const tEl = document.getElementById('fatalErrorTitle');
+    const mEl = document.getElementById('fatalErrorMsg');
+    if (el && tEl && mEl) {
+        tEl.innerText = title || 'KRİTİK HATA';
+        mEl.innerHTML = msg || 'Bilinmeyen bir hata oluştu.';
+        el.style.display = 'block';
+        try {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(e) {}
+    }
+    if (typeof showToast === 'function') {
+        showToast(`🚨 <strong>${title}</strong><br><span style="font-size:11px; color:#fca5a5;">${msg}</span>`, 9000);
+    }
+    console.error(`[FATAL ERROR]: ${title} - ${msg}`);
 }
 
 function applyFormulaPreset(formula) {
@@ -3451,7 +3483,7 @@ kangarooPeers[KANGAROO_TAB_ID] = {
 
 let kangarooCurrentScalar = 0n;
 let kangarooJumps = [];
-let kangarooHerdType = 'TAME'; // 'TAME' (Evcil) veya 'WILD' (Vahşi)
+let kangarooHerdType = 'DUAL'; // 'DUAL' (Çift Sürü: Tame + Wild), 'TAME', 'WILD'
 let kangarooStepCount = 0;
 let kangarooTargetPubHex = '';
 
@@ -4069,6 +4101,21 @@ function setAlgorithm(algo) {
         }
         if (typeof updateKangarooAlgoLabel === 'function') {
             updateKangarooAlgoLabel();
+        }
+        const curTarget = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : ((typeof getActiveTarget === 'function') ? getActiveTarget() : null);
+        const curId = curTarget ? curTarget.id : null;
+        const curNum = curId !== null ? parseInt(curId, 10) : null;
+        const hasPub = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
+        if (!hasPub) {
+            showFatalErrorUI(
+                'KANGAROO UYARISI: AÇIK ANAHTAR GEREKLİ',
+                `Seçili hedef (<strong>#${curId || '?'}</strong>) için blokzincirde bilinen bir açık anahtar (public key) yoktur!<br><br>` +
+                `Pollard's Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
+                `Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+            );
+        } else {
+            const errEl = document.getElementById('fatalErrorAlert');
+            if (errEl) errEl.style.display = 'none';
         }
         if (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList.length > 1) {
             if (typeof showToast === 'function') {
@@ -5792,11 +5839,16 @@ function generateKangarooKey(rangeStart, rangeEnd) {
         if (res && res.lastKey) {
             return BigInt('0x' + res.lastKey);
         }
-        return randomBigIntInRange(s, e);
+        return s;
     }
 
-    // Açık anahtar yoksa veya motor başlatılamadıysa: Güvenli rastgele / pseudo-random yürüyüş
-    return randomBigIntInRange(s, e);
+    // Açık anahtar yoksa veya motor başlatılamadıysa: ASLA sessizce rastgele arama yapma!
+    showFatalErrorUI(
+        'KANGAROO ÇALIŞTIRILAMAZ',
+        'Seçili hedefin açık anahtarı bulunamadığı için Pollard Kangaroo başlatılamadı. Arama durduruldu.'
+    );
+    if (isRunning) toggleHunter();
+    return s;
 }
 
 // ============================================================
@@ -6629,6 +6681,17 @@ function checkSavedWins() {
 // 🌌 GERÇEK ÇOK ÇEKİRDEKLİ WEB WORKER (MULTI-THREAD) MOTORU
 // ============================================================
 function bgWorkerProcess() {
+    self.onerror = function(msg, src, lineno, colno, err) {
+        try {
+            self.postMessage({
+                type: 'fatal_error',
+                workerId: (typeof workerId !== 'undefined') ? workerId : 0,
+                error: (err && err.message) ? err.message : String(msg),
+                line: lineno
+            });
+        } catch(e) {}
+    };
+
     if (typeof elliptic === 'undefined' || typeof CryptoJS === 'undefined') {
         try {
             importScripts(
@@ -7397,10 +7460,8 @@ function bgWorkerProcess() {
         const pNum = pid !== null ? parseInt(pid, 10) : null;
         const targetPub = (cfg && cfg.exposedKangarooPubkeys) ? (cfg.exposedKangarooPubkeys[pid] || cfg.exposedKangarooPubkeys[pNum]) : null;
 
-        let role = (workerId % 2 === 0) ? 'TAME' : 'WILD';
-        if (cfg && cfg.kangarooHerdType && (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD')) {
-            role = cfg.kangarooHerdType;
-        }
+        // Her worker bağımsız olarak DUAL (Tame + Wild) çalıştırır; workerId ofseti sayesinde her çekirdek farklı yollar arar
+        let role = 'DUAL';
 
         if (typeof RealPollardKangaroo === 'function' && targetPub) {
             try {
@@ -7445,15 +7506,23 @@ function bgWorkerProcess() {
                     matchType: (cfg && cfg.activeTarget && cfg.activeTarget.isUncompressed) ? 'TARGET_UNCOMP' : 'TARGET_COMP',
                     finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
                 });
+                isWorking = false;
                 return res.solvedKey;
             }
             if (res && res.lastKey) {
                 return BigInt('0x' + res.lastKey);
             }
-            return randomBigIntInRange(s, e);
+            return s;
         }
 
-        return randomBigIntInRange(s, e);
+        // Açık anahtar yoksa veya motor başlatılamadıysa: ASLA sahte rastgele arama yapma!
+        isWorking = false;
+        self.postMessage({
+            type: 'fatal_error',
+            workerId: workerId,
+            error: `Hedef #${_wkTargetId || '?'} için açık anahtar bulunamadığından Pollard Kangaroo başlatılamadı. Arama durduruldu.`
+        });
+        return s;
     }
 
     function getQuantumTunnelPercent() {
@@ -7503,7 +7572,8 @@ function bgWorkerProcess() {
 
     function workBatch() {
         if (!isWorking) return;
-        const batchSize = 35;
+        try {
+            const batchSize = 35;
         let count = 0;
         let lastKeyHex = '';
         let activeTarget = null;
@@ -7514,6 +7584,7 @@ function bgWorkerProcess() {
         const f = cfg.activeFormula || 'OMNI_CHAOS';
         
         for (let i = 0; i < batchSize; i++) {
+            if (!isWorking) break;
             if (cfg.isCircularMode && cfg.unsolvedList && cfg.unsolvedList.length > 0) {
                 activeTarget = cfg.unsolvedList[circularIdx % cfg.unsolvedList.length];
                 circularIdx++;
@@ -7852,7 +7923,17 @@ function bgWorkerProcess() {
         if (isWorking) {
             setTimeout(workBatch, 0);
         }
+    } catch (err) {
+        isWorking = false;
+        try {
+            self.postMessage({
+                type: 'fatal_error',
+                workerId: workerId,
+                error: 'İş parçacığı çalışma hatası: ' + ((err && err.message) ? err.message : String(err))
+            });
+        } catch(e) {}
     }
+}
 
     self.onmessage = function(e) {
         const d = e.data;
@@ -7881,7 +7962,7 @@ function bgWorkerProcess() {
             if (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD') {
                 workerKangarooHerdType = cfg.kangarooHerdType;
             } else {
-                workerKangarooHerdType = (workerId % 2 === 0) ? 'TAME' : 'WILD';
+                workerKangarooHerdType = 'DUAL';
             }
             activeWorkerPrefix = cfg.userPrefix || '';
             activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
@@ -7913,7 +7994,7 @@ function bgWorkerProcess() {
                 if (d.config.kangarooHerdType === 'TAME' || d.config.kangarooHerdType === 'WILD') {
                     workerKangarooHerdType = d.config.kangarooHerdType;
                 } else {
-                    workerKangarooHerdType = (workerId % 2 === 0) ? 'TAME' : 'WILD';
+                    workerKangarooHerdType = 'DUAL';
                 }
                 workerKangarooJumps = [];
             }
@@ -8102,7 +8183,7 @@ function getCurrentWorkerConfig() {
             }
             return null;
         })(),
-        kangarooHerdType: (typeof kangarooHerdType !== 'undefined') ? kangarooHerdType : 'MIXED',
+        kangarooHerdType: (typeof kangarooHerdType !== 'undefined' && kangarooHerdType) ? kangarooHerdType : 'DUAL',
         exposedKangarooPubkeys: (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') ? EXPOSED_KANGAROO_PUBKEYS : {},
     };
 }
@@ -8170,18 +8251,13 @@ function startWorkerPool(threadCount) {
             const w = new Worker(url);
             w.onmessage = handleWorkerMessage;
             w.onerror = function(err) {
-                console.error('[WORKER #' + i + ' ERROR]:', err.message || err.type, 'line:', err.lineno, 'col:', err.colno, 'file:', err.filename);
-                workerErrors++;
-                if (workerErrors >= threadCount && !workerHasReceivedProgress && isRunning) {
-                    if (isGpuRunning) {
-                        console.warn('[MULTI-THREAD] Yerel dosya/tarayıcı kısıtlaması nedeniyle CPU Workerları başlatılamadı. GPU tek başına tam güç devam ediyor.');
-                        stopWorkerPool();
-                    } else {
-                        console.warn('[MULTI-THREAD] Tüm Workerlar hata verdi / yerel dosya kısıtlandı. CPU motoru (huntBatch) doğrudan devreye alınıyor!');
-                        stopWorkerPool();
-                        huntBatch();
-                    }
-                }
+                const errMsg = (err && err.message) ? err.message : 'Web Worker çalışma zamanı hatası (Satır: ' + (err ? err.lineno : '?') + ')';
+                console.error('[WORKER #' + i + ' ERROR]:', errMsg);
+                showFatalErrorUI(
+                    `İş Parçacığı Çöktü (Worker #${i})`,
+                    `${errMsg}<br><small style="color:#fca5a5;">Boşuna beklememeniz için arama otomatik durduruldu.</small>`
+                );
+                if (isRunning) toggleHunter();
             };
             w.postMessage({
                 cmd: 'start',
@@ -8263,6 +8339,14 @@ function handleWorkerMessage(e) {
     try {
         const data = e.data;
         if (!data) return;
+        if (data.type === 'fatal_error') {
+            showFatalErrorUI(
+                `İş Parçacığı Hatası (Worker #${data.workerId})`,
+                `${data.error || 'Bilinmeyen çalışma zamanı hatası'}<br><small style="color:#fca5a5;">Boşuna beklememeniz için arama durduruldu.</small>`
+            );
+            if (isRunning) toggleHunter();
+            return;
+        }
         if (data.type !== 'win' && !isRunning) return;
 
         if (data.type === 'progress') {
@@ -8409,6 +8493,24 @@ function toggleHunter() {
         }
     } else {
         closePopups();
+        const errEl = document.getElementById('fatalErrorAlert');
+        if (errEl) errEl.style.display = 'none';
+
+        if (selectedAlgorithm === 'KANGAROO') {
+            const curTarget = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : ((typeof getActiveTarget === 'function') ? getActiveTarget() : null);
+            const curId = curTarget ? curTarget.id : null;
+            const curNum = curId !== null ? parseInt(curId, 10) : null;
+            const hasPub = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
+            if (!hasPub) {
+                showFatalErrorUI(
+                    'KANGAROO ÇALIŞTIRILAMAZ',
+                    `Seçili hedef (<strong>#${curId || '?'}</strong>) için açık anahtar (public key) bilinmiyor!<br><br>` +
+                    `<strong>Neden?</strong> Pollard Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
+                    `<strong>Çözüm:</strong> Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+                );
+                return;
+            }
+        }
         
         requestWakeLock();
         if (!ec) getEc();

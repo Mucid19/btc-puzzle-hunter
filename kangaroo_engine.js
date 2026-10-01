@@ -99,22 +99,23 @@ class RealPollardKangaroo {
             const sqrtSpan = this.bigIntSqrt(this.span);
             const meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
             
-            // 32 adet deterministik sıçrama ve EC noktaları (alt bitleri tam dolduran entropi)
+            // 32 adet deterministik sıçrama ve EC noktaları (meanJump etrafında [0.1 * m, 1.9 * m] dengeli dağılım)
             this.jumps = [];
             this.jumpPoints = [];
             for (let i = 0; i < 32; i++) {
-                const mult = BigInt(Math.floor(1000 + (i * 1000) / 31));
-                let jVal = (meanJump * mult) / 1000n;
-                const bitNoise = BigInt((i * 2654435761 + 1013904223) >>> 0);
-                jVal = (jVal ^ bitNoise) | 1n;
+                const factor = BigInt(Math.floor(100 + (i * 1800) / 31));
+                let jVal = (meanJump * factor) / 1000n;
                 if (jVal <= 0n) jVal = 1n;
+                // Tek sayı yaparak eliptik eğri üzerinde periyodik döngüye kilitlenmeyi engelle
+                if (jVal % 2n === 0n) jVal += 1n;
                 this.jumps.push(jVal);
                 this.jumpPoints.push(this.G.mul(jVal.toString(16)));
             }
 
             // 3. Belirgin Nokta (Distinguished Point) Maskesi
+            // Aralık büyüklüğüne göre dinamik ölçekleme: ortalama her 16..65536 adımda 1 tuzak
             const sqrtBits = sqrtSpan.toString(2).length;
-            this.dpBits = Math.max(8, Math.min(12, Math.floor(sqrtBits / 7))); // 8-12 bit: Ortalama her 1.024 - 2.048 adımda 1 gerçek tuzak (Abartısız & Hafif)
+            this.dpBits = Math.max(4, Math.min(16, Math.floor(sqrtBits / 2) - 1));
             this.dpMask = (1n << BigInt(this.dpBits)) - 1n;
 
             // 4. Başlangıç Noktalarını Kur
@@ -157,9 +158,12 @@ class RealPollardKangaroo {
 
         // Pollard's Kangaroo İlkesi (DUAL Modu):
         // Evcil kanguru aralığın üst sınırından başlayıp vahşi kangurunun geleceği yöne doğru
-        // tuzak patikasını (trap line) döşer (~2.5 * √N adım önden koşar).
+        // tuzak patikasını (trap line) döşer. Aralığı kaplayacak kadar (~span / meanJump) önden koşar.
         if (this.role === 'DUAL' && this.tamePoint) {
-            this.runTameSteps(64);
+            const sqrtSpan = this.bigIntSqrt(this.span);
+            const meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
+            const preSteps = Math.min(4096, Math.max(128, Number((this.span / meanJump) + 50n)));
+            this.runTameSteps(preSteps);
         }
     }
 
