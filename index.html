@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1207,11 +1207,11 @@
     <!-- KAZANILAN ÖDÜL BİLDİRİMİ -->
     <div id="winAlert" class="alert-win">
         <div class="win-title" onclick="toggleWinDetails()" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:0; user-select:none;">
-            <span style="display:flex; align-items:center; gap:6px; font-weight:800; font-size:13px;">
-                🎉 TEBRİKLER! DOĞRU ANAHTARI BULDUNUZ! 🎉
+            <span id="winAlertTitle" style="display:flex; align-items:center; gap:6px; font-weight:800; font-size:13px;">
+                🎉 CONGRATULATIONS! PRIVATE KEY FOUND! 🎉
             </span>
             <span id="winToggleBadge" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.3); border-radius:5px; padding:2px 8px; font-size:11px; font-weight:bold; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s; white-space:nowrap;">
-                <span id="winToggleArrow">▲</span> <span id="winToggleText">Genişlet</span>
+                <span id="winToggleArrow">▲</span> <span id="winToggleText">Expand</span>
             </span>
         </div>
         <div class="win-box" id="winDetails" style="display:none; margin-top:8px;"></div>
@@ -1219,15 +1219,20 @@
 
     <!-- ÖZEL TIKLAMALI AÇILIR BUTONLAR -->
     <div class="dropdown-bar">
+        <!-- Dil Değiştirme Butonu (EN / TR) -->
+        <div id="btnMainLang" class="custom-btn" onclick="toggleHunterLanguage()" style="background:#0f172a; border:1px solid #38bdf8; color:#38bdf8; cursor:pointer;" title="Switch Language / Dili Değiştir">
+            <span id="labelLang">🌐 Türkçe</span>
+        </div>
+
         <!-- Yeşil Açılır Buton (Devam Edenler) -->
         <div id="btnMainUnsolved" class="custom-btn btn-unsolved" onclick="togglePopup('popupUnsolved', event)">
-            <span id="labelUnsolved">🔁 Hepsi</span>
+            <span id="labelUnsolved">🔁 All Puzzles</span>
             <span>▼</span>
         </div>
 
         <!-- Mor Açılır Buton (Arşiv) -->
         <div id="btnMainSolved" class="custom-btn btn-solved" onclick="togglePopup('popupSolved', event)">
-            <span id="labelSolved" style="display:inline-flex; align-items:center; gap:4px;"><span style="font-size:9px; opacity:0.85;">⚪</span> Bitti</span>
+            <span id="labelSolved" style="display:inline-flex; align-items:center; gap:4px;"><span style="font-size:9px; opacity:0.85;">⚪</span> Solved</span>
             <span>▼</span>
         </div>
 
@@ -1259,21 +1264,21 @@
                 <!-- 🧠 OTOMATİK ARALIK VE STRATEJİ AJANI BUTONU -->
                 <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🔄 Otomatik Strateji Döngüsü (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
                     <span>🧠</span>
-                    <span id="agentToggleText">Döngü</span>
+                    <span id="agentToggleText">Cycle</span>
                 </div>
 
                 <!-- DONANIM / İŞ PARÇACIĞI / GPU SEÇİCİ -->
-                <select id="threadCountSelect" onchange="onThreadCountSelectChange()" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:130px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="CPU İş Parçacığı (Çekirdek) Seçimi">
-                    <option value="8" selected>🔥 8 Çekirdek (Önerilen)</option>
-                    <option value="12">🔥 12 Çekirdek</option>
-                    <option value="16">🌌 16 Çekirdek</option>
-                    <option value="6">🚀 6 Çekirdek</option>
-                    <option value="4">🚀 4 Çekirdek</option>
-                    <option value="2">🌱 2 Çekirdek</option>
+                <select id="threadCountSelect" onchange="onThreadCountSelectChange()" class="range-select thread-select-box" style="flex:1; min-width:0; max-width:130px; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="CPU Thread / Core Selection">
+                    <option value="8" selected>🔥 8 Cores (Recommended)</option>
+                    <option value="12">🔥 12 Cores</option>
+                    <option value="16">🌌 16 Cores</option>
+                    <option value="6">🚀 6 Cores</option>
+                    <option value="4">🚀 4 Cores</option>
+                    <option value="2">🌱 2 Cores</option>
                 </select>
 
                 <!-- KANGAROO TUZ & AKTİF SEKME SAYISI ROZETLERİ -->
-                <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Tuz Sayısı">📍 0 Tuz</span>
+                <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Tuz Sayısı">📍 0 Traps</span>
                 <span id="kangarooSwarmTabCountBadge" style="display:none;" title="Sekme">🟢 1 Sekme</span>
             </div>
 
@@ -1284,20 +1289,20 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
                     <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
-                        <option value="AGENT">🔄 Strateji Döngüsü</option>
-                        <option value="AUTO" selected>🔄 Oto (Karma)</option>
+                        <option value="AGENT">🔄 Strategy Cycle</option>
+                        <option value="AUTO" selected>🔄 Auto (Hybrid)</option>
                         <option value="VD_CORPUT">📐 Van der Corput</option>
-                        <option value="WEYL_GOLDEN">🌟 Weyl Kafesi</option>
-                        <option value="COPRIME_STRIDE">♾️ Asal Adımlı</option>
-                        <option value="RANDOM">🎲 Saf Rastgele</option>
+                        <option value="WEYL_GOLDEN">🌟 Weyl Lattice</option>
+                        <option value="COPRIME_STRIDE">♾️ Coprime Stride</option>
+                        <option value="RANDOM">🎲 Pure Random</option>
                         <option value="SOBOL">📐 Sobol / Quasi-RNG</option>
-                        <option value="HILBERT">🌀 Hilbert Fraktal</option>
-                        <option value="WEAK_ENTROPY">⚡ Zayıf / Kusurlu</option>
-                        <option value="CHAOS">♾️ Kaos</option>
+                        <option value="HILBERT">🌀 Hilbert Fractal</option>
+                        <option value="WEAK_ENTROPY">⚡ Weak / Flawed</option>
+                        <option value="CHAOS">♾️ Chaos</option>
                         <option value="KANGAROO">🦘 Pollard's Kangaroo</option>
-                        <option value="HALTON">🎲 Halton (Çok-Boyutlu)</option>
+                        <option value="HALTON">🎲 Halton (Multi-D)</option>
                         <option value="SCRAMBLED_SOBOL">🔀 Scrambled Sobol</option>
-                        <option value="MCMC">🎰 MCMC (Markov Yürüyüş)</option>
+                        <option value="MCMC">🎰 MCMC (Markov Walk)</option>
                     </select>
                 </div>
 
@@ -1307,8 +1312,8 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Kusurlu Entropi Boyutu (Bit)">
                     <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Kusurlu Entropi Boyutu (Bit)">⚡</span>
                     <select id="entropyBitsSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onEntropyBitsChange()">
-                        <option value="-1">⛔ Kapalı</option>
-                        <option value="0" selected>🔄 Oto</option>
+                        <option value="-1" id="optEntropyOff">⛔ Disabled</option>
+                        <option value="0" id="optEntropyAuto" selected>🔄 Auto</option>
                         <option value="32">⚡ 32-Bit</option>
                         <option value="40">⚡ 40-Bit</option>
                         <option value="48">⚡ 48-Bit</option>
@@ -1322,8 +1327,8 @@
                 <div id="blockPrefix" onclick="togglePrefixFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1.1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Ön Ek Filtresi Aç/Kapat (Tıklayın)">
                     <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:10.5px; flex-shrink:0; opacity:0.45;" title="Ön Ek Filtresi">0x</span>
                     <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; border-radius:3px; opacity:0.5;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="isPrefixFilterActive=true; updateModeVisuals();" title="Ön Ek">
-                    <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#ef4444; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek Kapalı (Tıklayın: 🔄 Oto moda geçer)">
-                        ⛔ Kapalı
+                    <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#ef4444; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Prefix Off (Click to toggle Auto)">
+                        ⛔ Off
                     </button>
                     <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
                 </div>
@@ -1343,10 +1348,10 @@
         <!-- 🎛️ OTO KAYDIRAÇ (SWEEP / RADAR) KONTROL ÇUBUĞU -->
         <div class="auto-slider-sweep-bar">
             <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Kaydıraç Otomatik Kayma Hızı: 1 saniye">⚡ Hızlı</button>
-                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Kaydıraç Otomatik Kayma Hızı: 3 saniye">⏱️ Orta</button>
-                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Kaydıraç Otomatik Kayma Hızı: 8 saniye">🐢 Yavaş</button>
-                <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Kaydıraç Otomatik Kayma Hızı: 15 saniye">🔬 Mikro</button>
+                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Sweep Speed: 1s">⚡ Fast</button>
+                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Sweep Speed: 3s">⏱️ Med</button>
+                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Sweep Speed: 8s">🐢 Slow</button>
+                <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Sweep Speed: 15s">🔬 Micro</button>
             </div>
             <div class="auto-slider-info-group">
                 <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Kapsanan: Tam Uzay</span>
@@ -1392,38 +1397,38 @@
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="label">Deneme</div>
+            <div class="label" id="lblStatAttempts">Attempts</div>
             <div class="value" id="statAttempts">0</div>
         </div>
         <div class="stat-card">
-            <div class="label">Hız</div>
+            <div class="label" id="lblStatSpeed">Speed</div>
             <div class="value" id="statSpeed">0 key/s</div>
         </div>
         <div class="stat-card">
-            <div class="label">Ödül</div>
-            <div class="value" id="statPoolCount" style="color: #34d399;">TÜMÜ</div>
+            <div class="label" id="lblStatPool">Reward</div>
+            <div class="value" id="statPoolCount" style="color: #34d399;">ALL</div>
         </div>
         <div class="stat-card">
-            <div class="label">Süre</div>
+            <div class="label" id="lblStatElapsed">Elapsed</div>
             <div class="value" id="statElapsed">00:00:00</div>
         </div>
     </div>
 
     <div class="live-log">
         <div class="log-row">
-            <span class="log-label">Aktif Algoritma:</span>
-            <span class="log-val" id="logAlgo" style="color: #38bdf8; font-weight:700;">🔄 Oto Geçiş (🎲 Rastgele + 📐 Sobol + 🌀 Hilbert)</span>
+            <span class="log-label" id="lblLogAlgo">Active Algorithm:</span>
+            <span class="log-val" id="logAlgo" style="color: #38bdf8; font-weight:700;">🔄 Auto Cycle (🎲 Random + 📐 Sobol + 🌀 Hilbert)</span>
         </div>
         <div class="log-row">
-            <span class="log-label">Hedef Cüzdan:</span>
+            <span class="log-label" id="lblLogTarget">Target Wallet:</span>
             <span class="log-val" id="logTarget" style="color: var(--accent);">-</span>
         </div>
         <div class="log-row">
-            <span class="log-label">Aralık:</span>
+            <span class="log-label" id="lblLogRange">Range:</span>
             <span class="log-val" id="logRange" style="color: #a78bfa;">-</span>
         </div>
         <div class="log-row">
-            <span class="log-label">Denenen Anahtar:</span>
+            <span class="log-label" id="lblLogKey">Tested Key:</span>
             <span class="log-val" id="logKey">-</span>
         </div>
     </div>
@@ -1442,19 +1447,19 @@
     </div>
 
     <div class="btn-group">
-        <button id="btnToggle" class="action-btn btn-start" onclick="toggleHunter()">▶ Aramayı Başlat</button>
+        <button id="btnToggle" class="action-btn btn-start" onclick="toggleHunter()">▶ Start Hunting</button>
     </div>
 
-    <!-- ☕ BAĞIŞ & DESTEK KUTUSU -->
+    <!-- ☕ SUPPORT & DONATION BOX -->
     <div style="margin-top: 14px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
         <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1;">
-            <span style="font-size: 11px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
-                ☕ Geliştiriciye Destek Ol (Bitcoin Bağış Adresi)
+            <span id="lblDonateTitle" style="font-size: 11px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                ☕ Support the Developer (Bitcoin Donation Address)
             </span>
             <span id="donationAddr" style="font-family: monospace; font-size: 11px; color: #94a3b8; word-break: break-all; user-select: all;">bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s</span>
         </div>
-        <button type="button" onclick="navigator.clipboard.writeText('bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s').then(() => { if (typeof showToast === 'function') showToast('📋 Bağış adresi panoya kopyalandı!'); else alert('Kopyalandı!'); })" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
-            📋 Kopyala
+        <button id="btnCopyDonate" type="button" onclick="navigator.clipboard.writeText('bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s').then(() => { if (typeof showToast === 'function') showToast(currentHunterLang === 'en' ? '📋 Donation address copied to clipboard!' : '📋 Bağış adresi panoya kopyalandı!'); else alert('Copied!'); })" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+            📋 Copy
         </button>
     </div>
 </div>
@@ -1520,7 +1525,7 @@ function onDualSliderToggle() {
         if (typeof window !== 'undefined') {
             window.uniqueKangarooTraps = new Set();
             const tEl = document.getElementById('kangarooSwarmTrapCount');
-            if (tEl) tEl.innerText = '📍 0 Tuzak';
+            if (tEl) tEl.innerText = '📍 0 ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
         }
         broadcastWorkerConfig();
 }
@@ -1617,7 +1622,7 @@ function resetKangarooTrapsUI() {
     if (typeof window !== 'undefined') {
         window.uniqueKangarooTraps = new Set();
         const trapEl = document.getElementById('kangarooSwarmTrapCount');
-        if (trapEl) trapEl.innerText = '📍 0 Tuzak';
+        if (trapEl) trapEl.innerText = '📍 0 ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
     }
     kangarooTrapsCount = 0;
     if (typeof kangarooSharedTraps !== 'undefined') kangarooSharedTraps = {};
@@ -3668,7 +3673,7 @@ function initKangarooSwarmChannel() {
                             };
                             kangarooTrapsCount++;
                             const trapEl = document.getElementById('kangarooSwarmTrapCount');
-                            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
+                            if (trapEl) trapEl.innerText = '📍 ' + kangarooTrapsCount + ' ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
                         }
                     }
                     break;
@@ -3837,7 +3842,7 @@ function updateKangarooSwarmUI() {
     // 1. Tuzak Sayacı: "Tuzak" yerine "Tuz" yazar
     const trapEl = document.getElementById('kangarooSwarmTrapCount');
     if (trapEl) {
-        trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
+        trapEl.innerText = '📍 ' + kangarooTrapsCount + ' ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
     }
 
     // 2. Açık Aktif Sekme Sayısı Toplamı: Ayrı ayrı yazmaz, toplamı yazar
@@ -3951,7 +3956,7 @@ function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist) {
     kangarooSharedTraps[hex] = { herd: herd, tabId: KANGAROO_TAB_ID, time: now, dist: dist };
     kangarooTrapsCount++;
     const tEl = document.getElementById('kangarooSwarmTrapCount');
-    if (tEl) { tEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`; }
+    if (tEl) { tEl.innerText = '📍 ' + kangarooTrapsCount + ' ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps'); }
 
     if (kangarooTrapsCount > 10000) {
         const keys = Object.keys(kangarooSharedTraps);
@@ -5108,15 +5113,16 @@ function buildCustomMenus() {
             if (isCircularMode) {
                 const count = unsolvedList.length;
                 const total = allUnsolvedPool.length;
+                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
                 if (count === total) {
-                    document.getElementById('labelUnsolved').innerText = '🔁 Hepsi';
-                    document.getElementById('statPoolCount').innerText = `TÜMÜ (${count})`;
+                    document.getElementById('labelUnsolved').innerText = isTr ? '🔁 Hepsi' : '🔁 All Puzzles';
+                    document.getElementById('statPoolCount').innerText = isTr ? `TÜMÜ (${count})` : `ALL (${count})`;
                 } else if (count === 1) {
                     document.getElementById('labelUnsolved').innerText = `🔁 #${unsolvedList[0].id}`;
                     document.getElementById('statPoolCount').innerText = `1 PUZZLE`;
                 } else {
-                    document.getElementById('labelUnsolved').innerText = `🔁 Seçili (${count})`;
-                    document.getElementById('statPoolCount').innerText = `SEÇİLİ (${count})`;
+                    document.getElementById('labelUnsolved').innerText = isTr ? `🔁 Seçili (${count})` : `🔁 Selected (${count})`;
+                    document.getElementById('statPoolCount').innerText = isTr ? `SEÇİLİ (${count})` : `SELECTED (${count})`;
                 }
                 broadcastWorkerConfig();
             }
@@ -5124,7 +5130,7 @@ function buildCustomMenus() {
     });
 
     const solvedList = ALL_PUZZLES.filter(p => p.status === 'SOLVED');
-    document.getElementById('labelSolved').innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> Bitti';
+    document.getElementById('labelSolved').innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Bitti' : 'Solved');
 
     const ARCHIVE_TEST_MAP = {
         19: { startHex: '0x57400', endHex: '0x57500', label: '🔑 #19 Test', color: '#eab308' },
@@ -5216,18 +5222,19 @@ function enableCircularMode() {
 
     const count = unsolvedList.length;
     const total = (allUnsolvedPool && allUnsolvedPool.length > 0) ? allUnsolvedPool.length : count;
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
     if (count === total) {
-        document.getElementById('labelUnsolved').innerText = '🔁 Hepsi';
-        document.getElementById('statPoolCount').innerText = `TÜMÜ (${count})`;
+        document.getElementById('labelUnsolved').innerText = isTr ? '🔁 Hepsi' : '🔁 All Puzzles';
+        document.getElementById('statPoolCount').innerText = isTr ? `TÜMÜ (${count})` : `ALL (${count})`;
     } else if (count === 1) {
         document.getElementById('labelUnsolved').innerText = `🔁 #${unsolvedList[0].id}`;
         document.getElementById('statPoolCount').innerText = `1 PUZZLE`;
     } else {
-        document.getElementById('labelUnsolved').innerText = `🔁 Seçili (${count})`;
-        document.getElementById('statPoolCount').innerText = `SEÇİLİ (${count})`;
+        document.getElementById('labelUnsolved').innerText = isTr ? `🔁 Seçili (${count})` : `🔁 Selected (${count})`;
+        document.getElementById('statPoolCount').innerText = isTr ? `SEÇİLİ (${count})` : `SELECTED (${count})`;
     }
     updateLogTargetLabel();
-    document.getElementById('logRange').innerText = 'Bulmacaya Göre Dinamik';
+    document.getElementById('logRange').innerText = isTr ? 'Bulmacaya Göre Dinamik' : 'Dynamic per Puzzle';
     if (typeof updateSliderUI === 'function') updateSliderUI();
     broadcastWorkerConfig();
 }
@@ -5815,7 +5822,7 @@ function generateKangarooKey(rangeStart, rangeEnd) {
             kangarooRealEngine.newTrapsToBroadcast = [];
             kangarooTrapsCount = kangarooRealEngine.tameTraps.size + kangarooRealEngine.wildTraps.size;
             const trapEl = document.getElementById('kangarooSwarmTrapCount');
-            if (trapEl) trapEl.innerText = `📍 ${kangarooTrapsCount} Tuzak`;
+            if (trapEl) trapEl.innerText = '📍 ' + kangarooTrapsCount + ' ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
         }
 
         if (res.status === 'WIN' && res.solvedKey) {
@@ -6495,7 +6502,7 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
     const btn = document.getElementById('btnToggle');
     if (btn) {
         btn.className = 'action-btn btn-start';
-        btn.innerText = '▶ Aramayı Başlat';
+        btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '▶ Aramayı Başlat' : '▶ Start Hunting';
     }
     if (timerInterval) {
         clearInterval(timerInterval);
@@ -6600,12 +6607,14 @@ function toggleWinDetails() {
     const isHidden = (details.style.display === 'none' || details.style.display === '');
     if (isHidden) {
         details.style.display = 'block';
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         if (arrow) arrow.innerText = '▼';
-        if (text) text.innerText = 'Daralt';
+        if (text) text.innerText = isTr ? 'Daralt' : 'Collapse';
     } else {
         details.style.display = 'none';
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         if (arrow) arrow.innerText = '▲';
-        if (text) text.innerText = 'Genişlet';
+        if (text) text.innerText = isTr ? 'Genişlet' : 'Expand';
     }
 }
 
@@ -8052,18 +8061,19 @@ function initThreadCountUI() {
         cpuCounts.push(detected);
         cpuCounts.sort((a, b) => a - b);
     }
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
     cpuCounts.forEach(c => {
         const opt = document.createElement('option');
         opt.value = String(c);
         if (c === 8) {
-            opt.innerText = isMobile ? '🔥 8 Çekirdek' : '🔥 8 Çekirdek (Önerilen)';
+            opt.innerText = isMobile ? (isTr ? '🔥 8 Çekirdek' : '🔥 8 Cores') : (isTr ? '🔥 8 Çekirdek (Önerilen)' : '🔥 8 Cores (Recommended)');
             opt.selected = true;
         } else if (c === detected) {
-            opt.innerText = isMobile ? ('⚡ ' + c + 'T (Cihaz)') : ('⚡ ' + c + ' Çekirdek (Cihaz Maks)');
+            opt.innerText = isMobile ? ('⚡ ' + c + 'T (' + (isTr ? 'Cihaz' : 'Device') + ')') : ('⚡ ' + c + (isTr ? ' Çekirdek (Cihaz Maks)' : ' Cores (Device Max)'));
         } else if (c >= 16) {
-            opt.innerText = isMobile ? ('🌌 ' + c + 'T') : ('🌌 ' + c + ' Çekirdek');
+            opt.innerText = isMobile ? ('🌌 ' + c + 'T') : ('🌌 ' + c + (isTr ? ' Çekirdek' : ' Cores'));
         } else {
-            opt.innerText = isMobile ? ('🚀 ' + c + 'T') : ('🚀 ' + c + ' Çekirdek');
+            opt.innerText = isMobile ? ('🚀 ' + c + 'T') : ('🚀 ' + c + (isTr ? ' Çekirdek' : ' Cores'));
         }
         sel.appendChild(opt);
     });
@@ -8230,7 +8240,7 @@ let workerHasReceivedProgress = false;
 function startWorkerPool(threadCount) {
     window.uniqueKangarooTraps = new Set();
     const trapEl = document.getElementById('kangarooSwarmTrapCount');
-    if (trapEl) trapEl.innerText = '📍 0 Tuzak';
+    if (trapEl) trapEl.innerText = '📍 0 ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Tuzak' : 'Traps');
     if (typeof requestTabKeepAlive === 'function') requestTabKeepAlive();
     stopWorkerPool();
     workerHasReceivedProgress = false;
@@ -8426,7 +8436,7 @@ function handleWorkerMessage(e) {
         const btn = document.getElementById('btnToggle');
         if (btn) {
             btn.className = 'action-btn btn-start';
-            btn.innerText = '▶ Aramayı Başlat';
+            btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '▶ Aramayı Başlat' : '▶ Start Hunting';
         }
         clearInterval(timerInterval);
         releaseWakeLock();
@@ -8456,6 +8466,309 @@ function handleWorkerMessage(e) {
 }
 
 
+
+// ============================================================
+// 🌐 MULTI-LANGUAGE (EN / TR) SYSTEM
+// ============================================================
+const HUNTER_I18N = {
+    en: {
+        labelLang: '🌐 Türkçe',
+        labelUnsolved: '🔁 All Puzzles',
+        labelSolved: 'Solved',
+        agentText: 'Cycle',
+        statAttempts: 'Attempts',
+        statSpeed: 'Speed',
+        statPool: 'Reward',
+        statElapsed: 'Elapsed',
+        logAlgo: 'Active Algorithm:',
+        logTarget: 'Target Wallet:',
+        logRange: 'Range:',
+        logKey: 'Tested Key:',
+        btnStart: '▶ Start Hunting',
+        btnStop: '⏹ Stop Hunting',
+        fatalTitle: 'CRITICAL ERROR',
+        speedFast: '⚡ Fast',
+        speedMed: '⏱️ Med',
+        speedSlow: '🐢 Slow',
+        speedMicro: '🔬 Micro',
+        optThreadsRec: ' Cores (Recommended)',
+        optThreads: ' Cores',
+        traps: ' Traps',
+        algoAgent: '🔄 Strategy Cycle',
+        algoAuto: '🔄 Auto (Hybrid)',
+        algoVdCorput: '📐 Van der Corput',
+        algoWeyl: '🌟 Weyl Lattice',
+        algoCoprime: '♾️ Coprime Stride',
+        algoRandom: '🎲 Pure Random',
+        algoSobol: '📐 Sobol / Quasi-RNG',
+        algoHilbert: '🌀 Hilbert Fractal',
+        algoWeak: '⚡ Weak / Flawed',
+        algoChaos: '♾️ Chaos',
+        algoKangaroo: "🦘 Pollard's Kangaroo",
+        algoHalton: '🎲 Halton (Multi-D)',
+        algoScrambledSobol: '🔀 Scrambled Sobol',
+        algoMCMC: '🎰 MCMC (Markov Walk)',
+        entropyOff: '⛔ Disabled',
+        entropyAuto: '🔄 Auto',
+        prefixOff: '⛔ Off',
+        prefixAuto: '🔄 Auto',
+        winTitle: '🎉 CONGRATULATIONS! PRIVATE KEY FOUND! 🎉',
+        winExpand: 'Expand',
+        winCollapse: 'Collapse',
+        statPoolAll: 'ALL',
+        donateTitle: '☕ Support the Developer (Bitcoin Donation Address)',
+        btnCopyDonate: '📋 Copy'
+    },
+    tr: {
+        labelLang: '🌐 English',
+        labelUnsolved: '🔁 Hepsi',
+        labelSolved: 'Bitti',
+        agentText: 'Döngü',
+        statAttempts: 'Deneme',
+        statSpeed: 'Hız',
+        statPool: 'Ödül',
+        statElapsed: 'Süre',
+        logAlgo: 'Aktif Algoritma:',
+        logTarget: 'Hedef Cüzdan:',
+        logRange: 'Aralık:',
+        logKey: 'Denenen Anahtar:',
+        btnStart: '▶ Aramayı Başlat',
+        btnStop: '⏹ Aramayı Durdur',
+        fatalTitle: 'KRİTİK HATA',
+        speedFast: '⚡ Hızlı',
+        speedMed: '⏱️ Orta',
+        speedSlow: '🐢 Yavaş',
+        speedMicro: '🔬 Mikro',
+        optThreadsRec: ' Çekirdek (Önerilen)',
+        optThreads: ' Çekirdek',
+        traps: ' Tuzak',
+        algoAgent: '🔄 Strateji Döngüsü',
+        algoAuto: '🔄 Oto (Karma)',
+        algoVdCorput: '📐 Van der Corput',
+        algoWeyl: '🌟 Weyl Kafesi',
+        algoCoprime: '♾️ Asal Adımlı',
+        algoRandom: '🎲 Saf Rastgele',
+        algoSobol: '📐 Sobol / Quasi-RNG',
+        algoHilbert: '🌀 Hilbert Fraktal',
+        algoWeak: '⚡ Zayıf / Kusurlu',
+        algoChaos: '♾️ Kaos',
+        algoKangaroo: "🦘 Pollard's Kangaroo",
+        algoHalton: '🎲 Halton (Çok-Boyutlu)',
+        algoScrambledSobol: '🔀 Scrambled Sobol',
+        algoMCMC: '🎰 MCMC (Markov Yürüyüş)',
+        entropyOff: '⛔ Kapalı',
+        entropyAuto: '🔄 Oto',
+        prefixOff: '⛔ Kapalı',
+        prefixAuto: '🔄 Oto',
+        winTitle: '🎉 TEBRİKLER! DOĞRU ANAHTARI BULDUNUZ! 🎉',
+        winExpand: 'Genişlet',
+        winCollapse: 'Daralt',
+        statPoolAll: 'TÜMÜ',
+        donateTitle: '☕ Geliştiriciye Destek Ol (Bitcoin Bağış Adresi)',
+        btnCopyDonate: '📋 Kopyala'
+    }
+};
+
+let currentHunterLang = 'en';
+try {
+    const savedLang = localStorage.getItem('btc_puzzle_lang');
+    if (savedLang === 'tr' || savedLang === 'en') {
+        currentHunterLang = savedLang;
+    }
+} catch(e) {}
+
+function ht(key) {
+    const langDict = HUNTER_I18N[currentHunterLang] || HUNTER_I18N['en'];
+    return (langDict && langDict[key]) || (HUNTER_I18N['en'] && HUNTER_I18N['en'][key]) || key;
+}
+
+function applyHunterLanguage(lang) {
+    try {
+        currentHunterLang = (lang === 'tr') ? 'tr' : 'en';
+        document.documentElement.lang = currentHunterLang;
+        try { localStorage.setItem('btc_puzzle_lang', currentHunterLang); } catch(e) {}
+        const isEn = (currentHunterLang === 'en');
+
+        // 1. Language Toggle Button
+        const elLang = document.getElementById('labelLang');
+        if (elLang) elLang.innerText = isEn ? '🌐 Türkçe' : '🌐 English';
+
+        // 2. Unsolved & Solved Dropdown Labels
+        const elUnsolved = document.getElementById('labelUnsolved');
+        if (elUnsolved) {
+            if (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined') {
+                const cnt = unsolvedList.length;
+                const tot = (typeof allUnsolvedPool !== 'undefined') ? allUnsolvedPool.length : cnt;
+                if (cnt === tot) elUnsolved.innerText = isEn ? '🔁 All Puzzles' : '🔁 Hepsi';
+                else if (cnt > 1) elUnsolved.innerText = isEn ? `🔁 Selected (${cnt})` : `🔁 Seçili (${cnt})`;
+                else if (cnt === 1) elUnsolved.innerText = `🔁 #${unsolvedList[0].id}`;
+            } else if (!currentTarget || currentTarget.id === 'ALL') {
+                elUnsolved.innerText = isEn ? '🔁 All Puzzles' : '🔁 Hepsi';
+            }
+        }
+
+        const elSolved = document.getElementById('labelSolved');
+        if (elSolved) elSolved.innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> ' + (isEn ? 'Solved' : 'Bitti');
+
+        // 3. Stats Grid
+        const elAttempts = document.getElementById('lblStatAttempts');
+        if (elAttempts) elAttempts.innerText = ht('statAttempts');
+
+        const elSpeed = document.getElementById('lblStatSpeed');
+        if (elSpeed) elSpeed.innerText = ht('statSpeed');
+
+        const elPool = document.getElementById('lblStatPool');
+        if (elPool) elPool.innerText = ht('statPool');
+
+        const elPoolCount = document.getElementById('statPoolCount');
+        if (elPoolCount) {
+            const txt = elPoolCount.innerText;
+            if (txt.includes('SEÇİLİ') || txt.includes('SELECTED')) {
+                elPoolCount.innerText = txt.replace('SEÇİLİ', isEn ? 'SELECTED' : 'SEÇİLİ').replace('SELECTED', isEn ? 'SELECTED' : 'SEÇİLİ');
+            } else if (txt.includes('TÜMÜ') || txt.includes('ALL')) {
+                elPoolCount.innerText = txt.replace('TÜMÜ', isEn ? 'ALL' : 'TÜMÜ').replace('ALL', isEn ? 'ALL' : 'TÜMÜ');
+            }
+        }
+
+        const elElapsed = document.getElementById('lblStatElapsed');
+        if (elElapsed) elElapsed.innerText = ht('statElapsed');
+
+        // 4. Live Logs
+        const elLogAlgo = document.getElementById('lblLogAlgo');
+        if (elLogAlgo) elLogAlgo.innerText = ht('logAlgo');
+
+        const elLogTarget = document.getElementById('lblLogTarget');
+        if (elLogTarget) elLogTarget.innerText = ht('logTarget');
+
+        const elLogRange = document.getElementById('lblLogRange');
+        if (elLogRange) elLogRange.innerText = ht('logRange');
+
+        const elLogRangeVal = document.getElementById('logRange');
+        if (elLogRangeVal) {
+            if (elLogRangeVal.innerText.includes('Bulmacaya') || elLogRangeVal.innerText.includes('Dynamic')) {
+                elLogRangeVal.innerText = isEn ? 'Dynamic per Puzzle' : 'Bulmacaya Göre Dinamik';
+            }
+        }
+
+        const elLogAlgoVal = document.getElementById('logAlgo');
+        if (elLogAlgoVal) {
+            if (elLogAlgoVal.innerText.includes('Boşluksuz') || (isEn && elLogAlgoVal.innerText.includes('Quasi-Monte Carlo'))) {
+                elLogAlgoVal.innerText = isEn ? '📐 Sobol & Van der Corput (Quasi-Monte Carlo)' : '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
+            }
+        }
+
+        const elLogKey = document.getElementById('lblLogKey');
+        if (elLogKey) elLogKey.innerText = ht('logKey');
+
+        // 5. Start / Stop Button
+        const elBtn = document.getElementById('btnToggle');
+        if (elBtn) {
+            elBtn.innerText = (typeof isRunning !== 'undefined' && isRunning) ? ht('btnStop') : ht('btnStart');
+        }
+
+        // 6. Agent Button
+        const elAgToggle = document.getElementById('agentToggleText');
+        if (elAgToggle) elAgToggle.innerText = ht('agentText');
+
+        // 7. Traps badge
+        const elTrapBadge = document.getElementById('kangarooSwarmTrapCount');
+        if (elTrapBadge) {
+            const numMatch = elTrapBadge.innerText.match(/\d+/);
+            const count = numMatch ? numMatch[0] : '0';
+            elTrapBadge.innerText = '📍 ' + count + (isEn ? ' Traps' : ' Tuzak');
+        }
+
+        // 8. Entropy select
+        const elOptOff = document.getElementById('optEntropyOff');
+        if (elOptOff) elOptOff.innerText = isEn ? '⛔ Disabled' : '⛔ Kapalı';
+        const elOptAuto = document.getElementById('optEntropyAuto');
+        if (elOptAuto) elOptAuto.innerText = isEn ? '🔄 Auto' : '🔄 Oto';
+
+        // 9. Prefix Auto Button
+        const elBtnPreAuto = document.getElementById('btnPrefixAuto');
+        if (elBtnPreAuto) {
+            const isAuto = (typeof isPrefixAutoJump !== 'undefined' && isPrefixAutoJump);
+            elBtnPreAuto.innerHTML = isAuto ? (isEn ? '🔄 Auto' : '🔄 Oto') : (isEn ? '⛔ Off' : '⛔ Kapalı');
+        }
+
+        // 10. Speeds
+        const elSFast = document.getElementById('btnSpeedFast');
+        if (elSFast) elSFast.innerText = ht('speedFast');
+        const elSMed = document.getElementById('btnSpeedMed');
+        if (elSMed) elSMed.innerText = ht('speedMed');
+        const elSSlow = document.getElementById('btnSpeedSlow');
+        if (elSSlow) elSSlow.innerText = ht('speedSlow');
+        const elSMicro = document.getElementById('btnSpeedMicro');
+        if (elSMicro) elSMicro.innerText = ht('speedMicro');
+
+        // 11. Donation Box
+        const elDTitle = document.getElementById('lblDonateTitle');
+        if (elDTitle) elDTitle.innerText = ht('donateTitle');
+        const elDBtn = document.getElementById('btnCopyDonate');
+        if (elDBtn) elDBtn.innerText = ht('btnCopyDonate');
+
+        // 12. Win Alert
+        const elWinTitle = document.getElementById('winAlertTitle');
+        if (elWinTitle) elWinTitle.innerText = ht('winTitle');
+        const elWinToggleText = document.getElementById('winToggleText');
+        if (elWinToggleText) {
+            const details = document.getElementById('winDetails');
+            const isHidden = (!details || details.style.display === 'none' || details.style.display === '');
+            elWinToggleText.innerText = isHidden ? ht('winExpand') : ht('winCollapse');
+        }
+
+        // 13. Fatal Alert Title
+        const elFatalTitle = document.getElementById('fatalErrorTitle');
+        if (elFatalTitle) elFatalTitle.innerText = ht('fatalTitle');
+
+        // 14. Algo select options
+        const aSel = document.getElementById('algoSelect');
+        if (aSel) {
+            const curVal = aSel.value;
+            const opts = aSel.options;
+            for (let i = 0; i < opts.length; i++) {
+                const v = opts[i].value;
+                if (v === 'AGENT') opts[i].text = ht('algoAgent');
+                else if (v === 'AUTO') opts[i].text = ht('algoAuto');
+                else if (v === 'VD_CORPUT') opts[i].text = ht('algoVdCorput');
+                else if (v === 'WEYL_GOLDEN') opts[i].text = ht('algoWeyl');
+                else if (v === 'COPRIME_STRIDE') opts[i].text = ht('algoCoprime');
+                else if (v === 'RANDOM') opts[i].text = ht('algoRandom');
+                else if (v === 'SOBOL') opts[i].text = ht('algoSobol');
+                else if (v === 'HILBERT') opts[i].text = ht('algoHilbert');
+                else if (v === 'WEAK_ENTROPY') opts[i].text = ht('algoWeak');
+                else if (v === 'CHAOS') opts[i].text = ht('algoChaos');
+                else if (v === 'KANGAROO') opts[i].text = ht('algoKangaroo');
+                else if (v === 'HALTON') opts[i].text = ht('algoHalton');
+                else if (v === 'SCRAMBLED_SOBOL') opts[i].text = ht('algoScrambledSobol');
+                else if (v === 'MCMC') opts[i].text = ht('algoMCMC');
+            }
+            aSel.value = curVal;
+        }
+
+        // 15. Re-render thread options
+        if (typeof initThreadCountUI === 'function') initThreadCountUI();
+
+    } catch(err) {
+        console.error('applyHunterLanguage error:', err);
+    }
+}
+
+function toggleHunterLanguage() {
+    applyHunterLanguage(currentHunterLang === 'en' ? 'tr' : 'en');
+}
+
+// Initial activation on page load
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (currentHunterLang !== 'en') applyHunterLanguage(currentHunterLang);
+        });
+    } else {
+        if (currentHunterLang !== 'en') applyHunterLanguage(currentHunterLang);
+    }
+}
+
 function toggleHunter() {
     const btn = document.getElementById('btnToggle');
     const btnUnsolved = document.getElementById('btnMainUnsolved');
@@ -8469,7 +8782,7 @@ function toggleHunter() {
         stopWorkerPool();
         releaseWakeLock();
         btn.className = 'action-btn btn-start';
-        btn.innerText = '▶ Aramayı Başlat';
+        btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '▶ Aramayı Başlat' : '▶ Start Hunting';
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -8520,7 +8833,7 @@ function toggleHunter() {
         // MIC modu: mikrofonu başlat
         
         btn.className = 'action-btn btn-stop';
-        btn.innerText = '⏹ Aramayı Durdur';
+        btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '⏹ Aramayı Durdur' : '⏹ Stop Hunting';
 
         if (activeRangeMode === 'HEX') {
             onHexRangeInput();

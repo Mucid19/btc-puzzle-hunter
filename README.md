@@ -10,120 +10,114 @@
 
 ![BTC Puzzle Hunter Preview](ui_preview.png)
 
-**`index.html`**, Bitcoin Puzzle işlemlerini çözmek için geliştirilmiş; **%100 bağımsız, sıfır dış bağımlılık (Zero External Dependency)** içeren ve doğrudan tarayıcı üzerinden çalışan tek dosyalık (single-file), yüksek performanslı bir arama ve kriptografik analiz aracıdır.
+**`index.html`** is an ultra-fast, 100% offline, zero-dependency browser-based cryptographic analysis and search engine designed to solve Bitcoin Puzzle transactions. Runs entirely in your local browser RAM via parallel Web Workers and WebGPU hardware acceleration.
 
-Herhangi bir sunucu kurulumu, `npm`, Node.js veya internet bağlantısı gerektirmez. Dosyayı tarayıcınızda açtığınız anda tüm secp256k1 ve hash kütüphaneleri cihazınızın yerel RAM belleğinde tamamen bağımsız çalışır.
+**[TR]** *Bitcoin Puzzle işlemlerini çözmek için geliştirilmiş; %100 bağımsız, sıfır dış bağımlılık (Zero External Dependency) içeren ve doğrudan tarayıcı üzerinden çalışan tek dosyalık (single-file), çift dilli (EN/TR), yüksek performanslı arama ve kriptografik analiz aracı.*
 
 ---
 
-## 🌐 Canlı Kullanım (GitHub Pages)
+## 🌐 Live Demo / Canlı Kullanım (GitHub Pages)
 
-Doğrudan tarayıcınız üzerinden hiçbir şey indirmeden çalıştırabilirsiniz:
+Run directly in your browser with zero installation:  
 👉 **[https://mucid19.github.io/btc-puzzle-hunter/](https://mucid19.github.io/btc-puzzle-hunter/)**
 
 ---
 
-## 🌟 Öne Çıkan Özellikler
+## ⚡ Highlights & Key Features (English)
 
-### 1. 🦘 Pollard's Kangaroo Hibrit Motoru ($O(\sqrt{N})$)
-* Klasik kaba kuvvet (brute-force) yerine $O(\sqrt{N})$ zaman karmaşıklığı ile çalışan gerçek eliptik eğri sıçrama ve tuzak motoru.
-* **Hibrit Aday Tarama:** Eliptik eğri tuzak noktaları hesaplanırken, eşzamanlı olarak aralıktan aday anahtarlar doğrudan secp256k1 Hash160 / Adres karşılaştırıcısına sokulur; dar test pencerelerinde ve önek dilimlerinde saniyeler içinde hedefi yakalar.
-* İfşa edilmiş açık anahtar (Exposed Public Key) desteği ile tuzak (trap) oluşturma ve anında doğrulama.
+### 1. 🦘 Pollard's Kangaroo Engine ($O(\sqrt{N})$)
+* Solves elliptic curve discrete logarithm problems in $O(\sqrt{N})$ time complexity instead of exponential brute-force.
+* **Hybrid Candidate Verification**: Validates candidate private keys against secp256k1 Hash160 addresses simultaneously while computing elliptic curve trap points.
+* Utilizes exposed public keys for known puzzles (#19, #57, #135, #140, #145, #150, #155, #160).
 
-### 2. ⚡ Çoklu İş Parçacığı (Multi-Thread Web Workers)
-* Cihazınızın donanımsal çekirdek sayısını (`navigator.hardwareConcurrency`) otomatik algılar.
-* 1 ila 32+ bağımsız Web Worker ile CPU çekirdeklerini %100 verimle paralel olarak çalıştırır.
-* Dinamik önbellek geçersiz kılma (Revoke Blob URL) ile her başlatmada güncel motor kodunu temiz olarak devreye alır.
+### 2. ⚡ Multi-Thread Web Workers
+* Automatically detects your hardware CPU concurrency (`navigator.hardwareConcurrency`).
+* Spawns 1 to 32+ independent Web Workers running in parallel with 100% CPU utilization.
+* Dynamic cache busting via Blob URLs ensures clean memory allocation on every run.
 
-### 3. 🚀 WebGPU Donanım Hızlandırma
-* Uyumlu tarayıcı ve GPU'larda saniyede milyonlarca anahtar kombinasyonunu doğrudan grafik kartı çekirdeklerinde işleme opsiyonu (`gpu_engine.js`).
+### 3. 🚀 WebGPU Hardware Acceleration
+* Process millions of key combinations per second directly on your graphics card cores using WebGPU (`gpu_engine.js`).
 
-### 4. 🎯 12+ Zengin Matematiksel Arama Algoritması
-* **🎲 Saf Rastgele (Random / Uniform RNG):** Kriptografik güvenli homojen global tarama.
-* **📐 Sobol Düşük Tutarsızlık (Quasi-Random):** Boşluk bırakmayan alan örtüşümü.
-* **📏 Van der Corput:** Sayı teorisi tabanlı taban-2 bit tersleme dağılımı.
-* **🌟 Weyl Altın Oran ($\phi$):** İrrasyonel adım frekans modülasyonlu altın kafes.
-* **♾️ Asal Adım (Coprime Stride):** Modüler döngüsüz tam kapsama taraması.
-* **🌀 Hilbert Uzay Doldurma Eğrisi:** %100 space-filling topolojik yakınlık taraması.
-* **⚡ Zayıf Entropi (Weak Entropy):** Kusurlu PRNG ve zayıf tohum kalıpları.
-* **🌌 Deterministik Kaos (Deterministic Chaos):** Lojistik ve çadır haritalı dinamik yürüyüş.
-* **🦘 Pollard's Kangaroo:** Eliptik eğri tuzak ve çarpışma ağı $O(\sqrt{N})$.
-* **🎲 Halton Dizisi:** 2, 3, 5, 7 asal tabanlı çok boyutlu homojen dağılım.
-* **🔀 Scrambled Sobol:** Owen sayısal kaydırmalı dinamik boşluk örtüşümü.
-* **🎰 MCMC (Markov Zinciri):** Metropolis-Hastings ve Lévy sıçramalı uyarlanabilir arama.
+### 4. 🎯 12+ Specialized Search Algorithms
+* **🎲 Pure Random**: Cryptographically secure uniform global exploration.
+* **📐 Sobol (Quasi-RNG)**: Low-discrepancy space-filling sequence.
+* **📏 Van der Corput**: Number-theoretic bit-reversal sequence.
+* **🌟 Weyl Golden Ratio ($\phi$)**: Irrational stride lattice for zero overlapping.
+* **♾️ Coprime Stride**: Modular non-repeating cycle traversal.
+* **🌀 Hilbert Curve**: Multi-dimensional space-filling topological walk.
+* **⚡ Weak Entropy**: Targets defective PRNG seeds and low-entropy keys.
+* **🌌 Deterministic Chaos**: Logistic and tent map dynamic trajectory.
+* **🦘 Pollard's Kangaroo**: Elliptic curve trap and collision network $O(\sqrt{N})$.
+* **🎲 Halton Sequence**: Prime-based multi-dimensional uniform coverage.
+* **🔀 Scrambled Sobol**: Owen-scrambled dynamic space filling.
+* **🎰 MCMC (Markov Chain)**: Adaptive Metropolis-Hastings walk.
 
-### 5. 🛡️ %100 Çevrimdışı ve Sıfır Ağ İsteği
-* **Gömülü Kütüphaneler:** CryptoJS, secp256k1, BigInteger, Bech32, Base58 ve RIPEMD160 kütüphaneleri doğrudan tek bir dosya içine entegre edilmiştir.
+### 5. 🌐 Bilingual Interface (EN / TR)
+* Instant 1-click language switcher (`🌐 EN | TR`) in the header.
+* Fully translated buttons, labels, algorithms, and real-time statistics.
 
-### 6. 🔑 Tam 256-Bit Standart Bitcoin Özel Anahtar Formatı
-* Bulunan ve aranan tüm anahtarlar standart 64 onaltılık karakter (`0x0000000000000000000000000000000000000000000000000...`) formatında sunulur.
-* WIF (Wallet Import Format), Sıkıştırılmış (Compressed) ve Sıkıştırılmamış (Uncompressed) adreslerle otomatik doğrulanır.
+### 6. 🛡️ 100% Air-Gapped & Offline Safe
+* Embedded standalone libraries: CryptoJS, secp256k1, BigInteger, Bech32, Base58, and RIPEMD160.
+* Zero network requests, zero telemetry, zero analytics.
 
 ---
 
-## 🚀 Hızlı Başlangıç (Yerel Kullanım)
+## 🚀 Quick Start
 
-1. Depoyu indirin veya klonlayın:
+1. Clone or download this repository:
    ```bash
    git clone https://github.com/Mucid19/btc-puzzle-hunter.git
    ```
-2. Klasör içerisindeki **`index.html`** dosyasına herhangi bir modern web tarayıcısında çift tıklayın:
-   * Google Chrome
-   * Microsoft Edge
-   * Brave Browser
-   * Mozilla Firefox
-3. **Hepsi bu kadar!** İnternet bağlantınız olmasa dahi anında çalışmaya başlar.
+2. Double-click **`index.html`** in any modern web browser (Chrome, Brave, Edge, Firefox, Safari).
+3. Select your target puzzle (#66, #71, #72, etc.), choose your preferred algorithm, adjust thread count, and click **▶ Start Hunting**!
 
 ---
 
-## 🖥️ Kullanım Rehberi
+## 🌟 Türkçe Özellikler ve Kullanım Rehberi
 
-1. **Hedef Belirleme:**
-   * Sol paneldeki listeden aramak istediğiniz Bitcoin Puzzle numarasını seçin (örneğin `#57`, `#66` vb.).
-   * İsterseniz **"Özel Aralık / Hex"** veya **"Yüzde Dilimi"** sekmesinden kendi aralığınızı girin.
-2. **Algoritma Seçimi:**
-   * Üst menüden arama metodolojinizi belirleyin (örn: `🔄 Strateji Döngüsü`, `🦘 Kangaroo`, `🎲 Rastgele`, `📐 Sobol`, `🎲 Halton`, `🎰 MCMC`).
-3. **Thread / Donanım Ayarı:**
-   * Cihazınızın çekirdek sayısına göre dilediğiniz iş parçacığı (Worker) sayısını seçin veya GPU motorunu devreye alın.
-4. **Aramayı Başlatın:**
-   * **`▶ Aramayı Başlat`** butonuna tıklayın.
-   * Hedef anahtar bulunduğunda sesli ve görsel bildirimle ekranda 64 karakter tam özel anahtarı ve cüzdan adresi listelenecektir.
+### 1. Hedef Belirleme
+* Sol açılır listeden aramak istediğiniz Bitcoin Puzzle numarasını seçin (örneğin `#66`, `#71`, `#72` vb.).
+* Çözülmüş tüm bulmacalar otomatik olarak Arşiv listesinde ayrı tutulur.
+
+### 2. Algoritma ve Donanım Ayarı
+* Arama yönteminizi belirleyin (`🔄 Strateji Döngüsü`, `🦘 Kangaroo`, `🎲 Rastgele`, `📐 Sobol`, vb.).
+* Donanımınıza uygun iş parçacığı (Worker) sayısını seçin veya WebGPU motorunu etkinleştirin.
+
+### 3. Çoklu Havuz ve Format Desteği
+* Üretilen her aday anahtar eşzamanlı olarak hem seçili hedefte hem de **İlave Adres Havuzunda (22.000+ adres)** test edilir.
+* Sıkıştırılmış (`1...`, `bc1q...`), sıkıştırılmamış ve Nested SegWit (`3...`) formatları anında taranır.
 
 ---
 
-## 📂 Dosya Yapısı
+## 📂 Repository File Structure
 
-Depo tamamen optimize edilmiş ve yüklemeye hazır temiz bir yapıdadır:
-
-| Dosya | Açıklama |
+| File | Description |
 | :--- | :--- |
-| **`index.html`** | %100 bağımsız, sıfır dış bağımlılıklı ana web uygulaması |
-| **`gpu_engine.js`** | WebGPU donanım hızlandırma ve paralel anahtar üretim motoru |
-| **`kangaroo_engine.js`** | Pollard's Kangaroo eliptik eğri çarpışma ve tuzak kütüphanesi |
-| **`all_160_puzzles.json`** | Tüm 160 Bitcoin bulmacasının hedef aralık ve adres veri seti |
-| **`manifest.json`** | PWA (Progressive Web App) masaüstü ve mobil kurulum manifestosu |
-| **`sw.js`** | %100 çevrimdışı önbellekleme sağlayan Service Worker |
-| **`icon-192.png`** / **`icon-512.png`** | Yüksek çözünürlüklü PWA uygulama ikonları |
-| **`ui_preview.png`** | GitHub proje arayüz önizleme görseli |
-| **`LICENSE`** | MIT Açık Kaynak Lisansı |
-| **`.gitignore`** | Git geçici ve yedek dosya hariç tutma kuralları |
-| **`README.md`** | GitHub proje tanıtım ve kullanım dokümantasyonu |
+| **`index.html`** | %100 standalone, zero-dependency bilingual web application |
+| **`gpu_engine.js`** | WebGPU hardware acceleration engine |
+| **`kangaroo_engine.js`** | Pollard's Kangaroo elliptic curve collision library |
+| **`all_160_puzzles.json`** | All 160 Bitcoin puzzle target ranges and addresses dataset |
+| **`manifest.json`** | PWA (Progressive Web App) installation manifest |
+| **`sw.js`** | Offline Service Worker caching |
+| **`icon-192.png`** / **`icon-512.png`** | High-resolution PWA application icons |
+| **`ui_preview.png`** | Project interface preview image |
+| **`LICENSE`** | MIT Open-Source License |
+| **`README.md`** | Bilingual project documentation |
 
 ---
 
-## ☕ Bağış ve Destek
+## ☕ Support & Donations / Bağış
 
-Bu projeyi faydalı bulduysanız, algoritmaların geliştirilmesine ve açık kaynak araştırma çalışmalarına destek olmak isterseniz Bitcoin ile katkıda bulunabilirsiniz:
+If this project helped you or supported your research, voluntary contributions are warmly appreciated:
 
-### 🪙 Bitcoin (BTC) Bağış Adresi:
+### 🪙 Bitcoin (BTC) Donation Address:
 ```text
 bc1qxf5cfrxasshlkt79x0q805l9t3feer868en68nhlxmwetlr6sv4qdfda5s
 ```
 
-> *Tüm bağışlar yeni algoritmik optimizasyonlar ve açık kaynak Bitcoin kriptografi araçlarının geliştirilmesi için kullanılmaktadır. Desteğiniz için teşekkürler!*
-
 ---
 
-## ⚖️ Yasal Uyarı
+## ⚖️ License & Disclaimer
 
-Bu yazılım yalnızca eğitim, matematiksel araştırma ve kriptografik analiz amacıyla geliştirilmiştir. Kullanıcılar kendi kullanım senaryolarından ve geçerli yerel mevzuatlara uyumdan bizzat sorumludur.
+Distributed under the **MIT License**. See `LICENSE` for more information.  
+*This software is developed strictly for educational, mathematical research, and cryptographic analysis purposes.*
