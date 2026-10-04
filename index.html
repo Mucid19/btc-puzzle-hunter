@@ -247,16 +247,25 @@
 
         .auto-slider-sweep-bar {
             display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            margin-bottom: 6px;
+            flex-direction: column;
+            gap: 3px;
+            margin-bottom: 4px;
             padding: 3px 6px;
             background: rgba(15, 23, 42, 0.65);
             border-radius: 6px;
             border: 1px solid #1e293b;
             box-sizing: border-box;
             width: 100%;
+            overflow: hidden;
+        }
+
+        .sweep-sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 4px;
+            box-sizing: border-box;
         }
 
         .auto-slider-speed-group {
@@ -268,6 +277,43 @@
             padding: 1px;
             gap: 2px;
             flex-shrink: 0;
+        }
+
+        .crop-mini-group {
+            display: inline-flex;
+            align-items: center;
+            background: #0b1320;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 1px 3px;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .mini-crop-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            padding: 1px 5px;
+            height: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 3px;
+            cursor: pointer;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid transparent;
+            line-height: 1;
+            box-sizing: border-box;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .mini-crop-btn:hover {
+            background: #1e293b;
+            color: #38bdf8;
+            border-color: #0284c7;
         }
 
         .auto-speed-btn {
@@ -311,6 +357,20 @@
             padding: 2px 6px;
             border-radius: 3px;
             border: 1px solid #1e293b;
+            font-weight: bold;
+            white-space: nowrap;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        #lblCropStatus {
+            font-family: monospace;
+            font-size: 10px;
+            color: #f59e0b;
+            background: #1e1b4b;
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid #6366f1;
             font-weight: bold;
             white-space: nowrap;
             line-height: 1.2;
@@ -758,97 +818,95 @@
                 gap: 6px;
             }
             .dual-slider-bar {
-                padding: 8px 8px;
+                padding: 4px 6px;
                 margin-bottom: 8px;
+                box-sizing: border-box;
+                overflow: hidden;
+                width: 100%;
             }
             .auto-slider-sweep-bar {
-                flex-wrap: nowrap !important;
-                padding: 3px 6px !important;
-                gap: 6px !important;
-                justify-content: flex-start !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 3px !important;
+                padding: 2px 4px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                overflow: hidden !important;
+            }
+            .sweep-sub-row {
+                display: flex !important;
                 align-items: center !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+                gap: 3px !important;
+                box-sizing: border-box !important;
             }
             .auto-slider-speed-group {
+                display: inline-flex !important;
                 flex: 1 1 auto !important;
-                display: flex !important;
-                width: auto !important;
+                min-width: 0 !important;
+                gap: 2px !important;
                 box-sizing: border-box !important;
             }
             .auto-speed-btn {
                 flex: 1 !important;
-                padding: 2px 4px !important;
-                font-size: 9.5px !important;
-                gap: 2px !important;
-                height: 24px !important;
+                min-width: 0 !important;
+                padding: 1px 2px !important;
+                font-size: 8.5px !important;
+                gap: 1px !important;
+                height: 21px !important;
                 justify-content: center !important;
+                white-space: nowrap !important;
             }
             .auto-slider-info-group {
                 flex: 0 0 auto !important;
                 display: inline-flex !important;
-                justify-content: center !important;
                 align-items: center !important;
-                width: auto !important;
-                gap: 0 !important;
-                box-sizing: border-box !important;
             }
             .slider-space-badge {
                 display: none !important;
             }
             #badgeAutoSliderStatus {
-                font-size: 9.5px !important;
-                padding: 2px 6px !important;
-                flex-shrink: 0 !important;
-                height: 24px !important;
+                font-size: 8.5px !important;
+                padding: 1px 4px !important;
+                height: 21px !important;
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
+                flex-shrink: 0 !important;
                 box-sizing: border-box !important;
+                white-space: nowrap !important;
             }
-            .auto-slider-sweep-bar {
-                flex-wrap: nowrap !important;
-                padding: 3px 6px !important;
-                gap: 6px !important;
-                justify-content: flex-start !important;
-                align-items: center !important;
-            }
-            .auto-slider-speed-group {
+            .crop-mini-group {
+                display: inline-flex !important;
                 flex: 1 1 auto !important;
-                display: flex !important;
-                width: auto !important;
-                box-sizing: border-box !important;
-            }
-            .auto-speed-btn {
-                flex: 1 !important;
-                padding: 2px 4px !important;
-                font-size: 9.5px !important;
+                min-width: 0 !important;
                 gap: 2px !important;
-                height: 24px !important;
-                justify-content: center !important;
-            }
-            .auto-slider-info-group {
-                flex: 0 0 auto !important;
-                display: inline-flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                width: auto !important;
-                gap: 0 !important;
                 box-sizing: border-box !important;
             }
-            .slider-space-badge {
-                display: none !important;
+            .mini-crop-btn {
+                flex: 1 !important;
+                min-width: 0 !important;
+                padding: 1px 2px !important;
+                font-size: 8.5px !important;
+                height: 20px !important;
+                justify-content: center !important;
+                white-space: nowrap !important;
             }
-            #badgeAutoSliderStatus {
-                font-size: 9.5px !important;
-                padding: 2px 6px !important;
+            #lblCropStatus {
+                font-size: 8.5px !important;
+                padding: 1px 4px !important;
+                height: 20px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
                 flex-shrink: 0 !important;
-                height: 24px !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                box-sizing: border-box !important;
+                white-space: nowrap !important;
             }
             .slider-item {
-                padding: 6px 8px;
+                padding: 4px 6px;
+                box-sizing: border-box;
+                min-width: 0;
             }
             .hex-bound-input {
                 width: 110px !important;
@@ -1262,7 +1320,7 @@
             <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
                 <!-- 🧠 OTOMATİK ARALIK VE STRATEJİ AJANI BUTONU -->
-                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🔄 Otomatik Strateji Döngüsü (Aç/Kapat)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
+                <div id="btnAgentToggle" onclick="toggleAutopilotAgent()" title="🔄 Auto Strategy Cycle (Toggle)" style="display:inline-flex; align-items:center; gap:3px; padding:0 6px; height:24px; border-radius:4px; font-size:10px; font-weight:bold; white-space:nowrap; flex-shrink:0; background:#1e1b4b; border:1px solid #6366f1; color:#a5b4fc; cursor:pointer; transition:all 0.2s;">
                     <span>🧠</span>
                     <span id="agentToggleText">Cycle</span>
                 </div>
@@ -1278,16 +1336,16 @@
                 </select>
 
                 <!-- KANGAROO TUZ & AKTİF SEKME SAYISI ROZETLERİ -->
-                <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Tuz Sayısı">📍 0 Traps</span>
-                <span id="kangarooSwarmTabCountBadge" style="display:none;" title="Sekme">🟢 1 Sekme</span>
+                <span id="kangarooSwarmTrapCount" style="display:inline-flex; align-items:center; gap:2px; color: #38bdf8; font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.14); padding: 1px 6px; height:24px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.35); font-family: monospace; white-space: nowrap; box-sizing: border-box; flex-shrink: 0;" title="Kangaroo Trap Count">📍 0 Traps</span>
+                <span id="kangarooSwarmTabCountBadge" style="display:none;" title="Tab">🟢 1 Tab</span>
             </div>
 
             <!-- 2. SATIR: ALGORİTMA (📐), ENTROPİ (⚡) VE ÖN EK (0x) BİRLEŞİK KONTROL SATIRI -->
             <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap; margin-top:2px;">
                 
                 <!-- ALGORİTMA SEÇİCİ (📐 Sembollü) -->
-                <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Arama Algoritması">
-                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Arama Algoritması">📐</span>
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1.2; min-width:0;" title="Search Algorithm">
+                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Search Algorithm">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
                         <option value="AGENT">🔄 Strategy Cycle</option>
                         <option value="AUTO" selected>🔄 Auto (Hybrid)</option>
@@ -1310,8 +1368,8 @@
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
                 <!-- ENTROPİ DERİNLİĞİ (⚡ Sembollü) -->
-                <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Kusurlu Entropi Boyutu (Bit)">
-                    <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Kusurlu Entropi Boyutu (Bit)">⚡</span>
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Flawed Entropy Size (Bit)">
+                    <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Flawed Entropy Size (Bit)">⚡</span>
                     <select id="entropyBitsSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onEntropyBitsChange()">
                         <option value="-1" id="optEntropyOff">⛔ Disabled</option>
                         <option value="0" id="optEntropyAuto" selected>🔄 Auto</option>
@@ -1325,9 +1383,9 @@
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
                 <!-- ÖN EK BLOĞU (Varsayılan Kapalı) -->
-                <div id="blockPrefix" onclick="togglePrefixFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1.1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Ön Ek Filtresi Aç/Kapat (Tıklayın)">
-                    <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:10.5px; flex-shrink:0; opacity:0.45;" title="Ön Ek Filtresi">0x</span>
-                    <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; border-radius:3px; opacity:0.5;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="isPrefixFilterActive=true; updateModeVisuals();" title="Ön Ek">
+                <div id="blockPrefix" onclick="togglePrefixFilter()" style="display:inline-flex; align-items:center; gap:2px; flex:1.1; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; box-shadow:none; opacity:0.45; transition:all 0.2s ease; cursor:pointer;" title="Prefix Filter Toggle (Click)">
+                    <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:10.5px; flex-shrink:0; opacity:0.45;" title="Prefix Filter">0x</span>
+                    <input type="text" id="prefixInput" class="prefix-input-box" placeholder="2000" style="padding:1px 3px; height:23px; font-size:10px; font-family:monospace; width:100%; min-width:32px; border-radius:3px; opacity:0.5;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="isPrefixFilterActive=true; updateModeVisuals();" title="Prefix">
                     <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:23px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#ef4444; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Prefix Off (Click to toggle Auto)">
                         ⛔ Off
                     </button>
@@ -1337,27 +1395,44 @@
 
             <!-- 3. SATIR: 🤖 OTOPİLOT AJANI (Panelde gizli çalışır) -->
             <div id="agentBanner" style="display:none !important;">
-                <span id="agentPhaseText" style="display:none;">Faz 1: Altın Oran Kademeli Tarama</span>
-                <span id="agentProgressText" style="display:none;">Doygunluk: %0 (180s)</span>
-                <button type="button" onclick="toggleAutopilotAgent(false)" style="display:none;">Kapat</button>
+                <span id="agentPhaseText" style="display:none;">Phase 1: Golden Ratio Sweeping</span>
+                <span id="agentProgressText" style="display:none;">Saturation: 0% (180s)</span>
+                <button type="button" onclick="toggleAutopilotAgent(false)" style="display:none;">Close</button>
             </div>
         </div>
     </div>
 
     <!-- 🎚️ ÇİFTLİ UZAY DARALTMA KAYDIRAÇLARI -->
     <div class="dual-slider-bar">
-        <!-- 🎛️ OTO KAYDIRAÇ (SWEEP / RADAR) KONTROL ÇUBUĞU -->
+        <!-- 🎛️ OTO KAYDIRAÇ & UZAY KIRPMA KONTROL ÇUBUĞU -->
         <div class="auto-slider-sweep-bar">
-            <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Sweep Speed: 1s">⚡ Fast</button>
-                <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Sweep Speed: 3s">⏱️ Med</button>
-                <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Sweep Speed: 8s">🐢 Slow</button>
-                <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Sweep Speed: 15s">🔬 Micro</button>
+            <!-- 1. SATIR: Hız Seçiciler & Radar Konum Rozeti -->
+            <div class="sweep-sub-row">
+                <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
+                    <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Fast (1s / 2.6% Golden Step)">⚡ Fast</button>
+                    <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Medium (3s / 1.6% Golden Step)">⏱️ Med</button>
+                    <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Slow (8s / 1.2% Golden Step)">🐢 Slow</button>
+                    <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Micro (15s / 0.6% Golden Step)">🔬 Micro</button>
+                </div>
+                <div class="auto-slider-info-group">
+                    <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Covered: Full Space</span>
+                    <span id="badgeAutoSliderStatus">%0.0 - %100.0</span>
+                    <input type="checkbox" id="chkEnableDualSlider" style="display:none;" checked onchange="onDualSliderToggle()">
+                </div>
             </div>
-            <div class="auto-slider-info-group">
-                <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Kapsanan: Tam Uzay</span>
-                <span id="badgeAutoSliderStatus">%0.0 - %100.0</span>
-                <input type="checkbox" id="chkEnableDualSlider" style="display:none;" checked onchange="onDualSliderToggle()">
+
+            <!-- 2. SATIR: Uzay Kırpma Butonları & Kırpma Rozeti -->
+            <div class="sweep-sub-row">
+                <div class="crop-mini-group">
+                    <span style="color:#f59e0b; font-weight:bold; font-size:10px; padding:0 2px;" title="Crop / Cut Space">✂️</span>
+                    <button type="button" class="mini-crop-btn" onclick="applySpaceCrop(25, 100)" title="Cut first 25%, scan 25%-100%">%25</button>
+                    <button type="button" class="mini-crop-btn" onclick="applySpaceCrop(50, 100)" title="Cut first 50%, scan upper half (50%-100%)">%50▲</button>
+                    <button type="button" class="mini-crop-btn" onclick="applySpaceCrop(0, 50)" title="Cut last 50%, scan lower half (0%-50%)">%50▼</button>
+                    <button type="button" class="mini-crop-btn" id="btnCropGolden" onclick="applySpaceCrop(38.2, 61.8)" title="Cut outside Golden Ratio (38.2% - 61.8%)" style="color:#fbbf24;">🌟 Golden</button>
+                    <button type="button" class="mini-crop-btn" id="btnCropSelection" onclick="cropSpaceToCurrentSelection()" style="background:#0284c7; color:#fff; border-color:#38bdf8; font-weight:bold;" title="Crop & lock selected range as new space">📌 Crop</button>
+                    <button type="button" class="mini-crop-btn" id="btnResetCrop" onclick="resetSpaceCrop()" style="background:#991b1b; color:#fff; border-color:#ef4444; font-weight:bold; display:none;" title="Reset Space (Full Space 0%-100%)">↩️</button>
+                </div>
+                <span id="lblCropStatus" style="color:#f59e0b; font-size:10px; font-family:monospace; font-weight:bold; display:none; background:#1e1b4b; padding:1px 5px; border-radius:3px; border:1px solid #6366f1; white-space:nowrap; flex-shrink:0;"></span>
             </div>
         </div>
 
@@ -1365,7 +1440,7 @@
             <!-- 1. SOL KAYDIRAÇ: MİNİMUM HEX SINIRI -->
             <div class="slider-item">
                 <div class="slider-top-label" style="display: none !important;">
-                    <span style="color:#34d399;">🟢 Minimum Hex Sınırı:</span>
+                    <span style="color:#34d399;">🟢 Minimum Hex Bound:</span>
                     <span id="lblSliderMin" style="color:#10b981; font-family:monospace; font-size:12px; font-weight:bold;">0x400000000000000000</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -1373,15 +1448,15 @@
                     <input type="text" id="hexSliderMin" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #10b981; color:#34d399; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MIN')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
-                    <span>Taban: <span id="lblHexStartMinBound" style="font-family:monospace; color:#34d399;">0x400000...</span></span>
-                    <span>Tavan: <span id="lblHexEndMinBound" style="font-family:monospace; color:#64748b;">0x7fffff...</span></span>
+                    <span>Base: <span id="lblHexStartMinBound" style="font-family:monospace; color:#34d399;">0x400000...</span></span>
+                    <span>Ceil: <span id="lblHexEndMinBound" style="font-family:monospace; color:#64748b;">0x7fffff...</span></span>
                 </div>
             </div>
 
             <!-- 2. SAĞ KAYDIRAÇ: MAKSİMUM HEX SINIRI -->
             <div class="slider-item">
                 <div class="slider-top-label" style="display: none !important;">
-                    <span style="color:#f472b6;">🔴 Maksimum Hex Sınırı:</span>
+                    <span style="color:#f472b6;">🔴 Maximum Hex Bound:</span>
                     <span id="lblSliderMax" style="color:#ec4899; font-family:monospace; font-size:12px; font-weight:bold;">0x7fffffffffffffffff</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -1389,8 +1464,8 @@
                     <input type="text" id="hexSliderMax" class="hex-bound-input" placeholder="0x..." style="width:135px; max-width:40%; min-width:75px; flex-shrink:0; background:#0b1320; border:1px solid #ec4899; color:#f472b6; font-size:11px; padding:3px 5px; border-radius:4px; font-family:monospace; text-align:right; box-sizing:border-box;" oninput="onHexSliderInputChange('MAX')">
                 </div>
                 <div style="display: none !important; justify-content:space-between; font-size:9px; color:#64748b;">
-                    <span>Taban: <span id="lblHexStartMaxBound" style="font-family:monospace; color:#64748b;">0x400000...</span></span>
-                    <span>Tavan: <span id="lblHexEndMaxBound" style="font-family:monospace; color:#f472b6;">0x7fffff...</span></span>
+                    <span>Base: <span id="lblHexStartMaxBound" style="font-family:monospace; color:#64748b;">0x400000...</span></span>
+                    <span>Ceil: <span id="lblHexEndMaxBound" style="font-family:monospace; color:#f472b6;">0x7fffff...</span></span>
                 </div>
             </div>
         </div>
@@ -1439,8 +1514,8 @@
             <div style="display:flex; align-items:flex-start; gap:12px;">
                 <span style="font-size:26px; line-height:1;">🚨</span>
                 <div>
-                    <strong id="fatalErrorTitle" style="color:#fca5a5; font-size:15px; display:block; margin-bottom:4px; font-weight:800; letter-spacing:0.5px;">KRİTİK HATA</strong>
-                    <div id="fatalErrorMsg" style="color:#fecaca;">Hata detayı burada görünecek.</div>
+                    <strong id="fatalErrorTitle" style="color:#fca5a5; font-size:15px; display:block; margin-bottom:4px; font-weight:800; letter-spacing:0.5px;">CRITICAL ERROR</strong>
+                    <div id="fatalErrorMsg" style="color:#fecaca;">Error details will appear here.</div>
                 </div>
             </div>
             <button onclick="document.getElementById('fatalErrorAlert').style.display='none'" style="background:rgba(239,68,68,0.25); border:1px solid #ef4444; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; padding:2px 8px; border-radius:6px; line-height:1;">✕</button>
@@ -1542,11 +1617,21 @@ function getActiveTarget() {
     return null;
 }
 
+let isSpaceCropped = false;
+let spaceCropStart = null;
+let spaceCropEnd = null;
+
 function getHexTargetBounds() {
     const target = getActiveTarget();
     if (!target) return null;
-    const tStart = toBigIntSafe(target.origStart || target.start);
-    const tEnd   = toBigIntSafe(target.origEnd   || target.end);
+    let tStart = toBigIntSafe(target.origStart || target.start);
+    let tEnd   = toBigIntSafe(target.origEnd   || target.end);
+
+    if (isSpaceCropped && spaceCropStart && spaceCropEnd && spaceCropEnd > spaceCropStart) {
+        tStart = spaceCropStart;
+        tEnd   = spaceCropEnd;
+    }
+
     const total  = tEnd - tStart;
     const totalHexLen = tEnd.toString(16).length;
     return { target, tStart, tEnd, total, totalHexLen };
@@ -1779,7 +1864,8 @@ function setHexSliderBounds(sKey, eKey, labelText) {
         pickNextRandomPrefix(sliderMinHex || tStart, sliderMaxHex || tEnd);
     }
     const logRangeEl = document.getElementById('logRange');
-    if (logRangeEl) logRangeEl.innerText = `🎯 ${labelText} [Hex Uzayı: 0x${sliderMinHex.toString(16)} - 0x${sliderMaxHex.toString(16)}]`;
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+    if (logRangeEl) logRangeEl.innerText = `🎯 ${labelText} [${isTr ? 'Hex Uzayı' : 'Hex Space'}: 0x${sliderMinHex.toString(16)} - 0x${sliderMaxHex.toString(16)}]`;
 }
 
 // ============================================================
@@ -1791,14 +1877,15 @@ let autoSliderInterval = null;
 let autoSliderDirection = 1; // 1: İleri (0 -> 100), -1: Geri (100 -> 0) [Ping-Pong Radar]
 
 const AUTO_SLIDER_SPEEDS = {
-    'FAST':   { intervalMs: 1000, stepPct: 2.618, label: '⚡ Hızlı' },
-    'MEDIUM': { intervalMs: 3000, stepPct: 1.618, label: '⏱️ Orta' },
-    'SLOW':   { intervalMs: 8000, stepPct: 1.236, label: '🐢 Yavaş' },
-    'MICRO':  { intervalMs: 15000, stepPct: 0.618, label: '🔬 Mikro' }
+    'FAST':   { intervalMs: 1000, stepPct: 2.618, labelEn: '⚡ Fast', labelTr: '⚡ Hızlı' },
+    'MEDIUM': { intervalMs: 3000, stepPct: 1.618, labelEn: '⏱️ Med', labelTr: '⏱️ Orta' },
+    'SLOW':   { intervalMs: 8000, stepPct: 1.236, labelEn: '🐢 Slow', labelTr: '🐢 Yavaş' },
+    'MICRO':  { intervalMs: 15000, stepPct: 0.618, labelEn: '🔬 Micro', labelTr: '🔬 Mikro' }
 };
 
 function toggleSpeedMode(speed) {
     if (!AUTO_SLIDER_SPEEDS[speed]) return;
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
 
     if (isAutoSliderActive && autoSliderSpeed === speed) {
         // Zaten seçili olan hıza tekrar basıldı -> Kapat
@@ -1806,7 +1893,7 @@ function toggleSpeedMode(speed) {
         autoSliderSpeed = null;
         stopAutoSliderTimer();
         if (typeof showToast === 'function') {
-            showToast('⏸️ <strong>Kaydıraç Taraması Kapatıldı</strong>');
+            showToast(isTr ? '⏸️ <strong>Kaydıraç Taraması Kapatıldı</strong>' : '⏸️ <strong>Slider Sweep Disabled</strong>');
         }
     } else {
         // Yeni bir hız seçildi veya kapalıyken tıklandı -> Başlat
@@ -1814,25 +1901,26 @@ function toggleSpeedMode(speed) {
         autoSliderSpeed = speed;
         autoSliderDirection = 1;
 
-        // Eğer aralık tam uzay ise (%0 - %100) veya geçersizse, başlangıç için tarama penceresi oluştur
-        const minEl = document.getElementById('rangeSliderMin');
-        const maxEl = document.getElementById('rangeSliderMax');
-        if (minEl && maxEl) {
-            const curSpan = BigInt(maxEl.value || 1000000000000) - BigInt(minEl.value || 0);
-            if (curSpan >= 950000000000n || curSpan <= 0n) {
-                minEl.value = 0;
-                maxEl.value = (speed === 'MICRO' ? 20000000000 : 50000000000); // %2 veya %5 pencere
-                onHexSliderChange('MIN');
-                onHexSliderChange('MAX');
+        const spdCfg = AUTO_SLIDER_SPEEDS[speed];
+        const spdLabel = isTr ? spdCfg.labelTr : spdCfg.labelEn;
+        if (typeof showToast === 'function') {
+            if (typeof isRunning !== 'undefined' && isRunning) {
+                showToast(isTr 
+                    ? `🚀 <strong>Kaydıraç: ${spdLabel} (🏓 Git-Gel Radar)</strong><br><span style="font-size:10.5px; color:#94a3b8;">${spdCfg.intervalMs / 1000} sn aralıkla Altın Oran (%${spdCfg.stepPct}) adımla taranıyor.</span>`
+                    : `🚀 <strong>Slider: ${spdLabel} (🏓 Ping-Pong Radar)</strong><br><span style="font-size:10.5px; color:#94a3b8;">Scanning with Golden Ratio (${spdCfg.stepPct}%) step every ${spdCfg.intervalMs / 1000}s.</span>`
+                );
+            } else {
+                showToast(isTr 
+                    ? `⏱️ <strong>Kaydıraç Hızı: ${spdLabel} Ayarlandı</strong><br><span style="font-size:10.5px; color:#94a3b8;">"▶ Aramayı Başlat"a bastığınızda kaydıraç otomatik hareket edecektir.</span>`
+                    : `⏱️ <strong>Slider Speed: ${spdLabel} Configured</strong><br><span style="font-size:10.5px; color:#94a3b8;">Slider will move automatically when you click "▶ Start Hunting".</span>`
+                );
             }
         }
 
-        const spdCfg = AUTO_SLIDER_SPEEDS[speed];
-        if (typeof showToast === 'function') {
-            showToast(`🚀 <strong>Kaydıraç: ${spdCfg.label} (🏓 Git-Gel Radar)</strong><br><span style="font-size:10.5px; color:#94a3b8;">${spdCfg.intervalMs / 1000} sn aralıkla Altın Oran (%${spdCfg.stepPct}) adımla taranıyor.</span>`);
+        // Sadece arama aktifken zamanlayıcıyı devreye al
+        if (typeof isRunning !== 'undefined' && isRunning) {
+            startAutoSliderTimer();
         }
-
-        startAutoSliderTimer();
     }
 
     updateSpeedButtonStyles();
@@ -1878,9 +1966,12 @@ function setAutoSliderSpeed(speed) {
 function startAutoSliderTimer() {
     stopAutoSliderTimer();
     if (!isAutoSliderActive) return;
+    // 🛑 Arama yokken kaydıraç ASLA hareket etmez!
+    if (typeof isRunning !== 'undefined' && !isRunning) return;
+
     const cfg = AUTO_SLIDER_SPEEDS[autoSliderSpeed] || AUTO_SLIDER_SPEEDS['MEDIUM'];
     autoSliderInterval = setInterval(() => {
-        if (!isAutoSliderActive) {
+        if (!isAutoSliderActive || (typeof isRunning !== 'undefined' && !isRunning)) {
             stopAutoSliderTimer();
             return;
         }
@@ -1896,6 +1987,8 @@ function stopAutoSliderTimer() {
 }
 
 function stepAutoSlider() {
+    // 🛑 Arama kapalıyken hiçbir kaydıraç adımı atılmaz!
+    if (typeof isRunning !== 'undefined' && !isRunning) return;
     if (isSliderSyncBusy) return;
     const bounds = getHexTargetBounds();
     if (!bounds) return;
@@ -1992,7 +2085,119 @@ function updateAutoSliderUI() {
         const pMin = (Number(minEl.value || 0) / 10000000000).toFixed(3);
         const pMax = (Number(maxEl.value || 1000000000000) / 10000000000).toFixed(3);
         const dirIcon = isAutoSliderActive ? (autoSliderDirection >= 1 ? '▶' : '◀') : '';
-        badge.innerText = `${dirIcon ? dirIcon + ' ' : ''}%${pMin} - %${pMax}`;
+        badge.innerText = `${dirIcon ? dirIcon + ' ' : ''}%${pMin} - %${pMax}${isSpaceCropped ? ' ✂️' : ''}`;
+    }
+}
+
+// ============================================================
+// ✂️ UZAY KESME / KIRPMA (SPACE CROPPER) FONKSİYONLARI
+// ============================================================
+function updateCropUI(minPct, maxPct) {
+    const btnReset = document.getElementById('btnResetCrop');
+    const lblStatus = document.getElementById('lblCropStatus');
+    if (!btnReset || !lblStatus) return;
+
+    if (isSpaceCropped && spaceCropStart && spaceCropEnd) {
+        btnReset.style.display = 'inline-flex';
+        const sHex = spaceCropStart.toString(16);
+        const eHex = spaceCropEnd.toString(16);
+        const sShort = '0x' + (sHex.length <= 8 ? sHex : sHex.substring(0, 6) + '...');
+        const eShort = '0x' + (eHex.length <= 8 ? eHex : eHex.substring(0, 6) + '...');
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+        lblStatus.innerText = `✂️ %${Number(minPct).toFixed(0)}-%${Number(maxPct).toFixed(0)}`;
+        lblStatus.title = isTr
+            ? `Kırpılmış Uzay: ${sShort} - ${eShort} (%${Number(minPct).toFixed(2)} - %${Number(maxPct).toFixed(2)})`
+            : `Cropped Space: ${sShort} - ${eShort} (${Number(minPct).toFixed(2)}% - ${Number(maxPct).toFixed(2)}%)`;
+        lblStatus.style.display = 'inline-block';
+    } else {
+        btnReset.style.display = 'none';
+        lblStatus.innerText = '';
+        lblStatus.style.display = 'none';
+    }
+}
+
+function applySpaceCrop(minPct, maxPct) {
+    const target = getActiveTarget();
+    if (!target) return;
+    const origStart = toBigIntSafe(target.origStart || target.start);
+    const origEnd = toBigIntSafe(target.origEnd || target.end);
+    const origTotal = origEnd - origStart;
+    if (origTotal <= 0n) return;
+
+    const minRatio = BigInt(Math.round(minPct * 10000000));
+    const maxRatio = BigInt(Math.round(maxPct * 10000000));
+
+    spaceCropStart = origStart + (origTotal * minRatio / 1000000000n);
+    spaceCropEnd = origStart + (origTotal * maxRatio / 1000000000n);
+    if (spaceCropEnd <= spaceCropStart) spaceCropEnd = spaceCropStart + 1n;
+
+    isSpaceCropped = (minPct > 0 || maxPct < 100);
+    finalizeSpaceCrop(minPct, maxPct);
+}
+
+function cropSpaceToCurrentSelection() {
+    const bounds = getHexTargetBounds();
+    if (!bounds) return;
+    if (!sliderMinHex || !sliderMaxHex || sliderMaxHex <= sliderMinHex) return;
+
+    spaceCropStart = sliderMinHex;
+    spaceCropEnd = sliderMaxHex;
+    isSpaceCropped = true;
+
+    const target = getActiveTarget();
+    const origStart = toBigIntSafe(target.origStart || target.start);
+    const origEnd = toBigIntSafe(target.origEnd || target.end);
+    const origTotal = origEnd - origStart;
+
+    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000n) / origTotal) / 100 : 0;
+    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000n) / origTotal) / 100 : 100;
+
+    finalizeSpaceCrop(minPct, maxPct);
+}
+
+function resetSpaceCrop() {
+    isSpaceCropped = false;
+    spaceCropStart = null;
+    spaceCropEnd = null;
+
+    const target = getActiveTarget();
+    if (target) {
+        sliderMinHex = toBigIntSafe(target.origStart || target.start);
+        sliderMaxHex = toBigIntSafe(target.origEnd || target.end);
+    }
+    updateCropUI(0, 100);
+    updateSliderUI();
+    broadcastWorkerConfig();
+    if (typeof showToast === 'function') {
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+        showToast(isTr 
+            ? '↩️ <strong>Uzay Sıfırlandı: Tam Bulmaca Uzayı (%0 - %100)</strong>'
+            : '↩️ <strong>Space Reset: Full Puzzle Space (0% - 100%)</strong>', 2500);
+    }
+}
+
+function finalizeSpaceCrop(minPct, maxPct) {
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+
+    // 🎯 Kaydıraç parmaklarını kırpılan yeni uzayın tam uçlarına oturt (%0 ve %100)
+    if (minEl && maxEl) {
+        minEl.value = 0;
+        maxEl.value = 1000000000000;
+    }
+
+    sliderMinHex = spaceCropStart;
+    sliderMaxHex = spaceCropEnd;
+
+    updateCropUI(minPct, maxPct);
+    updateSliderUI();
+    broadcastWorkerConfig();
+
+    if (typeof showToast === 'function') {
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+        showToast(isTr 
+            ? `✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`
+            : `✂️ <strong>Space Cropped! Remaining Range: ${Number(minPct).toFixed(1)}% — ${Number(maxPct).toFixed(1)}%</strong><br><span style="font-size:11px;">Sliders set to boundaries (0% - 100%) of the cropped space.</span>`, 3500);
     }
 }
 
@@ -2234,6 +2439,7 @@ function updateModeVisuals() {
     const gridOn = (f === 'GRID') ? true : isGridFilterActive;
 
     if (bPre) {
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         if (!preOn) {
             bPre.style.border = '1px solid #334155';
             bPre.style.boxShadow = 'none';
@@ -2246,8 +2452,8 @@ function updateModeVisuals() {
                 btnPre.style.background = '#0f172a';
                 btnPre.style.color = '#ef4444';
                 btnPre.style.borderColor = '#334155';
-                btnPre.innerText = '⛔ Kapalı';
-                btnPre.title = 'Ön Ek Kapalı (Tıklayın: 🔄 Oto moda geçer)';
+                btnPre.innerText = isTr ? '⛔ Kapalı' : '⛔ Off';
+                btnPre.title = isTr ? 'Ön Ek Kapalı (Tıklayın: 🔄 Oto moda geçer)' : 'Prefix Disabled (Click: Switch to 🔄 Auto)';
             }
             if (inPre) inPre.style.opacity = '0.5';
         } else if (isPrefixAutoJump) {
@@ -2262,8 +2468,8 @@ function updateModeVisuals() {
                 btnPre.style.background = '#f97316';
                 btnPre.style.color = '#ffffff';
                 btnPre.style.borderColor = '#fb923c';
-                btnPre.innerText = '🔄 Oto';
-                btnPre.title = 'Ön Ek Otomatik (Tıklayın: 🔒 Sabit moda geçer)';
+                btnPre.innerText = isTr ? '🔄 Oto' : '🔄 Auto';
+                btnPre.title = isTr ? 'Ön Ek Otomatik (Tıklayın: 🔒 Sabit moda geçer)' : 'Prefix Auto (Click: Switch to 🔒 Fixed)';
             }
             if (inPre) inPre.style.opacity = '1';
         } else {
@@ -2278,8 +2484,8 @@ function updateModeVisuals() {
                 btnPre.style.background = '#1e293b';
                 btnPre.style.color = '#fb923c';
                 btnPre.style.borderColor = '#f97316';
-                btnPre.innerText = '🔒 Sabit';
-                btnPre.title = 'Ön Ek Sabit (Tıklayın: ⛔ Kapalı konuma geçer)';
+                btnPre.innerText = isTr ? '🔒 Sabit' : '🔒 Fixed';
+                btnPre.title = isTr ? 'Ön Ek Sabit (Tıklayın: ⛔ Kapalı konuma geçer)' : 'Prefix Fixed (Click: Switch to ⛔ Off)';
             }
             if (inPre) inPre.style.opacity = '1';
         }
@@ -2373,100 +2579,128 @@ function applyFormulaPreset(formula) {
         if (b) b.classList.remove('active');
     });
 
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+
     if (formula === 'GOLDEN_SINGULARITY') {
         selectedAlgorithm = 'SOBOL';
         if (algoSel) algoSel.value = 'SOBOL';
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
+            logAlgo.innerText = isTr 
+                ? '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)' 
+                : '📐 Sobol & Van der Corput (Quasi-Monte Carlo Gapless)';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🌟 <strong>Altın Oran</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast(isTr 
+            ? '🌟 <strong>Altın Oran</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Kapalı Entropi (Tam Kapsama)</span>'
+            : '🌟 <strong>Golden Ratio</strong>: Recommended settings applied<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + ⛔ Disabled Entropy (Full Coverage)</span>');
     } else if (formula === 'DETERMINISTIC_CHAOS') {
         selectedAlgorithm = 'CHAOS';
         if (algoSel) algoSel.value = 'CHAOS';
         const bChaos = document.getElementById('btnAlgoChaos');
         if (bChaos) bChaos.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '♾️ Deterministik Kaos (Lojistik & Çadır Haritası)';
+            logAlgo.innerText = isTr 
+                ? '♾️ Deterministik Kaos (Lojistik & Çadır Haritası)' 
+                : '♾️ Deterministic Chaos (Logistic & Tent Map)';
             logAlgo.style.color = '#ec4899';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('♾️ <strong>Deterministik Kaos</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">♾️ Kaos + ⛔ Kapalı Entropi (Tam Kapsama)</span>');
+        showToast(isTr 
+            ? '♾️ <strong>Deterministik Kaos</strong>: Önerilen ayarlar uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">♾️ Kaos + ⛔ Kapalı Entropi (Tam Kapsama)</span>'
+            : '♾️ <strong>Deterministic Chaos</strong>: Recommended settings applied<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">♾️ Chaos + ⛔ Disabled Entropy (Full Coverage)</span>');
     } else if (formula === 'QUANTUM_TUNNEL') {
         selectedAlgorithm = 'SOBOL';
         if (algoSel) algoSel.value = 'SOBOL';
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Sobol & Dalga Osilasyonu (Sin² Wave)';
+            logAlgo.innerText = isTr 
+                ? '📐 Sobol & Dalga Osilasyonu (Sin² Wave)' 
+                : '📐 Sobol & Wave Oscillation (Sin² Wave)';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('〰️ <strong>Trigonometrik Dalga Salınımı (Sin² Wave)</strong>: Matematiksel osilatör uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Periyodik Sinüs Osilasyonu (Tam Kapsama)</span>');
+        showToast(isTr 
+            ? '〰️ <strong>Trigonometrik Dalga Salınımı (Sin² Wave)</strong>: Matematiksel osilatör uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Periyodik Sinüs Osilasyonu (Tam Kapsama)</span>'
+            : '〰️ <strong>Wave Oscillation (Sin² Wave)</strong>: Mathematical oscillator applied<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Periodic Sine Oscillation (Full Coverage)</span>');
     } else if (formula === 'RIEMANN_ZETA') {
         selectedAlgorithm = 'SOBOL';
         if (algoSel) algoSel.value = 'SOBOL';
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Sobol & Çoklu Harmonik Dalga (Multi-Harmonic)';
+            logAlgo.innerText = isTr 
+                ? '📐 Sobol & Çoklu Harmonik Dalga (Multi-Harmonic)' 
+                : '📐 Sobol & Multi-Harmonic Wave';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🌊 <strong>Çoklu Harmonik Dalga Salınımı</strong>: Harmonik frekans osilatörü uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Çoklu Harmonik Frekans (Tam Kapsama)</span>');
+        showToast(isTr 
+            ? '🌊 <strong>Çoklu Harmonik Dalga Salınımı</strong>: Harmonik frekans osilatörü uygulandı<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Çoklu Harmonik Frekans (Tam Kapsama)</span>'
+            : '🌊 <strong>Multi-Harmonic Wave Oscillation</strong>: Harmonic frequency oscillator applied<br><span style="font-size:10.5px; color:#94a3b8; font-weight:normal;">📐 Sobol + Multi-Harmonic Frequency (Full Coverage)</span>');
     } else if (formula === 'VD_CORPUT') {
         selectedAlgorithm = 'VD_CORPUT';
         if (algoSel) algoSel.value = 'VD_CORPUT';
         const b = document.getElementById('btnAlgoVdCorput'); if (b) b.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '📐 Van der Corput (Bit-Tersleme Tam Kapsama)';
+            logAlgo.innerText = isTr 
+                ? '📐 Van der Corput (Bit-Tersleme Tam Kapsama)' 
+                : '📐 Van der Corput (Bit-Reversal Full Coverage)';
             logAlgo.style.color = '#3b82f6';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('📐 <strong>Van der Corput</strong>: Bit-Tersleme Boşluksuz Tam Uzay Kapsama');
+        showToast(isTr 
+            ? '📐 <strong>Van der Corput</strong>: Bit-Tersleme Boşluksuz Tam Uzay Kapsama' 
+            : '📐 <strong>Van der Corput</strong>: Bit-Reversal Gapless Full Space Coverage');
     } else if (formula === 'WEYL_GOLDEN') {
         selectedAlgorithm = 'WEYL_GOLDEN';
         if (algoSel) algoSel.value = 'WEYL_GOLDEN';
         const b = document.getElementById('btnAlgoWeyl'); if (b) b.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '🌟 Weyl Altın Kafesi (Homojen Örtüşüm)';
+            logAlgo.innerText = isTr 
+                ? '🌟 Weyl Altın Kafesi (Homojen Örtüşüm)' 
+                : '🌟 Weyl Golden Lattice (Homogeneous Coverage)';
             logAlgo.style.color = '#eab308';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🌟 <strong>Weyl Altın Kafesi</strong>: Homojen Boşluksuz Örtüşüm');
+        showToast(isTr 
+            ? '🌟 <strong>Weyl Altın Kafesi</strong>: Homojen Boşluksuz Örtüşüm' 
+            : '🌟 <strong>Weyl Golden Lattice</strong>: Homogeneous Gapless Coverage');
     } else if (formula === 'COPRIME_STRIDE') {
         selectedAlgorithm = 'COPRIME_STRIDE';
         if (algoSel) algoSel.value = 'COPRIME_STRIDE';
         const b = document.getElementById('btnAlgoCoprime'); if (b) b.classList.add('active');
         if (logAlgo) {
-            logAlgo.innerText = '♾️ Asal Modüler Adımlama (Sıfır Tekrar)';
+            logAlgo.innerText = isTr 
+                ? '♾️ Asal Modüler Adımlama (Sıfır Tekrar)' 
+                : '♾️ Coprime Modular Stride (Zero Repetition)';
             logAlgo.style.color = '#10b981';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('♾️ <strong>Asal Modüler Adımlama</strong>: Sıfır Tekrar Tam Kapsama');
+        showToast(isTr 
+            ? '♾️ <strong>Asal Modüler Adımlama</strong>: Sıfır Tekrar Tam Kapsama' 
+            : '♾️ <strong>Coprime Modular Stride</strong>: Zero Repetition Full Coverage');
     } else if (formula === 'SPHERICAL_ORBITAL') {
         selectedAlgorithm = 'SPHERICAL_ORBITAL';
         if (algoSel) algoSel.value = 'SPHERICAL_ORBITAL';
         const bSobol = document.getElementById('btnAlgoSobol');
         if (bSobol) bSobol.classList.remove('active');
         if (logAlgo) {
-            const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
             logAlgo.innerText = isTr ? '⚛️ Küresel Harmonik & Orbital |ψ|² (Schrödinger)' : '⚛️ Spherical Harmonics & Orbital |ψ|² (Schrödinger)';
             logAlgo.style.color = '#06b6d4';
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         showToast(isTr 
             ? '⚛️ <strong>Küresel Harmonik Olasılık Dağılımı (|ψ|² = |R|²·|Y|²)</strong>: Kuantum dalga osilatörü devrede' 
             : '⚛️ <strong>Spherical Harmonic Distribution (|ψ|² = |R|²·|Y|²)</strong>: Quantum wave oscillator active');
@@ -2477,7 +2711,6 @@ function applyFormulaPreset(formula) {
             if (algoSel) algoSel.value = 'KANGAROO';
             const bKang = document.getElementById('btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'); if (bKang) bKang.classList.add('active');
             if (logAlgo) {
-                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
                 logAlgo.innerText = isTr ? '🦘 Pollard Kangaroo (Tuzak & Vahşi Sürü)' : '🦘 Pollard Kangaroo (Traps & Wild Herd)';
                 logAlgo.style.color = '#10b981';
             }
@@ -2486,13 +2719,17 @@ function applyFormulaPreset(formula) {
             if (algoSel) algoSel.value = 'CHAOS';
             const bChaos = document.getElementById('btnAlgoChaos'); if (bChaos) bChaos.classList.add('active');
             if (logAlgo) {
-                logAlgo.innerText = '🌀 Deterministik Omni-Kaos (Evrensel Sürü)';
+                logAlgo.innerText = isTr 
+                    ? '🌀 Deterministik Omni-Kaos (Evrensel Sürü)' 
+                    : '🌀 Deterministic Omni-Chaos (Universal Swarm)';
                 logAlgo.style.color = '#ec4899';
             }
         }
         if (typeof updateModeVisuals === 'function') updateModeVisuals();
         broadcastWorkerConfig();
-        showToast('🌀 <strong>Omni-Kaos (Evrensel Sürü)</strong>: Aktif');
+        showToast(isTr 
+            ? '🌀 <strong>Omni-Kaos (Evrensel Sürü)</strong>: Aktif' 
+            : '🌀 <strong>Omni-Chaos (Universal Swarm)</strong>: Active');
     }
 }
 
@@ -2778,7 +3015,7 @@ function onPrefixInput() {
                 btn.style.background = '#1e293b';
                 btn.style.color = '#94a3b8';
                 btn.style.borderColor = '#475569';
-                btn.innerText = '🔒 Sabit';
+                btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '🔒 Sabit' : '🔒 Fixed';
             }
         }
     } else {
@@ -4084,6 +4321,10 @@ function broadcastKangarooSyncTarget(puzzleId, startHex, endHex) {
 // ALGORİTMA SEÇİMİ
 let selectedEntropyBits = 0;
 
+function onAlgoSelectChange(algo) {
+    setAlgorithm(algo);
+}
+
 function setAlgorithm(algo) {
     selectedAlgorithm = algo;
 
@@ -4111,11 +4352,14 @@ function setAlgorithm(algo) {
 
     const logAlgo = document.getElementById('logAlgo');
     const isAgent = (typeof isAgentActive !== 'undefined' && isAgentActive);
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
 
     if (algo === 'AUTO') {
         const b = document.getElementById('btnAlgoAuto'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🔄 Oto Geçiş (🎲 Rast + 📐 Sobol + 📐 VdC + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos + 🦘 Kang + 🎲 Halton + 🔀 S.Sobol + 🎰 MCMC)';
+            logAlgo.innerText = isTr
+                ? '🔄 Oto Geçiş (🎲 Rast + 📐 Sobol + 📐 VdC + 🌟 Weyl + ♾️ Asal + 🌀 Hilbert + ⚡ Zayıf + ♾️ Kaos + 🦘 Kang + 🎲 Halton + 🔀 S.Sobol + 🎰 MCMC)'
+                : '🔄 Auto Cycle (🎲 Rand + 📐 Sobol + 📐 VdC + 🌟 Weyl + ♾️ Coprime + 🌀 Hilbert + ⚡ Weak + ♾️ Chaos + 🦘 Kang + 🎲 Halton + 🔀 S.Sobol + 🎰 MCMC)';
             logAlgo.style.color = '#38bdf8';
         }
         autoAlgoIndex = 0;
@@ -4123,37 +4367,47 @@ function setAlgorithm(algo) {
     } else if (algo === 'RANDOM') {
         const b = document.getElementById('btnAlgoRandom'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🎲 Saf Rastgele (Monte Carlo Uniform RNG)';
+            logAlgo.innerText = isTr ? '🎲 Saf Rastgele (Monte Carlo Uniform RNG)' : '🎲 Pure Random (Monte Carlo Uniform RNG)';
             logAlgo.style.color = '#34d399';
         }
     } else if (algo === 'SOBOL') {
         const b = document.getElementById('btnAlgoSobol'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
+            logAlgo.innerText = isTr 
+                ? '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)' 
+                : '📐 Sobol & Van der Corput (Quasi-Monte Carlo Gapless)';
             logAlgo.style.color = '#10b981';
         }
     } else if (algo === 'VD_CORPUT') {
         const b = document.getElementById('btnAlgoVdCorput'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '📐 Van der Corput (Bit-Tersleme Boşluksuz Tam Kapsama)';
+            logAlgo.innerText = isTr 
+                ? '📐 Van der Corput (Bit-Tersleme Boşluksuz Tam Kapsama)' 
+                : '📐 Van der Corput (Bit-Reversal Gapless Full Coverage)';
             logAlgo.style.color = '#3b82f6';
         }
     } else if (algo === 'WEYL_GOLDEN') {
         const b = document.getElementById('btnAlgoWeyl'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🌟 Weyl Altın Kafesi (Homojen Boşluksuz Örtüşüm)';
+            logAlgo.innerText = isTr 
+                ? '🌟 Weyl Altın Kafesi (Homojen Boşluksuz Örtüşüm)' 
+                : '🌟 Weyl Golden Lattice (Homogeneous Gapless Coverage)';
             logAlgo.style.color = '#eab308';
         }
     } else if (algo === 'COPRIME_STRIDE') {
         const b = document.getElementById('btnAlgoCoprime'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '♾️ Asal Modüler Adımlama (Sıfır Tekrar Tam Kapsama)';
+            logAlgo.innerText = isTr 
+                ? '♾️ Asal Modüler Adımlama (Sıfır Tekrar Tam Kapsama)' 
+                : '♾️ Coprime Modular Stride (Zero Repetition Full Coverage)';
             logAlgo.style.color = '#10b981';
         }
     } else if (algo === 'HILBERT') {
         const b = document.getElementById('btnAlgoHilbert'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🌀 Tam Hilbert Fraktal Uzay (%100 Space-Filling)';
+            logAlgo.innerText = isTr 
+                ? '🌀 Tam Hilbert Fraktal Uzay (%100 Space-Filling)' 
+                : '🌀 Full Hilbert Fractal Space (100% Space-Filling)';
             logAlgo.style.color = '#818cf8';
         }
     } else if (algo === 'WEAK_ENTROPY') {
@@ -4163,15 +4417,19 @@ function setAlgorithm(algo) {
             const entSel = document.getElementById('entropyBitsSelect');
             if (entSel) entSel.value = '0';
         }
-        const entDesc = selectedEntropyBits > 0 ? (selectedEntropyBits + '-Bit Kusurlu Tohum') : 'Kusurlu PRNG & Kalıp Modu';
+        const entDesc = selectedEntropyBits > 0 
+            ? (isTr ? (selectedEntropyBits + '-Bit Kusurlu Tohum') : (selectedEntropyBits + '-Bit Flawed Seed')) 
+            : (isTr ? 'Kusurlu PRNG & Kalıp Modu' : 'Weak PRNG & Pattern Mode');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '⚡ Zayıf Entropi (' + entDesc + ')';
+            logAlgo.innerText = (isTr ? '⚡ Zayıf Entropi (' : '⚡ Flawed Entropy (') + entDesc + ')';
             logAlgo.style.color = '#f59e0b';
         }
     } else if (algo === 'CHAOS') {
         const b = document.getElementById('btnAlgoChaos'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '♾️ Deterministik Kaos (Lojistik, Çadır & Çebışev Haritası)';
+            logAlgo.innerText = isTr 
+                ? '♾️ Deterministik Kaos (Lojistik, Çadır & Çebışev Haritası)' 
+                : '♾️ Deterministic Chaos (Logistic, Tent & Chebyshev Map)';
             logAlgo.style.color = '#ec4899';
         }
     } else if (algo === 'KANGAROO') {
@@ -4192,10 +4450,14 @@ function setAlgorithm(algo) {
         const hasPub = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
         if (!hasPub) {
             showFatalErrorUI(
-                'KANGAROO UYARISI: AÇIK ANAHTAR GEREKLİ',
-                `Seçili hedef (<strong>#${curId || '?'}</strong>) için blokzincirde bilinen bir açık anahtar (public key) yoktur!<br><br>` +
-                `Pollard's Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
-                `Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+                isTr ? 'KANGAROO UYARISI: AÇIK ANAHTAR GEREKLİ' : 'KANGAROO WARNING: PUBLIC KEY REQUIRED',
+                isTr
+                    ? `Seçili hedef (<strong>#${curId || '?'}</strong>) için blokzincirde bilinen bir açık anahtar (public key) yoktur!<br><br>` +
+                      `Pollard's Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
+                      `Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+                    : `Selected target (<strong>#${curId || '?'}</strong>) does not have a known exposed public key on blockchain!<br><br>` +
+                      `Pollard's Kangaroo cannot operate without an elliptic curve public key.<br>` +
+                      `Please select a puzzle with known public key (#19, #57, #135, #140, #145, #150, #155, #160) or switch algorithm to <strong>Sobol, Weyl, Chaos or Random</strong>.`
             );
         } else {
             const errEl = document.getElementById('fatalErrorAlert');
@@ -4203,25 +4465,33 @@ function setAlgorithm(algo) {
         }
         if (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList.length > 1) {
             if (typeof showToast === 'function') {
-                showToast('🦘 <strong>Pollard Kangaroo İpucu:</strong> Kangaroo eliptik eğri zincirleme yürüyüşü tek hedefe kilitlendiğinde en yüksek hıza ulaşır. Çoklu hedefler için Sobol, Weyl veya Kaos algoritmaları önerilir.', 4500);
+                showToast(isTr
+                    ? '🦘 <strong>Pollard Kangaroo İpucu:</strong> Kangaroo eliptik eğri zincirleme yürüyüşü tek hedefe kilitlendiğinde en yüksek hıza ulaşır. Çoklu hedefler için Sobol, Weyl veya Kaos algoritmaları önerilir.'
+                    : '🦘 <strong>Pollard Kangaroo Tip:</strong> Kangaroo reaches peak speed when locked to a single target. Sobol, Weyl or Chaos are recommended for multi-targets.', 4500);
             }
         }
     } else if (algo === 'HALTON') {
         const b = document.getElementById('btnAlgoHalton'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🎲 Halton Dizisi (Baz-2×3×5×7, Gerçek Düşük-Diskrepanslı)';
+            logAlgo.innerText = isTr 
+                ? '🎲 Halton Dizisi (Baz-2×3×5×7, Gerçek Düşük-Diskrepanslı)' 
+                : '🎲 Halton Sequence (Base-2×3×5×7, Low-Discrepancy)';
             logAlgo.style.color = '#06b6d4';
         }
     } else if (algo === 'SCRAMBLED_SOBOL') {
         const b = document.getElementById('btnAlgoScrambledSobol'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🔀 Scrambled Sobol (Owen Sayısal Kaydırma, Gerçek Sobol Garantisi)';
+            logAlgo.innerText = isTr 
+                ? '🔀 Scrambled Sobol (Owen Sayısal Kaydırma, Gerçek Sobol Garantisi)' 
+                : '🔀 Scrambled Sobol (Owen Digital Shift, True Sobol)';
             logAlgo.style.color = '#8b5cf6';
         }
     } else if (algo === 'MCMC') {
         const b = document.getElementById('btnAlgoMCMC'); if (b) b.classList.add('active');
         if (logAlgo && !isAgent) {
-            logAlgo.innerText = '🎰 MCMC — Markov Zinciri (Lévy Adımlar + Uyarlanabilir Sıcaklık)';
+            logAlgo.innerText = isTr 
+                ? '🎰 MCMC — Markov Zinciri (Lévy Adımlar + Uyarlanabilir Sıcaklık)' 
+                : '🎰 MCMC — Markov Chain (Lévy Flight + Adaptive Temp)';
             logAlgo.style.color = '#f97316';
         }
     } else if (algo === 'SPHERICAL_ORBITAL') {
@@ -4230,7 +4500,6 @@ function setAlgorithm(algo) {
         selectedAlgorithm = 'SPHERICAL_ORBITAL';
         if (typeof applyFormulaPreset === 'function') applyFormulaPreset('SPHERICAL_ORBITAL');
         if (logAlgo && !isAgent) {
-            const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
             logAlgo.innerText = isTr
                 ? '⚛️ Küresel Harmonik Kuantum Orbitali (|ψ|² = |R|²·|Y|²)'
                 : '⚛️ Spherical Harmonic Quantum Orbital (|ψ|² = |R|²·|Y|²)';
@@ -4263,8 +4532,11 @@ function onEntropyBitsChange() {
     } else {
         const logAlgo = document.getElementById('logAlgo');
         if (logAlgo && selectedAlgorithm === 'WEAK_ENTROPY') {
-            const entDesc = selectedEntropyBits > 0 ? (selectedEntropyBits + '-Bit Kusurlu Tohum') : 'Kusurlu PRNG & Kalıp Modu';
-            logAlgo.innerText = '⚡ Zayıf Entropi (' + entDesc + ')';
+            const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+            const entDesc = selectedEntropyBits > 0 
+                ? (isTr ? (selectedEntropyBits + '-Bit Kusurlu Tohum') : (selectedEntropyBits + '-Bit Flawed Seed')) 
+                : (isTr ? 'Kusurlu PRNG & Kalıp Modu' : 'Weak PRNG & Pattern Mode');
+            logAlgo.innerText = (isTr ? '⚡ Zayıf Entropi (' : '⚡ Flawed Entropy (') + entDesc + ')';
             logAlgo.style.color = '#f59e0b';
         }
         broadcastWorkerConfig();
@@ -4813,18 +5085,20 @@ function toggleAutopilotAgent(forceState) {
     const algoSel = document.getElementById('algoSelect');
     if (isAgentActive) {
         const isKangaroo = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         if (btn) {
             btn.style.background = isKangaroo ? '#0891b2' : '#4f46e5';
             btn.style.borderColor = isKangaroo ? '#06b6d4' : '#818cf8';
             btn.style.color = '#ffffff';
             btn.style.boxShadow = isKangaroo ? '0 0 8px rgba(6,182,212,0.6)' : '0 0 8px rgba(99,102,241,0.5)';
-            btn.title = isKangaroo ? '🦘 Pollard Kangaroo Ajanı Aktif (Tıkla: Kapat)' : '🧠 Otomatik Ajan Aktif (Tıkla: Kapat)';
+            btn.title = isTr 
+                ? (isKangaroo ? '🦘 Pollard Kangaroo Ajanı Aktif (Tıkla: Kapat)' : '🧠 Otomatik Ajan Aktif (Tıkla: Kapat)')
+                : (isKangaroo ? '🦘 Pollard Kangaroo Agent Active (Click: Turn Off)' : '🧠 Auto Strategy Cycle Active (Click: Turn Off)');
         }
         const toggleText = document.getElementById('agentToggleText');
         if (toggleText) {
-        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
-        toggleText.innerText = isTr ? (isKangaroo ? 'Kanguru' : 'Döngü') : (isKangaroo ? 'Kangaroo' : 'Cycle');
-    }
+            toggleText.innerText = isTr ? (isKangaroo ? 'Kanguru' : 'Döngü') : (isKangaroo ? 'Kangaroo' : 'Cycle');
+        }
 
         if (banner) banner.style.display = 'none';
         if (algoSel) algoSel.value = 'AGENT';
@@ -4839,15 +5113,16 @@ function toggleAutopilotAgent(forceState) {
         broadcastAgentState();
         console.log('[AJAN] ' + (isKangaroo ? '🦘 Pollard Kangaroo Sezgisel Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.' : '🧠 Otomatik Aralık Ajanı devreye alındı. Faz ' + (agentActivePhaseIndex + 1) + ' devrede.'));
     } else {
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         if (btn) {
             btn.style.background = '#1e1b4b';
             btn.style.borderColor = '#6366f1';
             btn.style.color = '#a5b4fc';
             btn.style.boxShadow = 'none';
-            btn.title = '🧠 Otomatik Aralık Ajanı (Aç/Kapat)';
+            btn.title = isTr ? '🧠 Otomatik Strateji Döngüsü (Aç/Kapat)' : '🧠 Auto Strategy Cycle (Toggle)';
         }
         const toggleText = document.getElementById('agentToggleText');
-        if (toggleText) toggleText.innerText = 'Ajan';
+        if (toggleText) toggleText.innerText = (typeof ht === 'function') ? ht('agentText') : (isTr ? 'Döngü' : 'Cycle');
 
         if (banner) banner.style.display = 'none';
         if (algoSel && algoSel.value === 'AGENT') algoSel.value = selectedAlgorithm || 'AUTO';
@@ -4946,8 +5221,12 @@ function applyAgentPhase(idx) {
 
     const logAlgo = document.getElementById('logAlgo');
     if (logAlgo) {
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         const badgeStr = tactic.badge ? ' (' + tactic.badge + ')' : '';
-        logAlgo.innerText = (isKangaroo ? '🦘 Pollard Kangaroo Şef Ajanı [' : '🧠 Otomatik Strateji Ajanı [') + tactic.name + ']' + badgeStr + herdBadge + swarmBadge;
+        const titleStr = isKangaroo 
+            ? (isTr ? '🦘 Pollard Kangaroo Şef Ajanı [' : "🦘 Pollard Kangaroo Chief Agent [") 
+            : (isTr ? '🧠 Otomatik Strateji Ajanı [' : '🧠 Auto Strategy Agent [');
+        logAlgo.innerText = titleStr + tactic.name + ']' + badgeStr + herdBadge + swarmBadge;
         logAlgo.style.color = isKangaroo ? '#06b6d4' : '#818cf8';
     }
     const toggleText = document.getElementById('agentToggleText');
@@ -5115,18 +5394,19 @@ function buildCustomMenus() {
     updateActiveUnsolvedList();
 
     // 📌 Sabit Üst Kontrol Çubuğu (Tümü / Temizle / Seçilenleri Ara)
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
     const headerBar = document.createElement('div');
     headerBar.style.cssText = 'padding: 7px 12px; background: #0c162d; border-bottom: 2px solid #1e293b; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5);';
     headerBar.innerHTML = `
         <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 11px; font-weight: 700; color: #38bdf8;">🎯 Seçili:</span>
+            <span style="font-size: 11px; font-weight: 700; color: #38bdf8;">${isTr ? '🎯 Seçili:' : '🎯 Selected:'}</span>
             <span id="puzzleSelectedBadge" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #0284c7; color: #38bdf8; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;">${selectedPuzzleIds.size}</span>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-            <button type="button" id="btnSelectAllPuzzles" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Tüm ${allUnsolvedPool ? allUnsolvedPool.length : ''} açık bulmacayı seçer">Tümü</button>
-            <button type="button" id="btnClearAllPuzzles" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Seçimleri temizler">Temizle</button>
-            <button type="button" id="btnSelectSameRange" style="background: rgba(245, 158, 11, 0.22); border: 1px solid #f59e0b; color: #fbbf24; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Mevcut bulmaca ile aynı basamak/aralıktaki açık bulmacaları seçer (Tekrar basıldığında sonraki aralığa geçer)">📏 Aynı Aralık</button>
-            <button type="button" id="btnApplySelectedSearch" style="background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; cursor: pointer;" title="Seçili bulmacaları dairesel aramaya alır">🔁 Seçilenleri Ara</button>
+            <button type="button" id="btnSelectAllPuzzles" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="${isTr ? 'Tüm ' + (allUnsolvedPool ? allUnsolvedPool.length : '') + ' açık bulmacayı seçer' : 'Select all ' + (allUnsolvedPool ? allUnsolvedPool.length : '') + ' open puzzles'}">${isTr ? 'Tümü' : 'All'}</button>
+            <button type="button" id="btnClearAllPuzzles" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="${isTr ? 'Seçimleri temizler' : 'Clear selection'}">${isTr ? 'Temizle' : 'Clear'}</button>
+            <button type="button" id="btnSelectSameRange" style="background: rgba(245, 158, 11, 0.22); border: 1px solid #f59e0b; color: #fbbf24; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="${isTr ? 'Mevcut bulmaca ile aynı basamak/aralıktaki açık bulmacaları seçer (Tekrar basıldığında sonraki aralığa geçer)' : 'Selects open puzzles with the same bit length as the current puzzle (Click again to cycle)'}">📏 ${isTr ? 'Aynı Aralık' : 'Same Range'}</button>
+            <button type="button" id="btnApplySelectedSearch" style="background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; cursor: pointer;" title="${isTr ? 'Seçili bulmacaları dairesel aramaya alır' : 'Search selected puzzles circularly'}">🔁 ${isTr ? 'Seçilenleri Ara' : 'Search Selected'}</button>
         </div>
     `;
     popUnsolved.appendChild(headerBar);
@@ -5135,8 +5415,8 @@ function buildCustomMenus() {
     const loopItem = document.createElement('div');
     loopItem.className = 'popup-item popup-item-loop';
     loopItem.innerHTML = `
-        <span>🔁 TÜM AÇIKLARI DAİRESEL ARA</span>
-        <span style="font-size: 11px;">#71 ➔ #160 Sırayla Dön</span>
+        <span>🔁 ${isTr ? 'TÜM AÇIKLARI DAİRESEL ARA' : 'SEARCH ALL OPEN CIRCULARLY'}</span>
+        <span style="font-size: 11px;">${isTr ? '#71 ➔ #160 Sırayla Dön' : '#71 ➔ #160 Rotate in Order'}</span>
     `;
     loopItem.onclick = function() {
         allUnsolvedPool.forEach(p => selectedPuzzleIds.add(String(p.id)));
@@ -5160,7 +5440,7 @@ function buildCustomMenus() {
             <div style="display: flex; align-items: center; gap: 6px;">
                 <input type="checkbox" class="puzzle-select-cb" data-id="${p.id}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #38bdf8; cursor: pointer;">
                 <span><strong>#${p.id}</strong> (${p.reward})</span>
-                <span class="range-tag" onclick="event.stopPropagation(); selectPuzzlesByLength(${pDigits})" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-size: 9px; padding: 0 4px; border-radius: 3px; cursor: pointer; font-family: monospace;" title="Tüm ${pDigits} haneli bulmacaları seç">${pDigits}H</span>
+                <span class="range-tag" onclick="event.stopPropagation(); selectPuzzlesByLength(${pDigits})" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-size: 9px; padding: 0 4px; border-radius: 3px; cursor: pointer; font-family: monospace;" title="${isTr ? 'Tüm ' + pDigits + ' haneli bulmacaları seç' : 'Select all ' + pDigits + '-digit puzzles'}">${pDigits}H</span>
             </div>
             <span style="color: #64748b; font-size: 11px;">${p.addr.substring(0, 12)}...</span>
         `;
@@ -5205,8 +5485,8 @@ function buildCustomMenus() {
 
         const btn = headerBar.querySelector('#btnSelectSameRange');
         if (btn) {
-            btn.innerText = `📏 ${len} Hane (${matching.length})`;
-            setTimeout(() => { if (btn) btn.innerText = '📏 Aynı Aralık'; }, 2500);
+            btn.innerText = isTr ? `📏 ${len} Hane (${matching.length})` : `📏 ${len} Digits (${matching.length})`;
+            setTimeout(() => { if (btn) btn.innerText = isTr ? '📏 Aynı Aralık' : '📏 Same Range'; }, 2500);
         }
     }
     window.selectPuzzlesByLength = selectPuzzlesByLength;
@@ -5265,7 +5545,7 @@ function buildCustomMenus() {
             } else {
                 if (selectedPuzzleIds.size <= 1) {
                     this.checked = true;
-                    alert('En az 1 bulmaca seçili kalmalıdır!');
+                    alert(isTr ? 'En az 1 bulmaca seçili kalmalıdır!' : 'At least 1 puzzle must remain selected!');
                     return;
                 }
                 selectedPuzzleIds.delete(pid);
@@ -5275,7 +5555,6 @@ function buildCustomMenus() {
             if (isCircularMode) {
                 const count = unsolvedList.length;
                 const total = allUnsolvedPool.length;
-                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
                 if (count === total) {
                     document.getElementById('labelUnsolved').innerText = isTr ? '🔁 Hepsi' : '🔁 All Puzzles';
                     document.getElementById('statPoolCount').innerText = isTr ? `TÜMÜ (${count})` : `ALL (${count})`;
@@ -5292,7 +5571,7 @@ function buildCustomMenus() {
     });
 
     const solvedList = ALL_PUZZLES.filter(p => p.status === 'SOLVED');
-    document.getElementById('labelSolved').innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> ' + ((typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? 'Bitti' : 'Solved');
+    document.getElementById('labelSolved').innerHTML = '<span style="font-size:9px; opacity:0.85;">⚪</span> ' + (isTr ? 'Bitti' : 'Solved');
 
     const ARCHIVE_TEST_MAP = {
         19: { startHex: '0x57400', endHex: '0x57500', label: '🔑 #19 Test', color: '#eab308' },
@@ -5304,7 +5583,7 @@ function buildCustomMenus() {
     const testHeader = document.createElement('div');
     testHeader.style.cssText = 'padding: 8px 12px; background: #111c33; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; gap: 6px; position: sticky; top: 0; z-index: 10;';
     testHeader.innerHTML = `
-        <span style="font-size: 11px; font-weight: bold; color: #94a3b8;">🔑 Hızlı Testler:</span>
+        <span style="font-size: 11px; font-weight: bold; color: #94a3b8;">${isTr ? '🔑 Hızlı Testler:' : '🔑 Quick Tests:'}</span>
         <div style="display: flex; gap: 6px;">
             <button style="padding: 2px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; border: 1px solid #eab308; background: rgba(234, 179, 8, 0.15); color: #fde047; cursor: pointer;" onclick="event.stopPropagation(); testPuzzleWithHex(19, '0x57400', '0x57500', '🔑 #19 Test'); closePopups();">#19</button>
             <button style="padding: 2px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.15); color: #34d399; cursor: pointer;" onclick="event.stopPropagation(); testPuzzleWithHex(38, '0x22382fa70c', '0x22382fb1c9', '🔑 #38 Test'); closePopups();">#38</button>
@@ -6436,21 +6715,24 @@ function huntBatch() {
                 const baseStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
                 const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
                 const isNarrowed = isDualSliderActive && (lastBoundMin && lastBoundMax && (lastBoundMin > baseStart || lastBoundMax < baseEnd));
+                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
                 let algoPrefix = '';
                 if (activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits !== -1) {
-                    algoPrefix = (selectedEntropyBits > 0 ? ('⚡ ' + selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
+                    const bStr = isTr ? 'b Entropi' : 'b Entropy';
+                    const fStr = isTr ? '⚡ Zayıf Entropi' : '⚡ Flawed Entropy';
+                    algoPrefix = (selectedEntropyBits > 0 ? ('⚡ ' + selectedEntropyBits + bStr) : fStr) + ' + ';
                 } else if (activeAlgo === 'SOBOL') {
                     algoPrefix = '📐 Sobol + ';
                 } else if (activeAlgo === 'VD_CORPUT') {
                     algoPrefix = '📐 Van der Corput + ';
                 } else if (activeAlgo === 'WEYL_GOLDEN') {
-                    algoPrefix = '🌟 Weyl Kafesi + ';
+                    algoPrefix = isTr ? '🌟 Weyl Kafesi + ' : '🌟 Weyl Lattice + ';
                 } else if (activeAlgo === 'COPRIME_STRIDE') {
-                    algoPrefix = '♾️ Modüler Adım + ';
+                    algoPrefix = isTr ? '♾️ Modüler Adım + ' : '♾️ Coprime Stride + ';
                 } else if (activeAlgo === 'HILBERT') {
                     algoPrefix = '🌀 Hilbert + ';
                 } else if (activeAlgo === 'CHAOS') {
-                    algoPrefix = '♾️ Kaos + ';
+                    algoPrefix = isTr ? '♾️ Kaos + ' : '♾️ Chaos + ';
                 } else if (activeAlgo === 'KANGAROO') {
                     algoPrefix = '🦘 Kangaroo';
                 } else if (activeAlgo === 'HALTON') {
@@ -6462,7 +6744,9 @@ function huntBatch() {
                 }
 
                 if (activeAlgo === 'KANGAROO') {
-                    rangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
+                    rangeText = isTr 
+                        ? '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)' 
+                        : '🦘 Pollard Kangaroo [Elliptic Curve O(√N)] (Full Range)';
                     document.getElementById('logRange').innerText = rangeText;
                 } else {
                     let baseRangeDesc = '';
@@ -6474,30 +6758,31 @@ function huntBatch() {
                     }
                     if (isEffectivePrefix && activeAlgo !== 'KANGAROO') {
                         pParts.push(isPrefixAutoJump 
-                            ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` 
-                            : `🧩 Ön Ek: 0x${userPrefix}`);
+                            ? (isTr ? `🔄 Oto Ön Ek: 0x${userPrefix || '...'}` : `🔄 Auto Prefix: 0x${userPrefix || '...'}`)
+                            : (isTr ? `🧩 Ön Ek: 0x${userPrefix}` : `🧩 Prefix: 0x${userPrefix}`));
                     }
                     if (activeFormula === 'OMNI_CHAOS') {
-                        pParts.push(`💥 Hibrit Kaos`);
+                        pParts.push(isTr ? `💥 Hibrit Kaos` : `💥 Hybrid Chaos`);
                     } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
-                        pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
+                        pParts.push(isTr ? `♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}` : `♾️ Deterministic Chaos ${physicsSliceStartPct.toFixed(2)}%`);
                     } else if (!isNarrowed && activeRangeMode === 'CHAOS') {
-                        pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
+                        pParts.push(isTr ? `⚡ Kaos [${chaosCurrentSubMode}]` : `⚡ Chaos [${chaosCurrentSubMode}]`);
                     } else if (activeRangeMode === 'HEX') {
                         const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
                         pParts.push(`🔤 Hex: 0x${hMinStr.substring(0,8)}...`);
                     } else if (activeRangeMode === 'PERCENT') {
-                        pParts.push(`% Dilim: %${sliceStartPct.toFixed(2)}`);
+                        pParts.push(isTr ? `% Dilim: %${sliceStartPct.toFixed(2)}` : `% Slice: ${sliceStartPct.toFixed(2)}%`);
                     } else if (activeFormula !== 'PREFIX' && activeFormula !== 'GRID') {
-                        pParts.push(`🌀 Fizik [${activeFormula}] %${physicsSliceStartPct.toFixed(2)}`);
+                        pParts.push(isTr ? `🌀 Fizik [${activeFormula}] %${physicsSliceStartPct.toFixed(2)}` : `🌀 Physics [${activeFormula}] ${physicsSliceStartPct.toFixed(2)}%`);
                     }
-                    baseRangeDesc = pParts.join(' + ') || 'Standart';
+                    baseRangeDesc = pParts.join(' + ') || (isTr ? 'Standart' : 'Standard');
                     rangeText = algoPrefix + baseRangeDesc;
                     document.getElementById('logRange').innerText = rangeText;
                 }
             }
             if (selectedAlgorithm === 'AUTO') {
-                const algoNames = {
+                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+                const algoNames = isTr ? {
                     'RANDOM':         '🎲 Rastgele Modu',
                     'SOBOL':          '📐 Sobol',
                     'VD_CORPUT':      '📐 Van der Corput',
@@ -6511,9 +6796,23 @@ function huntBatch() {
                     'SCRAMBLED_SOBOL':'🔀 Scrambled Sobol',
                     'MCMC':           '🎰 MCMC (Markov Yürüyüş)',
                     'SPHERICAL_ORBITAL': '⚛️ Küresel Kuantum Orbitali'
+                } : {
+                    'RANDOM':         '🎲 Random Mode',
+                    'SOBOL':          '📐 Sobol',
+                    'VD_CORPUT':      '📐 Van der Corput',
+                    'WEYL_GOLDEN':    '🌟 Weyl Lattice',
+                    'COPRIME_STRIDE': '♾️ Coprime Stride',
+                    'HILBERT':        '🌀 Hilbert Fractal',
+                    'WEAK_ENTROPY':   '⚡ Flawed Entropy',
+                    'CHAOS':          '♾️ Deterministic Chaos',
+                    'KANGAROO':       '🦘 Pollard Kangaroo',
+                    'HALTON':         '🎲 Halton (Multi-D)',
+                    'SCRAMBLED_SOBOL':'🔀 Scrambled Sobol',
+                    'MCMC':           '🎰 MCMC (Markov Walk)',
+                    'SPHERICAL_ORBITAL': '⚛️ Spherical Quantum Orbital'
                 };
-                const currentAutoAlgoName = algoNames[autoAlgoList[autoAlgoIndex]] || autoAlgoList[autoAlgoIndex] || 'Rastgele';
-                document.getElementById('logAlgo').innerText = `🔄 Oto Geçiş [${currentAutoAlgoName}]`;
+                const currentAutoAlgoName = algoNames[autoAlgoList[autoAlgoIndex]] || autoAlgoList[autoAlgoIndex] || (isTr ? 'Rastgele' : 'Random');
+                document.getElementById('logAlgo').innerText = isTr ? `🔄 Oto Geçiş [${currentAutoAlgoName}]` : `🔄 Auto Cycle [${currentAutoAlgoName}]`;
             }
                         if (lastKeyHex) {
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
@@ -6709,6 +7008,7 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
         document.title = document.title === winTitlePrefix ? "🚨 DİKKAT 🚨" : winTitlePrefix;
     }, 1000);
 
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
     // 4. LocalStorage'a kalıcı kaydet
     const winData = {
         puzzleId: puzzleId,
@@ -6717,7 +7017,7 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
         privateKey: '0x' + keyHex,
         wifCompressed: wifComp,
         wifUncompressed: wifUncomp,
-        finder: isRemoteWin ? `Kangaroo Sürü (${finderTabId})` : 'Bu Sekme',
+        finder: isRemoteWin ? (isTr ? `Kangaroo Sürü (${finderTabId})` : `Kangaroo Swarm (${finderTabId})`) : (isTr ? 'Bu Sekme' : 'This Tab'),
         date: new Date().toLocaleString()
     };
     localStorage.setItem('BTC_WIN_PUZZLE_' + puzzleId, JSON.stringify(winData));
@@ -6729,14 +7029,14 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
     resetWinDetailsState();
     const allFmt = privkeyToAddressesAll(keyHex);
     const swarmBadge = isRemoteWin 
-        ? `<div style="background:rgba(6,182,212,0.18); border:1px solid #06b6d4; padding:8px 12px; border-radius:6px; margin-bottom:10px; color:#38bdf8; font-weight:bold; font-size:12px; text-align:center;">🦘 KANGAROO SÜRÜ BAŞARISI: Anahtar bağlı sekme (${finderTabId}) tarafından bulundu ve anında eşitlendi!</div>`
-        : (typeof kangarooSwarmActive !== 'undefined' && kangarooSwarmActive ? `<div style="background:rgba(16,185,129,0.18); border:1px solid #10b981; padding:8px 12px; border-radius:6px; margin-bottom:10px; color:#34d399; font-weight:bold; font-size:12px; text-align:center;">🎯 Bu sekme tarafından bulundu ve Kangaroo Sürü Ağına iletildi!</div>` : '');
+        ? `<div style="background:rgba(6,182,212,0.18); border:1px solid #06b6d4; padding:8px 12px; border-radius:6px; margin-bottom:10px; color:#38bdf8; font-weight:bold; font-size:12px; text-align:center;">${isTr ? `🦘 KANGAROO SÜRÜ BAŞARISI: Anahtar bağlı sekme (${finderTabId}) tarafından bulundu ve anında eşitlendi!` : `🦘 KANGAROO SWARM SUCCESS: Key found by peer tab (${finderTabId}) and synchronized instantly!`}</div>`
+        : (typeof kangarooSwarmActive !== 'undefined' && kangarooSwarmActive ? `<div style="background:rgba(16,185,129,0.18); border:1px solid #10b981; padding:8px 12px; border-radius:6px; margin-bottom:10px; color:#34d399; font-weight:bold; font-size:12px; text-align:center;">${isTr ? '🎯 Bu sekme tarafından bulundu ve Kangaroo Sürü Ağına iletildi!' : '🎯 Found by this tab and broadcasted to Kangaroo Swarm Network!'}</div>` : '');
 
     winDetails.innerHTML = `
         ${swarmBadge}
-        <strong>🏆 ÖDÜL:</strong> Puzzle #${puzzleId} (${reward})<br>
-        <strong>🎯 Hedef Cüzdan:</strong> ${targetAddr}<br>
-        <strong>🔑 BULUNAN GİZLİ ŞİFRE (HEX):</strong><br>
+        <strong>${isTr ? '🏆 ÖDÜL:' : '🏆 REWARD:'}</strong> Puzzle #${puzzleId} (${reward})<br>
+        <strong>${isTr ? '🎯 Hedef Cüzdan:' : '🎯 Target Wallet:'}</strong> ${targetAddr}<br>
+        <strong>${isTr ? '🔑 BULUNAN GİZLİ ŞİFRE (HEX):' : '🔑 FOUND PRIVATE KEY (HEX):'}</strong><br>
         <span style="color: #f59e0b; font-size: 15px; font-weight: 800;">0x${keyHex}</span><br>
         <div style="margin-top:6px; margin-bottom:6px; background:rgba(15,23,42,0.6); padding:6px; border-radius:6px; border:1px solid #334155; font-size:11px; font-family:monospace; word-break:break-all; text-align:left;">
             <div style="color:#38bdf8; margin-bottom:2px;"><strong>📍 Native SegWit (Bech32):</strong> ${allFmt.bech32}</div>
@@ -6744,24 +7044,24 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
             <div style="color:#34d399;"><strong>📍 Legacy (P2PKH 1...):</strong> ${allFmt.legacyComp}</div>
         </div>
         <div style="margin-top:4px; margin-bottom:4px;">
-            <strong>🔐 WIF (Sıkıştırılmış - Electrum/Sparrow):</strong><br>
+            <strong>${isTr ? '🔐 WIF (Sıkıştırılmış - Electrum/Sparrow):' : '🔐 WIF (Compressed - Electrum/Sparrow):'}</strong><br>
             <span style="color: #38bdf8; font-size: 13px; font-weight: 800; font-family: monospace; word-break: break-all;">${wifComp}</span>
         </div>
         <div style="margin-bottom:6px;">
-            <strong style="font-size:11px; color:#94a3b8;">🔐 WIF (Standart 5):</strong><br>
+            <strong style="font-size:11px; color:#94a3b8;">${isTr ? '🔐 WIF (Standart 5):' : '🔐 WIF (Standard 5):'}</strong><br>
             <span style="color: #94a3b8; font-size: 11px; font-family: monospace; word-break: break-all;">${wifUncomp}</span>
         </div>
         <div style="text-align:center; margin-top:8px; display:flex; justify-content:center; gap:6px; flex-wrap:wrap;">
             <button onclick="copyWinKey('hex')" style="background:#f59e0b; color:#000; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">📋 HEX</button>
             <button onclick="copyWinKey('wif')" style="background:#0284c7; color:#fff; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🔐 WIF</button>
-            <button onclick="downloadWinFile('${puzzleId}', '${keyHex}', '${addr}', '${targetAddr}', '${reward}')" style="background:#10b981; color:#fff; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">💾 İndir</button>
-            <button onclick="clearWinAlert()" style="background:#ef4444; color:#fff; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🗑️ Temizle</button>
+            <button onclick="downloadWinFile('${puzzleId}', '${keyHex}', '${addr}', '${targetAddr}', '${reward}')" style="background:#10b981; color:#fff; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">💾 ${isTr ? 'İndir' : 'Download'}</button>
+            <button onclick="clearWinAlert()" style="background:#ef4444; color:#fff; border:none; padding:3px 10px; height:25px; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">🗑️ ${isTr ? 'Temizle' : 'Clear'}</button>
         </div>
     `;
 
     const winMsg = isRemoteWin 
-        ? `🎉 SÜRÜ BAŞARISI! KANGAROO AĞINDAKİ SEKME (${finderTabId}) PUZZLE #${puzzleId} ANAHTARINI BULDU!\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}`
-        : `🎉 TEBRİKLER! PUZZLE #${puzzleId} İÇİN ÖZEL ANAHTAR BULUNDU!\n\nBULDUM_PUZZLE_${puzzleId}.txt dosyası bilgisayarınıza kaydedildi.\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}`;
+        ? (isTr ? `🎉 SÜRÜ BAŞARISI! KANGAROO AĞINDAKİ SEKME (${finderTabId}) PUZZLE #${puzzleId} ANAHTARINI BULDU!\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}` : `🎉 SWARM SUCCESS! PEER TAB (${finderTabId}) FOUND PRIVATE KEY FOR PUZZLE #${puzzleId}!\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}`)
+        : (isTr ? `🎉 TEBRİKLER! PUZZLE #${puzzleId} İÇİN ÖZEL ANAHTAR BULUNDU!\n\nBULDUM_PUZZLE_${puzzleId}.txt dosyası bilgisayarınıza kaydedildi.\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}` : `🎉 CONGRATULATIONS! PRIVATE KEY FOUND FOR PUZZLE #${puzzleId}!\n\nFOUND_PUZZLE_${puzzleId}.txt file has been saved to your computer.\n\nPrivate Key (HEX): 0x${keyHex}\nWIF: ${wifComp}`);
     setTimeout(() => { alert(winMsg); }, 300);
 }
 
@@ -7631,6 +7931,12 @@ function bgWorkerProcess() {
     }
 
     let workerKangarooEngine = null;
+    let workerKangarooLastSpan = 0n;
+    let workerKangarooLastTargetId = '';
+    let workerKangarooLastProgressPost = 0;
+    let workerGeneralLastProgressPost = 0;
+    let workerGeneralAccumulatedCount = 0;
+
     function workerResetKangarooWalk(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
@@ -7640,10 +7946,17 @@ function bgWorkerProcess() {
 
         // Her worker bağımsız olarak DUAL (Tame + Wild) çalıştırır; workerId ofseti sayesinde her çekirdek farklı yollar arar
         let role = 'DUAL';
+        if (cfg && cfg.kangarooHerdType && (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD' || cfg.kangarooHerdType === 'DUAL')) {
+            role = cfg.kangarooHerdType;
+        }
 
-        if (typeof RealPollardKangaroo === 'function' && targetPub) {
+        const KangarooClass = (typeof self !== 'undefined' && typeof self.RealPollardKangaroo === 'function')
+            ? self.RealPollardKangaroo
+            : ((typeof RealPollardKangaroo === 'function') ? RealPollardKangaroo : null);
+
+        if (KangarooClass && targetPub) {
             try {
-                workerKangarooEngine = new RealPollardKangaroo(targetPub, s, e, { role: role, workerId: workerId });
+                workerKangarooEngine = new KangarooClass(targetPub, s, e, { role: role, workerId: workerId });
             } catch(err) {
                 workerKangarooEngine = null;
             }
@@ -7653,8 +7966,64 @@ function bgWorkerProcess() {
         workerKangarooStepCount = 0;
     }
 
-    let workerKangarooLastSpan = 0n;
-    let workerKangarooLastTargetId = '';
+    function workerRunDedicatedKangarooBatch() {
+        if (!isWorking) return;
+        if (!workerKangarooEngine || !workerKangarooEngine.isInitialized) return;
+
+        const res = workerKangarooEngine.step(256);
+        workerKangarooStepCount += 256;
+
+        if (workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0) {
+            const traps = workerKangarooEngine.newTrapsToBroadcast.slice();
+            workerKangarooEngine.newTrapsToBroadcast = [];
+            self.postMessage({
+                type: 'kangaroo_traps',
+                workerId: workerId,
+                traps: traps
+            });
+        }
+
+        if (res.status === 'WIN' && res.solvedKey) {
+            const keyHex = res.solvedKey.toString(16).padStart(64, '0');
+            const tAddr = (cfg && cfg.activeTarget) ? cfg.activeTarget.addr : '';
+            self.postMessage({
+                type: 'win',
+                workerId: workerId,
+                keyHex: keyHex,
+                key: keyHex,
+                targetId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : null,
+                targetAddr: tAddr,
+                reward: (cfg && cfg.activeTarget) ? cfg.activeTarget.reward : '',
+                isUncompressed: (cfg && cfg.activeTarget) ? !!cfg.activeTarget.isUncompressed : false,
+                matchType: (cfg && cfg.activeTarget && cfg.activeTarget.isUncompressed) ? 'TARGET_UNCOMP' : 'TARGET_COMP',
+                finderInfo: `🦘 Worker #${workerId} Pollard Kangaroo O(√N)`
+            });
+            isWorking = false;
+            return;
+        }
+
+        const now = Date.now();
+        if (now - workerKangarooLastProgressPost >= 100) {
+            workerKangarooLastProgressPost = now;
+            const wTraps = (workerKangarooEngine.tameTraps && workerKangarooEngine.wildTraps)
+                ? (workerKangarooEngine.tameTraps.size + workerKangarooEngine.wildTraps.size)
+                : (workerKangarooEngine.traps ? workerKangarooEngine.traps.size : 0);
+            self.postMessage({
+                type: 'progress',
+                workerId: workerId,
+                count: workerKangarooStepCount,
+                lastKey: res.lastKey || '',
+                trapCount: wTraps,
+                targetId: (cfg && cfg.activeTarget) ? cfg.activeTarget.id : '',
+                rangeText: '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)]'
+            });
+            workerKangarooStepCount = 0;
+        }
+
+        if (isWorking) {
+            setTimeout(workBatch, 0);
+        }
+    }
     function workerGenerateKangarooKey(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
@@ -7771,21 +8140,41 @@ function bgWorkerProcess() {
     function workBatch() {
         if (!isWorking) return;
         try {
-            const isKangaroo = (cfg.selectedAlgorithm === 'KANGAROO');
-            const batchSize = isKangaroo ? 2 : 40;
-        let count = 0;
-        let lastKeyHex = '';
-        let activeTarget = null;
-        let currentRangeText = '';
-        let baseDesc = '';
-        let isEffectivePrefix = false;
-        let lastWorkerAlgo = cfg.selectedAlgorithm || 'RANDOM';
-        let lastBoundMin = 0n;
-        let lastBoundMax = 0n;
-        let lastBaseStart = 0n;
-        let lastBaseEnd = 0n;
-        const mode = cfg.activeRangeMode || 'PERCENT';
-        const f = cfg.activeFormula || 'OMNI_CHAOS';
+            const mode = cfg.activeRangeMode || 'PERCENT';
+            const f = cfg.activeFormula || 'OMNI_CHAOS';
+            const isKangaroo = (f === 'KANGAROO' || (cfg && cfg.selectedAlgorithm === 'KANGAROO'));
+
+            if (isKangaroo) {
+                const actT = cfg.activeTarget;
+                if (actT) {
+                    const s = toBigIntSafe(actT.origStart || actT.start || '1');
+                    const e = toBigIntSafe(actT.origEnd || actT.end || '2');
+                    const span = e > s ? e - s : 1n;
+                    const pid = actT.id;
+                    if (!workerKangarooEngine || workerKangarooLastSpan !== span || workerKangarooLastTargetId !== String(pid)) {
+                        workerKangarooLastSpan = span;
+                        workerKangarooLastTargetId = String(pid);
+                        workerResetKangarooWalk(s, e);
+                    }
+                    if (workerKangarooEngine && workerKangarooEngine.isInitialized) {
+                        workerRunDedicatedKangarooBatch();
+                        return;
+                    }
+                }
+            }
+
+            const batchSize = 2500;
+            let count = 0;
+            let lastKeyHex = '';
+            let activeTarget = null;
+            let currentRangeText = '';
+            let baseDesc = '';
+            let isEffectivePrefix = false;
+            let lastWorkerAlgo = cfg.selectedAlgorithm || 'RANDOM';
+            let lastBoundMin = 0n;
+            let lastBoundMax = 0n;
+            let lastBaseStart = 0n;
+            let lastBaseEnd = 0n;
         
         for (let i = 0; i < batchSize; i++) {
             if (!isWorking) break;
@@ -8072,18 +8461,23 @@ function bgWorkerProcess() {
             }
         }
         
+        const isTr = (cfg && cfg.currentHunterLang === 'tr');
         if (lastWorkerAlgo === 'KANGAROO') {
-            currentRangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
+            currentRangeText = isTr 
+                ? '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)'
+                : '🦘 Pollard Kangaroo [Elliptic Curve O(√N)] (Full Range)';
         } else {
             let algoPrefix = '';
             if (lastWorkerAlgo === 'SOBOL') algoPrefix = '📐 Sobol + ';
             else if (lastWorkerAlgo === 'VD_CORPUT') algoPrefix = '📐 Van der Corput + ';
-            else if (lastWorkerAlgo === 'WEYL_GOLDEN') algoPrefix = '🌟 Weyl Kafesi + ';
-            else if (lastWorkerAlgo === 'COPRIME_STRIDE') algoPrefix = '♾️ Modüler Adım + ';
+            else if (lastWorkerAlgo === 'WEYL_GOLDEN') algoPrefix = isTr ? '🌟 Weyl Kafesi + ' : '🌟 Weyl Lattice + ';
+            else if (lastWorkerAlgo === 'COPRIME_STRIDE') algoPrefix = isTr ? '♾️ Modüler Adım + ' : '♾️ Coprime Stride + ';
             else if (lastWorkerAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
-            else if (lastWorkerAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
+            else if (lastWorkerAlgo === 'CHAOS') algoPrefix = isTr ? '♾️ Kaos + ' : '♾️ Chaos + ';
             else if (lastWorkerAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits !== -1) {
-                algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + 'b Entropi') : '⚡ Zayıf Entropi') + ' + ';
+                const bStr = isTr ? 'b Entropi' : 'b Entropy';
+                const fStr = isTr ? '⚡ Zayıf Entropi' : '⚡ Flawed Entropy';
+                algoPrefix = (cfg.selectedEntropyBits > 0 ? ('⚡ ' + cfg.selectedEntropyBits + bStr) : fStr) + ' + ';
             } else if (lastWorkerAlgo === 'HALTON') algoPrefix = '🎲 Halton + ';
             else if (lastWorkerAlgo === 'SCRAMBLED_SOBOL') algoPrefix = '🔀 S.Sobol + ';
             else if (lastWorkerAlgo === 'MCMC') algoPrefix = '🎰 MCMC + ';
@@ -8093,31 +8487,39 @@ function bgWorkerProcess() {
                 pParts.push('🎚️ [0x' + lastBoundMin.toString(16).substring(0, 6) + '..-0x' + lastBoundMax.toString(16).substring(0, 6) + '..]');
             }
             if (isEffectivePrefix) {
-                pParts.push(cfg.isPrefixAutoJump ? ('🔄 Oto Ön Ek: 0x' + (activeWorkerPrefix || '...')) : ('🧩 Ön Ek: 0x' + activeWorkerPrefix));
+                pParts.push(cfg.isPrefixAutoJump 
+                    ? ((isTr ? '🔄 Oto Ön Ek: 0x' : '🔄 Auto Prefix: 0x') + (activeWorkerPrefix || '...')) 
+                    : ((isTr ? '🧩 Ön Ek: 0x' : '🧩 Prefix: 0x') + activeWorkerPrefix));
             }
-            if (f === 'OMNI_CHAOS') pParts.push('💥 Hibrit Kaos');
-            else if (f === 'DETERMINISTIC_CHAOS') pParts.push('♾️ Deterministik Kaos');
-            else if (f !== 'PREFIX' && f !== 'GRID') pParts.push('🌀 Fizik [' + f + ']');
-            baseDesc = pParts.join(' + ') || 'Standart';
+            if (f === 'OMNI_CHAOS') pParts.push(isTr ? '💥 Hibrit Kaos' : '💥 Hybrid Chaos');
+            else if (f === 'DETERMINISTIC_CHAOS') pParts.push(isTr ? '♾️ Deterministik Kaos' : '♾️ Deterministic Chaos');
+            else if (f !== 'PREFIX' && f !== 'GRID') pParts.push((isTr ? '🌀 Fizik [' : '🌀 Physics [') + f + ']');
+            baseDesc = pParts.join(' + ') || (isTr ? 'Standart' : 'Standard');
             currentRangeText = algoPrefix + baseDesc;
         }
 
-        const newTrapsList = (workerKangarooEngine && workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0)
-            ? workerKangarooEngine.newTrapsToBroadcast.splice(0)
-            : null;
+        workerGeneralAccumulatedCount += count;
+        const now = Date.now();
+        if (now - workerGeneralLastProgressPost >= 100) {
+            workerGeneralLastProgressPost = now;
+            const newTrapsList = (workerKangarooEngine && workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0)
+                ? workerKangarooEngine.newTrapsToBroadcast.splice(0)
+                : null;
 
-        self.postMessage({
-            type: 'progress',
-            workerId: workerId,
-            count: count,
-            newTraps: newTrapsList,
-            lastKey: lastKeyHex,
-            targetId: activeTarget ? activeTarget.id : '',
-            rangeText: currentRangeText,
-            currentPrefix: (isEffectivePrefix || cfg.isPrefixAutoJump || cfg.isPrefixFilterActive) ? activeWorkerPrefix : null,
-            currentSuffix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerSuffix : null,
-            currentGridCell: (mode === 'GRID' || f === 'GRID' || f === 'OMNI_CHAOS') ? activeWorkerGridCell : null
-        });
+            self.postMessage({
+                type: 'progress',
+                workerId: workerId,
+                count: workerGeneralAccumulatedCount,
+                newTraps: newTrapsList,
+                lastKey: lastKeyHex,
+                targetId: activeTarget ? activeTarget.id : '',
+                rangeText: currentRangeText,
+                currentPrefix: (isEffectivePrefix || cfg.isPrefixAutoJump || cfg.isPrefixFilterActive) ? activeWorkerPrefix : null,
+                currentSuffix: (mode === 'PREFIX' || f === 'PREFIX' || f === 'OMNI_CHAOS') ? activeWorkerSuffix : null,
+                currentGridCell: (mode === 'GRID' || f === 'GRID' || f === 'OMNI_CHAOS') ? activeWorkerGridCell : null
+            });
+            workerGeneralAccumulatedCount = 0;
+        }
         
         if (isWorking) {
             setTimeout(workBatch, 0);
@@ -8319,11 +8721,12 @@ async function addGpuOptionIfSupported() {
         // GPU seçenekleri zaten varsa tekrar ekleme
         if (Array.from(sel.options).some(o => o.value && o.value.startsWith('GPU'))) return;
 
+        const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
         // 3 kademeli GPU modu: Ultra Hafif (Eco - 64 batch / 120ms), Dengeli (256 batch / 45ms), Turbo (1024 batch / 0ms)
         const gpuOptions = [
-            { val: 'GPU_ECO', label: '🟢 GPU (Ultra Hafif / 0 Kasma - 64 / 120ms)' },
-            { val: 'GPU_BALANCED', label: '🟡 GPU (Dengeli / Akıcı - 256 / 45ms)' },
-            { val: 'GPU_MAX', label: '🔴 GPU (Tam Güç - 1024 / 0ms)' }
+            { val: 'GPU_ECO', label: isTr ? '🟢 GPU (Ultra Hafif / 0 Kasma - 64 / 120ms)' : '🟢 GPU (Ultra Light / 0 Lag - 64 / 120ms)' },
+            { val: 'GPU_BALANCED', label: isTr ? '🟡 GPU (Dengeli / Akıcı - 256 / 45ms)' : '🟡 GPU (Balanced / Smooth - 256 / 45ms)' },
+            { val: 'GPU_MAX', label: isTr ? '🔴 GPU (Tam Güç - 1024 / 0ms)' : '🔴 GPU (Max Power - 1024 / 0ms)' }
         ];
 
         // Ters sırada ekle (Eco en üstte dursun)
@@ -8413,6 +8816,7 @@ function getCurrentWorkerConfig() {
         })(),
         kangarooHerdType: (typeof kangarooHerdType !== 'undefined' && kangarooHerdType) ? kangarooHerdType : 'DUAL',
         exposedKangarooPubkeys: (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') ? EXPOSED_KANGAROO_PUBKEYS : {},
+        currentHunterLang: (typeof currentHunterLang !== 'undefined' ? currentHunterLang : 'en'),
     };
 }
 
@@ -8426,19 +8830,20 @@ function onThreadCountSelectChange() {
     if (!sel) return;
     const val = sel.value;
     try { localStorage.setItem('PREF_THREAD_COUNT', val); } catch(e) {}
+    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
     if (val && val.startsWith('GPU')) {
         if (typeof window.setGpuIntensity === 'function') {
             window.setGpuIntensity(val);
         }
         if (typeof showToast === 'function') {
             const label = val.includes('ECO') 
-                ? '🟢 Ultra Hafif: 64 batch / 120ms - Sıfır Kasma' 
-                : (val.includes('MAX') ? '🔴 Tam Güç: 1024 batch / 0ms' : '🟡 Dengeli: 256 batch / 45ms - Akıcı');
-            showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
+                ? (isTr ? '🟢 Ultra Hafif: 64 batch / 120ms - Sıfır Kasma' : '🟢 Ultra Light: 64 batch / 120ms - Zero Lag')
+                : (val.includes('MAX') ? (isTr ? '🔴 Tam Güç: 1024 batch / 0ms' : '🔴 Max Power: 1024 batch / 0ms') : (isTr ? '🟡 Dengeli: 256 batch / 45ms - Akıcı' : '🟡 Balanced: 256 batch / 45ms - Smooth'));
+            showToast(isTr ? '⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>' : '⚡ <strong>GPU Mode Changed</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
         }
     } else {
         if (typeof showToast === 'function') {
-            showToast('💻 <strong>CPU Modu: ' + val + ' Çekirdek</strong>', 2000);
+            showToast(isTr ? '💻 <strong>CPU Modu: ' + val + ' Çekirdek</strong>' : '💻 <strong>CPU Mode: ' + val + ' Cores</strong>', 2000);
         }
     }
 }
@@ -8563,6 +8968,99 @@ function broadcastWorkerConfig() {
     });
 }
 
+// ==================== 60 FPS AYRIK RENDER MİMARİSİ (DECOUPLED UI) ====================
+const domCache = {
+    statAttempts: null,
+    statSpeed: null,
+    statElapsed: null,
+    logKey: null,
+    logRange: null,
+    logTarget: null,
+    prefixInput: null,
+    gridCellInput: null,
+    trapBadge: null,
+    init() {
+        this.statAttempts = document.getElementById('statAttempts');
+        this.statSpeed = document.getElementById('statSpeed');
+        this.statElapsed = document.getElementById('statElapsed');
+        this.logKey = document.getElementById('logKey');
+        this.logRange = document.getElementById('logRange');
+        this.logTarget = document.getElementById('logTarget');
+        this.prefixInput = document.getElementById('prefixInput');
+        this.gridCellInput = document.getElementById('gridCellInput');
+        this.trapBadge = document.getElementById('kangarooSwarmTrapCount');
+    }
+};
+
+const uiRenderState = {
+    dirty: false,
+    attempts: 0,
+    speedText: '',
+    trapText: '',
+    lastKeyHex: '',
+    rangeText: '',
+    prefixText: '',
+    gridCellText: '',
+    targetHtml: '',
+    rafId: null
+};
+
+function flushUiRenderState() {
+    if (!domCache.statAttempts) domCache.init();
+    const c = domCache;
+    if (c.statAttempts && uiRenderState.attempts !== undefined) {
+        c.statAttempts.textContent = uiRenderState.attempts.toLocaleString();
+    }
+    if (c.statSpeed && uiRenderState.speedText) {
+        c.statSpeed.textContent = uiRenderState.speedText;
+    }
+    if (c.trapBadge && uiRenderState.trapText) {
+        c.trapBadge.textContent = uiRenderState.trapText;
+    }
+    if (c.logKey && uiRenderState.lastKeyHex) {
+        c.logKey.textContent = uiRenderState.lastKeyHex;
+    }
+    if (c.logRange && uiRenderState.rangeText) {
+        c.logRange.textContent = uiRenderState.rangeText;
+    }
+    if (c.prefixInput && uiRenderState.prefixText && document.activeElement !== c.prefixInput) {
+        c.prefixInput.value = uiRenderState.prefixText;
+    }
+    if (c.gridCellInput && uiRenderState.gridCellText && document.activeElement !== c.gridCellInput) {
+        c.gridCellInput.value = uiRenderState.gridCellText;
+    }
+    if (c.logTarget && uiRenderState.targetHtml) {
+        c.logTarget.innerHTML = uiRenderState.targetHtml;
+    }
+    uiRenderState.dirty = false;
+}
+
+function startUiRenderLoop() {
+    if (!domCache.statAttempts) domCache.init();
+    if (uiRenderState.rafId) return;
+
+    function renderFrame() {
+        if (!isRunning) {
+            uiRenderState.rafId = null;
+            return;
+        }
+        if (uiRenderState.dirty) {
+            flushUiRenderState();
+        }
+        uiRenderState.rafId = requestAnimationFrame(renderFrame);
+    }
+    uiRenderState.rafId = requestAnimationFrame(renderFrame);
+}
+
+function stopUiRenderLoop() {
+    if (uiRenderState.rafId) {
+        cancelAnimationFrame(uiRenderState.rafId);
+        uiRenderState.rafId = null;
+    }
+    flushUiRenderState();
+}
+// ======================================================================================
+
 function handleWorkerMessage(e) {
     try {
         const data = e.data;
@@ -8575,6 +9073,29 @@ function handleWorkerMessage(e) {
             if (isRunning) toggleHunter();
             return;
         }
+        if (data.type === 'kangaroo_traps' && data.traps && Array.isArray(data.traps)) {
+            if (!window.uniqueKangarooTraps) window.uniqueKangarooTraps = new Set();
+            data.traps.forEach(t => {
+                const k = t.pointKey || t.pointXHex;
+                if (k) {
+                    window.uniqueKangarooTraps.add(k);
+                    if (typeof broadcastKangarooTrap === 'function') {
+                        broadcastKangarooTrap(k, t.herd, t.dist);
+                    }
+                }
+            });
+            if (typeof workerPool !== 'undefined' && workerPool.length > 0) {
+                for (let w of workerPool) {
+                    if (w) {
+                        try { w.postMessage({ cmd: 'addTraps', traps: data.traps }); } catch(e) {}
+                    }
+                }
+            }
+            const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+            uiRenderState.trapText = '📍 ' + window.uniqueKangarooTraps.size.toLocaleString() + (isTr ? ' Tuzak' : ' Traps');
+            uiRenderState.dirty = true;
+            return;
+        }
         if (data.type !== 'win' && data.type !== 'found' && !isRunning) return;
 
         if (data.type === 'progress') {
@@ -8582,24 +9103,20 @@ function handleWorkerMessage(e) {
             if (data.newTraps && data.newTraps.length > 0) {
                 if (!window.uniqueKangarooTraps) window.uniqueKangarooTraps = new Set();
                 for (let t of data.newTraps) {
-                    if (t && t.pointXHex) {
-                        window.uniqueKangarooTraps.add(t.pointXHex);
+                    const k = t.pointKey || t.pointXHex;
+                    if (k) {
+                        window.uniqueKangarooTraps.add(k);
                         if (typeof broadcastKangarooTrap === 'function') {
-                            broadcastKangarooTrap(t.pointXHex, t.herd, t.dist);
+                            broadcastKangarooTrap(k, t.herd, t.dist);
                         }
                     }
                 }
                 if (typeof workerPool !== 'undefined' && workerPool.length > 0) {
                     for (let w of workerPool) {
-                        if (w && w !== worker) {
+                        if (w) {
                             try { w.postMessage({ cmd: 'addTraps', traps: data.newTraps }); } catch(e) {}
                         }
                     }
-                }
-                const trapEl = document.getElementById('kangarooSwarmTrapCount');
-                if (trapEl) {
-                    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
-                    trapEl.innerText = '📍 ' + window.uniqueKangarooTraps.size.toLocaleString() + (isTr ? ' Tuzak' : ' Traps');
                 }
             }
             if (isGpuRunning) {
@@ -8613,82 +9130,79 @@ function handleWorkerMessage(e) {
             }
             if (sliceModeActive && data.count) sliceAttempts += data.count;
             
-            const now = Date.now();
-            if (now - lastProgressUI >= 80) {
-                lastProgressUI = now;
-                const attEl = document.getElementById('statAttempts');
-                if (attEl) attEl.innerText = attempts.toLocaleString();
-                if (!isGpuRunning && data.rate !== undefined && data.rate > 0) {
-                    const spEl = document.getElementById('statSpeed');
-                    if (spEl) spEl.innerText = Math.round(data.rate).toLocaleString() + ' key/s';
-                }
-                // index0: API kontrolü devre dışı
-                if (data.lastKey) {
-                    const lk = document.getElementById('logKey');
-                    if (lk) lk.innerText = '0x' + String(data.lastKey).replace(/^0x/i, '').padStart(64, '0');
-                }
-                if (data.rangeText) {
-                    const lr = document.getElementById('logRange');
-                    if (lr) lr.innerText = data.rangeText;
-                }
-                if (data.currentPrefix && (isPrefixAutoJump || isPrefixFilterActive || (typeof isAgentActive !== 'undefined' && isAgentActive))) {
-                    userPrefix = data.currentPrefix;
-                    const pInput = document.getElementById('prefixInput');
-                    if (pInput) {
-                        pInput.value = data.currentPrefix;
-                        pInput.placeholder = data.currentPrefix;
-                    }
-                }
-                if (data.currentGridCell !== null && data.currentGridCell !== undefined && isGridAutoJump && (activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'GRID')) {
-                    userGridCell = data.currentGridCell;
-                    const gInput = document.getElementById('gridCellInput');
-                    if (gInput) gInput.value = data.currentGridCell;
-                }
-                if (data.targetId && !isCircularMode && currentTarget) {
-                    if (typeof updateLogTargetLabel === 'function') updateLogTargetLabel();
-                } else if (data.targetId && isCircularMode && unsolvedList) {
-                    const p = unsolvedList.find(x => x.id === data.targetId);
-                    if (p) {
-                        const cCount = customAddressSet ? customAddressSet.size : 0;
-                        const cText = (isCustomPoolActive && cCount > 0) ? ' (+' + cCount.toLocaleString('tr-TR') + ' 🎯)' : '';
-                        const lt = document.getElementById('logTarget');
-                        if (lt) lt.innerHTML = '#' + p.id + ' -> ' + p.addr + cText;
-                    }
+            uiRenderState.attempts = attempts;
+
+            if (!isGpuRunning && data.rate !== undefined && data.rate > 0) {
+                uiRenderState.speedText = Math.round(data.rate).toLocaleString() + ' key/s';
+            }
+            if (data.trapCount !== undefined) {
+                if (typeof window.workerTrapMap === 'undefined') window.workerTrapMap = {};
+                window.workerTrapMap[data.workerId] = data.trapCount;
+                let sumTraps = 0;
+                for (const w in window.workerTrapMap) sumTraps += window.workerTrapMap[w];
+                if (sumTraps > 0) {
+                    const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
+                    const trapK = (sumTraps >= 1000) ? (sumTraps / 1000).toFixed(1) + 'k' : sumTraps;
+                    uiRenderState.trapText = `📍 ${trapK}` + (isTr ? ' Tuzak' : ' Traps');
                 }
             }
+            if (data.lastKey) {
+                uiRenderState.lastKeyHex = '0x' + String(data.lastKey).replace(/^0x/i, '').padStart(64, '0');
+            }
+            if (data.rangeText) {
+                uiRenderState.rangeText = data.rangeText;
+            }
+            if (data.currentPrefix && (isPrefixAutoJump || isPrefixFilterActive || (typeof isAgentActive !== 'undefined' && isAgentActive))) {
+                userPrefix = data.currentPrefix;
+                uiRenderState.prefixText = data.currentPrefix;
+            }
+            if (data.currentGridCell !== null && data.currentGridCell !== undefined && isGridAutoJump && (activeFormula === 'GRID' || activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'GRID')) {
+                userGridCell = data.currentGridCell;
+                uiRenderState.gridCellText = data.currentGridCell;
+            }
+            if (data.targetId && !isCircularMode && currentTarget) {
+                if (typeof updateLogTargetLabel === 'function') updateLogTargetLabel();
+            } else if (data.targetId && isCircularMode && unsolvedList) {
+                const p = unsolvedList.find(x => x.id === data.targetId);
+                if (p) {
+                    uiRenderState.targetHtml = '#' + p.id + ' -> ' + p.addr;
+                }
+            }
+            uiRenderState.dirty = true;
         } else if (data.type === 'win' || data.type === 'found') {
-        console.log('🎉🎉🎉 KAZANÇ BULUNDU!', data);
+            console.log('🎉🎉🎉 KAZANÇ BULUNDU!', data);
 
-        stopWorkerPool();
-        isRunning = false;
-        
-        const btn = document.getElementById('btnToggle');
-        if (btn) {
-            btn.className = 'action-btn btn-start';
-            btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '▶ Aramayı Başlat' : '▶ Start Hunting';
+            stopWorkerPool();
+            isRunning = false;
+            stopUiRenderLoop();
+            
+            const btn = document.getElementById('btnToggle');
+            if (btn) {
+                btn.className = 'action-btn btn-start';
+                btn.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '▶ Aramayı Başlat' : '▶ Start Hunting';
+            }
+            clearInterval(timerInterval);
+            releaseWakeLock();
+            
+            const winKeyHex = data.keyHex || data.key;
+            let winAddr = '';
+            if (data.isP2SH) {
+                winAddr = hash160ToP2SHAddress(privkeyToHash160(winKeyHex));
+            } else if (data.isUncompressed) {
+                winAddr = privkeyToAddress(winKeyHex, false);
+            } else {
+                winAddr = privkeyToAddress(winKeyHex, true);
+            }
+            
+            const winId = data.targetId || (currentTarget ? currentTarget.id : '#1');
+            const targetAddr = data.targetAddr || (currentTarget ? currentTarget.addr : winAddr);
+            const reward = data.reward || 'Bitcoin Ödülü';
+            
+            document.getElementById('statAttempts').innerText = attempts.toLocaleString();
+            document.getElementById('logKey').innerText = '0x' + winKeyHex;
+            
+            handleWin(winId, winKeyHex, winAddr, targetAddr, reward);
         }
-        clearInterval(timerInterval);
-        releaseWakeLock();
-        
-        const winKeyHex = data.keyHex || data.key;
-        let winAddr = '';
-        if (data.isP2SH) {
-            winAddr = hash160ToP2SHAddress(privkeyToHash160(winKeyHex));
-        } else if (data.isUncompressed) {
-            winAddr = privkeyToAddress(winKeyHex, false);
-        } else {
-            winAddr = privkeyToAddress(winKeyHex, true);
-        }
-        
-        const winId = data.targetId || (currentTarget ? currentTarget.id : '#1');
-        const targetAddr = data.targetAddr || (currentTarget ? currentTarget.addr : winAddr);
-        const reward = data.reward || 'Bitcoin Ödülü';
-        
-        document.getElementById('statAttempts').innerText = attempts.toLocaleString();
-        document.getElementById('logKey').innerText = '0x' + winKeyHex;
-        
-        handleWin(winId, winKeyHex, winAddr, targetAddr, reward);
-    }
     } catch(err) {
         console.error('[handleWorkerMessage error]:', err);
     }
@@ -8876,16 +9390,45 @@ function applyHunterLanguage(lang) {
 
         const elLogRangeVal = document.getElementById('logRange');
         if (elLogRangeVal) {
-            if (elLogRangeVal.innerText.includes('Bulmacaya') || elLogRangeVal.innerText.includes('Dynamic')) {
+            let rTxt = elLogRangeVal.innerText;
+            if (rTxt.includes('Bulmacaya') || rTxt.includes('Dynamic')) {
                 elLogRangeVal.innerText = isEn ? 'Dynamic per Puzzle' : 'Bulmacaya Göre Dinamik';
+            } else if (isEn) {
+                elLogRangeVal.innerText = rTxt
+                    .replace('⚡ Zayıf Entropi', '⚡ Flawed Entropy')
+                    .replace('b Entropi', 'b Entropy')
+                    .replace('🌟 Weyl Kafesi', '🌟 Weyl Lattice')
+                    .replace('♾️ Modüler Adım', '♾️ Coprime Stride')
+                    .replace('♾️ Kaos', '♾️ Chaos')
+                    .replace('🔄 Oto Ön Ek', '🔄 Auto Prefix')
+                    .replace('🧩 Ön Ek', '🧩 Prefix')
+                    .replace('💥 Hibrit Kaos', '💥 Hybrid Chaos')
+                    .replace('♾️ Deterministik Kaos', '♾️ Deterministic Chaos')
+                    .replace('🌀 Fizik', '🌀 Physics')
+                    .replace('Standart', 'Standard')
+                    .replace('[Eliptik Eğri O(√N)] (Tam Aralık)', '[Elliptic Curve O(√N)] (Full Range)');
+            } else {
+                elLogRangeVal.innerText = rTxt
+                    .replace('⚡ Flawed Entropy', '⚡ Zayıf Entropi')
+                    .replace('b Entropy', 'b Entropi')
+                    .replace('🌟 Weyl Lattice', '🌟 Weyl Kafesi')
+                    .replace('♾️ Coprime Stride', '♾️ Modüler Adım')
+                    .replace('♾️ Chaos', '♾️ Kaos')
+                    .replace('🔄 Auto Prefix', '🔄 Oto Ön Ek')
+                    .replace('🧩 Prefix', '🧩 Ön Ek')
+                    .replace('💥 Hybrid Chaos', '💥 Hibrit Kaos')
+                    .replace('♾️ Deterministic Chaos', '♾️ Deterministik Kaos')
+                    .replace('🌀 Physics', '🌀 Fizik')
+                    .replace('Standard', 'Standart')
+                    .replace('[Elliptic Curve O(√N)] (Full Range)', '[Eliptik Eğri O(√N)] (Tam Aralık)');
             }
         }
 
-        const elLogAlgoVal = document.getElementById('logAlgo');
-        if (elLogAlgoVal) {
-            if (elLogAlgoVal.innerText.includes('Boşluksuz') || (isEn && elLogAlgoVal.innerText.includes('Quasi-Monte Carlo'))) {
-                elLogAlgoVal.innerText = isEn ? '📐 Sobol & Van der Corput (Quasi-Monte Carlo)' : '📐 Sobol & Van der Corput (Quasi-Monte Carlo Boşluksuz)';
-            }
+        if (typeof selectedAlgorithm !== 'undefined' && typeof setAlgorithm === 'function') {
+            setAlgorithm(selectedAlgorithm);
+        }
+        if (typeof broadcastWorkerConfig === 'function') {
+            broadcastWorkerConfig();
         }
 
         const elLogKey = document.getElementById('lblLogKey');
@@ -8981,6 +9524,45 @@ function applyHunterLanguage(lang) {
         // 15. Re-render thread options
         if (typeof initThreadCountUI === 'function') initThreadCountUI();
 
+        // 16. Crop & Speed Button Texts & Tooltips
+        const elCropGold = document.getElementById('btnCropGolden');
+        if (elCropGold) {
+            elCropGold.innerText = isEn ? '🌟 Golden' : '🌟 Altın';
+            elCropGold.title = isEn ? 'Cut outside Golden Ratio (38.2% - 61.8%)' : 'Altın Çekirdek (%38.2 - %61.8) hariç kes';
+        }
+        const elCropSel = document.getElementById('btnCropSelection');
+        if (elCropSel) {
+            elCropSel.innerText = isEn ? '📌 Crop' : '📌 Kırp';
+            elCropSel.title = isEn ? 'Crop & lock selected range as new space' : 'Seçili aralığı yeni uzay olarak kırp & sabitle';
+        }
+        const elResetCrop = document.getElementById('btnResetCrop');
+        if (elResetCrop) {
+            elResetCrop.title = isEn ? 'Reset Space (Full Space 0%-100%)' : 'Uzayı Sıfırla (Tam Uzay %0-%100)';
+        }
+        const sFast = document.getElementById('btnSpeedFast');
+        if (sFast) sFast.title = isEn ? 'Fast (1s / 2.6% Golden Step)' : 'Hızlı (1 sn / %2.6 Altın Adım)';
+        const sMed = document.getElementById('btnSpeedMed');
+        if (sMed) sMed.title = isEn ? 'Medium (3s / 1.6% Golden Step)' : 'Orta (3 sn / %1.6 Altın Adım)';
+        const sSlow = document.getElementById('btnSpeedSlow');
+        if (sSlow) sSlow.title = isEn ? 'Slow (8s / 1.2% Golden Step)' : 'Yavaş (8 sn / %1.2 Altın Adım)';
+        const sMicro = document.getElementById('btnSpeedMicro');
+        if (sMicro) sMicro.title = isEn ? 'Micro (15s / 0.6% Golden Step)' : 'Mikro (15 sn / %0.6 Altın Adım)';
+
+        // 17. Mode Visuals (Prefix, Agent button titles, etc.)
+        if (typeof updateModeVisuals === 'function') updateModeVisuals();
+
+        // 18. Rebuild Custom Menus in the current language
+        if (typeof buildCustomMenus === 'function') buildCustomMenus();
+
+        // 19. Update crop status title if active
+        if (typeof updateCropUI === 'function' && typeof isSpaceCropped !== 'undefined' && isSpaceCropped) {
+            const minEl = document.getElementById('rangeSliderMin');
+            const maxEl = document.getElementById('rangeSliderMax');
+            const pMin = minEl ? (Number(minEl.value || 0) / 10000000000) : 0;
+            const pMax = maxEl ? (Number(maxEl.value || 1000000000000) / 10000000000) : 100;
+            updateCropUI(pMin, pMax);
+        }
+
     } catch(err) {
         console.error('applyHunterLanguage error:', err);
     }
@@ -8994,10 +9576,10 @@ function toggleHunterLanguage() {
 if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            if (currentHunterLang !== 'en') applyHunterLanguage(currentHunterLang);
+            applyHunterLanguage(currentHunterLang);
         });
     } else {
-        if (currentHunterLang !== 'en') applyHunterLanguage(currentHunterLang);
+        applyHunterLanguage(currentHunterLang);
     }
 }
 
@@ -9009,6 +9591,7 @@ function toggleHunter() {
 
     if (isRunning) {
         isRunning = false;
+        stopUiRenderLoop();
 
         stopGpuHunting();
         stopWorkerPool();
@@ -9020,7 +9603,7 @@ function toggleHunter() {
             timerInterval = null;
         }
         if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
-        const spEl = document.getElementById('statSpeed');
+        const spEl = domCache.statSpeed || document.getElementById('statSpeed');
         if (spEl) spEl.innerText = '0 key/s';
 
         btnUnsolved.classList.remove('locked');
@@ -9047,11 +9630,16 @@ function toggleHunter() {
             const curNum = curId !== null ? parseInt(curId, 10) : null;
             const hasPub = (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && curId) ? (EXPOSED_KANGAROO_PUBKEYS[curId] || EXPOSED_KANGAROO_PUBKEYS[curNum]) : null;
             if (!hasPub) {
+                const isTr = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr');
                 showFatalErrorUI(
-                    'KANGAROO ÇALIŞTIRILAMAZ',
-                    `Seçili hedef (<strong>#${curId || '?'}</strong>) için açık anahtar (public key) bilinmiyor!<br><br>` +
-                    `<strong>Neden?</strong> Pollard Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
-                    `<strong>Çözüm:</strong> Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+                    isTr ? 'KANGAROO ÇALIŞTIRILAMAZ' : 'KANGAROO CANNOT RUN',
+                    isTr 
+                        ? `Seçili hedef (<strong>#${curId || '?'}</strong>) için açık anahtar (public key) bilinmiyor!<br><br>` +
+                          `<strong>Neden?</strong> Pollard Kangaroo algoritması eliptik eğri açık anahtarı olmadan çalışamaz.<br>` +
+                          `<strong>Çözüm:</strong> Lütfen açık anahtarı bilinen bir bulmaca seçin (#19, #57, #135, #140, #145, #150, #155, #160) veya algoritmayı <strong>Sobol, Weyl, Kaos ya da Rastgele</strong> olarak değiştirin.`
+                        : `Public key unknown for selected target (<strong>#${curId || '?'}</strong>)!<br><br>` +
+                          `<strong>Reason:</strong> Pollard's Kangaroo requires an elliptic curve public key to operate.<br>` +
+                          `<strong>Solution:</strong> Please select a puzzle with known public key (#19, #57, #135, #140, #145, #150, #155, #160) or change algorithm to <strong>Sobol, Weyl, Chaos or Random</strong>.`
                 );
                 return;
             }
@@ -9060,6 +9648,7 @@ function toggleHunter() {
         requestWakeLock();
         if (!ec) getEc();
         isRunning = true;
+        startUiRenderLoop();
         // P2P: kanal yoksa oluştur
         
         // MIC modu: mikrofonu başlat
@@ -9083,11 +9672,11 @@ function toggleHunter() {
             const hrs = String(Math.floor(sec / 3600)).padStart(2, '0');
             const mins = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
             const secs = String(sec % 60).padStart(2, '0');
-            const el = document.getElementById('statElapsed');
+            const el = domCache.statElapsed || document.getElementById('statElapsed');
             if (el) el.innerText = hrs + ':' + mins + ':' + secs;
             
             const speed = sec > 0 ? (attempts / sec).toFixed(1) : 0;
-            const spEl = document.getElementById('statSpeed');
+            const spEl = domCache.statSpeed || document.getElementById('statSpeed');
             if (spEl) spEl.innerText = Number(speed).toLocaleString('tr-TR') + ' key/s';
         }, 500);
 
@@ -9099,7 +9688,7 @@ function toggleHunter() {
                 window.setGpuIntensity(threadVal);
             }
             const spEl = document.getElementById('statSpeed');
-            if (spEl) spEl.innerText = '⚡ GPU Hazırlanıyor...';
+            if (spEl) spEl.innerText = (typeof currentHunterLang !== 'undefined' && currentHunterLang === 'tr') ? '⚡ GPU Hazırlanıyor...' : '⚡ GPU Initializing...';
             if (typeof initWebGpuEngine === 'function') {
                 initWebGpuEngine().then(ok => {
                     if (ok && isRunning) {
@@ -9226,6 +9815,7 @@ window.onload = function() {
     if (typeof updateSliderUI === 'function') updateSliderUI(); broadcastWorkerConfig();
     checkSavedWins();
     if (typeof applyFormulaPreset === 'function') applyFormulaPreset(activeFormula);
+    if (typeof applyHunterLanguage === 'function') applyHunterLanguage(currentHunterLang);
     if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
         try {
             navigator.serviceWorker.getRegistrations().then(registrations => {

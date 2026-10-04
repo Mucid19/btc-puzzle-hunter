@@ -28,17 +28,9 @@ struct U256 { l: array<u32, 8> }
 struct U512 { lo: U256, hi: U256 }
 struct JacobianPoint { x: U256, y: U256, z: U256, is_inf: u32 }
 
-struct GpuParams {
-    batch_size: u32,
-    _pad0: u32,
-    _pad1: u32,
-    _pad2: u32,
-}
-
 // Input: 8 u32 per key (LE), Output: 9 u32 per key (compressed pubkey)
 @group(0) @binding(0) var<storage, read>       privkeys: array<u32>;
 @group(0) @binding(1) var<storage, read_write> pubkeys:  array<u32>;
-@group(0) @binding(2) var<uniform>             params:   GpuParams;
 
 // ----------------------------------------------------------------------------
 // u32 x u32 → 64-bit result represented as vec2<u32>(lo, hi)
@@ -263,11 +255,11 @@ fn u512_mod_p(t: U512) -> U256 {
         }
         if (ov9 != 0u) {
             let q9 = mul32(ov9, 977u);
-            let s1 = add32c(acc[1], q9.x, 0u); acc[1] = s1.x;
-            let qc = add32c(q9.y, ov9, 0u);
-            let s2 = add32c(acc[2], qc.x, s1.y); acc[2] = s2.x;
-            carry = qc.y + s2.y;
-            for (var i = 3u; i < 8u; i++) {
+            let s0 = add32c(acc[0], q9.x, 0u); acc[0] = s0.x;
+            let sc = add32c(q9.y, ov9, 0u);
+            let s1 = add32c(acc[1], sc.x, s0.y); acc[1] = s1.x;
+            carry = sc.y + s1.y;
+            for (var i = 2u; i < 8u; i++) {
                 if (carry == 0u) { break; }
                 let s = acc[i] + carry;
                 carry = select(0u, 1u, s < acc[i]);
@@ -473,7 +465,7 @@ fn store_pubkey(base: u32, x: U256, y: U256) {
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let idx   = gid.x;
     let total = arrayLength(&privkeys) / 8u;
-    if (idx >= total || idx >= params.batch_size) { return; }
+    if (idx >= total) { return; }
 
     // Load private key (8 u32, LE)
     var k: U256;
@@ -505,7 +497,6 @@ class GpuEngine {
         this.pipeline    = null;
         this.privkeyBuf  = null;
         this.pubkeyBuf   = null;
-        this.paramsBuf   = null;
         this.readbackBuf = null;
         this.bindGroup   = null;
         this.maxBatchSize = 2048;
@@ -588,15 +579,11 @@ class GpuEngine {
             this.readbackBuf = this.device.createBuffer({
                 size: pubBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
             });
-            this.paramsBuf = this.device.createBuffer({
-                size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-            });
             this.bindGroup = this.device.createBindGroup({
                 layout: this.pipeline.getBindGroupLayout(0),
                 entries: [
                     { binding: 0, resource: { buffer: this.privkeyBuf } },
-                    { binding: 1, resource: { buffer: this.pubkeyBuf  } },
-                    { binding: 2, resource: { buffer: this.paramsBuf  } }
+                    { binding: 1, resource: { buffer: this.pubkeyBuf  } }
                 ]
             });
 
@@ -637,8 +624,6 @@ class GpuEngine {
         }
 
         this.device.queue.writeBuffer(this.privkeyBuf, 0, privData.buffer, 0, n * 32);
-        const paramsData = new Uint32Array([n, 0, 0, 0]);
-        this.device.queue.writeBuffer(this.paramsBuf, 0, paramsData.buffer);
 
         const encoder = this.device.createCommandEncoder();
         encoder.clearBuffer(this.pubkeyBuf, 0, n * 104);
@@ -653,12 +638,9 @@ class GpuEngine {
         this.device.queue.submit([encoder.finish()]);
 
         await this.readbackBuf.mapAsync(GPUMapMode.READ, 0, n * 104);
-        try {
-            const raw = new Uint32Array(this.readbackBuf.getMappedRange(0, n * 104).slice(0));
-            return raw;
-        } finally {
-            this.readbackBuf.unmap();
-        }
+        const raw = new Uint32Array(this.readbackBuf.getMappedRange(0, n * 104).slice(0));
+        this.readbackBuf.unmap();
+        return raw;
     }
 
     /**
@@ -785,12 +767,11 @@ function genBatchForGpu(cfg, size) {
         boundMin = (hMin < boundMin) ? boundMin : (hMin > boundMax ? boundMin : hMin);
         boundMax = (hMax > boundMax) ? boundMax : (hMax < boundMin ? boundMax : hMax);
     } else if (cfg.activeRangeMode === 'PERCENT' && cfg.sliceModeActive && totalR > 10000n) {
-        const baseMin = boundMin;
         const effRange = boundMax - boundMin;
         const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 100000000));
         const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 100000000));
-        boundMin = baseMin + (effRange * sBig / 10000000000n);
-        boundMax = baseMin + (effRange * eBig / 10000000000n);
+        boundMin = boundMin + (effRange * sBig / 10000000000n);
+        boundMax = boundMin + (effRange * eBig / 10000000000n);
     }
     if (boundMax <= boundMin) boundMax = boundMin + 1n;
 
@@ -946,7 +927,6 @@ function genBatchForGpu(cfg, size) {
 // Hedef hash160'ı 5 tamsayı kelimesi olarak önbellekleme (string ayrıştırma yükünü sıfırlar)
 let cachedTargetH160Str = '';
 let targetW0 = 0, targetW1 = 0, targetW2 = 0, targetW3 = 0, targetW4 = 0;
-let hasTargetHash160 = false;
 function ensureTargetWords(h160) {
     if (h160 === cachedTargetH160Str) return;
     cachedTargetH160Str = h160;
@@ -956,10 +936,8 @@ function ensureTargetWords(h160) {
         targetW2 = parseInt(h160.substr(16, 8), 16) | 0;
         targetW3 = parseInt(h160.substr(24, 8), 16) | 0;
         targetW4 = parseInt(h160.substr(32, 8), 16) | 0;
-        hasTargetHash160 = true;
     } else {
         targetW0 = targetW1 = targetW2 = targetW3 = targetW4 = 0;
-        hasTargetHash160 = false;
     }
 }
 
@@ -1029,7 +1007,7 @@ async function gpuHuntBatch() {
             gpuTotalKeys++;
 
             // 🎯 1. Sıkıştırılmış (Compressed) Hedef Eşleşme Kontrolü
-            if (hasTargetHash160 && rw[0] === targetW0 && rw[1] === targetW1 && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
+            if (targetW0 !== 0 && rw[0] === targetW0 && rw[1] === targetW1 && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
                 const keyHex = keys[i].toString(16).padStart(64, '0');
                 console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
                 handleGpuWin(keyHex, target, targetH160, false);
@@ -1045,7 +1023,7 @@ async function gpuHuntBatch() {
                 const rmdU = cjs.RIPEMD160(shaU);
                 const rwU = rmdU.words;
 
-                if (hasTargetHash160 && rwU[0] === targetW0 && rwU[1] === targetW1 && rwU[2] === targetW2 && rwU[3] === targetW3 && rwU[4] === targetW4) {
+                if (targetW0 !== 0 && rwU[0] === targetW0 && rwU[1] === targetW1 && rwU[2] === targetW2 && rwU[3] === targetW3 && rwU[4] === targetW4) {
                     const keyHex = keys[i].toString(16).padStart(64, '0');
                     console.log('[GPU] 🎯 UNCOMPRESSED WIN! key=' + keyHex + ' hash160=' + targetH160);
                     handleGpuWin(keyHex, target, targetH160, true);
@@ -1148,12 +1126,9 @@ async function gpuHuntBatch() {
 
     } catch(e) {
         console.error('[GPU] gpuHuntBatch hatası:', e);
-        const wasRunning = gpuHuntRunning;
         gpuHuntRunning = false;
-        // CPU fallback - only if hunt was actively running and not stopped
-        if (wasRunning && typeof huntRunning !== 'undefined' && huntRunning && typeof huntBatch === 'function') {
-            huntBatch();
-        }
+        // CPU fallback
+        if (typeof huntBatch === 'function') huntBatch();
     }
 }
 
@@ -1198,107 +1173,12 @@ function handleGpuWin(keyHex, target, matchedH160, isUncompressed) {
     }
 }
 
-let webGpuKangarooInstance = null;
-let gpuKangarooLastTime = 0;
-let gpuKangarooAccumSteps = 0;
-
-async function gpuKangarooLoop() {
-    if (!gpuHuntRunning || !webGpuKangarooInstance) return;
-
-    try {
-        const batchRes = await webGpuKangarooInstance.dispatchBatch();
-        const steps = (typeof batchRes === 'object') ? batchRes.steps : Number(batchRes);
-        const lastKey = (typeof batchRes === 'object' && batchRes.lastKey) ? batchRes.lastKey : '';
-        gpuKangarooAccumSteps += steps;
-        gpuTotalKeys += steps;
-
-        const now = performance.now();
-        const elapsed = (now - gpuKangarooLastTime) / 1000;
-        if (elapsed >= 0.25) {
-            gpuKeysPerSec = Math.round(gpuKangarooAccumSteps / (elapsed || 0.001));
-            gpuKangarooAccumSteps = 0;
-            gpuKangarooLastTime = now;
-
-            const trapCount = webGpuKangarooInstance.tameTraps.size + webGpuKangarooInstance.wildTraps.size;
-
-            if (typeof handleWorkerMessage === 'function') {
-                handleWorkerMessage({ data: {
-                    type: 'progress',
-                    workerId: 999,
-                    count: steps,
-                    rate: gpuKeysPerSec,
-                    trapCount: trapCount,
-                    lastKey: lastKey,
-                    rangeText: `⚡ WebGPU Kangaroo — 2048 Sürü (${gpuKeysPerSec.toLocaleString()} key/s)`
-                }});
-            }
-        }
-
-        if (webGpuKangarooInstance.isSolved && webGpuKangarooInstance.solvedKey) {
-            const keyHex = webGpuKangarooInstance.solvedKey.toString(16).padStart(64, '0');
-            const cfg = (typeof getCurrentWorkerConfig === 'function') ? getCurrentWorkerConfig() : null;
-            const target = cfg ? cfg.activeTarget : null;
-            console.log('🎉 [GPU KANGAROO BINGO!] Hedef Çözüldü:', keyHex);
-            handleGpuWin(keyHex, target, target ? target.targetHash160 : '', false);
-            gpuHuntRunning = false;
-            return;
-        }
-
-        if (gpuHuntRunning) {
-            setTimeout(gpuKangarooLoop, Math.min(gpuThrottleDelay, 10));
-        }
-    } catch(err) {
-        console.error('[WebGPU Kangaroo Loop Error]:', err);
-        gpuHuntRunning = false;
-    }
-}
-
-async function startGpuHunting() {
+function startGpuHunting() {
     if (!gpuEngine || !gpuEngine.isInitialized) {
         console.warn('[GPU] Engine hazır değil');
         return false;
     }
     gpuHuntRunning = true;
-
-    const cfg = (typeof getCurrentWorkerConfig === 'function') ? getCurrentWorkerConfig() : null;
-    const isKangaroo = (cfg && cfg.activeAlgo === 'KANGAROO') || (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
-
-    if (isKangaroo && typeof WebGpuKangarooEngine !== 'undefined') {
-        const target = cfg ? cfg.activeTarget : null;
-        let targetPub = (typeof kangarooTargetPubHex !== 'undefined' && kangarooTargetPubHex) ? kangarooTargetPubHex : null;
-        if (!targetPub && target && typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') {
-            targetPub = EXPOSED_KANGAROO_PUBKEYS[target.id] || EXPOSED_KANGAROO_PUBKEYS[parseInt(target.id, 10)] || null;
-        }
-        if (!targetPub && target) {
-            targetPub = target.pubHex || target.pubkeyHex || null;
-        }
-
-        if (targetPub) {
-            console.log('[GPU] 🦘 Pollard Kangaroo WebGPU Çekirdeği Başlatılıyor... Hedef Açık Anahtar:', targetPub);
-            webGpuKangarooInstance = new WebGpuKangarooEngine();
-            const s = (typeof toBigIntSafe === 'function') ? toBigIntSafe(target.start) : BigInt('0x' + target.start);
-            const e = (typeof toBigIntSafe === 'function') ? toBigIntSafe(target.end) : BigInt('0x' + target.end);
-
-            gpuKangarooLastTime = performance.now();
-            gpuKangarooAccumSteps = 0;
-
-            const ok = await webGpuKangarooInstance.init(gpuEngine.device, targetPub, s, e);
-            if (ok) {
-                console.log('[GPU] 🦘 WebGPU Kangaroo Döngüsü Aktif!');
-                gpuKangarooLoop();
-                return true;
-            } else {
-                console.warn('[GPU] WebGpuKangarooEngine başlatılamadı, standart GPU aramasına dönülüyor.');
-                webGpuKangarooInstance = null;
-            }
-        } else {
-            console.warn('[GPU] Hedef açık anahtar (pubkey) bulunamadı. Standart GPU moduna geçiliyor.');
-            if (typeof showToast === 'function') {
-                showToast(`ℹ️ <strong>Pollard Kangaroo Açık Anahtar Gerektirir</strong><br><span style="font-size:11px;">#${target ? target.id : ''} için açık anahtar ifşa edilmediğinden GPU Hızlı Arama (Sobol/Kaos) modunda çalışıyor.</span>`, 4500);
-            }
-        }
-    }
-
     console.log('[GPU] ⚡ Arama başladı — batch=' + gpuEngine.batchSize + ', throttleDelay=' + gpuThrottleDelay + 'ms, adapter=' + gpuEngine.adapterInfo);
     gpuHuntBatch();
     return true;
@@ -1306,9 +1186,6 @@ async function startGpuHunting() {
 
 function stopGpuHunting() {
     gpuHuntRunning = false;
-    if (webGpuKangarooInstance) {
-        webGpuKangarooInstance = null;
-    }
     if (gpuEngine) {
         gpuEngine.destroy();
         gpuEngine = null;
