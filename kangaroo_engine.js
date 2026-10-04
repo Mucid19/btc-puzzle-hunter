@@ -42,12 +42,13 @@ class RealPollardKangaroo {
         // Evcil (Tame) Durumu
         this.tameDist = 0n;
         this.tamePoint = null;
-        this.tameTraps = new Map(); // pointXHex -> tameDist
+        this.maxJump = 1n;
+        this.tameTraps = new Map(); // pointKey -> tameDist
 
         // Vahşi (Wild) Durumu
         this.wildDist = 0n;
         this.wildPoint = null;
-        this.wildTraps = new Map(); // pointXHex -> wildDist
+        this.wildTraps = new Map(); // pointKey -> wildDist
 
         // Genel durum
         this.role = options.role || 'DUAL'; // 'TAME', 'WILD', veya 'DUAL' (ikisini de yürütür)
@@ -58,6 +59,13 @@ class RealPollardKangaroo {
         this.isInitialized = false;
 
         this.init();
+    }
+
+    getPointKey(point) {
+        if (!point) return '';
+        const isEven = point.getY().isEven();
+        const prefix = isEven ? '02' : '03';
+        return prefix + point.getX().toString(16).padStart(64, '0');
     }
 
     bigIntSqrt(value) {
@@ -99,23 +107,24 @@ class RealPollardKangaroo {
             const sqrtSpan = this.bigIntSqrt(this.span);
             const meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
             
-            // 32 adet deterministik sıçrama ve EC noktaları (meanJump etrafında [0.1 * m, 1.9 * m] dengeli dağılım)
+            // 32 adet deterministik sıçrama ve EC noktaları (Van Oorschot-Wiener standardı)
             this.jumps = [];
             this.jumpPoints = [];
+            let seed = 0x12345678n;
             for (let i = 0; i < 32; i++) {
-                const factor = BigInt(Math.floor(100 + (i * 1800) / 31));
-                let jVal = (meanJump * factor) / 1000n;
+                seed = (seed * 6364136223846793005n + 1442695040888963407n) & 0xFFFFFFFFFFFFFFFFn;
+                const rnd = seed % 2000n;
+                let jVal = (meanJump * (100n + rnd)) / 1000n;
                 if (jVal <= 0n) jVal = 1n;
-                // Tek sayı yaparak eliptik eğri üzerinde periyodik döngüye kilitlenmeyi engelle
-                if (jVal % 2n === 0n) jVal += 1n;
                 this.jumps.push(jVal);
                 this.jumpPoints.push(this.G.mul(jVal.toString(16)));
             }
+            this.maxJump = this.jumps.reduce((max, v) => v > max ? v : max, 1n);
 
             // 3. Belirgin Nokta (Distinguished Point) Maskesi
-            // Aralık büyüklüğüne göre dinamik ölçekleme: ortalama her 16..65536 adımda 1 tuzak
+            // Ortalama her 256..16384 adımda 1 tuzak üretir (IPC ve bellek taşmasını önler)
             const sqrtBits = sqrtSpan.toString(2).length;
-            this.dpBits = Math.max(4, Math.min(16, Math.floor(sqrtBits / 2) - 1));
+            this.dpBits = Math.max(8, Math.min(16, Math.floor(sqrtBits / 2)));
             this.dpMask = (1n << BigInt(this.dpBits)) - 1n;
 
             // 4. Başlangıç Noktalarını Kur
@@ -134,7 +143,7 @@ class RealPollardKangaroo {
         const wId = BigInt(this.options.workerId || 0);
         const jIdx = Number(wId % 32n);
         const baseJump = (this.jumps && this.jumps.length > jIdx) ? this.jumps[jIdx] : 1000n;
-        const initialShift = baseJump * (wId + 1n);
+        const initialShift = (baseJump * (wId + 1n)) % (this.span > 0n ? this.span : 1n);
 
         // Evcil Kanguru: Aralığın sonundan ofsetli başlar
         this.tameDist = (this.rangeMax > initialShift) ? (this.rangeMax - initialShift) : this.rangeMax;
@@ -157,12 +166,11 @@ class RealPollardKangaroo {
         this.newTrapsToBroadcast = [];
 
         // Pollard's Kangaroo İlkesi (DUAL Modu):
-        // Evcil kanguru aralığın üst sınırından başlayıp vahşi kangurunun geleceği yöne doğru
-        // tuzak patikasını (trap line) döşer. Aralığı kaplayacak kadar (~span / meanJump) önden koşar.
+        // Hafif ön hazırlık adımları (başlangıç takılmasını önlemek için 64..256 adım)
         if (this.role === 'DUAL' && this.tamePoint) {
             const sqrtSpan = this.bigIntSqrt(this.span);
             const meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
-            const preSteps = Math.min(4096, Math.max(128, Number((this.span / meanJump) + 50n)));
+            const preSteps = Math.min(256, Math.max(32, Number((this.span / meanJump) + 10n)));
             this.runTameSteps(preSteps);
         }
     }
@@ -171,16 +179,16 @@ class RealPollardKangaroo {
         if (!this.tamePoint) return false;
         for (let s = 0; s < count; s++) {
             const txBig = BigInt('0x' + this.tamePoint.getX().toString(16));
-            const txHex = txBig.toString(16);
+            const pKey = this.getPointKey(this.tamePoint);
 
             // Belirgin Nokta (DP) kontrolü
             if ((txBig & this.dpMask) === 0n) {
-                if (!this.tameTraps.has(txHex)) {
-                    this.tameTraps.set(txHex, this.tameDist);
-                    this.newTrapsToBroadcast.push({ pointXHex: txHex, herd: 'TAME', dist: this.tameDist.toString(16) });
+                if (!this.tameTraps.has(pKey)) {
+                    this.tameTraps.set(pKey, this.tameDist);
+                    this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'TAME', dist: this.tameDist.toString(16) });
                 }
-                if (this.wildTraps.has(txHex)) {
-                    if (this.checkCollision(txHex, this.tameDist, this.wildTraps.get(txHex))) {
+                if (this.wildTraps.has(pKey)) {
+                    if (this.checkCollision(pKey, this.tameDist, this.wildTraps.get(pKey))) {
                         return true;
                     }
                 }
@@ -196,20 +204,21 @@ class RealPollardKangaroo {
     /**
      * Dışarıdan (örneğin başka bir sekmeden / BroadcastChannel üzerinden) gelen tuzak noktasını ekle
      */
-    addRemoteTrap(pointXHex, herd, dist) {
-        if (!pointXHex || dist === undefined || dist === null) return;
+    addRemoteTrap(pointKeyOrHex, herd, dist) {
+        if (!pointKeyOrHex || dist === undefined || dist === null) return;
+        const key = String(pointKeyOrHex);
         const distBig = typeof dist === 'bigint' ? dist : BigInt('0x' + dist.toString().replace(/^0x/i, ''));
         if (herd === 'TAME') {
-            this.tameTraps.set(pointXHex, distBig);
+            this.tameTraps.set(key, distBig);
             // Eğer vahşi kangurumuz bu noktaya daha önce bastıysa anında çarpışma!
-            if (this.wildTraps.has(pointXHex)) {
-                this.checkCollision(pointXHex, distBig, this.wildTraps.get(pointXHex));
+            if (this.wildTraps.has(key)) {
+                this.checkCollision(key, distBig, this.wildTraps.get(key));
             }
         } else if (herd === 'WILD') {
-            this.wildTraps.set(pointXHex, distBig);
+            this.wildTraps.set(key, distBig);
             // Eğer evcil kangurumuz bu noktaya daha önce bastıysa anında çarpışma!
-            if (this.tameTraps.has(pointXHex)) {
-                this.checkCollision(pointXHex, this.tameTraps.get(pointXHex), distBig);
+            if (this.tameTraps.has(key)) {
+                this.checkCollision(key, this.tameTraps.get(key), distBig);
             }
         }
     }
@@ -257,17 +266,17 @@ class RealPollardKangaroo {
             // 1. Evcil (Tame) Sıçraması
             if (runTame && this.tamePoint) {
                 const txBig = BigInt('0x' + this.tamePoint.getX().toString(16));
-                const txHex = txBig.toString(16);
+                const pKey = this.getPointKey(this.tamePoint);
 
                 // Belirgin Nokta (DP) kontrolü
                 if ((txBig & this.dpMask) === 0n) {
-                    if (!this.tameTraps.has(txHex)) {
-                        this.tameTraps.set(txHex, this.tameDist);
-                        this.newTrapsToBroadcast.push({ pointXHex: txHex, herd: 'TAME', dist: this.tameDist.toString(16) });
+                    if (!this.tameTraps.has(pKey)) {
+                        this.tameTraps.set(pKey, this.tameDist);
+                        this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'TAME', dist: this.tameDist.toString(16) });
                     }
                     // Vahşi kanguru bu noktaya daha önce basmış mı?
-                    if (this.wildTraps.has(txHex)) {
-                        if (this.checkCollision(txHex, this.tameDist, this.wildTraps.get(txHex))) {
+                    if (this.wildTraps.has(pKey)) {
+                        if (this.checkCollision(pKey, this.tameDist, this.wildTraps.get(pKey))) {
                             return { status: 'WIN', solvedKey: this.solvedKey, steps: this.totalSteps };
                         }
                     }
@@ -281,18 +290,26 @@ class RealPollardKangaroo {
 
             // 2. Vahşi (Wild) Sıçraması
             if (runWild && this.wildPoint) {
+                // Aşma (Overshoot) kontrolü: Eğer vahşi kanguru arama penceresini aştıysa yeni bir ofsetle yeniden doğur (respawn)
+                const maxAllowedWildDist = this.span + (this.maxJump * 8n);
+                if (this.wildDist > maxAllowedWildDist) {
+                    const newShift = (BigInt(Math.floor(Math.random() * 65536)) * this.maxJump) % (this.span > 0n ? this.span : 1n);
+                    this.wildDist = newShift;
+                    this.wildPoint = this.targetPoint.add(this.G.mul(newShift.toString(16)));
+                }
+
                 const wxBig = BigInt('0x' + this.wildPoint.getX().toString(16));
-                const wxHex = wxBig.toString(16);
+                const wpKey = this.getPointKey(this.wildPoint);
 
                 // Belirgin Nokta (DP) kontrolü
                 if ((wxBig & this.dpMask) === 0n) {
-                    if (!this.wildTraps.has(wxHex)) {
-                        this.wildTraps.set(wxHex, this.wildDist);
-                        this.newTrapsToBroadcast.push({ pointXHex: wxHex, herd: 'WILD', dist: this.wildDist.toString(16) });
+                    if (!this.wildTraps.has(wpKey)) {
+                        this.wildTraps.set(wpKey, this.wildDist);
+                        this.newTrapsToBroadcast.push({ pointKey: wpKey, pointXHex: wpKey, herd: 'WILD', dist: this.wildDist.toString(16) });
                     }
                     // Evcil kanguru bu noktaya daha önce basmış mı? (ÇARPIŞMA!)
-                    if (this.tameTraps.has(wxHex)) {
-                        if (this.checkCollision(wxHex, this.tameTraps.get(wxHex), this.wildDist)) {
+                    if (this.tameTraps.has(wpKey)) {
+                        if (this.checkCollision(wpKey, this.tameTraps.get(wpKey), this.wildDist)) {
                             return { status: 'WIN', solvedKey: this.solvedKey, steps: this.totalSteps };
                         }
                     }
