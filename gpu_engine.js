@@ -903,11 +903,6 @@ function genBatchForGpu(cfg, size) {
             }
         }
 
-        // Sezgisel Ajan Popcount Sınırlaması (varsa)
-        if (cfg && cfg.agentPopcountRange && typeof window.applyPopcountConstraint === 'function') {
-            currentKey = window.applyPopcountConstraint(currentKey, boundMin, boundMax, cfg.agentPopcountRange);
-        }
-
         keys[i] = currentKey;
     }
 
