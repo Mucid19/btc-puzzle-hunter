@@ -1620,6 +1620,8 @@ function getActiveTarget() {
 let isSpaceCropped = false;
 let spaceCropStart = null;
 let spaceCropEnd = null;
+let spaceCropMinPct = 0;
+let spaceCropMaxPct = 100;
 
 function getHexTargetBounds() {
     const target = getActiveTarget();
@@ -2124,6 +2126,9 @@ function applySpaceCrop(minPct, maxPct) {
     const origTotal = origEnd - origStart;
     if (origTotal <= 0n) return;
 
+    spaceCropMinPct = minPct;
+    spaceCropMaxPct = maxPct;
+
     const minRatio = BigInt(Math.round(minPct * 10000000));
     const maxRatio = BigInt(Math.round(maxPct * 10000000));
 
@@ -2152,6 +2157,9 @@ function cropSpaceToCurrentSelection() {
     const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000n) / origTotal) / 100 : 0;
     const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000n) / origTotal) / 100 : 100;
 
+    spaceCropMinPct = minPct;
+    spaceCropMaxPct = maxPct;
+
     finalizeSpaceCrop(minPct, maxPct);
 }
 
@@ -2159,6 +2167,8 @@ function resetSpaceCrop() {
     isSpaceCropped = false;
     spaceCropStart = null;
     spaceCropEnd = null;
+    spaceCropMinPct = 0;
+    spaceCropMaxPct = 100;
 
     const target = getActiveTarget();
     if (target) {
@@ -3631,11 +3641,22 @@ function updateKangarooAlgoLabel() {
 
 function updateLogTargetLabel() {
     const targetEl = document.getElementById('logTarget');
-    if (!targetEl) return;
+    const customCount = (typeof customAddressSet !== 'undefined' && customAddressSet) ? customAddressSet.size : 0;
+    const customText = (typeof isCustomPoolActive !== 'undefined' && isCustomPoolActive && customCount > 0)
+        ? ` <span style="color:#38bdf8; font-weight:bold; font-size:11px;">(+${customCount.toLocaleString('tr-TR')} 🎯)</span>`
+        : '';
+    let html = '';
     if (isCircularMode) {
-        targetEl.innerHTML = '71 ➔ 160';
+        html = '71 ➔ 160' + customText;
     } else if (currentTarget) {
-        targetEl.innerHTML = `#${currentTarget.id} -> ${currentTarget.addr}`;
+        html = `#${currentTarget.id} -> ${currentTarget.addr}${customText}`;
+    }
+    if (html) {
+        if (typeof uiRenderState !== 'undefined') {
+            uiRenderState.targetHtml = html;
+            uiRenderState.dirty = true;
+        }
+        if (targetEl) targetEl.innerHTML = html;
     }
     if (typeof updateKangarooAlgoLabel === 'function') updateKangarooAlgoLabel();
 }
@@ -4328,7 +4349,7 @@ function onAlgoSelectChange(algo) {
 function setAlgorithm(algo) {
     selectedAlgorithm = algo;
 
-    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC'];
+    const btnIds = ['btnAlgoAuto', 'btnAlgoRandom', 'btnAlgoSobol', 'btnAlgoVdCorput', 'btnAlgoWeyl', 'btnAlgoCoprime', 'btnAlgoHilbert', 'btnAlgoWeak', 'btnAlgoChaos', 'btnAlgoKangaroo', 'btnAlgoHalton', 'btnAlgoScrambledSobol', 'btnAlgoMCMC', 'btnAlgoSphericalOrbital'];
     btnIds.forEach(id => {
         const b = document.getElementById(id);
         if (b) b.classList.remove('active');
@@ -8196,8 +8217,12 @@ function bgWorkerProcess() {
             let boundMax = baseEnd;
             if (cfg.isDualSliderActive && mode !== 'HEX') {
                 if (cfg.isCircularMode) {
-                    const minStep = (cfg.sliderMinStep !== undefined && cfg.sliderMinStep !== null) ? BigInt(Math.round(cfg.sliderMinStep)) : 0n;
-                    const maxStep = (cfg.sliderMaxStep !== undefined && cfg.sliderMaxStep !== null) ? BigInt(Math.round(cfg.sliderMaxStep)) : 1000000000000n;
+                    let minStep = (cfg.sliderMinStep !== undefined && cfg.sliderMinStep !== null) ? BigInt(Math.round(cfg.sliderMinStep)) : 0n;
+                    let maxStep = (cfg.sliderMaxStep !== undefined && cfg.sliderMaxStep !== null) ? BigInt(Math.round(cfg.sliderMaxStep)) : 1000000000000n;
+                    if (cfg.isSpaceCropped && (cfg.spaceCropMinPct > 0 || cfg.spaceCropMaxPct < 100)) {
+                        minStep = BigInt(Math.round(cfg.spaceCropMinPct * 10000000000));
+                        maxStep = BigInt(Math.round(cfg.spaceCropMaxPct * 10000000000));
+                    }
                     if (minStep > 0n || maxStep < 1000000000000n) {
                         boundMin = baseStart + (totalR * minStep / 1000000000000n);
                         boundMax = baseStart + (totalR * maxStep / 1000000000000n);
@@ -8801,6 +8826,9 @@ function getCurrentWorkerConfig() {
             const maxEl = document.getElementById('rangeSliderMax');
             return maxEl ? parseFloat(maxEl.value || 1000000000000) : 1000000000000;
         })(),
+        isSpaceCropped: (typeof isSpaceCropped !== 'undefined') ? isSpaceCropped : false,
+        spaceCropMinPct: (typeof spaceCropMinPct !== 'undefined') ? spaceCropMinPct : 0,
+        spaceCropMaxPct: (typeof spaceCropMaxPct !== 'undefined') ? spaceCropMaxPct : 100,
         isCustomPoolActive: (isCustomPoolActive || (currentTarget && (currentTarget.id === 'ilave' || currentTarget.id === 'TEST_64'))) && customAddressSet && customAddressSet.size > 0,
         customAddresses: (customAddressSet && customAddressSet.size > 0) ? Array.from(customAddressSet) : [],
         customHashToAddress: (typeof customHashToAddress !== 'undefined' && customHashToAddress) ? customHashToAddress : {},
@@ -9161,11 +9189,22 @@ function handleWorkerMessage(e) {
                 uiRenderState.gridCellText = data.currentGridCell;
             }
             if (data.targetId && !isCircularMode && currentTarget) {
-                if (typeof updateLogTargetLabel === 'function') updateLogTargetLabel();
+                const cCount = (typeof customAddressSet !== 'undefined' && customAddressSet) ? customAddressSet.size : 0;
+                const cText = (typeof isCustomPoolActive !== 'undefined' && isCustomPoolActive && cCount > 0) ? ' (+' + cCount.toLocaleString('tr-TR') + ' 🎯)' : '';
+                uiRenderState.targetHtml = '#' + currentTarget.id + ' -> ' + currentTarget.addr + cText;
             } else if (data.targetId && isCircularMode && unsolvedList) {
-                const p = unsolvedList.find(x => x.id === data.targetId);
+                if (!window._unsolvedMap || window._unsolvedMapSource !== unsolvedList) {
+                    window._unsolvedMap = new Map();
+                    for (let i = 0; i < unsolvedList.length; i++) {
+                        window._unsolvedMap.set(unsolvedList[i].id, unsolvedList[i]);
+                    }
+                    window._unsolvedMapSource = unsolvedList;
+                }
+                const p = window._unsolvedMap.get(data.targetId);
                 if (p) {
-                    uiRenderState.targetHtml = '#' + p.id + ' -> ' + p.addr;
+                    const cCount = (typeof customAddressSet !== 'undefined' && customAddressSet) ? customAddressSet.size : 0;
+                    const cText = (typeof isCustomPoolActive !== 'undefined' && isCustomPoolActive && cCount > 0) ? ' (+' + cCount.toLocaleString('tr-TR') + ' 🎯)' : '';
+                    uiRenderState.targetHtml = '#' + p.id + ' -> ' + p.addr + cText;
                 }
             }
             uiRenderState.dirty = true;
