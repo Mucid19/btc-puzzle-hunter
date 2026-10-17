@@ -30,15 +30,20 @@ struct JacobianPoint { x: U256, y: U256, z: U256, is_inf: u32 }
 
 struct GpuParams {
     batch_size: u32,
+    has_target: u32,
+    target_w0: u32,
+    target_w1: u32,
+    target_w2: u32,
+    target_w3: u32,
+    target_w4: u32,
     _pad0: u32,
-    _pad1: u32,
-    _pad2: u32,
 }
 
-// Input: 8 u32 per key (LE), Output: 9 u32 per key (compressed pubkey)
-@group(0) @binding(0) var<storage, read>       privkeys: array<u32>;
-@group(0) @binding(1) var<storage, read_write> pubkeys:  array<u32>;
-@group(0) @binding(2) var<uniform>             params:   GpuParams;
+// Input: 8 u32 per key (LE), Output: 26 u32 per key (pubkey)
+@group(0) @binding(0) var<storage, read>       privkeys:     array<u32>;
+@group(0) @binding(1) var<storage, read_write> pubkeys:      array<u32>;
+@group(0) @binding(2) var<uniform>             params:       GpuParams;
+@group(0) @binding(3) var<storage, read_write> match_result: array<u32>;
 
 // ----------------------------------------------------------------------------
 // u32 x u32 → 64-bit result represented as vec2<u32>(lo, hi)
@@ -467,6 +472,65 @@ fn store_pubkey(base: u32, x: U256, y: U256) {
 }
 
 // ----------------------------------------------------------------------------
+// SHA-256 and RIPEMD-160 on GPU (WGSL 1.0)
+// ----------------------------------------------------------------------------
+const SHA256_K = array<u32, 64>(
+    0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u, 0x3956c25bu, 0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u,
+    0xd807aa98u, 0x12835b01u, 0x243185beu, 0x550c7dc3u, 0x72be5d74u, 0x80deb1feu, 0x9bdc06a7u, 0xc19bf174u,
+    0xe49b69c1u, 0xefbe4786u, 0x0fc19dc6u, 0x240ca1ccu, 0x2de92c6fu, 0x4a7484aau, 0x5cb0a9dcu, 0x76f988dau,
+    0x983e5152u, 0xa831c66du, 0xb00327c8u, 0xbf597fc7u, 0xc6e00bf3u, 0xd5a79147u, 0x06ca6351u, 0x14292967u,
+    0x27b70a85u, 0x2e1b2138u, 0x4d2c6dfcu, 0x53380d13u, 0x650a7354u, 0x766a0abbu, 0x81c2c92eu, 0x92722c85u,
+    0xa2bfe8a1u, 0xa81a664bu, 0xc24b8b70u, 0xc76c51a3u, 0xd192e819u, 0xd6990624u, 0xf40e3585u, 0x106aa070u,
+    0x19a4c116u, 0x1e376c08u, 0x2748774cu, 0x34b0bcb5u, 0x391c0cb3u, 0x4ed8aa4au, 0x5b9cca4fu, 0x682e6ff3u,
+    0x748f82eeu, 0x78a5636fu, 0x84c87814u, 0x8cc70208u, 0x90befffau, 0xa4506cebu, 0xbef9a3f7u, 0xc67178f2u
+);
+
+const RL = array<u32, 80>(
+    0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 11u, 12u, 13u, 14u, 15u,
+    7u, 4u, 13u, 1u, 10u, 6u, 15u, 3u, 12u, 0u, 9u, 5u, 2u, 14u, 11u, 8u,
+    3u, 10u, 14u, 4u, 9u, 15u, 8u, 1u, 2u, 7u, 0u, 6u, 13u, 11u, 5u, 12u,
+    1u, 9u, 11u, 10u, 0u, 8u, 12u, 4u, 13u, 3u, 7u, 15u, 14u, 5u, 6u, 2u,
+    4u, 0u, 5u, 9u, 7u, 12u, 2u, 10u, 14u, 1u, 3u, 8u, 11u, 6u, 15u, 13u
+);
+const RR = array<u32, 80>(
+    5u, 14u, 7u, 0u, 9u, 2u, 11u, 4u, 13u, 6u, 15u, 8u, 1u, 10u, 3u, 12u,
+    6u, 11u, 3u, 7u, 0u, 13u, 5u, 10u, 14u, 15u, 8u, 12u, 4u, 9u, 1u, 2u,
+    15u, 5u, 1u, 3u, 7u, 14u, 6u, 9u, 11u, 8u, 12u, 2u, 10u, 0u, 4u, 13u,
+    8u, 6u, 4u, 1u, 3u, 11u, 15u, 0u, 5u, 12u, 2u, 13u, 9u, 7u, 10u, 14u,
+    12u, 15u, 10u, 4u, 1u, 5u, 8u, 7u, 6u, 2u, 13u, 14u, 0u, 3u, 9u, 11u
+);
+const SL = array<u32, 80>(
+    11u, 14u, 15u, 12u, 5u, 8u, 7u, 9u, 11u, 13u, 14u, 15u, 6u, 7u, 9u, 8u,
+    7u, 6u, 8u, 13u, 11u, 9u, 7u, 15u, 7u, 12u, 15u, 9u, 11u, 7u, 13u, 12u,
+    11u, 13u, 6u, 7u, 14u, 9u, 13u, 15u, 14u, 8u, 13u, 6u, 5u, 12u, 7u, 5u,
+    11u, 12u, 14u, 15u, 14u, 15u, 9u, 8u, 9u, 14u, 5u, 6u, 8u, 6u, 5u, 12u,
+    9u, 15u, 5u, 11u, 6u, 8u, 13u, 12u, 5u, 12u, 13u, 14u, 11u, 8u, 5u, 6u
+);
+const SR = array<u32, 80>(
+    8u, 9u, 9u, 11u, 13u, 15u, 15u, 5u, 7u, 7u, 8u, 11u, 14u, 14u, 12u, 6u,
+    9u, 13u, 15u, 7u, 12u, 8u, 9u, 11u, 7u, 7u, 12u, 7u, 6u, 15u, 13u, 11u,
+    9u, 7u, 15u, 11u, 8u, 6u, 6u, 14u, 12u, 13u, 5u, 14u, 13u, 13u, 7u, 5u,
+    15u, 5u, 8u, 11u, 14u, 14u, 6u, 14u, 6u, 9u, 12u, 9u, 12u, 5u, 15u, 8u,
+    8u, 5u, 12u, 9u, 12u, 5u, 14u, 6u, 8u, 13u, 6u, 5u, 15u, 13u, 11u, 11u
+);
+
+fn rotl(v: u32, n: u32) -> u32 {
+    return (v << n) | (v >> (32u - n));
+}
+
+fn bswap32(w: u32) -> u32 {
+    return ((w & 0xFFu) << 24u) | (((w >> 8u) & 0xFFu) << 16u) | (((w >> 16u) & 0xFFu) << 8u) | ((w >> 24u) & 0xFFu);
+}
+
+fn f_ripemd(round: u32, x: u32, y: u32, z: u32) -> u32 {
+    if (round == 0u) { return x ^ y ^ z; }
+    if (round == 1u) { return (x & y) | ((~x) & z); }
+    if (round == 2u) { return (x | (~y)) ^ z; }
+    if (round == 3u) { return (x & z) | (y & (~z)); }
+    return x ^ (y | (~z));
+}
+
+// ----------------------------------------------------------------------------
 // Compute entry point
 // ----------------------------------------------------------------------------
 @compute @workgroup_size(64)
@@ -492,6 +556,123 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let ay    = fp_mul(pt.y, zinv3);
 
     store_pubkey(idx, ax, ay);
+
+    let prefix = 2u + (ay.l[0] & 1u);
+
+    // 1. SHA-256 for 33-byte compressed public key
+    var W: array<u32, 64>;
+    W[0] = (prefix << 24u) | (ax.l[7] >> 8u);
+    W[1] = (ax.l[7] << 24u) | (ax.l[6] >> 8u);
+    W[2] = (ax.l[6] << 24u) | (ax.l[5] >> 8u);
+    W[3] = (ax.l[5] << 24u) | (ax.l[4] >> 8u);
+    W[4] = (ax.l[4] << 24u) | (ax.l[3] >> 8u);
+    W[5] = (ax.l[3] << 24u) | (ax.l[2] >> 8u);
+    W[6] = (ax.l[2] << 24u) | (ax.l[1] >> 8u);
+    W[7] = (ax.l[1] << 24u) | (ax.l[0] >> 8u);
+    W[8] = ((ax.l[0] & 0xFFu) << 24u) | 0x00800000u;
+    for (var t = 9u; t < 15u; t++) { W[t] = 0u; }
+    W[15] = 264u;
+
+    for (var t = 16u; t < 64u; t++) {
+        let s0 = ((W[t - 15u] >> 7u) | (W[t - 15u] << 25u)) ^ ((W[t - 15u] >> 18u) | (W[t - 15u] << 14u)) ^ (W[t - 15u] >> 3u);
+        let s1 = ((W[t - 2u] >> 17u) | (W[t - 2u] << 15u)) ^ ((W[t - 2u] >> 19u) | (W[t - 2u] << 13u)) ^ (W[t - 2u] >> 10u);
+        W[t] = W[t - 16u] + s0 + W[t - 7u] + s1;
+    }
+
+    var a = 0x6a09e667u;
+    var b = 0xbb67ae85u;
+    var c = 0x3c6ef372u;
+    var d = 0xa54ff53au;
+    var e = 0x510e527fu;
+    var f = 0x9b05688cu;
+    var g = 0x1f83d9abu;
+    var h = 0x5be0cd19u;
+
+    for (var t = 0u; t < 64u; t++) {
+        let S1 = ((e >> 6u) | (e << 26u)) ^ ((e >> 11u) | (e << 21u)) ^ ((e >> 25u) | (e << 7u));
+        let ch = (e & f) ^ ((~e) & g);
+        let temp1 = h + S1 + ch + SHA256_K[t] + W[t];
+        let S0 = ((a >> 2u) | (a << 30u)) ^ ((a >> 13u) | (a << 19u)) ^ ((a >> 22u) | (a << 10u));
+        let maj = (a & b) ^ (a & c) ^ (b & c);
+        let temp2 = S0 + maj;
+
+        h = g; g = f; f = e; e = d + temp1;
+        d = c; c = b; b = a; a = temp1 + temp2;
+    }
+
+    // 2. RIPEMD-160 for 32-byte SHA-256 output
+    var X: array<u32, 16>;
+    X[0] = bswap32(a + 0x6a09e667u);
+    X[1] = bswap32(b + 0xbb67ae85u);
+    X[2] = bswap32(c + 0x3c6ef372u);
+    X[3] = bswap32(d + 0xa54ff53au);
+    X[4] = bswap32(e + 0x510e527fu);
+    X[5] = bswap32(f + 0x9b05688cu);
+    X[6] = bswap32(g + 0x1f83d9abu);
+    X[7] = bswap32(h + 0x5be0cd19u);
+    X[8] = 0x00000080u;
+    for (var xi = 9u; xi < 14u; xi++) { X[xi] = 0u; }
+    X[14] = 256u;
+    X[15] = 0u;
+
+    var al = 0x67452301u; var bl = 0xefcdab89u; var cl = 0x98badcfeu; var dl = 0x10325476u; var el = 0xc3d2e1f0u;
+    var ar = 0x67452301u; var br = 0xefcdab89u; var cr = 0x98badcfeu; var dr = 0x10325476u; var er = 0xc3d2e1f0u;
+
+    for (var i = 0u; i < 80u; i++) {
+        let round_l = i / 16u;
+        var kl = 0u;
+        if (round_l == 1u) { kl = 0x5a827999u; }
+        else if (round_l == 2u) { kl = 0x6ed9eba1u; }
+        else if (round_l == 3u) { kl = 0x8f1bbcdcu; }
+        else if (round_l == 4u) { kl = 0xa953fd4eu; }
+
+        let fl = f_ripemd(round_l, bl, cl, dl);
+        var tl = al + fl + X[RL[i]] + kl;
+        tl = rotl(tl, SL[i]) + el;
+        al = el; el = dl; dl = rotl(cl, 10u); cl = bl; bl = tl;
+
+        let round_r = 4u - round_l;
+        var kr = 0u;
+        if (round_r == 4u) { kr = 0x50a28be6u; }
+        else if (round_r == 3u) { kr = 0x5c4dd124u; }
+        else if (round_r == 2u) { kr = 0x6d703ef3u; }
+        else if (round_r == 1u) { kr = 0x7a6d76e9u; }
+
+        let fr = f_ripemd(round_r, br, cr, dr);
+        var tr = ar + fr + X[RR[i]] + kr;
+        tr = rotl(tr, SR[i]) + er;
+        ar = er; er = dr; dr = rotl(cr, 10u); cr = br; br = tr;
+    }
+
+    let r0 = bswap32(0xefcdab89u + cl + dr);
+    let r1 = bswap32(0x98badcfeu + dl + er);
+    let r2 = bswap32(0x10325476u + el + ar);
+    let r3 = bswap32(0xc3d2e1f0u + al + br);
+    let r4 = bswap32(0x67452301u + bl + cr);
+
+    // 3. Target Hash160 Matching on GPU
+    if (params.has_target == 1u) {
+        if (r0 == params.target_w0 && r1 == params.target_w1 && r2 == params.target_w2 && r3 == params.target_w3 && r4 == params.target_w4) {
+            match_result[0] = 1u;
+            match_result[1] = idx;
+            for (var wi = 0u; wi < 8u; wi++) {
+                match_result[2u + wi] = k.l[wi];
+            }
+            match_result[10] = r0;
+            match_result[11] = r1;
+            match_result[12] = r2;
+            match_result[13] = r3;
+            match_result[14] = r4;
+            match_result[15] = 0u;
+        }
+    }
+
+    // Report last key for UI status
+    if (idx == params.batch_size - 1u) {
+        for (var wi = 0u; wi < 8u; wi++) {
+            match_result[16u + wi] = k.l[wi];
+        }
+    }
 }
 `;
 
@@ -510,7 +691,7 @@ class GpuEngine {
         this.bindGroup   = null;
         this.maxBatchSize = 2048;
         this.batchSize   = (typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'ECO') ? 64
-                         : ((typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'MAX') ? 1024 : 256);
+                         : ((typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'MAX') ? 256 : 128);
         this.isInitialized = false;
         this.adapterInfo = null;
     }
@@ -544,7 +725,18 @@ class GpuEngine {
                 console.warn('[GPU] Standart requestDevice başarısız, temel limitler ile deneniyor:', e);
                 device = await adapter.requestDevice({ requiredLimits: {} });
             }
+            return await this.initWithDevice(device, this.adapterInfo);
+        } catch(e) {
+            console.error('[GPU] WebGPU init hatası:', e);
+            return false;
+        }
+    }
+
+    async initWithDevice(device, adapterInfo) {
+        if (!device) return false;
+        try {
             this.device = device;
+            this.adapterInfo = adapterInfo || 'WebGPU GPU';
 
             this.device.lost.then(info => {
                 console.warn('[GPU] Device lost:', info.reason, info.message);
@@ -576,8 +768,8 @@ class GpuEngine {
                 });
             }
 
-            const privBytes = this.maxBatchSize * 8 * 4;   // 2048*8*4 = 65,536 bytes
-            const pubBytes  = this.maxBatchSize * 26 * 4;  // 2048*26*4 = 212,992 bytes (33b comp + 65b uncomp)
+            const privBytes = this.maxBatchSize * 8 * 4;
+            const pubBytes  = this.maxBatchSize * 26 * 4;
 
             this.privkeyBuf = this.device.createBuffer({
                 size: privBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -589,14 +781,22 @@ class GpuEngine {
                 size: pubBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
             });
             this.paramsBuf = this.device.createBuffer({
-                size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+                size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
+            this.matchBuf = this.device.createBuffer({
+                size: 128, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST
+            });
+            this.readbackMatchBuf = this.device.createBuffer({
+                size: 128, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+            });
+
             this.bindGroup = this.device.createBindGroup({
                 layout: this.pipeline.getBindGroupLayout(0),
                 entries: [
                     { binding: 0, resource: { buffer: this.privkeyBuf } },
                     { binding: 1, resource: { buffer: this.pubkeyBuf  } },
-                    { binding: 2, resource: { buffer: this.paramsBuf  } }
+                    { binding: 2, resource: { buffer: this.paramsBuf  } },
+                    { binding: 3, resource: { buffer: this.matchBuf   } }
                 ]
             });
 
@@ -619,7 +819,81 @@ class GpuEngine {
     }
 
     /**
-     * Ham Uint32Array olarak pubkey kelimelerini döner (sıfır ara nesne tahsisi)
+     * ⚡ GPU-Native HASH160 Arama Çekirdeği (SHA256 + RIPEMD160 + Eşleşme Denetimi %100 GPU İçinde)
+     */
+    async huntBatchGpu(privkeysBig, targetWords) {
+        if (!this.isInitialized) throw new Error('GPU başlatılmamış');
+        const n = privkeysBig.length;
+        if (n === 0) return { matched: false, keyHex: '', lastKeyHex: '' };
+
+        const privData = new Uint32Array(n * 8);
+        for (let i = 0; i < n; i++) {
+            let k = privkeysBig[i];
+            const base = i * 8;
+            for (let j = 0; j < 8; j++) {
+                privData[base + j] = Number(k & 0xFFFFFFFFn);
+                k >>= 32n;
+            }
+        }
+        this.device.queue.writeBuffer(this.privkeyBuf, 0, privData.buffer, 0, n * 32);
+
+        // matchBuf sıfırlama (128 bytes = 32 x u32)
+        const zeroMatch = new Uint32Array(32);
+        this.device.queue.writeBuffer(this.matchBuf, 0, zeroMatch.buffer);
+
+        const hasTarget = (targetWords && targetWords.length === 5) ? 1 : 0;
+        const pData = new Uint32Array([
+            n,
+            hasTarget,
+            hasTarget ? targetWords[0] : 0,
+            hasTarget ? targetWords[1] : 0,
+            hasTarget ? targetWords[2] : 0,
+            hasTarget ? targetWords[3] : 0,
+            hasTarget ? targetWords[4] : 0,
+            0
+        ]);
+        this.device.queue.writeBuffer(this.paramsBuf, 0, pData.buffer);
+
+        const encoder = this.device.createCommandEncoder();
+        const pass = encoder.beginComputePass();
+        pass.setPipeline(this.pipeline);
+        pass.setBindGroup(0, this.bindGroup);
+        pass.dispatchWorkgroups(Math.ceil(n / 64));
+        pass.end();
+
+        // SADECE 128 byte'lık sonuç tamponunu geri oku (Sıfır PCIe darboğazı)
+        encoder.copyBufferToBuffer(this.matchBuf, 0, this.readbackMatchBuf, 0, 128);
+        this.device.queue.submit([encoder.finish()]);
+
+        await this.readbackMatchBuf.mapAsync(GPUMapMode.READ, 0, 128);
+        try {
+            const mapped = new Uint32Array(this.readbackMatchBuf.getMappedRange(0, 128));
+            const isFound = mapped[0] === 1;
+            let winningKeyHex = '';
+            if (isFound) {
+                let winK = 0n;
+                for (let wi = 7; wi >= 0; wi--) {
+                    winK = (winK << 32n) | BigInt(mapped[2 + wi] >>> 0);
+                }
+                winningKeyHex = winK.toString(16).padStart(64, '0');
+            }
+            let lastK = 0n;
+            for (let wi = 7; wi >= 0; wi--) {
+                lastK = (lastK << 32n) | BigInt(mapped[16 + wi] >>> 0);
+            }
+            const lastKeyHex = lastK ? lastK.toString(16).padStart(64, '0') : '';
+            return {
+                matched: isFound,
+                keyHex: winningKeyHex,
+                lastKeyHex: lastKeyHex
+            };
+        } finally {
+            this.readbackMatchBuf.unmap();
+        }
+    }
+
+    /**
+     * Ham Uint32Array olarak pubkey kelimelerini döner (Geriye dönük uyumluluk)
      */
     async computePubkeysRaw(privkeysBig) {
         if (!this.isInitialized) throw new Error('GPU başlatılmamış');
@@ -637,7 +911,7 @@ class GpuEngine {
         }
 
         this.device.queue.writeBuffer(this.privkeyBuf, 0, privData.buffer, 0, n * 32);
-        const paramsData = new Uint32Array([n, 0, 0, 0]);
+        const paramsData = new Uint32Array([n, 0, 0, 0, 0, 0, 0, 0]);
         this.device.queue.writeBuffer(this.paramsBuf, 0, paramsData.buffer);
 
         const encoder = this.device.createCommandEncoder();
@@ -688,10 +962,13 @@ class GpuEngine {
 
     destroy() {
         try {
-            if (this.privkeyBuf)  this.privkeyBuf.destroy();
-            if (this.pubkeyBuf)   this.pubkeyBuf.destroy();
-            if (this.readbackBuf) this.readbackBuf.destroy();
-            if (this.device)      this.device.destroy();
+            if (this.privkeyBuf)        this.privkeyBuf.destroy();
+            if (this.pubkeyBuf)         this.pubkeyBuf.destroy();
+            if (this.readbackBuf)       this.readbackBuf.destroy();
+            if (this.paramsBuf)         this.paramsBuf.destroy();
+            if (this.matchBuf)          this.matchBuf.destroy();
+            if (this.readbackMatchBuf)  this.readbackMatchBuf.destroy();
+            if (this.device)            this.device.destroy();
         } catch(e) {}
         this.isInitialized = false;
         this.device = null;
@@ -707,7 +984,485 @@ let gpuHuntRunning = false;
 let gpuKeysPerSec  = 0;
 let gpuTotalKeys   = 0;
 
+let gpuWorker = null;
+let isGpuWorkerActive = false;
+let gpuWorkerBlobUrl = null;
+let gpuWorkerAdapterInfo = '';
+
+const GPU_WORKER_RUNNER_LOGIC = `
+let workerDevice = null;
+let workerAdapterInfo = '';
+let workerGpuEngine = null;
+let workerKangarooEngine = null;
+let workerHuntRunning = false;
+
+let workerIntensity = 'BALANCED';
+let workerThrottleDelay = 35;
+let workerStepsPerCall = 16;
+let workerBatchSize = 128;
+
+let workerCfg = null;
+let workerTotalKeys = 0;
+let workerLastTime = 0;
+let workerAccumSteps = 0;
+
+let workerTargetWords0 = new Set();
+let workerTargetMap = new Map();
+let workerCustomAddressSet = null;
+
+let targetW0 = 0, targetW1 = 0, targetW2 = 0, targetW3 = 0, targetW4 = 0;
+let hasTargetHash160 = false;
+let cachedTargetH160Str = '';
+
+function ensureTargetWords(h160) {
+    if (h160 === cachedTargetH160Str) return;
+    cachedTargetH160Str = h160;
+    if (h160 && h160.length === 40) {
+        targetW0 = parseInt(h160.substr(0, 8), 16) | 0;
+        targetW1 = parseInt(h160.substr(8, 8), 16) | 0;
+        targetW2 = parseInt(h160.substr(16, 8), 16) | 0;
+        targetW3 = parseInt(h160.substr(24, 8), 16) | 0;
+        targetW4 = parseInt(h160.substr(32, 8), 16) | 0;
+        hasTargetHash160 = true;
+    } else {
+        targetW0 = targetW1 = targetW2 = targetW3 = targetW4 = 0;
+        hasTargetHash160 = false;
+    }
+}
+
+async function workerKangarooLoop() {
+    if (!workerHuntRunning || !workerKangarooEngine) return;
+    try {
+        const batchRes = await workerKangarooEngine.dispatchBatch();
+        const steps = (typeof batchRes === 'object') ? batchRes.steps : Number(batchRes);
+        const lastKey = (typeof batchRes === 'object' && batchRes.lastKey) ? batchRes.lastKey : '';
+        workerAccumSteps += steps;
+        workerTotalKeys += steps;
+
+        const now = performance.now();
+        const elapsed = (now - workerLastTime) / 1000;
+        if (elapsed >= 0.25) {
+            const rate = Math.round(workerAccumSteps / (elapsed || 0.001));
+            const trapCount = workerKangarooEngine.tameTraps.size + workerKangarooEngine.wildTraps.size;
+
+            self.postMessage({
+                type: 'progress',
+                workerId: 999,
+                count: workerAccumSteps,
+                rate: rate,
+                trapCount: trapCount,
+                lastKey: lastKey,
+                rangeText: '⚡ WebGPU Worker Kangaroo — 2048 Sürü (' + rate.toLocaleString() + ' key/s)'
+            });
+            workerAccumSteps = 0;
+            workerLastTime = now;
+        }
+
+        if (workerKangarooEngine.isSolved && workerKangarooEngine.solvedKey) {
+            const keyHex = workerKangarooEngine.solvedKey.toString(16).padStart(64, '0');
+            const target = workerCfg ? workerCfg.activeTarget : null;
+            self.postMessage({
+                type: 'win',
+                workerId: 999,
+                keyHex: keyHex,
+                targetId: target ? target.id : '',
+                targetAddr: target ? target.addr : '',
+                reward: (target && target.reward ? target.reward : '⚡ GPU') + ' (WebGPU Worker Kangaroo)',
+                matchedH160: target ? target.targetHash160 : '',
+                isUncompressed: false,
+                matchType: 'GPU_KANGAROO'
+            });
+            workerHuntRunning = false;
+            return;
+        }
+
+        if (workerHuntRunning) {
+            setTimeout(workerKangarooLoop, workerThrottleDelay);
+        }
+    } catch(err) {
+        console.error('[WebGPU Worker Kangaroo Error]:', err);
+        self.postMessage({ type: 'error', error: err.message });
+        workerHuntRunning = false;
+    }
+}
+
+async function workerHuntLoop() {
+    if (!workerHuntRunning || !workerGpuEngine) return;
+    try {
+        const t0 = performance.now();
+        const batchInfo = genBatchForGpu(workerCfg, workerGpuEngine.batchSize);
+        const keys = batchInfo.keys;
+        const BATCH = keys.length;
+        if (BATCH === 0) {
+            if (workerHuntRunning) setTimeout(workerHuntLoop, workerThrottleDelay);
+            return;
+        }
+
+        const target = workerCfg ? workerCfg.activeTarget : null;
+        const hasTargetH160 = Boolean(target && target.targetHash160);
+        let targetH160 = hasTargetH160 ? target.targetHash160.trim().toLowerCase() : '';
+        ensureTargetWords(targetH160);
+
+        // ⚡ GPU computes Pubkeys + SHA-256 + RIPEMD-160 + Target Match in single kernel!
+        const gpuRes = await workerGpuEngine.huntBatchGpu(
+            keys,
+            hasTargetHash160 ? [targetW0, targetW1, targetW2, targetW3, targetW4] : null
+        );
+
+        let found = false;
+        if (gpuRes && gpuRes.matched) {
+            const keyHex = gpuRes.keyHex || (keys[0] ? keys[0].toString(16).padStart(64, '0') : '');
+            self.postMessage({
+                type: 'win',
+                workerId: 999,
+                keyHex: keyHex,
+                targetId: target ? target.id : '',
+                targetAddr: target ? target.addr : '',
+                reward: (target && target.reward) ? target.reward : '⚡ GPU',
+                matchedH160: targetH160,
+                isUncompressed: false,
+                matchType: 'GPU_SHADER_HASH160'
+            });
+            workerHuntRunning = false;
+            found = true;
+            return;
+        }
+
+        // Çoklu Hedef veya İlave Havuz (Fallback Kontrolü)
+        const hasMultiTarget = Boolean(workerCustomAddressSet && workerCustomAddressSet.size > 0) || Boolean(workerTargetMap && workerTargetMap.size > 1);
+        if (hasMultiTarget) {
+            const raw = await workerGpuEngine.computePubkeysRaw(keys);
+            const cjs = (typeof self !== 'undefined' && self.CryptoJS) ? self.CryptoJS : (typeof CryptoJS !== 'undefined' ? CryptoJS : null);
+            if (cjs && raw) {
+                const waWords = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                const wa = { words: waWords, sigBytes: 33 };
+
+                for (let i = 0; i < BATCH && workerHuntRunning; i++) {
+                    const off = i * 26;
+                    const w0 = raw[off];
+                    const prefix = (w0 >>> 24) & 0xFF;
+                    if (prefix !== 2 && prefix !== 3) continue;
+
+                    waWords[0] = w0;
+                    waWords[1] = raw[off + 1];
+                    waWords[2] = raw[off + 2];
+                    waWords[3] = raw[off + 3];
+                    waWords[4] = raw[off + 4];
+                    waWords[5] = raw[off + 5];
+                    waWords[6] = raw[off + 6];
+                    waWords[7] = raw[off + 7];
+                    waWords[8] = raw[off + 8] & 0xFF000000;
+
+                    const sha = cjs.SHA256(wa);
+                    const rmd = cjs.RIPEMD160(sha);
+                    const rw = rmd.words;
+
+                    if (workerTargetMap && workerTargetMap.size > 0) {
+                        const w0Match = workerTargetWords0.size === 0 || workerTargetWords0.has(rw[0] >>> 0);
+                        if (w0Match) {
+                            const h160 = rmd.toString().toLowerCase();
+                            const matched = workerTargetMap.get(h160);
+                            if (matched) {
+                                const keyHex = keys[i].toString(16).padStart(64, '0');
+                                self.postMessage({
+                                    type: 'win',
+                                    workerId: 999,
+                                    keyHex: keyHex,
+                                    targetId: matched.id,
+                                    targetAddr: matched.addr,
+                                    reward: matched.reward || '⚡ GPU',
+                                    matchedH160: h160,
+                                    isUncompressed: false,
+                                    matchType: 'GPU_MULTI_TARGET'
+                                });
+                                workerHuntRunning = false; found = true; break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        workerAccumSteps += BATCH;
+        workerTotalKeys += BATCH;
+
+        const now = performance.now();
+        const elapsed = (now - workerLastTime) / 1000;
+        if (elapsed >= 0.25) {
+            const rate = Math.round(workerAccumSteps / (elapsed || 0.001));
+            const lastK = (gpuRes && gpuRes.lastKeyHex) ? gpuRes.lastKeyHex : (keys && keys.length > 0 ? keys[keys.length - 1].toString(16).padStart(64, '0') : '');
+            self.postMessage({
+                type: 'progress',
+                workerId: 999,
+                count: workerAccumSteps,
+                rate: rate,
+                lastKey: lastK,
+                targetId: target ? target.id : '',
+                rangeText: '⚡ WebGPU HASH160 — ' + (batchInfo.rangeDesc || 'Standart') + ' (' + rate.toLocaleString() + ' key/s)'
+            });
+            workerAccumSteps = 0;
+            workerLastTime = now;
+        }
+
+        if (!found && workerHuntRunning) {
+            setTimeout(workerHuntLoop, workerThrottleDelay);
+        }
+    } catch(err) {
+        console.error('[WebGPU Worker Standard Loop Error]:', err);
+        self.postMessage({ type: 'error', error: err.message });
+        workerHuntRunning = false;
+    }
+}
+
+self.onmessage = async function(e) {
+    const data = e.data;
+    if (!data) return;
+
+    if (data.cmd === 'init') {
+        try {
+            if (!navigator.gpu) {
+                self.postMessage({ type: 'gpu_unsupported', reason: 'Worker navigator.gpu desteklenmiyor' });
+                return;
+            }
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) {
+                self.postMessage({ type: 'gpu_unsupported', reason: 'GPU Adapter bulunamadı' });
+                return;
+            }
+            workerDevice = await adapter.requestDevice();
+            workerAdapterInfo = (adapter.info && adapter.info.description) ? adapter.info.description : (adapter.name || 'WebGPU GPU');
+            self.postMessage({ type: 'gpu_ready', adapterInfo: workerAdapterInfo });
+        } catch(err) {
+            self.postMessage({ type: 'gpu_unsupported', reason: err.message });
+        }
+    } else if (data.cmd === 'start') {
+        workerCfg = data.config;
+        workerIntensity = data.intensity || 'BALANCED';
+        workerThrottleDelay = data.throttleDelay || 35;
+        workerStepsPerCall = data.stepsPerCall || 16;
+        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+
+        workerTotalKeys = 0;
+        workerLastTime = performance.now();
+        workerAccumSteps = 0;
+        workerHuntRunning = true;
+
+        workerTargetMap.clear();
+        workerTargetWords0.clear();
+        if (workerCfg && workerCfg.unsolvedList) {
+            for (const p of workerCfg.unsolvedList) {
+                if (p.targetHash160) {
+                    const cleanH = p.targetHash160.trim().toLowerCase();
+                    workerTargetMap.set(cleanH, p);
+                    workerTargetWords0.add(parseInt(cleanH.substr(0, 8), 16) | 0);
+                }
+            }
+        }
+        if (data.customAddresses && Array.isArray(data.customAddresses)) {
+            workerCustomAddressSet = new Set(data.customAddresses);
+        }
+
+        const isKangaroo = data.isKangaroo;
+        const target = workerCfg ? workerCfg.activeTarget : null;
+
+        if (isKangaroo && data.targetPubHex) {
+            let s = toBigIntSafeGpu(target.start);
+            let e = toBigIntSafeGpu(target.end);
+            if (workerCfg && workerCfg.isDualSliderActive && workerCfg.sliderMinHex && workerCfg.sliderMaxHex) {
+                const sMin = toBigIntSafeGpu(workerCfg.sliderMinHex);
+                const sMax = toBigIntSafeGpu(workerCfg.sliderMaxHex);
+                if (sMin >= s && sMax <= e && sMax > sMin) {
+                    s = sMin; e = sMax;
+                }
+            }
+
+            workerKangarooEngine = new WebGpuKangarooEngine();
+            workerKangarooEngine.stepsPerCall = workerStepsPerCall;
+            const ok = await workerKangarooEngine.init(workerDevice, data.targetPubHex, s, e);
+            if (ok) {
+                workerKangarooEngine.setStepsPerCall(workerStepsPerCall);
+                workerKangarooLoop();
+            } else {
+                self.postMessage({ type: 'error', error: 'Kangaroo Engine başlatılamadı' });
+                workerHuntRunning = false;
+            }
+        } else {
+            workerGpuEngine = new GpuEngine();
+            workerGpuEngine.batchSize = workerBatchSize;
+            const ok = await workerGpuEngine.initWithDevice(workerDevice, workerAdapterInfo);
+            if (ok) {
+                workerHuntLoop();
+            } else {
+                self.postMessage({ type: 'error', error: 'GpuEngine başlatılamadı' });
+                workerHuntRunning = false;
+            }
+        }
+    } else if (data.cmd === 'stop') {
+        workerHuntRunning = false;
+        if (workerKangarooEngine) {
+            workerKangarooEngine.destroy();
+            workerKangarooEngine = null;
+        }
+        if (workerGpuEngine) {
+            workerGpuEngine.destroyBuffers();
+            workerGpuEngine = null;
+        }
+    } else if (data.cmd === 'setIntensity') {
+        workerIntensity = data.intensity || workerIntensity;
+        workerThrottleDelay = data.throttleDelay || workerThrottleDelay;
+        workerStepsPerCall = data.stepsPerCall || workerStepsPerCall;
+        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+
+        if (workerKangarooEngine) {
+            workerKangarooEngine.setStepsPerCall(workerStepsPerCall);
+        }
+        if (workerGpuEngine) {
+            workerGpuEngine.batchSize = workerBatchSize;
+        }
+    }
+};
+`;
+
+function createGpuWorker() {
+    if (gpuWorker) {
+        try { gpuWorker.terminate(); } catch(e) {}
+        gpuWorker = null;
+    }
+
+    // 1. Önce doğrudan gpu_worker.js dosyasını dene (HTTP / Web Server ortamı)
+    try {
+        const w = new Worker('gpu_worker.js');
+        return w;
+    } catch(err) {
+        console.warn('[GPU] Doğrudan Worker("gpu_worker.js") açılamadı (file:// CORS kısıtlaması olabilir), Blob Worker deneniyor...', err.message);
+    }
+
+    // 2. Local file:// altında CORS hatasını aşmak için DOM'daki kütüphanelerle dinamik Blob Worker oluştur
+    try {
+        if (gpuWorkerBlobUrl) {
+            try { URL.revokeObjectURL(gpuWorkerBlobUrl); } catch(e) {}
+            gpuWorkerBlobUrl = null;
+        }
+
+        let coreLibsCode = '';
+        const coreTag = (typeof document !== 'undefined') ? document.getElementById('core-libs') : null;
+        if (coreTag) {
+            coreLibsCode = coreTag.textContent;
+        }
+
+        const workerSource = `(function() {
+${coreLibsCode}
+}).call(self);
+
+const SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+const GPU_WGSL = ${JSON.stringify(GPU_WGSL)};
+const WGSL_KANGAROO_SHADER = ${typeof WGSL_KANGAROO_SHADER !== 'undefined' ? JSON.stringify(WGSL_KANGAROO_SHADER) : "''"};
+${typeof WebGpuKangarooEngine !== 'undefined' ? WebGpuKangarooEngine.toString() : ''};
+${GpuEngine.toString()};
+${toBigIntSafeGpu.toString()};
+
+${typeof GPU_KEY_GENERATORS_SOURCE !== 'undefined' ? GPU_KEY_GENERATORS_SOURCE : ''}
+
+${genBatchForGpu.toString()};
+
+${GPU_WORKER_RUNNER_LOGIC}
+`;
+        const blob = new Blob([workerSource], { type: 'application/javascript' });
+        gpuWorkerBlobUrl = URL.createObjectURL(blob);
+        return new Worker(gpuWorkerBlobUrl);
+    } catch(err) {
+        console.warn('[GPU] Blob Worker oluşturulamadı:', err);
+        return null;
+    }
+}
+
+function setupGpuWorkerListeners(worker) {
+    if (!worker) return;
+    worker.onmessage = function(e) {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === 'progress') {
+            gpuKeysPerSec = data.rate || 0;
+            gpuTotalKeys = (gpuTotalKeys || 0) + (data.count || 0);
+            window.gpuKeysPerSec = gpuKeysPerSec;
+            window.gpuTotalKeys = gpuTotalKeys;
+
+            const spEl = document.getElementById('statSpeed');
+            if (spEl) {
+                spEl.innerText = gpuKeysPerSec.toLocaleString() + ' key/s';
+            }
+
+            if (typeof handleWorkerMessage === 'function') {
+                handleWorkerMessage(e);
+            }
+        } else if (data.type === 'win') {
+            gpuHuntRunning = false;
+            if (typeof handleWorkerMessage === 'function') {
+                handleWorkerMessage(e);
+            }
+        } else if (data.type === 'error') {
+            console.error('[GPU Worker Error]:', data.error);
+        }
+    };
+
+    worker.onerror = function(err) {
+        console.error('[GPU Worker Runtime Error]:', err.message);
+    };
+}
+
 async function initWebGpuEngine() {
+    isGpuWorkerActive = false;
+
+    // 1. Web Worker içinde WebGPU'yu test et ve başlat (İzole Thread)
+    try {
+        const w = createGpuWorker();
+        if (w) {
+            const workerInitOk = await new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    resolve(false);
+                }, 2000);
+
+                w.onmessage = function(e) {
+                    const data = e.data;
+                    if (!data) return;
+                    if (data.type === 'gpu_ready') {
+                        clearTimeout(timeout);
+                        gpuWorkerAdapterInfo = data.adapterInfo || 'WebGPU GPU (Worker)';
+                        console.log('[GPU] 🚀 WebGPU Web Worker Başarıyla Aktif! (' + gpuWorkerAdapterInfo + ')');
+                        resolve(true);
+                    } else if (data.type === 'gpu_unsupported') {
+                        clearTimeout(timeout);
+                        console.warn('[GPU] Worker içinde WebGPU desteklenmiyor:', data.reason);
+                        resolve(false);
+                    }
+                };
+
+                w.onerror = function(err) {
+                    clearTimeout(timeout);
+                    console.warn('[GPU] WebGPU Worker hatası:', err.message);
+                    resolve(false);
+                };
+
+                w.postMessage({ cmd: 'init' });
+            });
+
+            if (workerInitOk) {
+                gpuWorker = w;
+                isGpuWorkerActive = true;
+                setupGpuWorkerListeners(gpuWorker);
+                return true;
+            } else {
+                try { w.terminate(); } catch(e) {}
+            }
+        }
+    } catch(err) {
+        console.warn('[GPU] Worker başlatma sırasında istisna:', err);
+    }
+
+    // 2. Worker WebGPU başarısız olursa (Fallback: Ana thread)
+    console.log('[GPU] ℹ️ Ana thread WebGPU motoru başlatılıyor (Fallback)...');
+    isGpuWorkerActive = false;
     gpuEngine = new GpuEngine();
     const ok = await gpuEngine.init();
     if (!ok) { gpuEngine = null; return false; }
@@ -744,9 +1499,336 @@ function toBigIntSafeGpu(val) {
     if (val === null || typeof val === 'undefined') return 0n;
     if (typeof val === 'bigint') return val;
     let s = val.toString().trim().toLowerCase();
+    if (!s || s === '0x') return 0n;
     if (s.startsWith('0x')) return BigInt(s);
     return BigInt('0x' + s);
 }
+
+const GPU_KEY_GENERATORS_SOURCE = `
+let sobolStep = 1;
+function generateSobolKey(rangeStart, rangeEnd) {
+    sobolStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    let n = BigInt(sobolStep);
+    let rev = 0n;
+    let temp = n & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev = (rev << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    const g = n ^ (n >> 1n);
+    const mix = (rev ^ (g * 0x9E3779B97F4A7C15n)) & 0xFFFFFFFFFFFFFFFFn;
+    const spanBits = totalRange.toString(2).length;
+    let offset;
+    if (spanBits > 60) {
+        const g2 = ((n * 0x517cc1b727220a95n) ^ 0x6c62272e07bb0142n) & 0xFFFFFFFFFFFFFFFFn;
+        const fullMix = (mix << 64n) | g2;
+        offset = (fullMix * (totalRange + 1n)) >> 128n;
+    } else {
+        offset = (mix * (totalRange + 1n)) >> 64n;
+    }
+    const cand = rangeStart + offset;
+    return cand > rangeEnd ? rangeEnd : cand;
+}
+
+let scrambledSobolStep = 1;
+function generateScrambledSobolKey(rangeStart, rangeEnd) {
+    scrambledSobolStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    let n = BigInt(scrambledSobolStep);
+    const g = n ^ (n >> 1n);
+    let s1 = (g ^ 0x6a09e667f3bcc908n) * 0x9e3779b97f4a7c15n;
+    s1 ^= (s1 >> 32n);
+    s1 = (s1 * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+    s1 ^= (s1 >> 27n);
+    let rev = 0n, temp = s1;
+    for (let i = 0; i < 64; i++) {
+        rev = (rev << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    const spanBits = totalRange.toString(2).length;
+    let offset;
+    if (spanBits > 60) {
+        let s2 = (g ^ 0xbb67ae8584caa73bn) * 0x517cc1b727220a95n;
+        s2 ^= (s2 >> 29n);
+        const fullMix = (rev << 64n) | (s2 & 0xFFFFFFFFFFFFFFFFn);
+        offset = (fullMix * (totalRange + 1n)) >> 128n;
+    } else {
+        offset = (rev * (totalRange + 1n)) >> 64n;
+    }
+    const cand = rangeStart + offset;
+    return cand > rangeEnd ? rangeEnd : cand;
+}
+
+let haltonStep = 1n;
+function generateHaltonKey(rangeStart, rangeEnd) {
+    haltonStep++;
+    if (haltonStep > 1000000000000n) haltonStep = 1n;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    let n = haltonStep, rev2 = 0n, temp = n & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev2 = (rev2 << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    let rev3 = 0.0, f3 = 1.0 / 3.0, n3 = n;
+    while (n3 > 0n) {
+        let d = Number(n3 % 3n);
+        rev3 += d * f3;
+        n3 /= 3n;
+        f3 /= 3.0;
+    }
+    const r2Float = Number(rev2 >> 11n) / 9007199254740992.0;
+    const combined = (r2Float * 0.618033988749895 + rev3 * 0.381966011250105) % 1.0;
+    const scale = BigInt(Math.floor(combined * 1000000000000000.0));
+    const offset = (totalRange * scale) / 1000000000000000n;
+    const cand = rangeStart + offset;
+    return cand > rangeEnd ? rangeEnd : cand;
+}
+
+let vdCorputStep = 1n;
+function generateVanDerCorputKey(rangeStart, rangeEnd) {
+    vdCorputStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    let n = vdCorputStep;
+    let rev = 0n;
+    let temp = n & 0xFFFFFFFFFFFFFFFFn;
+    for (let i = 0; i < 64; i++) {
+        rev = (rev << 1n) | (temp & 1n);
+        temp >>= 1n;
+    }
+    const spanBits = totalRange.toString(2).length;
+    let offset;
+    if (spanBits > 60) {
+        const rev2 = ((rev * 0x517cc1b727220a95n) ^ 0x6c62272e07bb0142n) & 0xFFFFFFFFFFFFFFFFn;
+        const fullRev = (rev << 64n) | rev2;
+        offset = (fullRev * (totalRange + 1n)) >> 128n;
+    } else {
+        offset = (rev * (totalRange + 1n)) >> 64n;
+    }
+    const cand = rangeStart + offset;
+    return cand > rangeEnd ? rangeEnd : cand;
+}
+
+let weylStep = 1n;
+function generateWeylGoldenKey(rangeStart, rangeEnd) {
+    weylStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    const weylFrac = (weylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+    const spanBits = totalRange.toString(2).length;
+    let offset;
+    if (spanBits > 60) {
+        const weylFrac2 = (weylStep * 0xC6A4A7935BD1E995n) & 0xFFFFFFFFFFFFFFFFn;
+        const fullFrac = (weylFrac << 64n) | weylFrac2;
+        offset = (fullFrac * (totalRange + 1n)) >> 128n;
+    } else {
+        offset = (weylFrac * (totalRange + 1n)) >> 64n;
+    }
+    const cand = rangeStart + offset;
+    return cand > rangeEnd ? rangeEnd : cand;
+}
+
+let coprimeStep = 1n;
+function generateCoprimeStrideKey(rangeStart, rangeEnd) {
+    coprimeStep++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    const mod = totalRange + 1n;
+    const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? (0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) : 0xC6A4A7935BD1E995n;
+    const offset = (coprimeStep * (stride | 1n)) % mod;
+    return rangeStart + (offset < 0n ? -offset : offset);
+}
+
+let hilbertStepVal = 0n;
+function hilbertD2XY(order, d) {
+    let n = 1 << order;
+    let rx, ry, s, t = Number(d % BigInt(n * n));
+    let x = 0, y = 0;
+    for (s = 1; s < n; s <<= 1) {
+        rx = 1 & Math.floor(t / 2);
+        ry = 1 & (t ^ rx);
+        if (ry === 0) {
+            if (rx === 1) {
+                x = s - 1 - x;
+                y = s - 1 - y;
+            }
+            let tmp = x; x = y; y = tmp;
+        }
+        x += s * rx;
+        y += s * ry;
+    }
+    return { x: x, y: y };
+}
+function generateHilbertKey(rangeStart, rangeEnd) {
+    hilbertStepVal++;
+    const totalRange = rangeEnd - rangeStart;
+    if (totalRange <= 0n) return rangeStart;
+    const HILBERT_TOTAL = 65536n;
+    const HILBERT_STRIDE = 10007n;
+    const cellIndex = (hilbertStepVal * HILBERT_STRIDE) % HILBERT_TOTAL;
+    const cellSize = totalRange / HILBERT_TOTAL;
+    const cellStart = rangeStart + (cellIndex * cellSize);
+    let microOffset = 0n;
+    if (cellSize > 1000000n) {
+        const r = BigInt(Math.floor(Math.random() * 1000000));
+        microOffset = (cellSize * r) / 1000000n;
+    } else if (cellSize > 1n) {
+        microOffset = BigInt(Math.floor(Math.random() * Number(cellSize)));
+    }
+    const key = cellStart + microOffset;
+    return (key >= rangeStart && key <= rangeEnd) ? key : rangeStart + (key % (totalRange + 1n));
+}
+
+let chaosX = 0.141592653589793, chaosY = 0.271828182845904, chaosStep = 0;
+function generateDeterministicChaosKey(min, max) {
+    if (min >= max) return min;
+    const span = max - min;
+    chaosStep++;
+    chaosX = 4.0 * chaosX * (1.0 - chaosX);
+    if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) {
+        chaosX = (0.14159265 + (chaosStep * 0.00713)) % 0.85 + 0.07;
+    }
+    chaosY = (chaosY < 0.5) ? (2.0 * chaosY) : (2.0 * (1.0 - chaosY));
+    if (chaosY <= 0.0001 || chaosY >= 0.9999 || isNaN(chaosY)) {
+        chaosY = (0.27182818 + (chaosStep * 0.00931)) % 0.85 + 0.07;
+    }
+    const highInt = BigInt(Math.floor(chaosX * 4294967296)) & 0xFFFFFFFFn;
+    const lowInt = BigInt(Math.floor(chaosY * 4294967296)) & 0xFFFFFFFFn;
+    const mixed = (highInt << 32n) | lowInt;
+    return min + (mixed % (span + 1n));
+}
+
+let weakEntropyCounter = 0;
+function generateWeakEntropyKey(rangeStart, rangeEnd, entropyBits) {
+    const entBits = Number((entropyBits !== undefined && entropyBits !== null) ? entropyBits : 0);
+    if (entBits === -1) return randomBigIntInRange(rangeStart, rangeEnd);
+    weakEntropyCounter++;
+    const span = rangeEnd - rangeStart;
+    if (span <= 0n) return rangeStart;
+    const totalBits = BigInt(span.toString(2).length);
+    const c = BigInt(weakEntropyCounter);
+    if (entBits === 32) {
+        let state = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
+        let val = 0n, bits = 0n;
+        while (bits < totalBits) {
+            state = (state * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+            val = (val << 32n) | state;
+            bits += 32n;
+        }
+        return rangeStart + (val % (span + 1n));
+    } else if (entBits === 64) {
+        let z = (c * 0x9e3779b97f4a7c15n + 1n) & 0xFFFFFFFFFFFFFFFFn;
+        let val = 0n, bits = 0n;
+        while (bits < totalBits) {
+            z = (z + 0x9e3779b97f4a7c15n) & 0xFFFFFFFFFFFFFFFFn;
+            let temp = z;
+            temp = ((temp ^ (temp >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
+            val = (val << 64n) | ((temp ^ (temp >> 31n)) & 0xFFFFFFFFFFFFFFFFn);
+            bits += 64n;
+        }
+        return rangeStart + (val % (span + 1n));
+    }
+    const cat = Number(c % 3n);
+    if (cat === 0) {
+        let state = (c * 1103515245n + 12345n) & 0xFFFFFFFFn;
+        let val = 0n, bits = 0n;
+        while (bits < totalBits) {
+            state = (state * 1664525n + 1013904223n) & 0xFFFFFFFFn;
+            val = (val << 32n) | state;
+            bits += 32n;
+        }
+        return rangeStart + (val % (span + 1n));
+    } else if (cat === 1) {
+        const b1 = (c * 7n) % totalBits;
+        const b2 = (c * 13n) % totalBits;
+        const val = (1n << b1) | (1n << b2);
+        return rangeStart + (val % (span + 1n));
+    } else {
+        const pat = 'deadbeefcafebabe';
+        const hexLen = Math.max(1, Math.ceil(Number(totalBits) / 4));
+        const fullHex = pat.repeat(Math.floor(hexLen / pat.length) + 2).slice(0, hexLen);
+        const val = BigInt('0x' + fullHex) ^ ((c * 13n) % 1024n);
+        return rangeStart + (val % (span + 1n));
+    }
+}
+
+const KRONECKER_CONSTANTS = [
+    0x6A09E667F3BCC908n, 0xBB67AE8584CAA73Bn, 0x3C6EF372FE94F82Bn, 0xA54FF53A5F1D36F1n,
+    0x510E527FADE682D1n, 0x9B05688C2B3E6C1Fn, 0x1F83D9ABFB41BD6Bn, 0x5BD0AAFF55490AEFn
+];
+let kroneckerStep = 1n;
+function generateKroneckerKey(rangeStart, rangeEnd) {
+    kroneckerStep++;
+    const span = rangeEnd - rangeStart;
+    if (span <= 0n) return rangeStart;
+    const idx = Number(kroneckerStep % 8n);
+    const alpha = KRONECKER_CONSTANTS[idx];
+    const frac = (kroneckerStep * alpha) & 0xFFFFFFFFFFFFFFFFn;
+    return rangeStart + ((frac * (span + 1n)) >> 64n);
+}
+
+let grayCodeStep = 1n;
+function generateGrayCodeKey(rangeStart, rangeEnd) {
+    grayCodeStep++;
+    const span = rangeEnd - rangeStart;
+    if (span <= 0n) return rangeStart;
+    const g = grayCodeStep ^ (grayCodeStep >> 1n);
+    const frac = (g * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+    return rangeStart + ((frac * (span + 1n)) >> 64n);
+}
+
+let rndBuf = null;
+let rndIdx = 0;
+function randomBigIntInRange(min, max) {
+    if (min >= max) return min;
+    const span = max - min;
+    if (!rndBuf || rndIdx >= rndBuf.length) {
+        rndBuf = new Uint8Array(256 * 32);
+        const c = (typeof crypto !== 'undefined') ? crypto : (typeof self !== 'undefined' ? self.crypto : null);
+        if (c && typeof c.getRandomValues === 'function') c.getRandomValues(rndBuf);
+        else for (let k = 0; k < rndBuf.length; k++) rndBuf[k] = Math.floor(Math.random() * 256);
+        rndIdx = 0;
+    }
+    let rand = 0n;
+    for (let j = 0; j < 32; j++) rand = (rand << 8n) | BigInt(rndBuf[rndIdx + j]);
+    rndIdx += 32;
+    return min + (rand % (span + 1n));
+}
+
+let riemannT = 0.0;
+let quantumPhase = 0.0;
+function getNextPhysicsPercent(formula) {
+    if (formula === 'DETERMINISTIC_CHAOS' || formula === 'CHAOS') {
+        chaosStep++;
+        chaosX = 4.0 * chaosX * (1.0 - chaosX);
+        if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) chaosX = 0.14159265;
+        chaosY = (chaosY < 0.5) ? (2.0 * chaosY) : (2.0 * (1.0 - chaosY));
+        if (chaosY <= 0.0001 || chaosY >= 0.9999 || isNaN(chaosY)) chaosY = 0.27182818;
+        return Math.max(0.001, Math.min(99.999, (chaosX * 0.618 + chaosY * 0.382) * 100.0));
+    }
+    if (formula === 'GOLDEN_SINGULARITY' || formula === 'WEYL_GOLDEN') {
+        riemannT += 1.0;
+        return Math.max(0.001, Math.min(99.999, (((riemannT * 0.618033988749895) % 1.0) * 100.0)));
+    }
+    if (formula === 'QUANTUM_TUNNEL' || formula === 'QUANTUM') {
+        quantumPhase = (quantumPhase + 0.08) % (Math.PI * 2);
+        const alpha = (Math.sin(quantumPhase) + 1) / 2;
+        return 100.0 * (1 - Math.exp(-3.5 * alpha));
+    }
+    riemannT += 0.05;
+    const s1 = Math.sin(riemannT * Math.log(2));
+    const s2 = Math.sin(riemannT * Math.log(3));
+    const s3 = Math.sin(riemannT * Math.log(5));
+    const val = (s1 + s2 + s3 + 3) / 6;
+    return Math.max(0.001, Math.min(99.999, val * 100.0));
+}
+`;
+
+try { (new Function(GPU_KEY_GENERATORS_SOURCE))(); } catch(e) {}
 
 /**
  * GPU Arama Uzayını ve Algoritmaları Yöneten Gelişmiş Üretici
@@ -806,15 +1888,15 @@ function genBatchForGpu(cfg, size) {
     let subMax = boundMax;
     const f = cfg.activeFormula;
     const curSpan = (boundMax > boundMin) ? (boundMax - boundMin) : 1n;
-    const isNarrowRange = curSpan <= 10000000n; // 10M altı test ve dar aralıklarda mikro dilimleme YAPILMAZ!
+    const isNarrowRange = curSpan <= 10000000n;
     const isPrefixMode  = (f === 'PREFIX' || cfg.activeRangeMode === 'PREFIX' || cfg.isPrefixFilterActive);
     const isHexRange    = (cfg.activeRangeMode === 'HEX');
 
     if (!isNarrowRange && !isPrefixMode && !isHexRange &&
         (f === 'OMNI_CHAOS' || f === 'DETERMINISTIC_CHAOS' || f === 'QUANTUM_TUNNEL' || f === 'RIEMANN_ZETA' || f === 'GOLDEN_SINGULARITY' || cfg.activeRangeMode === 'PHYSICS')) {
-        if (typeof window.getNextPhysicsPercent === 'function') {
-            const centerPct = window.getNextPhysicsPercent();
-            const microWidth = 0.5; // Geniş uzayda anlamlı pencere genişliği
+        if (typeof getNextPhysicsPercent === 'function') {
+            const centerPct = getNextPhysicsPercent(f);
+            const microWidth = 0.5;
             const sPct = Math.max(0.0, centerPct - microWidth);
             const ePct = Math.min(100.0, centerPct + microWidth);
             const startBig = BigInt(Math.round(sPct * 100000000));
@@ -829,16 +1911,13 @@ function genBatchForGpu(cfg, size) {
     let activeAlgo = cfg.selectedAlgorithm || 'RANDOM';
     if (activeAlgo === 'AUTO') {
         gpuAutoStepCounter++;
-        const autoList = ['RANDOM', 'SOBOL', 'VD_CORPUT', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'KANGAROO_SOBOL', 'KANGAROO_GLV', 'HALTON', 'SCRAMBLED_SOBOL', 'MCMC'];
+        const autoList = ['RANDOM', 'SOBOL', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'HALTON', 'SCRAMBLED_SOBOL', 'KRONECKER_LATTICE', 'GRAY_CODE_WALK'];
         if (gpuAutoStepCounter % 25 === 0) {
             gpuAutoIndex = (gpuAutoIndex + 1) % autoList.length;
         }
         activeAlgo = autoList[gpuAutoIndex] || 'RANDOM';
     }
     if (activeAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
-        activeAlgo = 'RANDOM';
-    }
-    if ((activeAlgo === 'KANGAROO' || activeAlgo === 'KANGAROO_SOBOL' || activeAlgo === 'KANGAROO_GLV') && typeof window.isKangarooModeActive === 'function' && !window.isKangarooModeActive()) {
         activeAlgo = 'RANDOM';
     }
 
@@ -864,51 +1943,36 @@ function genBatchForGpu(cfg, size) {
         }
     }
 
-    // 5. Anahtarları Üret (Seçilen Algoritmaya Göre)
+    // 5. Anahtarları Üret (Seçilen Algoritmaya Göre - 100% Bağımsız ve Hatasız)
     const keys = new Array(size);
-    const effSpan = subMax - subMin;
+    const effSpan = (subMax > subMin) ? (subMax - subMin) : 1n;
     const targetLen = baseEnd.toString(16).length;
-
-    let rndBuf = null;
-    let rndIdx = 0;
 
     for (let i = 0; i < size; i++) {
         let currentKey;
 
-        if (activeAlgo === 'SOBOL' && typeof window.generateSobolKey === 'function') {
-            currentKey = window.generateSobolKey(subMin, subMax);
-        } else if (activeAlgo === 'VD_CORPUT' && typeof window.generateVanDerCorputKey === 'function') {
-            currentKey = window.generateVanDerCorputKey(subMin, subMax);
-        } else if (activeAlgo === 'WEYL_GOLDEN' && typeof window.generateWeylGoldenKey === 'function') {
-            currentKey = window.generateWeylGoldenKey(subMin, subMax);
-        } else if (activeAlgo === 'COPRIME_STRIDE' && typeof window.generateCoprimeStrideKey === 'function') {
-            currentKey = window.generateCoprimeStrideKey(subMin, subMax);
-        } else if (activeAlgo === 'HILBERT' && typeof window.generateHilbertKey === 'function') {
-            currentKey = window.generateHilbertKey(subMin, subMax);
-        } else if (activeAlgo === 'CHAOS' && typeof window.generateDeterministicChaosKey === 'function') {
-            currentKey = window.generateDeterministicChaosKey(subMin, subMax);
-        } else if (activeAlgo === 'WEAK_ENTROPY' && typeof window.generateWeakEntropyKey === 'function' && cfg.selectedEntropyBits !== -1) {
-            currentKey = window.generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits);
-        } else if ((activeAlgo === 'KANGAROO' || activeAlgo === 'KANGAROO_SOBOL' || activeAlgo === 'KANGAROO_GLV') && typeof window.generateKangarooKey === 'function') {
-            currentKey = window.generateKangarooKey(subMin, subMax);
-        } else if (activeAlgo === 'HALTON' && typeof window.generateHaltonKey === 'function') {
-            currentKey = window.generateHaltonKey(subMin, subMax);
-        } else if (activeAlgo === 'SCRAMBLED_SOBOL' && typeof window.generateScrambledSobolKey === 'function') {
-            currentKey = window.generateScrambledSobolKey(subMin, subMax);
-        } else if (activeAlgo === 'MCMC' && typeof window.generateMCMCKey === 'function') {
-            currentKey = window.generateMCMCKey(subMin, subMax);
-        } else if (typeof window.randomBigIntInRange === 'function') {
-            currentKey = window.randomBigIntInRange(subMin, subMax);
+        if (activeAlgo === 'SOBOL') {
+            currentKey = (typeof generateSobolKey === 'function') ? generateSobolKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'SCRAMBLED_SOBOL') {
+            currentKey = (typeof generateScrambledSobolKey === 'function') ? generateScrambledSobolKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'HALTON') {
+            currentKey = (typeof generateHaltonKey === 'function') ? generateHaltonKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'WEYL_GOLDEN') {
+            currentKey = (typeof generateWeylGoldenKey === 'function') ? generateWeylGoldenKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'COPRIME_STRIDE') {
+            currentKey = (typeof generateCoprimeStrideKey === 'function') ? generateCoprimeStrideKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'HILBERT') {
+            currentKey = (typeof generateHilbertKey === 'function') ? generateHilbertKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'CHAOS') {
+            currentKey = (typeof generateDeterministicChaosKey === 'function') ? generateDeterministicChaosKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'WEAK_ENTROPY') {
+            currentKey = (typeof generateWeakEntropyKey === 'function') ? generateWeakEntropyKey(subMin, subMax, cfg.selectedEntropyBits) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'KRONECKER_LATTICE') {
+            currentKey = (typeof generateKroneckerKey === 'function') ? generateKroneckerKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
+        } else if (activeAlgo === 'GRAY_CODE_WALK') {
+            currentKey = (typeof generateGrayCodeKey === 'function') ? generateGrayCodeKey(subMin, subMax) : randomBigIntInRange(subMin, subMax);
         } else {
-            if (!rndBuf || rndIdx >= rndBuf.length) {
-                rndBuf = new Uint8Array(256 * 32);
-                crypto.getRandomValues(rndBuf);
-                rndIdx = 0;
-            }
-            let rand = 0n;
-            for (let j = 0; j < 32; j++) rand = (rand << 8n) | BigInt(rndBuf[rndIdx + j]);
-            rndIdx += 32;
-            currentKey = subMin + (rand % (effSpan + 1n));
+            currentKey = randomBigIntInRange(subMin, subMax);
         }
 
         // Ön Ek Kilitleme
@@ -925,12 +1989,33 @@ function genBatchForGpu(cfg, size) {
         // Kaydıraç Sınır Denetimi & Sarma (Clamp & Wrap)
         if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
             if (currentKey < boundMin || currentKey > boundMax) {
-                currentKey = effSpan > 0n ? (boundMin + ((currentKey > boundMin ? (currentKey - boundMin) : (boundMin - currentKey)) % effSpan)) : boundMin;
+                currentKey = effSpan > 0n ? (boundMin + ((currentKey > boundMin ? (currentKey - boundMin) : (boundMin - currentKey)) % (effSpan + 1n))) : boundMin;
             }
         }
 
         keys[i] = currentKey;
     }
+
+    let algoPrefix = '';
+    if (activeAlgo === 'SOBOL') algoPrefix = '📐 Sobol + ';
+    else if (activeAlgo === 'WEYL_GOLDEN') algoPrefix = '🌟 Weyl Kafesi + ';
+    else if (activeAlgo === 'COPRIME_STRIDE') algoPrefix = '♾️ Modüler Adım + ';
+    else if (activeAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
+    else if (activeAlgo === 'CHAOS') algoPrefix = '♾️ Kaos + ';
+    else if (activeAlgo === 'WEAK_ENTROPY') algoPrefix = '⚡ Zayıf Entropi + ';
+    else if (activeAlgo === 'HALTON') algoPrefix = '🎲 Halton + ';
+    else if (activeAlgo === 'SCRAMBLED_SOBOL') algoPrefix = '🔀 S.Sobol + ';
+    else if (activeAlgo === 'KRONECKER_LATTICE') algoPrefix = '🌟 Kronecker Kafesi + ';
+    else if (activeAlgo === 'GRAY_CODE_WALK') algoPrefix = '🧬 Gray Kodu (H=1) + ';
+
+    const pParts = [];
+    if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
+        pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 6) + '..-0x' + boundMax.toString(16).substring(0, 6) + '..]');
+    }
+    if (isEffectivePrefix && gpuActivePrefix) {
+        pParts.push('🧩 Ön Ek: 0x' + gpuActivePrefix);
+    }
+    const rangeDesc = algoPrefix + (pParts.join(' + ') || 'Standart');
 
     return {
         keys: keys,
@@ -940,6 +2025,7 @@ function genBatchForGpu(cfg, size) {
         subMax: subMax,
         activeAlgo: activeAlgo,
         activePrefix: isEffectivePrefix ? gpuActivePrefix : '',
+        rangeDesc: rangeDesc,
         baseStart: baseStart,
         baseEnd: baseEnd
     };
@@ -991,94 +2077,135 @@ async function gpuHuntBatch() {
     try {
         const batchInfo = genBatchForGpu(cfg, BATCH);
         const keys = batchInfo.keys;
-        const raw  = await gpuEngine.computePubkeysRaw(keys);
 
         ensureTargetWords(targetH160);
-        const cjs = window.CryptoJS;
-        if (!cjs) return;
 
-        // Tek bir WordArray nesnesini yeniden kullanarak bellek çöpünü önleme
-        const waWords = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-        const wa = { words: waWords, sigBytes: 33 };
-
-        const waUWords = new Array(17);
-        const waU = { words: waUWords, sigBytes: 65 };
-
-        const isUncompTarget = Boolean(target && (target.isUncompressed || false));
-        const checkUncomp = isUncompTarget;
+        // ⚡ GPU computes Pubkeys + SHA-256 + RIPEMD-160 + Target Match in single kernel!
+        const gpuRes = await gpuEngine.huntBatchGpu(
+            keys,
+            hasTargetHash160 ? [targetW0, targetW1, targetW2, targetW3, targetW4] : null
+        );
 
         let found = false;
-        for (let i = 0; i < BATCH && gpuHuntRunning; i++) {
-            const off = i * 26;
-            const w0 = raw[off];
-            const prefix = (w0 >>> 24) & 0xFF;
-            if (prefix !== 2 && prefix !== 3) continue;
+        if (gpuRes && gpuRes.matched) {
+            const keyHex = gpuRes.keyHex || (keys[0] ? keys[0].toString(16).padStart(64, '0') : '');
+            console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
+            handleGpuWin(keyHex, target, targetH160, false);
+            gpuHuntRunning = false;
+            found = true;
+            return;
+        }
 
-            gpuTotalKeys++;
+        // Çoklu hedef / özel havuz / sıkıştırılmamış kontrolü (İkincil Kontrol)
+        const isUncompTarget = Boolean(target && (target.isUncompressed || target.id === 'ilave' || target.id === 'TEST_64'));
+        const checkUncomp = isUncompTarget || Boolean(cfg.isCustomPoolActive);
+        const hasMultiTarget = checkUncomp || Boolean(cfg.isCustomPoolActive) || Boolean(cfg.satoshiMultiTargetActive) || Boolean(cfg.isCircularMode);
 
+        if (hasMultiTarget) {
+            const raw = await gpuEngine.computePubkeysRaw(keys);
+            const cjs = window.CryptoJS;
+            if (cjs && raw) {
+                const waWords = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+                const wa = { words: waWords, sigBytes: 33 };
 
+                const waUWords = new Array(17);
+                const waU = { words: waUWords, sigBytes: 65 };
 
-            waWords[0] = w0;
-            waWords[1] = raw[off + 1];
-            waWords[2] = raw[off + 2];
-            waWords[3] = raw[off + 3];
-            waWords[4] = raw[off + 4];
-            waWords[5] = raw[off + 5];
-            waWords[6] = raw[off + 6];
-            waWords[7] = raw[off + 7];
-            waWords[8] = raw[off + 8] & 0xFF000000;
+                const customBloom = (cfg.isCustomPoolActive && typeof customBloomFilter !== 'undefined') ? customBloomFilter : null;
 
-            const sha = cjs.SHA256(wa);
-            const rmd = cjs.RIPEMD160(sha);
-            const rw = rmd.words;
+                for (let i = 0; i < BATCH && gpuHuntRunning; i++) {
+                    const off = i * 26;
+                    const w0 = raw[off];
+                    const prefix = (w0 >>> 24) & 0xFF;
+                    if (prefix !== 2 && prefix !== 3) continue;
 
-            // 🎯 1. Sıkıştırılmış (Compressed) Hedef Eşleşme Kontrolü
-            if (hasTargetHash160 && rw[0] === targetW0 && rw[1] === targetW1 && rw[2] === targetW2 && rw[3] === targetW3 && rw[4] === targetW4) {
-                const keyHex = keys[i].toString(16).padStart(64, '0');
-                console.log('[GPU] 🎯 WIN! key=' + keyHex + ' hash160=' + targetH160);
-                handleGpuWin(keyHex, target, targetH160, false);
-                gpuHuntRunning = false; found = true; break;
-            }
+                    waWords[0] = w0;
+                    waWords[1] = raw[off + 1];
+                    waWords[2] = raw[off + 2];
+                    waWords[3] = raw[off + 3];
+                    waWords[4] = raw[off + 4];
+                    waWords[5] = raw[off + 5];
+                    waWords[6] = raw[off + 6];
+                    waWords[7] = raw[off + 7];
+                    waWords[8] = raw[off + 8] & 0xFF000000;
 
-            // 🎯 2. Sıkıştırılmamış (Uncompressed) Hedef Eşleşme Kontrolü (196ru37... ve Özel Havuz uncompressed adresler)
-            if (checkUncomp) {
-                for (let u = 0; u < 17; u++) waUWords[u] = raw[off + 9 + u];
-                waUWords[16] = waUWords[16] & 0xFF000000;
+                    const sha = cjs.SHA256(wa);
+                    const rmd = cjs.RIPEMD160(sha);
+                    const rw = rmd.words;
 
-                const shaU = cjs.SHA256(waU);
-                const rmdU = cjs.RIPEMD160(shaU);
-                const rwU = rmdU.words;
+                    // 🎯 Sıkıştırılmamış Eşleşme Kontrolü
+                    if (checkUncomp) {
+                        for (let u = 0; u < 17; u++) waUWords[u] = raw[off + 9 + u];
+                        waUWords[16] = waUWords[16] & 0xFF000000;
 
-                if (hasTargetHash160 && rwU[0] === targetW0 && rwU[1] === targetW1 && rwU[2] === targetW2 && rwU[3] === targetW3 && rwU[4] === targetW4) {
-                    const keyHex = keys[i].toString(16).padStart(64, '0');
-                    console.log('[GPU] 🎯 UNCOMPRESSED WIN! key=' + keyHex + ' hash160=' + targetH160);
-                    handleGpuWin(keyHex, target, targetH160, true);
-                    gpuHuntRunning = false; found = true; break;
-                }
+                        const shaU = cjs.SHA256(waU);
+                        const rmdU = cjs.RIPEMD160(shaU);
+                        const rwU = rmdU.words;
 
-            }
-
-            // Çoklu hedef döngüsel mod kontrolü (O(1) Map optimizasyonu)
-            if (cfg.isCircularMode) {
-                if (cfg.unsolvedList && cfg.unsolvedList.length > 0) {
-                    const h160 = rmd.toString();
-                    if (!window._gpuTargetMap || window._gpuTargetMapVersion !== cfg.unsolvedList.length) {
-                        window._gpuTargetMap = new Map();
-                        for (let p of cfg.unsolvedList) {
-                            if (p.targetHash160) window._gpuTargetMap.set(p.targetHash160.toLowerCase(), p);
+                        if (hasTargetHash160 && rwU[0] === targetW0 && rwU[1] === targetW1 && rwU[2] === targetW2 && rwU[3] === targetW3 && rwU[4] === targetW4) {
+                            const keyHex = keys[i].toString(16).padStart(64, '0');
+                            console.log('[GPU] 🎯 UNCOMPRESSED WIN! key=' + keyHex + ' hash160=' + targetH160);
+                            handleGpuWin(keyHex, target, targetH160, true);
+                            gpuHuntRunning = false; found = true; break;
                         }
-                        window._gpuTargetMapVersion = cfg.unsolvedList.length;
+
+                        if (cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined' && customAddressSet && customAddressSet.size > 0) {
+                            let bloomHitU = true;
+                            if (customBloom && typeof customBloom.hasWords5 === 'function') {
+                                bloomHitU = customBloom.hasWords5(rwU[0] >>> 0, rwU[1] >>> 0, rwU[2] >>> 0, rwU[3] >>> 0, rwU[4] >>> 0);
+                            }
+                            if (bloomHitU) {
+                                const h160U = rmdU.toString();
+                                if (customAddressSet.has(h160U)) {
+                                    const keyHex = keys[i].toString(16).padStart(64, '0');
+                                    console.log('[GPU] 🎯 CUSTOM POOL (UNCOMPRESSED) WIN! key=' + keyHex);
+                                    handleGpuWin(keyHex, target, h160U, true, '🎯 İlave Havuz Cüzdanı (Uncompressed)');
+                                    gpuHuntRunning = false; found = true; break;
+                                }
+                            }
+                        }
                     }
-                    const matched = window._gpuTargetMap.get(h160.toLowerCase());
-                    if (matched) {
-                        const keyHex = keys[i].toString(16).padStart(64, '0');
-                        console.log('[GPU] 🎯 HEDEF EŞLEŞTİ! key=' + keyHex + ' id=' + matched.id);
-                        handleGpuWin(keyHex, matched, h160, false);
-                        gpuHuntRunning = false; found = true; break;
+
+                    // Çoklu hedef / özel havuz kontrolü
+                    if (cfg.satoshiMultiTargetActive || cfg.isCustomPoolActive || cfg.isCircularMode) {
+                        if (cfg.unsolvedList && cfg.unsolvedList.length > 0) {
+                            const h160 = rmd.toString();
+                            if (!window._gpuTargetMap || window._gpuTargetMapVersion !== cfg.unsolvedList.length) {
+                                window._gpuTargetMap = new Map();
+                                for (let p of cfg.unsolvedList) {
+                                    if (p.targetHash160) window._gpuTargetMap.set(p.targetHash160.toLowerCase(), p);
+                                }
+                                window._gpuTargetMapVersion = cfg.unsolvedList.length;
+                            }
+                            const matched = window._gpuTargetMap.get(h160.toLowerCase());
+                            if (matched) {
+                                const keyHex = keys[i].toString(16).padStart(64, '0');
+                                console.log('[GPU] 🎯 HEDEF EŞLEŞTİ! key=' + keyHex + ' id=' + matched.id);
+                                handleGpuWin(keyHex, matched, h160, false);
+                                gpuHuntRunning = false; found = true; break;
+                            }
+                        }
+                        if (cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined' && customAddressSet && customAddressSet.size > 0) {
+                            let bloomHit = true;
+                            if (customBloom && typeof customBloom.hasWords5 === 'function') {
+                                bloomHit = customBloom.hasWords5(rw[0] >>> 0, rw[1] >>> 0, rw[2] >>> 0, rw[3] >>> 0, rw[4] >>> 0);
+                            }
+                            if (bloomHit) {
+                                const h160 = rmd.toString();
+                                if (customAddressSet.has(h160)) {
+                                    const keyHex = keys[i].toString(16).padStart(64, '0');
+                                    console.log('[GPU] 🎯 CUSTOM POOL WIN! key=' + keyHex);
+                                    handleGpuWin(keyHex, target, h160, false, '🎯 İlave Havuz Cüzdanı');
+                                    gpuHuntRunning = false; found = true; break;
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+
+        gpuTotalKeys += BATCH;
 
         const dt = (performance.now() - t0) / 1000;
         gpuKeysPerSec = Math.round(BATCH / (dt || 0.001));
@@ -1094,7 +2221,6 @@ async function gpuHuntBatch() {
         }
         let algoPrefix = '';
         if (batchInfo.activeAlgo === 'SOBOL') algoPrefix = '📐 Sobol + ';
-        else if (batchInfo.activeAlgo === 'VD_CORPUT') algoPrefix = '📐 Van der Corput + ';
         else if (batchInfo.activeAlgo === 'WEYL_GOLDEN') algoPrefix = '🌟 Weyl Kafesi + ';
         else if (batchInfo.activeAlgo === 'COPRIME_STRIDE') algoPrefix = '♾️ Modüler Adım + ';
         else if (batchInfo.activeAlgo === 'HILBERT') algoPrefix = '🌀 Hilbert + ';
@@ -1106,6 +2232,9 @@ async function gpuHuntBatch() {
         else if (batchInfo.activeAlgo === 'HALTON') algoPrefix = '🎲 Halton + ';
         else if (batchInfo.activeAlgo === 'SCRAMBLED_SOBOL') algoPrefix = '🔀 S.Sobol + ';
         else if (batchInfo.activeAlgo === 'MCMC') algoPrefix = '🎰 MCMC + ';
+        else if (batchInfo.activeAlgo === 'WEAK_PRNG_LCG') algoPrefix = '🎲 Zayıf PRNG (LCG) + ';
+        else if (batchInfo.activeAlgo === 'KRONECKER_LATTICE') algoPrefix = '🌟 Kronecker Kafesi + ';
+        else if (batchInfo.activeAlgo === 'GRAY_CODE_WALK') algoPrefix = '🧬 Gray Kodu (H=1) + ';
 
         if (cfg.activeFormula === 'OMNI_CHAOS') algoPrefix = '♾️ Omni-Kaos + ' + algoPrefix;
         else if (cfg.activeFormula === 'GOLDEN_SINGULARITY') algoPrefix = '🌟 Altın Oran + ' + algoPrefix;
@@ -1147,28 +2276,52 @@ async function gpuHuntBatch() {
     }
 }
 
-let gpuThrottleDelay = 45; // Varsayılan: 45ms dinlenme payı (akıcı 60 FPS masaüstü)
+let gpuThrottleDelay = 35; // Varsayılan: 35ms dinlenme payı (akıcı 60 FPS masaüstü, AMD DWM uyumlu)
 let gpuCurrentIntensity = 'BALANCED';
+let gpuCurrentStepsPerCall = 16;
 
 function setGpuIntensity(level) {
     if (!level) return;
     const l = String(level).toUpperCase();
     if (l.includes('ECO') || l.includes('LIGHT') || l.includes('LOW')) {
         gpuCurrentIntensity = 'ECO';
-        gpuThrottleDelay = 120; // 120ms dinlenme payı: GPU ve CPU %95 boşta, sıfır kasma/donma
-        if (gpuEngine) gpuEngine.batchSize = 64;
-        console.log('[GPU] 🟢 Ultra Hafif / Eco moduna geçildi (Batch: 64, Gecikme: 120ms - Sıfır Kasma)');
+        gpuThrottleDelay = 80; // 80ms dinlenme payı: GPU ve CPU %90+ serbest, sıfır kasma/donma
+        gpuCurrentStepsPerCall = 8;
+        if (gpuEngine) gpuEngine.batchSize = 512;
+        if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
+            webGpuKangarooInstance.setStepsPerCall(8);
+        }
+        console.log('[GPU] 🟢 Ultra Hafif / Eco moduna geçildi (Batch: 512, Steps: 8, Gecikme: 80ms - Sıfır Kasma)');
     } else if (l.includes('MAX') || l.includes('TURBO') || l.includes('HIGH')) {
         gpuCurrentIntensity = 'MAX';
-        gpuThrottleDelay = 2; // 2ms: Tam güç, tarayıcı olay döngüsüne minimal nefes
-        if (gpuEngine) gpuEngine.batchSize = 1024;
-        console.log('[GPU] 🔴 Tam Güç moduna geçildi (Batch: 1024, Gecikme: 2ms)');
+        gpuThrottleDelay = 15; // 15ms: Windows DWM ve fare imlecinin akıcı kalması için AMD uyumlu nefes payı
+        gpuCurrentStepsPerCall = 32;
+        if (gpuEngine) gpuEngine.batchSize = 4096;
+        if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
+            webGpuKangarooInstance.setStepsPerCall(32);
+        }
+        console.log('[GPU] 🔴 Tam Güç moduna geçildi (Batch: 4096, Steps: 32, Gecikme: 15ms)');
     } else {
         // BALANCED (Varsayılan)
         gpuCurrentIntensity = 'BALANCED';
-        gpuThrottleDelay = 45; // 45ms: Akıcı 60 FPS masaüstü
-        if (gpuEngine) gpuEngine.batchSize = 256;
-        console.log('[GPU] 🟡 Dengeli moduna geçildi (Batch: 256, Gecikme: 45ms - 60 FPS akıcı)');
+        gpuThrottleDelay = 35; // 35ms: Akıcı 60 FPS masaüstü, AMD WDDM preemption uyumlu
+        gpuCurrentStepsPerCall = 16;
+        if (gpuEngine) gpuEngine.batchSize = 2048;
+        if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
+            webGpuKangarooInstance.setStepsPerCall(16);
+        }
+        console.log('[GPU] 🟡 Dengeli moduna geçildi (Batch: 2048, Steps: 16, Gecikme: 35ms - 60 FPS akıcı)');
+    }
+
+    if (isGpuWorkerActive && gpuWorker) {
+        try {
+            gpuWorker.postMessage({
+                cmd: 'setIntensity',
+                intensity: gpuCurrentIntensity,
+                throttleDelay: gpuThrottleDelay,
+                stepsPerCall: gpuCurrentStepsPerCall
+            });
+        } catch(e) {}
     }
 }
 
@@ -1236,7 +2389,7 @@ async function gpuKangarooLoop() {
         }
 
         if (gpuHuntRunning) {
-            setTimeout(gpuKangarooLoop, Math.min(gpuThrottleDelay, 10));
+            setTimeout(gpuKangarooLoop, gpuThrottleDelay);
         }
     } catch(err) {
         console.error('[WebGPU Kangaroo Loop Error]:', err);
@@ -1245,25 +2398,57 @@ async function gpuKangarooLoop() {
 }
 
 async function startGpuHunting() {
+    gpuHuntRunning = true;
+
+    const cfg = (typeof getCurrentWorkerConfig === 'function') ? getCurrentWorkerConfig() : null;
+    const algoStr = (cfg && (cfg.selectedAlgorithm || cfg.activeAlgo)) ? String(cfg.selectedAlgorithm || cfg.activeAlgo).toUpperCase() : '';
+    const isExplicitNonKangaroo = algoStr && algoStr !== 'AUTO' && !algoStr.startsWith('KANGAROO') && algoStr !== 'GLV_LATTICE_2D';
+    const isKangaroo = !isExplicitNonKangaroo && Boolean(algoStr.startsWith('KANGAROO') || algoStr === 'GLV_LATTICE_2D' || (typeof isKangarooModeActive === 'function' && isKangarooModeActive()));
+
+    let targetPub = (typeof kangarooTargetPubHex !== 'undefined' && kangarooTargetPubHex) ? kangarooTargetPubHex : null;
+    const target = cfg ? cfg.activeTarget : null;
+    if (!targetPub && target && typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') {
+        targetPub = EXPOSED_KANGAROO_PUBKEYS[target.id] || EXPOSED_KANGAROO_PUBKEYS[parseInt(target.id, 10)] || null;
+    }
+    if (!targetPub && target) {
+        targetPub = target.pubHex || target.pubkeyHex || null;
+    }
+
+    if (isKangaroo && !targetPub) {
+        console.warn('[GPU] Hedef açık anahtar (pubkey) bulunamadı. Standart GPU moduna geçiliyor.');
+        if (typeof showToast === 'function') {
+            showToast(`ℹ️ <strong>Pollard Kangaroo Açık Anahtar Gerektirir</strong><br><span style="font-size:11px;">#${target ? target.id : ''} için açık anahtar ifşa edilmediğinden GPU Hızlı Arama (${cfg?.selectedAlgorithm || 'Sobol'}) modunda çalışıyor.</span>`, 4500);
+        }
+    }
+
+    const effectiveKangaroo = isKangaroo && Boolean(targetPub);
+
+    if (isGpuWorkerActive && gpuWorker) {
+        console.log(`[GPU] ⚡ İzole Web Worker üzerinden GPU avı başlatılıyor... (Kangaroo=${effectiveKangaroo}, Intensity=${gpuCurrentIntensity}, Delay=${gpuThrottleDelay}ms, Steps=${gpuCurrentStepsPerCall})`);
+
+        const customAddrs = (cfg && cfg.isCustomPoolActive && typeof customAddressSet !== 'undefined' && customAddressSet)
+            ? Array.from(customAddressSet)
+            : [];
+
+        gpuWorker.postMessage({
+            cmd: 'start',
+            config: cfg,
+            intensity: gpuCurrentIntensity,
+            throttleDelay: gpuThrottleDelay,
+            stepsPerCall: gpuCurrentStepsPerCall,
+            isKangaroo: effectiveKangaroo,
+            targetPubHex: targetPub,
+            customAddresses: customAddrs
+        });
+        return true;
+    }
+
     if (!gpuEngine || !gpuEngine.isInitialized) {
         console.warn('[GPU] Engine hazır değil');
         return false;
     }
-    gpuHuntRunning = true;
 
-    const cfg = (typeof getCurrentWorkerConfig === 'function') ? getCurrentWorkerConfig() : null;
-    const isKangaroo = (cfg && cfg.activeAlgo === 'KANGAROO') || (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
-
-    if (isKangaroo && typeof WebGpuKangarooEngine !== 'undefined') {
-        const target = cfg ? cfg.activeTarget : null;
-        let targetPub = (typeof kangarooTargetPubHex !== 'undefined' && kangarooTargetPubHex) ? kangarooTargetPubHex : null;
-        if (!targetPub && target && typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') {
-            targetPub = EXPOSED_KANGAROO_PUBKEYS[target.id] || EXPOSED_KANGAROO_PUBKEYS[parseInt(target.id, 10)] || null;
-        }
-        if (!targetPub && target) {
-            targetPub = target.pubHex || target.pubkeyHex || null;
-        }
-
+    if (effectiveKangaroo && typeof WebGpuKangarooEngine !== 'undefined') {
         if (targetPub) {
             console.log('[GPU] 🦘 Pollard Kangaroo WebGPU Çekirdeği Başlatılıyor... Hedef Açık Anahtar:', targetPub);
             let s = (typeof toBigIntSafe === 'function') ? toBigIntSafe(target.start) : BigInt('0x' + target.start);
@@ -1284,9 +2469,15 @@ async function startGpuHunting() {
             gpuKangarooAccumSteps = 0;
 
             webGpuKangarooInstance = new WebGpuKangarooEngine();
+            if (typeof gpuCurrentStepsPerCall !== 'undefined') {
+                webGpuKangarooInstance.stepsPerCall = gpuCurrentStepsPerCall;
+            }
             const ok = await webGpuKangarooInstance.init(gpuEngine.device, targetPub, s, e);
             if (ok) {
-                console.log('[GPU] 🦘 WebGPU Kangaroo Döngüsü Aktif!');
+                if (typeof gpuCurrentStepsPerCall !== 'undefined' && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
+                    webGpuKangarooInstance.setStepsPerCall(gpuCurrentStepsPerCall);
+                }
+                console.log(`[GPU] 🦘 WebGPU Kangaroo Döngüsü Aktif! (stepsPerCall=${webGpuKangarooInstance.stepsPerCall}, delay=${gpuThrottleDelay}ms)`);
                 gpuKangarooLoop();
                 return true;
             } else {
@@ -1306,8 +2497,13 @@ async function startGpuHunting() {
     return true;
 }
 
-function stopGpuHunting() {
+function stopGpuHunting(immediate) {
     gpuHuntRunning = false;
+    if (isGpuWorkerActive && gpuWorker) {
+        try {
+            gpuWorker.postMessage({ cmd: 'stop', immediate: !!immediate });
+        } catch(e) {}
+    }
     if (webGpuKangarooInstance) {
         webGpuKangarooInstance = null;
     }
@@ -1328,6 +2524,10 @@ window.genBatchForGpu    = genBatchForGpu;
 window.setGpuIntensity   = setGpuIntensity;
 window.gpuKeysPerSec     = gpuKeysPerSec;
 window.gpuTotalKeys      = gpuTotalKeys;
+Object.defineProperty(window, 'isGpuWorkerActive', {
+    get() { return isGpuWorkerActive; },
+    configurable: true
+});
 Object.defineProperty(window, 'gpuThrottleDelay', {
     get() { return gpuThrottleDelay; },
     set(v) { gpuThrottleDelay = v; },
@@ -1336,5 +2536,10 @@ Object.defineProperty(window, 'gpuThrottleDelay', {
 Object.defineProperty(window, 'gpuCurrentIntensity', {
     get() { return gpuCurrentIntensity; },
     set(v) { gpuCurrentIntensity = v; },
+    configurable: true
+});
+Object.defineProperty(window, 'gpuCurrentStepsPerCall', {
+    get() { return gpuCurrentStepsPerCall; },
+    set(v) { gpuCurrentStepsPerCall = v; },
     configurable: true
 });

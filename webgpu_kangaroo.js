@@ -212,14 +212,17 @@ fn u256_mul_full(a: U256, b: U256) -> U512 {
 
 fn u512_mod_p(t: U512) -> U256 {
     let p = p_val();
+    let c = U256(array<u32, 8>(977u, 1u, 0u, 0u, 0u, 0u, 0u, 0u));
     var s_lo = t.lo;
+    var h = t.hi;
+    // 2^256 = 2^32 + 977 (mod p): her turda ÜST kısım (h) yeni taşmayla değiştirilir
     for (var iter = 0u; iter < 4u; iter++) {
-        let hi_prod = u256_mul_full(t.hi, U256(array<u32, 8>(977u, 1u, 0u, 0u, 0u, 0u, 0u, 0u)));
-        let sum_lo = u256_add_raw(s_lo, hi_prod.lo);
+        if (u256_is_zero(h)) { break; }
+        let prod = u256_mul_full(h, c);
+        let sum_lo = u256_add_raw(s_lo, prod.lo);
         let carry = select(0u, 1u, u256_lt(sum_lo, s_lo));
-        let rem_hi = u256_add_raw(hi_prod.hi, U256(array<u32, 8>(carry, 0u, 0u, 0u, 0u, 0u, 0u, 0u)));
+        h = u256_add_raw(prod.hi, U256(array<u32, 8>(carry, 0u, 0u, 0u, 0u, 0u, 0u, 0u)));
         s_lo = sum_lo;
-        if (u256_is_zero(rem_hi)) { break; }
     }
     while (!u256_lt(s_lo, p)) {
         s_lo = u256_sub_raw(s_lo, p);
@@ -311,7 +314,7 @@ fn main(
         cur_dist = u256_add_raw(cur_dist, j_pt.dist);
 
         // 5. Ayırt Edici Nokta (Distinguished Point / Tuzak) Kontrolü
-        if ((cur_x.l[0] & params.dp_mask_lo) == 0u && (cur_x.l[1] & params.dp_mask_hi) == 0u) {
+        if (((cur_x.l[0] >> 5u) & params.dp_mask_lo) == 0u && (cur_x.l[1] & params.dp_mask_hi) == 0u) {
             let slot = atomicAdd(&trap_header.trap_count, 1u);
             if (slot < params.max_traps) {
                 var rec: TrapRecord;
@@ -344,10 +347,8 @@ class WebGpuKangarooEngine {
         this.trapHeaderBuf = null;
         this.trapRecordsBuf = null;
         this.trapReadbackBuf = null;
-        this.bindGroup = null;
-
         this.numKangaroos = 2048; // 64 workgroup x 32 threads
-        this.stepsPerCall = 128;
+        this.stepsPerCall = 16;   // AMD/WDDM uyumlu adım sayısı (2-4ms pass: Windows DWM ve masaüstü donmasını engeller)
         this.maxTraps = 512;
 
         this.targetPubHex = '';
@@ -370,6 +371,23 @@ class WebGpuKangarooEngine {
 
         this.ec = null;
         this.targetPoint = null;
+    }
+
+    setStepsPerCall(steps) {
+        const s = Math.max(4, Math.min(Number(steps) || 16, 64));
+        this.stepsPerCall = s;
+        if (this.paramsBuf && this.device) {
+            const paramsData = new Uint32Array([
+                this.numKangaroos,
+                this.stepsPerCall,
+                this.dpMaskLo,
+                this.dpMaskHi,
+                this.maxTraps,
+                this.useNegationMap ? 1 : 0,
+                0, 0
+            ]);
+            try { this.device.queue.writeBuffer(this.paramsBuf, 0, paramsData); } catch(e) {}
+        }
     }
 
     bigIntToU256Words(big) {
@@ -398,7 +416,7 @@ class WebGpuKangarooEngine {
         this.span = this.rangeMax > this.rangeMin ? (this.rangeMax - this.rangeMin) : 1n;
         this.lastKey = this.rangeMax.toString(16);
 
-        const el = (typeof window !== 'undefined' && window.elliptic) ? window.elliptic : null;
+        const el = (typeof window !== 'undefined' && window.elliptic) ? window.elliptic : ((typeof self !== 'undefined' && self.elliptic) ? self.elliptic : null);
         if (!el || !el.ec) throw new Error('[WebGPU Kangaroo] elliptic kütüphanesi bulunamadı');
         this.ec = new el.ec('secp256k1');
         const keyObj = this.ec.keyFromPublic(this.targetPubHex, 'hex');
@@ -603,6 +621,21 @@ class WebGpuKangarooEngine {
                     // X(P) == X(-P) olduğundan, Tame ve Wild zıt Y paritelerinde olsalar dahi
                     // aynı X hücresinde anında çarpışırlar! (Arama uzayını 2x küçültür -> 1.414x hızlanma)
                     const xHex = xBig.toString(16).padStart(64, '0');
+                    if (this._verified === undefined) this._verified = 0;
+                    if (this._verified < 3) {
+                        this._verified++;
+                        try {
+                            const chk = (herd === 0) ? this.ec.g.mul(distBig.toString(16))
+                                                     : this.targetPoint.add(this.ec.g.mul(distBig.toString(16)));
+                            const cx = chk.getX().toString(16).padStart(64, '0');
+                            if (cx !== xHex) {
+                                console.error('[WebGPU Kangaroo] ❌ GPU aritmetiği CPU ile UYUŞMUYOR — tuzak x/dist tutarsız, çarpışma asla bulunamaz');
+                                this.gpuMathBroken = true;
+                            } else if (this._verified === 3 && !this.gpuMathBroken) {
+                                console.log('[WebGPU Kangaroo] ✅ GPU aritmetiği CPU ile doğrulandı (3 tuzak)');
+                            }
+                        } catch (e) {}
+                    }
                     const trapRecord = { dist: distBig, parity: parity, id: kId, herd: herd };
 
                     if (herd === 0) {
@@ -719,4 +752,7 @@ class WebGpuKangarooEngine {
 
 if (typeof window !== 'undefined') {
     window.WebGpuKangarooEngine = WebGpuKangarooEngine;
+}
+if (typeof self !== 'undefined') {
+    self.WebGpuKangarooEngine = WebGpuKangarooEngine;
 }

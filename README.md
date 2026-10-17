@@ -90,6 +90,8 @@ Run directly in your browser with zero installation:
 | :--- | :--- |
 | **`index.html`** | 100% standalone, zero-dependency browser application |
 | **`gpu_engine.js`** | WebGPU hardware acceleration engine |
+| **`gpu_worker.js`** | Dedicated Web Worker for zero-freeze isolated GPU computation |
+| **`webgpu_kangaroo.js`** | WebGPU WGSL shader pipeline for Pollard's Kangaroo |
 | **`kangaroo_engine.js`** | Pollard's Kangaroo elliptic curve collision library |
 | **`all_160_puzzles.json`** | All 160 Bitcoin puzzle target ranges and addresses dataset |
 | **`manifest.json`** | Progressive Web App (PWA) manifest |
