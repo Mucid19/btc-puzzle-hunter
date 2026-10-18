@@ -1568,50 +1568,32 @@ function generateHaltonKey(rangeStart, rangeEnd) {
     if (haltonStep > 1000000000000n) haltonStep = 1n;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
-    let n = haltonStep, rev2 = 0n, temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev2 = (rev2 << 1n) | (temp & 1n);
-        temp >>= 1n;
+    // Halton: taban 2 ve taban 3 radikal tersleri sırayla kullanılır (her biri tek başına düzgün dağılımlıdır)
+    const m = haltonStep >> 1n;
+    let value;
+    if ((haltonStep & 1n) === 0n) {
+        let rev2 = 0n, temp = m & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev2 = (rev2 << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        value = Number(rev2 >> 11n) / 9007199254740992.0;
+    } else {
+        let rev3 = 0.0, f3 = 1.0 / 3.0, n3 = m;
+        while (n3 > 0n) {
+            const d = Number(n3 % 3n);
+            rev3 += d * f3;
+            n3 /= 3n;
+            f3 /= 3.0;
+        }
+        value = rev3;
     }
-    let rev3 = 0.0, f3 = 1.0 / 3.0, n3 = n;
-    while (n3 > 0n) {
-        let d = Number(n3 % 3n);
-        rev3 += d * f3;
-        n3 /= 3n;
-        f3 /= 3.0;
-    }
-    const r2Float = Number(rev2 >> 11n) / 9007199254740992.0;
-    const combined = (r2Float * 0.618033988749895 + rev3 * 0.381966011250105) % 1.0;
-    const scale = BigInt(Math.floor(combined * 1000000000000000.0));
-    const offset = (totalRange * scale) / 1000000000000000n;
-    const cand = rangeStart + offset;
+    const scale = BigInt(Math.floor(value * 1000000000000000.0));
+    const cand = rangeStart + (totalRange * scale) / 1000000000000000n;
     return cand > rangeEnd ? rangeEnd : cand;
 }
 
 let vdCorputStep = 1n;
-function generateVanDerCorputKey(rangeStart, rangeEnd) {
-    vdCorputStep++;
-    const totalRange = rangeEnd - rangeStart;
-    if (totalRange <= 0n) return rangeStart;
-    let n = vdCorputStep;
-    let rev = 0n;
-    let temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev = (rev << 1n) | (temp & 1n);
-        temp >>= 1n;
-    }
-    const spanBits = totalRange.toString(2).length;
-    let offset;
-    if (spanBits > 60) {
-        const rev2 = ((rev * 0x517cc1b727220a95n) ^ 0x6c62272e07bb0142n) & 0xFFFFFFFFFFFFFFFFn;
-        const fullRev = (rev << 64n) | rev2;
-        offset = (fullRev * (totalRange + 1n)) >> 128n;
-    } else {
-        offset = (rev * (totalRange + 1n)) >> 64n;
-    }
-    const cand = rangeStart + offset;
-    return cand > rangeEnd ? rangeEnd : cand;
-}
 
 let weylStep = 1n;
 function generateWeylGoldenKey(rangeStart, rangeEnd) {
@@ -1670,8 +1652,10 @@ function generateHilbertKey(rangeStart, rangeEnd) {
     const HILBERT_TOTAL = 65536n;
     const HILBERT_STRIDE = 10007n;
     const cellIndex = (hilbertStepVal * HILBERT_STRIDE) % HILBERT_TOTAL;
-    const cellSize = totalRange / HILBERT_TOTAL;
-    const cellStart = rangeStart + (cellIndex * cellSize);
+    // Hücre sınırları tam bölüşümle hesaplanır (tamsayı yuvarlaması aralığın üst ucunu dışarıda bırakmaz)
+    const spanCount = totalRange + 1n;
+    const cellStart = rangeStart + (cellIndex * spanCount) / HILBERT_TOTAL;
+    const cellSize = (rangeStart + ((cellIndex + 1n) * spanCount) / HILBERT_TOTAL) - cellStart;
     let microOffset = 0n;
     if (cellSize > 1000000n) {
         const r = BigInt(Math.floor(Math.random() * 1000000));
@@ -1687,19 +1671,23 @@ let chaosX = 0.141592653589793, chaosY = 0.271828182845904, chaosStep = 0;
 function generateDeterministicChaosKey(min, max) {
     if (min >= max) return min;
     const span = max - min;
-    chaosStep++;
-    chaosX = 4.0 * chaosX * (1.0 - chaosX);
-    if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) {
-        chaosX = (0.14159265 + (chaosStep * 0.00713)) % 0.85 + 0.07;
+    // Lojistik harita bit akışı; aralık genişliği + 64 bit taşma payı (modulo yanlılığı ihmal edilebilir)
+    const bitCount = Math.min(span.toString(2).length + 64, 320);
+    const wordCount = Math.ceil(bitCount / 32);
+    let hex = '';
+    for (let w = 0; w < wordCount; w++) {
+        let u32 = 0;
+        for (let b = 0; b < 32; b++) {
+            chaosStep++;
+            chaosX = 4.0 * chaosX * (1.0 - chaosX);
+            if (chaosX <= 0.000001 || chaosX >= 0.999999 || isNaN(chaosX)) {
+                chaosX = 0.14159265 + ((chaosStep * 0.031) % 0.8);
+            }
+            u32 = (u32 << 1) | (chaosX > 0.5 ? 1 : 0);
+        }
+        hex += (u32 >>> 0).toString(16).padStart(8, '0');
     }
-    chaosY = (chaosY < 0.5) ? (2.0 * chaosY) : (2.0 * (1.0 - chaosY));
-    if (chaosY <= 0.0001 || chaosY >= 0.9999 || isNaN(chaosY)) {
-        chaosY = (0.27182818 + (chaosStep * 0.00931)) % 0.85 + 0.07;
-    }
-    const highInt = BigInt(Math.floor(chaosX * 4294967296)) & 0xFFFFFFFFn;
-    const lowInt = BigInt(Math.floor(chaosY * 4294967296)) & 0xFFFFFFFFn;
-    const mixed = (highInt << 32n) | lowInt;
-    return min + (mixed % (span + 1n));
+    return min + (BigInt('0x' + hex) % (span + 1n));
 }
 
 let weakEntropyCounter = 0;

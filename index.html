@@ -1497,7 +1497,7 @@
                         <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Mikro (600 ms / %0.02 Adım)">🔬 Mikro</button>
                     </div>
                     <div id="groupSliderRegime" class="auto-slider-speed-group">
-                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn active" style="background:#059669; color:#ffffff; box-shadow:0 0 8px rgba(5,150,105,0.6);" onclick="setSliderRegime('AUTO')" title="🧠 Akıllı Otomatik Rejim (Bulmaca ve algoritmaya göre dinamik rezonans/weyl/karekök)">🧠 Oto</button>
+                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn active" style="background:#059669; color:#ffffff; box-shadow:0 0 8px rgba(5,150,105,0.6);" onclick="toggleRegimeAuto()" title="🧠 Akıllı Otomatik Rejim (Bulmaca ve algoritmaya göre dinamik rezonans/weyl/karekök) — açıkken tekrar basınca kapanır ve o an seçili rejime sabitlenir">🧠 Oto</button>
                         <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)">🦚 √N</button>
                         <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)">🌀 Weyl</button>
                         <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Kangaroo Doppler kilidi & ayak izi koruma)">🦘 Rzns</button>
@@ -2060,6 +2060,7 @@ function setHexSliderBounds(sKey, eKey, labelText) {
 let isAutoSliderActive = true;
 let autoSliderSpeed = 'AUTO'; // 'AUTO', 'FAST', 'MEDIUM', 'SLOW', 'MICRO' or null when inactive
 let autoSliderRegime = 'AUTO'; // 'AUTO', 'RESONANCE', 'WEYL', 'SQRT', 'CLASSIC'
+let autoRegimeStepCounter = 0;
 let autoSliderInterval = null;
 let autoSliderDirection = 1; // 1: İleri (0 -> 100), -1: Geri (100 -> 0)
 let lastAutoSliderBroadcastTime = 0;
@@ -2111,8 +2112,7 @@ function getEffectiveSliderRegime() {
 
     const isKang = (typeof curAlgo === 'string' && curAlgo.startsWith('KANGAROO')) || 
                    curAlgo === 'ADDR_HOP_SWEEP' || 
-                   curAlgo === 'GLV_LATTICE_2D' || 
-                   hasPub;
+                   curAlgo === 'GLV_LATTICE_2D';   // açık anahtar tek başına RESONANCE zorlamaz (Weyl rejimi de denenebilsin)
     if (isKang) return 'RESONANCE';
 
     if (curAlgo === 'LEVY_FLIGHT' || curAlgo === 'ULAM_SPIRAL') return 'SQRT';
@@ -2123,7 +2123,8 @@ function getEffectiveSliderRegime() {
         if (actT.id && !isNaN(parseInt(actT.id))) bits = parseInt(actT.id);
         else if (actT.start) bits = actT.start.toString().length * 4;
     }
-    if (bits >= 66) return 'SQRT';
+    // AUTO rejimde büyük bulmacalarda da WEYL denensin: SQRT <-> WEYL dönüşümlü (her 40 kaydırıcı adımında)
+    if (bits >= 66) return (Math.floor(autoRegimeStepCounter / 40) % 2 === 0) ? 'SQRT' : 'WEYL';
 
     return 'WEYL';
 }
@@ -2157,6 +2158,16 @@ function setSliderRegime(regime, isRemoteSync = false) {
             'CLASSIC': '🏓 Klasik Doğrusal Radar (Eski Ping-Pong)'
         };
         showToast(`🎛️ <strong>Kaydıraç Rejimi:</strong> ${labels[autoSliderRegime] || autoSliderRegime}`);
+    }
+}
+
+// Oto butonu: kapalıyken açar; açıkken tekrar basılınca kapatır ve Oto'nun o an seçmiş olduğu rejime sabitler
+function toggleRegimeAuto() {
+    if (autoSliderRegime === 'AUTO') {
+        const eff = (typeof getEffectiveSliderRegime === 'function') ? getEffectiveSliderRegime() : 'WEYL';
+        setSliderRegime(['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(eff) ? eff : 'WEYL');
+    } else {
+        setSliderRegime('AUTO');
     }
 }
 
@@ -2449,6 +2460,7 @@ function stepAutoSlider() {
     if (!part) return;
     const { tStart, tEnd, total, partMinStep, partMaxStep } = part;
     if (total <= 0n) return;
+    if (typeof autoSliderRegime !== 'undefined' && autoSliderRegime === 'AUTO') autoRegimeStepCounter++;
 
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
@@ -3437,38 +3449,23 @@ let chaosKeyStep = 1;
 function generateDeterministicChaosKey(rangeStart, rangeEnd) {
     const span = rangeEnd - rangeStart;
     if (span <= 0n) return rangeStart;
-    chaosKeyStep++;
-    // Lojistik ve Çadır haritasını ilerlet
-    chaosX = 4.0 * chaosX * (1.0 - chaosX);
-    if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) {
-        chaosX = (0.14159265 + (chaosKeyStep * 0.00713)) % 0.85 + 0.07;
-    }
-    chaosY = (chaosY < 0.5) ? (2.0 * chaosY) : (2.0 * (1.0 - chaosY));
-    if (chaosY <= 0.0001 || chaosY >= 0.9999 || isNaN(chaosY)) {
-        chaosY = (0.27182818 + (chaosKeyStep * 0.00931)) % 0.85 + 0.07;
-    }
-
-    const highInt = BigInt(Math.floor(chaosX * 4294967296)) & 0xFFFFFFFFn;
-    const lowInt = BigInt(Math.floor(chaosY * 4294967296)) & 0xFFFFFFFFn;
-    const mixInt = (BigInt(chaosKeyStep * 0x9e3779b9) ^ (highInt << 32n) | lowInt) & 0xFFFFFFFFFFFFFFFFn;
-
-    let candidate = 0n;
-    const hexLen = span.toString(16).length;
-    if (hexLen > 16) {
-        let hexStr = '';
-        for (let i = 0; i < hexLen; i += 8) {
+    // Lojistik harita bit akışı; +64 bit taşma payı modulo yanlılığını ihmal edilebilir yapar
+    const bitCount = Math.min(span.toString(2).length + 64, 320);
+    const wordCount = Math.ceil(bitCount / 32);
+    let hex = '';
+    for (let w = 0; w < wordCount; w++) {
+        let u32 = 0;
+        for (let b = 0; b < 32; b++) {
+            chaosKeyStep++;
             chaosX = 4.0 * chaosX * (1.0 - chaosX);
-            if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) {
-                chaosX = (0.14159265 + ((chaosKeyStep + i) * 0.00713)) % 0.85 + 0.07;
+            if (chaosX <= 0.000001 || chaosX >= 0.999999 || isNaN(chaosX)) {
+                chaosX = 0.14159265 + ((chaosKeyStep * 0.031) % 0.8);
             }
-            const part = (Math.floor(chaosX * 0x100000000) >>> 0).toString(16).padStart(8, '0');
-            hexStr += part;
+            u32 = (u32 << 1) | (chaosX > 0.5 ? 1 : 0);
         }
-        candidate = BigInt('0x' + hexStr.slice(0, hexLen));
-    } else {
-        candidate = mixInt;
+        hex += (u32 >>> 0).toString(16).padStart(8, '0');
     }
-    return rangeStart + (candidate % (span + 1n));
+    return rangeStart + (BigInt('0x' + hex) % (span + 1n));
 }
 
 function getNextPhysicsPercent() {
@@ -4436,7 +4433,7 @@ const EXPOSED_KANGAROO_PUBKEYS = {
     23:  '03f82710361b8b81bdedb16994f30c80db522450a93e8e87eeb07f7903cf28d04b', // #23 Solved (23-bit, key 0x556e52)
     38:  '03c060e1e3771cbeccb38e119c2414702f3f5181a89652538851d2e3886bdd70c6', // #38 Solved (38-bit, key 0x22382facd0)
     57:  '02a521a07e98f78b03fc1e039bc3a51408cd73119b5eb116e583fe57dc8db07aea', // #57 Test (5.7 BTC - Solved)
-    66:  '024ee2be2d4e9f9272f5a4a030f8526646839d6a871f20b86827c9b60f1d73c02b', // #66 Solved (6.6 BTC, key 0x2832ed74f2b5e35ee)
+    66:  '024ee2be2d4e9f92d2f5a4a03058617dc45befe22938feed5b7a6b7282dd74cbdd', // #66 Solved (6.6 BTC, key 0x2832ed74f2b5e35ee)
     67:  '0212209f5ec514a1580a2937bd833979d933199fc230e204c6cdc58872b7d46f75', // #67 Solved (6.7 BTC)
     130: '03633cbe3ec02b9401c5effa144c5b4d22f87940259634858fc7e59b1c09937852', // #130 Solved (13.0 BTC, key 0x33e7665705359f04f28b88cf897c603c9)
     135: '02145d2611c823a396ef6712ce0f712f09b9b4f3135e3e0aa3230fb9b6d08d1e16', // #135 (13.5 BTC)
@@ -6605,8 +6602,10 @@ function generateHilbertKey(rangeStart, rangeEnd) {
     const { x, y } = hilbertD2XY(HILBERT_ORDER, cellIndex);
     const spatialCellIndex = (BigInt(y) << 8n) | BigInt(x);
     
-    const cellSize = totalRange / HILBERT_TOTAL_CELLS;
-    const cellStart = rangeStart + (spatialCellIndex * cellSize);
+    const cellSpan = totalRange + 1n;
+    const cellStart0 = rangeStart + (spatialCellIndex * cellSpan) / HILBERT_TOTAL_CELLS;
+    const cellSize = (rangeStart + ((spatialCellIndex + 1n) * cellSpan) / HILBERT_TOTAL_CELLS) - cellStart0;
+    const cellStart = cellStart0;
     
     let microOffset = 0n;
     if (cellSize > 1n) {
@@ -7047,31 +7046,34 @@ function generateLevyFlightKey(rangeStart, rangeEnd) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
     const span = (e > s) ? (e - s + 1n) : 1n;
-    if (mainLevyState.rangeStart !== s || mainLevyState.rangeEnd !== e || mainLevyState.pos === 0n) {
-        mainLevyState.rangeStart = s;
-        mainLevyState.rangeEnd = e;
-        mainLevyState.stepCount = 0n;
-        mainLevyState.pos = s + (span / 2n);
+    const st = mainLevyState;
+    if (st.rangeStart !== s || st.rangeEnd !== e || st.pos === 0n) {
+        st.rangeStart = s; st.rangeEnd = e; st.seen = null;
+        if (typeof st.stepCount !== 'bigint') st.stepCount = 0n;
+        st.pos = s + (span / 2n);
     }
-    mainLevyState.stepCount++;
-
-    const u = (mainLevyState.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
+    st.stepCount++;
+    // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
+    if (!st.seen || st.stepCount % 64n === 1n) {
+        const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        st.pos = s + ((span * frac) >> 64n);
+        st.seen = new Set();
+    }
+    const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
     const uFloat = Number(u) / 4294967296.0 + 0.0000001;
-    // Pareto-Lévy: L = u^(-1/α), α = 1.33 (3/4 güç) -> L = u^(-0.75)
-    const levyStepFactor = Math.min(Math.pow(uFloat, -0.75), 1000.0);
-
-    const sqrtSpan = bigintSqrt(span);
-    const baseJump = sqrtSpan > 1000n ? (sqrtSpan / 1000n) : 1n;
-    const jump = BigInt(Math.floor(Number(baseJump) * levyStepFactor));
-
-    const dir = ((mainLevyState.stepCount * 0xBF58476D1CE4E5B9n) & 1n) === 1n ? 1n : -1n;
-    mainLevyState.pos = mainLevyState.pos + dir * jump;
-
-    if (mainLevyState.pos < s || mainLevyState.pos > e) {
-        const weylFrac = (mainLevyState.stepCount * 0x6A09E667F3BCC908n) & 0xFFFFFFFFFFFFFFFFn;
-        mainLevyState.pos = s + (span * weylFrac >> 64n);
+    const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
+    const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
+    const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
+    const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
+    let p = st.pos + dir * jump;
+    for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
+        p = s + (((p - s) % span) + span) % span;
+        if (!st.seen.has(p)) break;
+        p += jump + BigInt(t) + 1n;
     }
-    return mainLevyState.pos;
+    st.seen.add(p);
+    st.pos = p;
+    return p;
 }
 
 // ============================================================
@@ -7099,20 +7101,30 @@ function generateContinuedFractionsKey(rangeStart, rangeEnd) {
 
 // ============================================================
 // 🌀 ULAM-SACKS SPIRAL (Parabolik Karekök Spirali & Asal Odaklar)
-// k(n) = s + (4n^2 + 2n + 41) mod N (Euler-Ulam Parabolik Yürüyüşü)
+// k(n) = s + (n · m) mod N, gcd(m, N) = 1 (tek çarpan: tüm kalıntı sınıfları, tam döngü)
 // ============================================================
 let mainUlamStep = 1n;
+let mainUlamMult = 0n, mainUlamSpan = 0n;
+function ulamCoprimeMultiplier(span) {
+    if (span <= 2n) return 1n;
+    const gcd = (a, b) => { while (b) { const t = a % b; a = b; b = t; } return a; };
+    let m = ((span * 0x9E3779B97F4A7C15n) >> 64n) | 1n;   // altın oran tabanlı tek sayı
+    m = m % span;
+    if (m < 3n) m = 3n;
+    while (gcd(m, span) !== 1n) { m += 2n; if (m >= span) m = 3n + (m % 7n) * 2n; }
+    return m;
+}
+
 function generateUlamSpiralKey(rangeStart, rangeEnd) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
     const span = (e > s) ? (e - s + 1n) : 1n;
     mainUlamStep++;
-
     const n = mainUlamStep;
-    // Euler polinomu & kuadratik parabolik büyüme
+    // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
     const quad = (4n * n * n + 2n * n + 41n);
-    const offset = quad % span;
-    return s + (offset < 0n ? -offset : offset);
+    const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
+    return s + offset;
 }
 
 // ============================================================
@@ -7140,6 +7152,112 @@ if (typeof window !== 'undefined') {
 
 
 // ============================================================
+/* ===== FAST HASH160 ENGINE: tek EC hesabı + hızlı SHA256/RIPEMD160 + Map hedef araması ===== */
+const FastH = (function () {
+    const rotl = (x, n) => (x << n) | (x >>> (32 - n));
+    const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+    const primes = []; for (let n = 2; primes.length < 64; n++) { let ok = true; for (const p of primes) { if (p * p > n) break; if (n % p === 0) { ok = false; break; } } if (ok) primes.push(n); }
+    const fr = v => Math.floor((v - Math.floor(v)) * 4294967296) >>> 0;
+    const SK = new Uint32Array(primes.map(p => fr(Math.cbrt(p))));
+    const SH = new Uint32Array(primes.slice(0, 8).map(p => fr(Math.sqrt(p))));
+    const W = new Uint32Array(64);
+    function sha256(m) {
+        const len = m.length, tot = ((len + 9 + 63) >> 6) << 6, b = new Uint8Array(tot);
+        b.set(m); b[len] = 0x80;
+        const dv = new DataView(b.buffer); dv.setUint32(tot - 4, len * 8, false);
+        const h = SH.slice();
+        for (let o = 0; o < tot; o += 64) {
+            for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4, false);
+            for (let i = 16; i < 64; i++) {
+                const a = W[i - 15], c = W[i - 2];
+                W[i] = (W[i - 16] + (rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3)) + W[i - 7] + (rotr(c, 17) ^ rotr(c, 19) ^ (c >>> 10))) | 0;
+            }
+            let a = h[0], bb = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+            for (let i = 0; i < 64; i++) {
+                const t1 = (hh + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + SK[i] + W[i]) | 0;
+                const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+                hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+            }
+            h[0] += a; h[1] += bb; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+        }
+        const out = new Uint8Array(32), ov = new DataView(out.buffer);
+        for (let i = 0; i < 8; i++) ov.setUint32(i * 4, h[i], false);
+        return out;
+    }
+    const RL = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, 7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8, 3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12, 1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2, 4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
+    const RR = [5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12, 6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2, 15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13, 8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14, 12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
+    const SL = [11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8, 7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12, 11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5, 11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12, 9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
+    const SR = [8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6, 9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11, 9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5, 15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8, 8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
+    const KL = [0, 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xA953FD4E], KR = [0x50A28BE6, 0x5C4DD124, 0x6D703EF3, 0x7A6D76E9, 0];
+    const F = (j, x, y, z) => j === 0 ? x ^ y ^ z : j === 1 ? (x & y) | (~x & z) : j === 2 ? (x | ~y) ^ z : j === 3 ? (x & z) | (y & ~z) : x ^ (y | ~z);
+    const X = new Uint32Array(16);
+    function ripemd160(m) { // girdi: 32 bayt (sha256 çıktısı) -> tek blok
+        const b = new Uint8Array(64); b.set(m); b[m.length] = 0x80;
+        const dv = new DataView(b.buffer); dv.setUint32(56, m.length * 8, true);
+        for (let i = 0; i < 16; i++) X[i] = dv.getUint32(i * 4, true);
+        let al = 0x67452301, bl = 0xEFCDAB89 | 0, cl = 0x98BADCFE | 0, dl = 0x10325476, el = 0xC3D2E1F0 | 0;
+        let ar = al, br = bl, cr = cl, dr = dl, er = el;
+        for (let i = 0; i < 80; i++) {
+            const r = i >> 4;
+            let t = (rotl((al + F(r, bl, cl, dl) + X[RL[i]] + KL[r]) | 0, SL[i]) + el) | 0;
+            al = el; el = dl; dl = rotl(cl, 10); cl = bl; bl = t;
+            t = (rotl((ar + F(4 - r, br, cr, dr) + X[RR[i]] + KR[r]) | 0, SR[i]) + er) | 0;
+            ar = er; er = dr; dr = rotl(cr, 10); cr = br; br = t;
+        }
+        const t = (0xEFCDAB89 + cl + dr) | 0;
+        const o = new Uint8Array(20), ov = new DataView(o.buffer);
+        ov.setUint32(0, t, true);
+        ov.setUint32(4, (0x98BADCFE + dl + er) | 0, true);
+        ov.setUint32(8, (0x10325476 + el + ar) | 0, true);
+        ov.setUint32(12, (0xC3D2E1F0 + al + br) | 0, true);
+        ov.setUint32(16, (0x67452301 + bl + cr) | 0, true);
+        return o;
+    }
+    const hash160 = m => ripemd160(sha256(m));
+    const HX = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+    const hex = u => { let s = ''; for (let i = 0; i < u.length; i++) s += HX[u[i]]; return s; };
+    const buf = new Uint8Array(65);
+    // --- hedef havuzu: ilk 32 bit -> [{p, h}] ---
+    let map = null, sig = '', sigActive = null;
+    function build(active) {
+        const all = (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES : [];
+        const s = all.length + '|' + (active ? active.addr : '');
+        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map();
+        for (const p of [active, ...all]) {
+            if (!p) continue;
+            const h = String(p.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(p.addr) : '') || '').toLowerCase().replace(/^0x/, '');
+            if (h.length !== 40) continue;
+            const k = parseInt(h.slice(0, 8), 16) >>> 0; // sıra: aktif hedef önce gelir
+            (map.get(k) || map.set(k, []).get(k)).push({ p, h });
+        }
+    }
+    let last = null; // artımlı nokta toplama önbelleği
+    function pubXY(ec, keyHex) {
+        const k = BigInt('0x' + keyHex);
+        let P;
+        if (last && k === last.k + 1n) P = last.P.add(ec.g); else P = ec.keyFromPrivate(keyHex, 'hex').getPublic();
+        last = { k, P };
+        return P;
+    }
+    function check(keyHex, active, ec) {
+        build(active);
+        const P = pubXY(ec, keyHex);
+        const x = P.getX().toArray('be', 32), y = P.getY().toArray('be', 32);
+        buf[0] = (y[31] & 1) ? 3 : 2; buf.set(x, 1);
+        const hc = hash160(buf.subarray(0, 33));
+        buf[0] = 4; buf.set(y, 33);
+        const hu = hash160(buf);
+        const kc = ((hc[0] << 24) | (hc[1] << 16) | (hc[2] << 8) | hc[3]) >>> 0;
+        const ku = ((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0;
+        const lc = map.get(kc), lu = map.get(ku);
+        if (!lc && !lu) return null;
+        if (lc) { const s = hex(hc); for (const e of lc) if (e.h === s) return { p: e.p, unc: false }; }
+        if (lu) { const s = hex(hu); for (const e of lu) if (e.h === s) return { p: e.p, unc: true }; }
+        return null;
+    }
+    return { check, hash160, sha256, ripemd160, hex };
+})();
+
 function huntBatch() {
     if (!isRunning) return;
 
@@ -7381,44 +7499,14 @@ function huntBatch() {
             attempts++;
             if (sliceModeActive) sliceAttempts++;
 
-            const currentH160 = privkeyToHash160(lastKeyHex);
-
-            // YÜKSEK HIZLI HASH160 KARŞILAŞTIRMA (Base58 yükü olmadan 2x-3x daha hızlı)
-            const cleanTargetH160 = (activeTarget.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(activeTarget.addr) : '') || '').toLowerCase().replace(/^0x/i, '');
-            const cleanCurH160 = (currentH160 || '').toLowerCase().replace(/^0x/i, '');
-
-            if (cleanTargetH160 && cleanCurH160 === cleanTargetH160) {
-                const winAddr = privkeyToAddress(lastKeyHex);
+            // ⚡ HIZLI YOL: tek EC hesabı (compressed+uncompressed) + hızlı SHA256/RIPEMD160 + Map araması
+            const fh = FastH.check(lastKeyHex, activeTarget, getEc());
+            if (fh) {
+                const winAddr = privkeyToAddress(lastKeyHex, !fh.unc);
                 document.getElementById('statAttempts').innerText = attempts.toLocaleString();
                 document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                handleWin(activeTarget.id, lastKeyHex, winAddr, activeTarget.addr, activeTarget.reward);
+                handleWin(fh.p.id, lastKeyHex, winAddr, fh.p.addr, fh.p.reward + (fh.unc ? ' (Uncompressed)' : ''));
                 return;
-            }
-            // Uncompressed adres kontrolü (196ru37... uncompressed adresler için)
-            const directUncompH160 = privkeyToHash160Uncompressed(lastKeyHex);
-            const cleanDirectUncomp = (directUncompH160 || '').toLowerCase().replace(/^0x/i, '');
-            if (cleanTargetH160 && cleanDirectUncomp === cleanTargetH160) {
-                const winAddr = privkeyToAddress(lastKeyHex, false);
-                document.getElementById('statAttempts').innerText = attempts.toLocaleString();
-                document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                handleWin(activeTarget.id, lastKeyHex, winAddr, activeTarget.addr, activeTarget.reward + ' (Uncompressed)');
-                return;
-            }
-
-            // 🎯 TÜM BULMACA HAVUZU ÇAPRAZ KONTROLÜ (Çoklu Seçim & Rotasyon Koruması)
-            if (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) {
-                for (let pi = 0; pi < ALL_PUZZLES.length; pi++) {
-                    const chkP = ALL_PUZZLES[pi];
-                    const chkH160 = (chkP.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(chkP.addr) : '') || '').toLowerCase().replace(/^0x/i, '');
-                    if (chkH160 && (chkH160 === cleanCurH160 || chkH160 === cleanDirectUncomp)) {
-                        const isUnc = (chkH160 === cleanDirectUncomp && chkH160 !== cleanCurH160);
-                        const winAddr = privkeyToAddress(lastKeyHex, !isUnc);
-                        document.getElementById('statAttempts').innerText = attempts.toLocaleString();
-                        document.getElementById('logKey').innerText = '0x' + lastKeyHex;
-                        handleWin(chkP.id, lastKeyHex, winAddr, chkP.addr, chkP.reward + (isUnc ? ' (Uncompressed)' : ''));
-                        return;
-                    }
-                }
             }
 
             
@@ -7525,7 +7613,7 @@ function huntBatch() {
                         pParts.push(`💥 Hibrit Kaos`);
                     } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
                         pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
-                    } else if (!isNarrowRange && activeRangeMode === 'CHAOS') {
+                    } else if (!isNarrowed && activeRangeMode === 'CHAOS') {
                         pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
                     } else if (activeRangeMode === 'HEX') {
                         const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
@@ -8022,6 +8110,112 @@ function checkSavedWins() {
 // 🌌 GERÇEK ÇOK ÇEKİRDEKLİ WEB WORKER (MULTI-THREAD) MOTORU
 // ============================================================
 function bgWorkerProcess() {
+/* ⚡ Hızlı SHA256/RIPEMD160 (worker içi kopya) */
+/* ===== FAST HASH160 ENGINE: tek EC hesabı + hızlı SHA256/RIPEMD160 + Map hedef araması ===== */
+const FastH = (function () {
+    const rotl = (x, n) => (x << n) | (x >>> (32 - n));
+    const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+    const primes = []; for (let n = 2; primes.length < 64; n++) { let ok = true; for (const p of primes) { if (p * p > n) break; if (n % p === 0) { ok = false; break; } } if (ok) primes.push(n); }
+    const fr = v => Math.floor((v - Math.floor(v)) * 4294967296) >>> 0;
+    const SK = new Uint32Array(primes.map(p => fr(Math.cbrt(p))));
+    const SH = new Uint32Array(primes.slice(0, 8).map(p => fr(Math.sqrt(p))));
+    const W = new Uint32Array(64);
+    function sha256(m) {
+        const len = m.length, tot = ((len + 9 + 63) >> 6) << 6, b = new Uint8Array(tot);
+        b.set(m); b[len] = 0x80;
+        const dv = new DataView(b.buffer); dv.setUint32(tot - 4, len * 8, false);
+        const h = SH.slice();
+        for (let o = 0; o < tot; o += 64) {
+            for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4, false);
+            for (let i = 16; i < 64; i++) {
+                const a = W[i - 15], c = W[i - 2];
+                W[i] = (W[i - 16] + (rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3)) + W[i - 7] + (rotr(c, 17) ^ rotr(c, 19) ^ (c >>> 10))) | 0;
+            }
+            let a = h[0], bb = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+            for (let i = 0; i < 64; i++) {
+                const t1 = (hh + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + SK[i] + W[i]) | 0;
+                const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+                hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+            }
+            h[0] += a; h[1] += bb; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+        }
+        const out = new Uint8Array(32), ov = new DataView(out.buffer);
+        for (let i = 0; i < 8; i++) ov.setUint32(i * 4, h[i], false);
+        return out;
+    }
+    const RL = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, 7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8, 3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12, 1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2, 4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
+    const RR = [5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12, 6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2, 15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13, 8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14, 12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
+    const SL = [11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8, 7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12, 11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5, 11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12, 9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
+    const SR = [8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6, 9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11, 9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5, 15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8, 8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
+    const KL = [0, 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xA953FD4E], KR = [0x50A28BE6, 0x5C4DD124, 0x6D703EF3, 0x7A6D76E9, 0];
+    const F = (j, x, y, z) => j === 0 ? x ^ y ^ z : j === 1 ? (x & y) | (~x & z) : j === 2 ? (x | ~y) ^ z : j === 3 ? (x & z) | (y & ~z) : x ^ (y | ~z);
+    const X = new Uint32Array(16);
+    function ripemd160(m) { // girdi: 32 bayt (sha256 çıktısı) -> tek blok
+        const b = new Uint8Array(64); b.set(m); b[m.length] = 0x80;
+        const dv = new DataView(b.buffer); dv.setUint32(56, m.length * 8, true);
+        for (let i = 0; i < 16; i++) X[i] = dv.getUint32(i * 4, true);
+        let al = 0x67452301, bl = 0xEFCDAB89 | 0, cl = 0x98BADCFE | 0, dl = 0x10325476, el = 0xC3D2E1F0 | 0;
+        let ar = al, br = bl, cr = cl, dr = dl, er = el;
+        for (let i = 0; i < 80; i++) {
+            const r = i >> 4;
+            let t = (rotl((al + F(r, bl, cl, dl) + X[RL[i]] + KL[r]) | 0, SL[i]) + el) | 0;
+            al = el; el = dl; dl = rotl(cl, 10); cl = bl; bl = t;
+            t = (rotl((ar + F(4 - r, br, cr, dr) + X[RR[i]] + KR[r]) | 0, SR[i]) + er) | 0;
+            ar = er; er = dr; dr = rotl(cr, 10); cr = br; br = t;
+        }
+        const t = (0xEFCDAB89 + cl + dr) | 0;
+        const o = new Uint8Array(20), ov = new DataView(o.buffer);
+        ov.setUint32(0, t, true);
+        ov.setUint32(4, (0x98BADCFE + dl + er) | 0, true);
+        ov.setUint32(8, (0x10325476 + el + ar) | 0, true);
+        ov.setUint32(12, (0xC3D2E1F0 + al + br) | 0, true);
+        ov.setUint32(16, (0x67452301 + bl + cr) | 0, true);
+        return o;
+    }
+    const hash160 = m => ripemd160(sha256(m));
+    const HX = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+    const hex = u => { let s = ''; for (let i = 0; i < u.length; i++) s += HX[u[i]]; return s; };
+    const buf = new Uint8Array(65);
+    // --- hedef havuzu: ilk 32 bit -> [{p, h}] ---
+    let map = null, sig = '', sigActive = null;
+    function build(active) {
+        const all = (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES : [];
+        const s = all.length + '|' + (active ? active.addr : '');
+        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map();
+        for (const p of [active, ...all]) {
+            if (!p) continue;
+            const h = String(p.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(p.addr) : '') || '').toLowerCase().replace(/^0x/, '');
+            if (h.length !== 40) continue;
+            const k = parseInt(h.slice(0, 8), 16) >>> 0; // sıra: aktif hedef önce gelir
+            (map.get(k) || map.set(k, []).get(k)).push({ p, h });
+        }
+    }
+    let last = null; // artımlı nokta toplama önbelleği
+    function pubXY(ec, keyHex) {
+        const k = BigInt('0x' + keyHex);
+        let P;
+        if (last && k === last.k + 1n) P = last.P.add(ec.g); else P = ec.keyFromPrivate(keyHex, 'hex').getPublic();
+        last = { k, P };
+        return P;
+    }
+    function check(keyHex, active, ec) {
+        build(active);
+        const P = pubXY(ec, keyHex);
+        const x = P.getX().toArray('be', 32), y = P.getY().toArray('be', 32);
+        buf[0] = (y[31] & 1) ? 3 : 2; buf.set(x, 1);
+        const hc = hash160(buf.subarray(0, 33));
+        buf[0] = 4; buf.set(y, 33);
+        const hu = hash160(buf);
+        const kc = ((hc[0] << 24) | (hc[1] << 16) | (hc[2] << 8) | hc[3]) >>> 0;
+        const ku = ((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0;
+        const lc = map.get(kc), lu = map.get(ku);
+        if (!lc && !lu) return null;
+        if (lc) { const s = hex(hc); for (const e of lc) if (e.h === s) return { p: e.p, unc: false }; }
+        if (lu) { const s = hex(hu); for (const e of lu) if (e.h === s) return { p: e.p, unc: true }; }
+        return null;
+    }
+    return { check, hash160, sha256, ripemd160, hex };
+})();
     if (typeof elliptic === 'undefined' || typeof CryptoJS === 'undefined') {
         try {
             importScripts(
@@ -8367,6 +8561,84 @@ function bgWorkerProcess() {
     const SECP_BETA   = 0x7AE96A2B657C07106E64479EAC3434E99CF0497512F58995C1396C28719501EEn;
     const SECP_LAMBDA = 0x5363AD4CC05C30E0A5261C028812645A122E22EA20816678DF02967C1B23BD72n;
 
+    // 🚀 SABİT-TABANLI (fixed-base) ÇAPA: k·G = Σ d_j · (2^(8j)·G). Tablo pencere başına tembel kurulur;
+    //    anahtar 57 bit ise yalnızca 8 pencere / 8 karma Jacobian toplama (elliptic'e göre 4-6× hızlı).
+    //    İlk 5 çapa elliptic ile karşılaştırılır; uyuşmazlıkta kalıcı olarak elliptic yoluna dönülür.
+    let workerFbRows = [];        // pencere j -> 256 elemanlı dizi: [x, y] BigInt (indeks 0 kullanılmaz)
+    let workerFbBases = [];       // pencere j -> elliptic noktası 2^(8j)·G
+    let workerFbChecks = 0;
+    let workerFbBroken = false;
+
+    function workerFbEnsure(inst, j) {
+        while (workerFbRows.length <= j) {
+            const w = workerFbRows.length;
+            const base = (w === 0) ? inst.g : (() => { let b = workerFbBases[w - 1]; for (let s = 0; s < 8; s++) b = b.dbl(); return b; })();
+            workerFbBases[w] = base;
+            const row = new Array(256);
+            row[0] = null;
+            let acc = null;
+            for (let d = 1; d < 256; d++) {
+                acc = acc ? acc.add(base) : base;
+                row[d] = [BigInt('0x' + acc.getX().toString('hex')), BigInt('0x' + acc.getY().toString('hex'))];
+            }
+            workerFbRows[w] = row;
+        }
+        return workerFbRows[j];
+    }
+
+    function workerFbMadd(X1, Y1, Z1, x2, y2) {
+        const P = SECP_P;
+        const Z1Z1 = (Z1 * Z1) % P;
+        const U2 = (x2 * Z1Z1) % P;
+        const S2 = (y2 * Z1 * Z1Z1) % P;
+        const H = (U2 - X1 + P) % P;
+        const r = (S2 - Y1 + P) % P;
+        if (H === 0n) return null;                     // eşit/zıt nokta: elliptic yoluna dön
+        const HH = (H * H) % P;
+        const HHH = (H * HH) % P;
+        const V = (X1 * HH) % P;
+        const X3 = (((r * r - HHH - 2n * V) % P) + 2n * P) % P;
+        const Y3 = (((r * (V - X3 + P) - Y1 * HHH) % P) + P) % P;
+        const Z3 = (Z1 * H) % P;
+        return [X3, Y3, Z3];
+    }
+
+    function workerFixedBaseAnchor(inst, k) {
+        if (workerFbBroken || !inst || k <= 0n) return null;
+        let R = null;
+        let kk = k;
+        let j = 0;
+        while (kk > 0n) {
+            const d = Number(kk & 255n);
+            kk >>= 8n;
+            if (d !== 0) {
+                const row = workerFbEnsure(inst, j);
+                const x = row[d][0];
+                const y = row[d][1];
+                if (R === null) R = [x, y, 1n];
+                else { R = workerFbMadd(R[0], R[1], R[2], x, y); if (R === null) return null; }
+            }
+            j++;
+            if (j > 32) return null;
+        }
+        if (R === null) return null;
+        const zi = fastInvModP(R[2]);
+        const zi2 = (zi * zi) % SECP_P;
+        const pt = [(R[0] * zi2) % SECP_P, (((R[1] * zi2) % SECP_P) * zi) % SECP_P];
+        if (workerFbChecks < 5) {
+            workerFbChecks++;
+            const pub = inst.keyFromPrivate(k.toString(16).padStart(64, '0'), 'hex').getPublic();
+            const ex = BigInt('0x' + pub.getX().toString('hex'));
+            const ey = BigInt('0x' + pub.getY().toString('hex'));
+            if (ex !== pt[0] || ey !== pt[1]) {
+                workerFbBroken = true;
+                console.error('[Worker] Sabit-tabanlı çapa elliptic ile uyuşmuyor: devre dışı bırakıldı, elliptic yoluna dönüldü');
+                return null;
+            }
+        }
+        return pt;
+    }
+
     function fastInvModP(a) {
         let u = (a % SECP_P + SECP_P) % SECP_P;
         let v = SECP_P, x1 = 1n, x2 = 0n;
@@ -8587,6 +8859,7 @@ function bgWorkerProcess() {
 
     const _uncompWordsBuf = new Array(17).fill(0);
     const _uncompWABuf = { words: _uncompWordsBuf, sigBytes: 65 };
+    const _uncompBytes = new Uint8Array(68), _uncompDV = new DataView(_uncompBytes.buffer);
 
     function fastPointToUncompressedHash160(ptX, ptY) {
         const cjs = getCryptoJS();
@@ -8609,7 +8882,8 @@ function bgWorkerProcess() {
         _uncompWordsBuf[15] = Number((ptY >> 8n) & 0xFFFFFFFFn);
         _uncompWordsBuf[16] = (Number(ptY & 0xFFn) << 24);
 
-        return cjs.RIPEMD160(cjs.SHA256(_uncompWABuf)).toString();
+        for (let i = 0; i < 17; i++) _uncompDV.setUint32(i * 4, _uncompWordsBuf[i] >>> 0, false);
+        return FastH.hex(FastH.hash160(_uncompBytes.subarray(0, 65)));
     }
 
     function privkeyToHash160(privHex) {
@@ -8985,8 +9259,10 @@ function bgWorkerProcess() {
         const cellIndex = (BigInt(hilbertStep) * HILBERT_STRIDE) % HILBERT_TOTAL_CELLS;
         const { x, y } = hilbertD2XY(HILBERT_ORDER, cellIndex);
         const spatialCellIndex = (BigInt(y) << 8n) | BigInt(x);
-        const cellSize = totalRange / HILBERT_TOTAL_CELLS;
-        const cellStart = rangeStart + (spatialCellIndex * cellSize);
+        const cellSpan = totalRange + 1n;
+            const cellStart0 = rangeStart + (spatialCellIndex * cellSpan) / HILBERT_TOTAL_CELLS;
+            const cellSize = (rangeStart + ((spatialCellIndex + 1n) * cellSpan) / HILBERT_TOTAL_CELLS) - cellStart0;
+        const cellStart = cellStart0;
         let microOffset = 0n;
         if (cellSize > 1n) {
             const hs = BigInt(hilbertStep);
@@ -9013,31 +9289,35 @@ function bgWorkerProcess() {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const span = (e > s) ? (e - s + 1n) : 1n;
-        if (workerLevyState.rangeStart !== s || workerLevyState.rangeEnd !== e || workerLevyState.pos === 0n) {
-            workerLevyState.rangeStart = s;
-            workerLevyState.rangeEnd = e;
-            const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-            workerLevyState.stepCount = wId * 7919n;
-            workerLevyState.pos = s + (span * ((wId * 17n + 13n) % 256n) / 256n);
+        const st = workerLevyState;
+        if (!st._init) { st._init = true; st.stepCount = BigInt(typeof workerId !== 'undefined' ? workerId : 0) * 7919n; }
+        if (st.rangeStart !== s || st.rangeEnd !== e || st.pos === 0n) {
+            st.rangeStart = s; st.rangeEnd = e; st.seen = null;
+            if (typeof st.stepCount !== 'bigint') st.stepCount = 0n;
+            st.pos = s + (span / 2n);
         }
-        workerLevyState.stepCount++;
-
-        const u = (workerLevyState.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
+        st.stepCount++;
+        // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
+        if (!st.seen || st.stepCount % 64n === 1n) {
+            const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+            st.pos = s + ((span * frac) >> 64n);
+            st.seen = new Set();
+        }
+        const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
         const uFloat = Number(u) / 4294967296.0 + 0.0000001;
-        const levyStepFactor = Math.min(Math.pow(uFloat, -0.75), 1000.0);
-
-        const sqrtSpan = workerBigintSqrt(span);
-        const baseJump = sqrtSpan > 1000n ? (sqrtSpan / 1000n) : 1n;
-        const jump = BigInt(Math.floor(Number(baseJump) * levyStepFactor));
-
-        const dir = ((workerLevyState.stepCount * 0xBF58476D1CE4E5B9n) & 1n) === 1n ? 1n : -1n;
-        workerLevyState.pos = workerLevyState.pos + dir * jump;
-
-        if (workerLevyState.pos < s || workerLevyState.pos > e) {
-            const weylFrac = (workerLevyState.stepCount * 0x6A09E667F3BCC908n) & 0xFFFFFFFFFFFFFFFFn;
-            workerLevyState.pos = s + (span * weylFrac >> 64n);
+        const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
+        const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
+        const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
+        const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
+        let p = st.pos + dir * jump;
+        for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
+            p = s + (((p - s) % span) + span) % span;
+            if (!st.seen.has(p)) break;
+            p += jump + BigInt(t) + 1n;
         }
-        return workerLevyState.pos;
+        st.seen.add(p);
+        st.pos = p;
+        return p;
     }
 
     function workerBigintSqrt(value) {
@@ -9082,6 +9362,17 @@ function bgWorkerProcess() {
     // 🌀 WORKER ULAM-SACKS SPIRAL (Parabolik Karekök Spirali)
     // ============================================================
     let workerUlamStep = 1n;
+    let workerUlamMult = 0n, workerUlamSpan = 0n;
+    function ulamCoprimeMultiplier(span) {
+        if (span <= 2n) return 1n;
+        const gcd = (a, b) => { while (b) { const t = a % b; a = b; b = t; } return a; };
+        let m = ((span * 0x9E3779B97F4A7C15n) >> 64n) | 1n;   // altın oran tabanlı tek sayı
+        m = m % span;
+        if (m < 3n) m = 3n;
+        while (gcd(m, span) !== 1n) { m += 2n; if (m >= span) m = 3n + (m % 7n) * 2n; }
+        return m;
+    }
+
     function generateWorkerUlamSpiralKey(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
@@ -9090,11 +9381,11 @@ function bgWorkerProcess() {
             workerUlamStep = 1n + BigInt((typeof workerId !== 'undefined' ? workerId : 0) * 104729);
         }
         workerUlamStep++;
-
         const n = workerUlamStep;
+        // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
         const quad = (4n * n * n + 2n * n + 41n);
-        const offset = quad % span;
-        return s + (offset < 0n ? -offset : offset);
+        const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
+        return s + offset;
     }
 
     let workerWeakCounter = 0;
@@ -10025,8 +10316,11 @@ function bgWorkerProcess() {
             let anchorPt = null;
             if (inst) {
                 try {
-                    let pub = inst.keyFromPrivate(lastKeyHex, 'hex').getPublic();
-                    anchorPt = [BigInt('0x' + pub.getX().toString('hex')), BigInt('0x' + pub.getY().toString('hex'))];
+                    anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
+                    if (!anchorPt) {
+                        let pub = inst.keyFromPrivate(lastKeyHex, 'hex').getPublic();
+                        anchorPt = [BigInt('0x' + pub.getX().toString('hex')), BigInt('0x' + pub.getY().toString('hex'))];
+                    }
                 } catch(e) {}
             }
 
@@ -11313,7 +11607,7 @@ function toggleHunter(isRemoteSync = false) {
                     isGpuRunning = true;
                     isGpuSupported = true;
                     startGpuHunting();
-                    const modeStr = (typeof window.isGpuWorkerActive !== 'undefined' && window.isGpuWorkerActive) ? '🚀 İzole Web Worker (0 Donma)' : '⚡ Standart GPU';
+                    const modeStr = (typeof isGpuWorkerActive !== 'undefined' && isGpuWorkerActive) ? '🚀 İzole Web Worker (0 Donma)' : '⚡ Standart GPU';
                     console.log('[GPU] ✅ GPU arama aktif [' + modeStr + '].');
                     if (typeof showToast === 'function') {
                         showToast(`⚡ <strong>WebGPU Aktif</strong><br><span style="font-size:11px;">${modeStr}</span>`, 2500);

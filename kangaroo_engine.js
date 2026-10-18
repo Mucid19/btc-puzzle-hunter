@@ -558,7 +558,7 @@ class RealPollardKangaroo {
         const wildCount = M - tameCount;
 
         // 🎯 EVCİL (TAME) KANGURULAR:
-        // rangeMax sınırından veya ötesinden başlar (d <= rangeMax olduğu için Vahşi kanguru arkadan yetişir)
+        // aralığın ortasından başlar (Vahşi kanguru, anahtar nerede olursa olsun tame ayak izlerine ulaşır)
         for (let k = 0; k < tameCount; k++) {
             let tDist;
             if (this.isHyperGlv145) {
@@ -576,7 +576,7 @@ class RealPollardKangaroo {
                 tDist = this.rangeMin + (fullVal % spanEff);
             } else {
                 const kShift = (initialShift + (combinedId * bigM + BigInt(k)) * (this.maxJump > 0n ? this.maxJump : 1000n) * 2n) % (this.span > 0n ? this.span : 1n);
-                tDist = this.rangeMax + kShift;
+                tDist = this.rangeMin + (this.span / 2n) + kShift; // tame aralığın ortasından başlar (konumdan bağımsız verim)
             }
             if (this.G) {
                 const tPt = this.G.mul(tDist.toString(16));
@@ -766,7 +766,7 @@ class RealPollardKangaroo {
 
         const M = this.herdSize;
         const cycles = Math.max(1, Math.floor(steps / M));
-        const maxAllowedWildDist = this.span + (this.maxJump * 6n);
+        const maxAllowedWildDist = (this.span * 2n) + (this.maxJump * 6n); // wild, tame ayak izlerine ulaşabilsin diye 2×span
         const P = SECP256K1_P;
         const isGlv = Boolean(this.options && (this.options.herdMode === 'GLV_HYBRID' || this.options.herdMode === 'GLV_LATTICE_2D'));
         const isKronecker = Boolean(this.isKroneckerLattice || (this.options && this.options.herdMode === 'KRONECKER_LATTICE'));

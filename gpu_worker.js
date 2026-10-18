@@ -873,13 +873,87 @@ fn u256_gte(a: U256, b: U256) -> bool {
     return true;
 }
 
+
+
+// --- DÜZELTİLMİŞ alan aritmetiği (secp256k1 p = 2^256 - 2^32 - 977): gerçek gölgelendirici çalıştırmasıyla doğrulandı ---
+fn fx_add32c(a: u32, b: u32, c: u32) -> vec2<u32> {
+    let s1 = a + b;
+    let c1 = select(0u, 1u, s1 < a);
+    let s2 = s1 + c;
+    let c2 = select(0u, 1u, s2 < s1);
+    return vec2<u32>(s2, c1 + c2);
+}
+
+fn fx_add_raw(a: U256, b: U256) -> U256 {
+    var r: U256;
+    var c: u32 = 0u;
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+        let t = fx_add32c(a.l[i], b.l[i], c);
+        r.l[i] = t.x;
+        c = t.y;
+    }
+    return r;
+}
+
+fn fx_mul16(a: U256, b: U256) -> array<u32, 16> {
+    var t: array<u32, 16>;
+    for (var k: u32 = 0u; k < 16u; k = k + 1u) { t[k] = 0u; }
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+        var carry: u32 = 0u;
+        for (var j: u32 = 0u; j < 8u; j = j + 1u) {
+            let pr = mul32(a.l[i], b.l[j]);
+            let s1 = fx_add32c(t[i + j], pr.x, carry);
+            t[i + j] = s1.x;
+            carry = pr.y + s1.y;
+        }
+        t[i + 8u] = carry;
+    }
+    return t;
+}
+
 fn fp_add(a: U256, b: U256) -> U256 {
     let p = secp256k1_p();
-    let res = u256_add_c(a, b);
-    if (res.carry != 0u || u256_gte(res.val, p)) {
-        return u256_sub(res.val, p);
+    var r: U256;
+    var c: u32 = 0u;
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+        let t = fx_add32c(a.l[i], b.l[i], c);
+        r.l[i] = t.x;
+        c = t.y;
     }
-    return res.val;
+    if (c != 0u || u256_gte(r, p)) { return u256_sub(r, p); }
+    return r;
+}
+
+fn fp_mul(a: U256, b: U256) -> U256 {
+    let p = secp256k1_p();
+    let t = fx_mul16(a, b);
+    var s: U256;
+    var h: U256;
+    for (var k: u32 = 0u; k < 8u; k = k + 1u) { s.l[k] = t[k]; h.l[k] = t[k + 8u]; }
+    var cc: U256;
+    for (var k: u32 = 0u; k < 8u; k = k + 1u) { cc.l[k] = 0u; }
+    cc.l[0] = 977u;
+    cc.l[1] = 1u;
+    for (var it: u32 = 0u; it < 4u; it = it + 1u) {
+        var hz = true;
+        for (var k: u32 = 0u; k < 8u; k = k + 1u) { if (h.l[k] != 0u) { hz = false; } }
+        if (hz) { break; }
+        let pr = fx_mul16(h, cc);
+        var pl: U256;
+        var ph: U256;
+        for (var k: u32 = 0u; k < 8u; k = k + 1u) { pl.l[k] = pr[k]; ph.l[k] = pr[k + 8u]; }
+        let ns = fx_add_raw(s, pl);
+        var carry: u32 = 0u;
+        if (!u256_gte(ns, s)) { carry = 1u; }
+        var cv: U256;
+        for (var k: u32 = 0u; k < 8u; k = k + 1u) { cv.l[k] = 0u; }
+        cv.l[0] = carry;
+        h = fx_add_raw(ph, cv);
+        s = ns;
+    }
+    if (u256_gte(s, p)) { s = u256_sub(s, p); }
+    if (u256_gte(s, p)) { s = u256_sub(s, p); }
+    return s;
 }
 
 fn fp_sub(a: U256, b: U256) -> U256 {
@@ -960,9 +1034,6 @@ fn u512_mod_p(r: array<u32, 16>) -> U256 {
     return acc;
 }
 
-fn fp_mul(a: U256, b: U256) -> U256 {
-    return u512_mod_p(u256_mul_full(a, b));
-}
 
 fn fp_sqr(a: U256) -> U256 { return fp_mul(a, a); }
 
@@ -1000,7 +1071,7 @@ fn dist_add(d: U256, j: U256) -> U256 {
 }
 
 fn is_distinguished(x: U256, mask_lo: u32, mask_hi: u32) -> bool {
-    let lo_ok = (x.l[0] & mask_lo) == 0u;
+    let lo_ok = ((x.l[0] >> 5u) & mask_lo) == 0u; // alt 5 bit sıçrama indeksi içindir
     let hi_ok = (mask_hi == 0u) || ((x.l[1] & mask_hi) == 0u);
     return lo_ok && hi_ok;
 }
@@ -1015,7 +1086,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let mask_hi = params.dp_mask_hi;
     let max_t   = params.max_traps;
     let steps   = params.steps_per_call;
-    let use_neg = (params.negation_mode == 1u);
+    let use_neg = false; // negasyon: dist/işaret izlenmeden değişmezi bozduğu için kapalı
 
     for (var s: u32 = 0u; s < steps; s = s + 1u) {
         let jump_idx = st.x.l[0] & 31u;
@@ -1072,7 +1143,7 @@ class WebGpuKangarooEngine {
         this.span = 0n;
         this.dpMaskLo = 0x0000FFFF;
         this.dpMaskHi = 0;
-        this.useNegationMap = true;
+        this.useNegationMap = false;
         this.tameTraps = new Map();
         this.wildTraps = new Map();
         this.isSolved = false;
@@ -1298,6 +1369,18 @@ class WebGpuKangarooEngine {
                     const kId = arr[base + 18];
 
                     const xHex = xBig.toString(16).padStart(64, '0');
+                    // 🔍 Öz-denetim: ilk 3 tuzağın x'i CPU'da yeniden hesaplanır
+                    if (this._selfCheck === undefined) this._selfCheck = 0;
+                    if (this._selfCheck < 3 && this.ec) {
+                        this._selfCheck++;
+                        try {
+                            const dHex = distBig.toString(16);
+                            const chk = (herd === 0) ? this.ec.g.mul(dHex) : this.targetPoint.add(this.ec.g.mul(dHex));
+                            const cx = chk.getX().toString(16).padStart(64, '0');
+                            if (cx !== xHex) { console.error('[GPU Kangaroo] ❌ GPU aritmetiği CPU ile UYUŞMUYOR: çarpışma bulunamaz'); this.gpuMathBroken = true; }
+                            else if (this._selfCheck === 3 && !this.gpuMathBroken) { console.log('[GPU Kangaroo] ✅ GPU aritmetiği CPU ile doğrulandı (3 tuzak)'); }
+                        } catch (e) {}
+                    }
                     const trapRecord = { dist: distBig, parity: parity, id: kId, herd: herd };
 
                     if (herd === 0) {
@@ -1689,50 +1772,32 @@ function generateHaltonKey(rangeStart, rangeEnd) {
     if (haltonStep > 1000000000000n) haltonStep = 1n;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
-    let n = haltonStep, rev2 = 0n, temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev2 = (rev2 << 1n) | (temp & 1n);
-        temp >>= 1n;
+    // Halton: taban 2 ve taban 3 radikal tersleri sırayla kullanılır (her biri tek başına düzgün dağılımlıdır)
+    const m = haltonStep >> 1n;
+    let value;
+    if ((haltonStep & 1n) === 0n) {
+        let rev2 = 0n, temp = m & 0xFFFFFFFFFFFFFFFFn;
+        for (let i = 0; i < 64; i++) {
+            rev2 = (rev2 << 1n) | (temp & 1n);
+            temp >>= 1n;
+        }
+        value = Number(rev2 >> 11n) / 9007199254740992.0;
+    } else {
+        let rev3 = 0.0, f3 = 1.0 / 3.0, n3 = m;
+        while (n3 > 0n) {
+            const d = Number(n3 % 3n);
+            rev3 += d * f3;
+            n3 /= 3n;
+            f3 /= 3.0;
+        }
+        value = rev3;
     }
-    let rev3 = 0.0, f3 = 1.0 / 3.0, n3 = n;
-    while (n3 > 0n) {
-        let d = Number(n3 % 3n);
-        rev3 += d * f3;
-        n3 /= 3n;
-        f3 /= 3.0;
-    }
-    const r2Float = Number(rev2 >> 11n) / 9007199254740992.0;
-    const combined = (r2Float * 0.618033988749895 + rev3 * 0.381966011250105) % 1.0;
-    const scale = BigInt(Math.floor(combined * 1000000000000000.0));
-    const offset = (totalRange * scale) / 1000000000000000n;
-    const cand = rangeStart + offset;
+    const scale = BigInt(Math.floor(value * 1000000000000000.0));
+    const cand = rangeStart + (totalRange * scale) / 1000000000000000n;
     return cand > rangeEnd ? rangeEnd : cand;
 }
 
 let vdCorputStep = 1n;
-function generateVanDerCorputKey(rangeStart, rangeEnd) {
-    vdCorputStep++;
-    const totalRange = rangeEnd - rangeStart;
-    if (totalRange <= 0n) return rangeStart;
-    let n = vdCorputStep;
-    let rev = 0n;
-    let temp = n & 0xFFFFFFFFFFFFFFFFn;
-    for (let i = 0; i < 64; i++) {
-        rev = (rev << 1n) | (temp & 1n);
-        temp >>= 1n;
-    }
-    const spanBits = totalRange.toString(2).length;
-    let offset;
-    if (spanBits > 60) {
-        const rev2 = ((rev * 0x517cc1b727220a95n) ^ 0x6c62272e07bb0142n) & 0xFFFFFFFFFFFFFFFFn;
-        const fullRev = (rev << 64n) | rev2;
-        offset = (fullRev * (totalRange + 1n)) >> 128n;
-    } else {
-        offset = (rev * (totalRange + 1n)) >> 64n;
-    }
-    const cand = rangeStart + offset;
-    return cand > rangeEnd ? rangeEnd : cand;
-}
 
 let weylStep = 1n;
 function generateWeylGoldenKey(rangeStart, rangeEnd) {
@@ -1791,8 +1856,10 @@ function generateHilbertKey(rangeStart, rangeEnd) {
     const HILBERT_TOTAL = 65536n;
     const HILBERT_STRIDE = 10007n;
     const cellIndex = (hilbertStepVal * HILBERT_STRIDE) % HILBERT_TOTAL;
-    const cellSize = totalRange / HILBERT_TOTAL;
-    const cellStart = rangeStart + (cellIndex * cellSize);
+    // Hücre sınırları tam bölüşümle hesaplanır (tamsayı yuvarlaması aralığın üst ucunu dışarıda bırakmaz)
+    const spanCount = totalRange + 1n;
+    const cellStart = rangeStart + (cellIndex * spanCount) / HILBERT_TOTAL;
+    const cellSize = (rangeStart + ((cellIndex + 1n) * spanCount) / HILBERT_TOTAL) - cellStart;
     let microOffset = 0n;
     if (cellSize > 1000000n) {
         const r = BigInt(Math.floor(Math.random() * 1000000));
@@ -1808,19 +1875,23 @@ let chaosX = 0.141592653589793, chaosY = 0.271828182845904, chaosStep = 0;
 function generateDeterministicChaosKey(min, max) {
     if (min >= max) return min;
     const span = max - min;
-    chaosStep++;
-    chaosX = 4.0 * chaosX * (1.0 - chaosX);
-    if (chaosX <= 0.0001 || chaosX >= 0.9999 || isNaN(chaosX)) {
-        chaosX = (0.14159265 + (chaosStep * 0.00713)) % 0.85 + 0.07;
+    // Lojistik harita bit akışı; aralık genişliği + 64 bit taşma payı (modulo yanlılığı ihmal edilebilir)
+    const bitCount = Math.min(span.toString(2).length + 64, 320);
+    const wordCount = Math.ceil(bitCount / 32);
+    let hex = '';
+    for (let w = 0; w < wordCount; w++) {
+        let u32 = 0;
+        for (let b = 0; b < 32; b++) {
+            chaosStep++;
+            chaosX = 4.0 * chaosX * (1.0 - chaosX);
+            if (chaosX <= 0.000001 || chaosX >= 0.999999 || isNaN(chaosX)) {
+                chaosX = 0.14159265 + ((chaosStep * 0.031) % 0.8);
+            }
+            u32 = (u32 << 1) | (chaosX > 0.5 ? 1 : 0);
+        }
+        hex += (u32 >>> 0).toString(16).padStart(8, '0');
     }
-    chaosY = (chaosY < 0.5) ? (2.0 * chaosY) : (2.0 * (1.0 - chaosY));
-    if (chaosY <= 0.0001 || chaosY >= 0.9999 || isNaN(chaosY)) {
-        chaosY = (0.27182818 + (chaosStep * 0.00931)) % 0.85 + 0.07;
-    }
-    const highInt = BigInt(Math.floor(chaosX * 4294967296)) & 0xFFFFFFFFn;
-    const lowInt = BigInt(Math.floor(chaosY * 4294967296)) & 0xFFFFFFFFn;
-    const mixed = (highInt << 32n) | lowInt;
-    return min + (mixed % (span + 1n));
+    return min + (BigInt('0x' + hex) % (span + 1n));
 }
 
 let weakEntropyCounter = 0;
