@@ -1374,9 +1374,9 @@
                 <!-- DONANIM / İŞLEMCİ ÇEKİRDEK & WEBGPU SEÇİCİ -->
                 <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="flex:1.2; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı & WebGPU Seçimi">
                     <option value="AUTO_SWARM" selected>⚡ Oto Sürü Dengele</option>
-                    <option value="GPU_ECO">🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)</option>
-                    <option value="GPU_BALANCED">🟡 GPU (Dengeli / Akıcı - 128 / 35ms)</option>
-                    <option value="GPU_MAX">🔴 GPU (Tam Güç - 256 / 15ms)</option>
+                    <option value="GPU_ECO">🟢 GPU (Ultra Hafif / Sessiz — 2K Batch / 8ms)</option>
+                    <option value="GPU_BALANCED">🟡 GPU (Dengeli Yüksek Hız — 8K Batch / 2ms)</option>
+                    <option value="GPU_MAX">🔴 GPU (Maksimum Turbo — 16K Batch / 0ms)</option>
                     <option value="4">🚀 4 Çekirdek</option>
                     <option value="8">⚡ 8 Çekirdek</option>
                     <option value="12">🔥 12 Çekirdek</option>
@@ -5109,9 +5109,9 @@ function initKangarooSwarmChannel() {
                                     tabId: data.senderId,
                                     time: now
                                 });
-                                if (kangarooSharedTraps.size > 25000) {
+                                if (kangarooSharedTraps.size > 250000) {
                                     const it = kangarooSharedTraps.keys();
-                                    for (let i = 0; i < 2500; i++) {
+                                    for (let i = 0; i < 25000; i++) {
                                         const n = it.next();
                                         if (n.done) break;
                                         kangarooSharedTraps.delete(n.value);
@@ -5449,9 +5449,9 @@ function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist) {
 
     if (kangarooSharedTraps instanceof Map) {
         kangarooSharedTraps.set(hex, { herd: herd, tabId: KANGAROO_TAB_ID, time: now, dist: dist });
-        if (kangarooSharedTraps.size > 25000) {
+        if (kangarooSharedTraps.size > 250000) {
             const it = kangarooSharedTraps.keys();
-            for (let i = 0; i < 2500; i++) {
+            for (let i = 0; i < 25000; i++) {
                 const n = it.next();
                 if (n.done) break;
                 kangarooSharedTraps.delete(n.value);
@@ -7055,15 +7055,15 @@ function generateLevyFlightKey(rangeStart, rangeEnd) {
     st.stepCount++;
     // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
     if (!st.seen || st.stepCount % 64n === 1n) {
-        if (st.anchorSpan !== span) { st.anchorSpan = span; st.anchorMult = ulamCoprimeMultiplier(span); }
-        st.pos = s + (((st.stepCount >> 6n) * st.anchorMult) % span);   // tam çözünürlük (span 2^64'ü aşsa da düşük bitler kaybolmaz)
+        const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        st.pos = s + ((span * frac) >> 64n);
         st.seen = new Set();
     }
     const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
     const uFloat = Number(u) / 4294967296.0 + 0.0000001;
     const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
     const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
-    const jump = (() => { const j = (baseJump * BigInt(Math.max(1, Math.floor(factor * 4096)))) >> 12n; return j > 0n ? j : 1n; })();   // BigInt: düşük bitler korunur
+    const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
     const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
     let p = st.pos + dir * jump;
     for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
@@ -7119,12 +7119,12 @@ function generateUlamSpiralKey(rangeStart, rangeEnd) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
     const span = (e > s) ? (e - s + 1n) : 1n;
-    if (span <= 1n) return s;
-    if (mainUlamSpan !== span) { mainUlamSpan = span; mainUlamMult = ulamCoprimeMultiplier(span); }
     mainUlamStep++;
-    // Tek (span ile aralarında asal) çarpan: n·m mod span her kalıntı sınıfını tam bir kez gezer.
-    // (Çift sayılı bir 2^k aralıkta tek bir polinom/çarpan paritesi korur: 4n²+2n+41 hep TEK olduğundan yarısı hiç gezilmezdi.)
-    return s + ((mainUlamStep * mainUlamMult) % span);
+    const n = mainUlamStep;
+    // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
+    const quad = (4n * n * n + 2n * n + 41n);
+    const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
+    return s + offset;
 }
 
 // ============================================================
@@ -9325,15 +9325,15 @@ const FastH = (function () {
         st.stepCount++;
         // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
         if (!st.seen || st.stepCount % 64n === 1n) {
-            if (st.anchorSpan !== span) { st.anchorSpan = span; st.anchorMult = ulamCoprimeMultiplier(span); }
-            st.pos = s + (((st.stepCount >> 6n) * st.anchorMult) % span);   // tam çözünürlük (span 2^64'ü aşsa da düşük bitler kaybolmaz)
+            const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+            st.pos = s + ((span * frac) >> 64n);
             st.seen = new Set();
         }
         const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
         const uFloat = Number(u) / 4294967296.0 + 0.0000001;
         const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
         const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
-        const jump = (() => { const j = (baseJump * BigInt(Math.max(1, Math.floor(factor * 4096)))) >> 12n; return j > 0n ? j : 1n; })();   // BigInt: düşük bitler korunur
+        const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
         const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
         let p = st.pos + dir * jump;
         for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
@@ -9403,13 +9403,15 @@ const FastH = (function () {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const span = (e > s) ? (e - s + 1n) : 1n;
-        if (span <= 1n) return s;
-        if (workerUlamStep === 1n) { workerUlamStep = 1n + BigInt((typeof workerId !== 'undefined' ? workerId : 0) * 104729); }
-        if (workerUlamSpan !== span) { workerUlamSpan = span; workerUlamMult = ulamCoprimeMultiplier(span); }
+        if (workerUlamStep === 1n) {
+            workerUlamStep = 1n + BigInt((typeof workerId !== 'undefined' ? workerId : 0) * 104729);
+        }
         workerUlamStep++;
-        // Tek (span ile aralarında asal) çarpan: n·m mod span her kalıntı sınıfını tam bir kez gezer.
-        // (Çift sayılı bir 2^k aralıkta tek bir polinom/çarpan paritesi korur: 4n²+2n+41 hep TEK olduğundan yarısı hiç gezilmezdi.)
-        return s + ((workerUlamStep * workerUlamMult) % span);
+        const n = workerUlamStep;
+        // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
+        const quad = (4n * n * n + 2n * n + 41n);
+        const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
+        return s + offset;
     }
 
     let workerWeakCounter = 0;
@@ -10905,17 +10907,17 @@ async function addGpuOptionIfSupported() {
 
         const optMax = document.createElement('option');
         optMax.value = 'GPU_MAX';
-        optMax.innerText = '🔴 GPU (Tam Güç - 256 / 15ms)';
+        optMax.innerText = '🔴 GPU (Maksimum Turbo — 16K Batch / 0ms)';
         optMax.style.fontWeight = 'bold';
 
         const optBal = document.createElement('option');
         optBal.value = 'GPU_BALANCED';
-        optBal.innerText = '🟡 GPU (Dengeli / Akıcı - 128 / 35ms)';
+        optBal.innerText = '🟡 GPU (Dengeli Yüksek Hız — 8K Batch / 2ms)';
         optBal.style.fontWeight = 'bold';
 
         const optEco = document.createElement('option');
         optEco.value = 'GPU_ECO';
-        optEco.innerText = '🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)';
+        optEco.innerText = '🟢 GPU (Ultra Hafif / Sessiz — 2K Batch / 8ms)';
         optEco.style.fontWeight = 'bold';
 
         sel.insertBefore(optMax, sel.firstChild);
@@ -11052,8 +11054,8 @@ function onThreadCountSelectChange(isRemoteSync = false) {
         }
         if (typeof showToast === 'function') {
             const label = val.includes('ECO') 
-                ? '🟢 Ultra Hafif: 64 batch / 80ms - Sıfır Donma' 
-                : (val.includes('MAX') ? '🔴 Tam Güç: 256 batch / 15ms' : '🟡 Dengeli: 128 batch / 35ms - Akıcı 60 FPS');
+                ? '🟢 Ultra Hafif: 2K batch / 8ms - Sessiz' 
+                : (val.includes('MAX') ? '🔴 Maksimum Turbo: 16K batch / 0ms' : '🟡 Dengeli: 8K batch / 2ms - Yüksek Hız');
             showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
         }
     } else if (val === 'AUTO_SWARM') {
@@ -11331,9 +11333,9 @@ function handleWorkerMessage(e) {
                 if (typeof kangarooSharedTraps !== 'undefined') {
                     if (kangarooSharedTraps instanceof Map) {
                         kangarooSharedTraps.set(k, { herd: t.herd, tabId: KANGAROO_TAB_ID, time: Date.now(), dist: t.dist });
-                        if (kangarooSharedTraps.size > 25000) {
+                        if (kangarooSharedTraps.size > 250000) {
                             const it = kangarooSharedTraps.keys();
-                            for (let i = 0; i < 2500; i++) {
+                            for (let i = 0; i < 25000; i++) {
                                 const n = it.next();
                                 if (n.done) break;
                                 kangarooSharedTraps.delete(n.value);

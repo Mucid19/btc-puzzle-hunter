@@ -1138,8 +1138,8 @@ class WebGpuKangarooEngine {
         this.trapReadbackBuf = null;
 
         this.numKangaroos = 2048;
-        this.stepsPerCall = 16;
-        this.maxTraps = 512;
+        this.stepsPerCall = 64;
+        this.maxTraps = 1024;
         this.span = 0n;
         this.dpMaskLo = 0x0000FFFF;
         this.dpMaskHi = 0;
@@ -1153,7 +1153,7 @@ class WebGpuKangarooEngine {
     }
 
     setStepsPerCall(steps) {
-        const s = Math.max(4, Math.min(Number(steps) || 16, 64));
+        const s = Math.max(8, Math.min(Number(steps) || 64, 256));
         this.stepsPerCall = s;
         if (this.paramsBuf && this.device) {
             const paramsData = new Uint32Array([
@@ -1479,8 +1479,8 @@ class GpuEngine {
         this.readbackMatchBuf= null;
         this.readbackBuf     = null;
         this.isInitialized   = false;
-        this.maxBatchSize    = 8192;
-        this.batchSize       = 2048;
+        this.maxBatchSize    = 32768;
+        this.batchSize       = 8192;
     }
 
     async initWithDevice(device, adapterInfo) {
@@ -2230,9 +2230,17 @@ let workerKangarooEngine = null;
 let workerHuntRunning = false;
 
 let workerIntensity = 'BALANCED';
-let workerThrottleDelay = 35;
-let workerStepsPerCall = 16;
-let workerBatchSize = 2048;
+let workerThrottleDelay = 2;
+let workerStepsPerCall = 64;
+let workerBatchSize = 8192;
+
+const kChannel = new MessageChannel();
+kChannel.port1.onmessage = () => { if (workerHuntRunning) workerKangarooLoop(); };
+function workerNextKangaroo() { kChannel.port2.postMessage(null); }
+
+const hChannel = new MessageChannel();
+hChannel.port1.onmessage = () => { if (workerHuntRunning) workerHuntLoop(); };
+function workerNextHunt() { hChannel.port2.postMessage(null); }
 
 let workerCfg = null;
 let workerTotalKeys = 0;
@@ -2313,7 +2321,11 @@ async function workerKangarooLoop() {
         }
 
         if (workerHuntRunning) {
-            setTimeout(workerKangarooLoop, workerThrottleDelay);
+            if (workerThrottleDelay <= 0) {
+                workerNextKangaroo();
+            } else {
+                setTimeout(workerKangarooLoop, workerThrottleDelay);
+            }
         }
     } catch(err) {
         console.error('[WebGPU Worker Kangaroo Error]:', err);
@@ -2444,7 +2456,11 @@ async function workerHuntLoop() {
         }
 
         if (!found && workerHuntRunning) {
-            setTimeout(workerHuntLoop, workerThrottleDelay);
+            if (workerThrottleDelay <= 0) {
+                workerNextHunt();
+            } else {
+                setTimeout(workerHuntLoop, workerThrottleDelay);
+            }
         }
     } catch(err) {
         console.error('[WebGPU Worker Standard Loop Error]:', err);
@@ -2480,9 +2496,9 @@ self.onmessage = async function(e) {
     } else if (data.cmd === 'start') {
         workerCfg = data.config;
         workerIntensity = data.intensity || 'BALANCED';
-        workerThrottleDelay = data.throttleDelay || 35;
-        workerStepsPerCall = data.stepsPerCall || 16;
-        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+        workerThrottleDelay = (data.throttleDelay !== undefined) ? data.throttleDelay : 2;
+        workerStepsPerCall = data.stepsPerCall || 64;
+        workerBatchSize = (workerIntensity === 'ECO') ? 2048 : ((workerIntensity === 'MAX') ? 16384 : 8192);
 
         workerTotalKeys = 0;
         workerLastTime = performance.now();
@@ -2553,9 +2569,9 @@ self.onmessage = async function(e) {
         }
     } else if (data.cmd === 'setIntensity') {
         workerIntensity = data.intensity || workerIntensity;
-        workerThrottleDelay = data.throttleDelay || workerThrottleDelay;
+        workerThrottleDelay = (data.throttleDelay !== undefined) ? data.throttleDelay : workerThrottleDelay;
         workerStepsPerCall = data.stepsPerCall || workerStepsPerCall;
-        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+        workerBatchSize = (workerIntensity === 'ECO') ? 2048 : ((workerIntensity === 'MAX') ? 16384 : 8192);
 
         if (workerKangarooEngine) {
             workerKangarooEngine.setStepsPerCall(workerStepsPerCall);

@@ -60,7 +60,7 @@ class RealPollardKangaroo {
      * civarında kalacak şekilde seçilir. Alt sınır 8, üst sınır 16 (her ~65k adımda 1 tuzak).
      * 40 bit ve altı küçük aralıklarda null döner (mevcut ayar korunur).
      */
-    static adaptiveDpBits(span, cap = 25000) {
+    static adaptiveDpBits(span, cap = 250000) {
         const sp = (typeof span === 'bigint' && span > 0n) ? span : 1n;
         const spanBits = sp.toString(2).length;
         if (spanBits <= 40) return null;
@@ -71,10 +71,7 @@ class RealPollardKangaroo {
         const stepBits = Math.ceil(spanBits / 2) + 1;               // ~ log2(2·sqrt(N))
         const lo = stepBits + 2 - Math.floor(Math.log2(Math.max(2, cap))); // beklenen DP sayısı depoya sığsın (~3x pay)
         const hi = stepBits - 8;                                    // DP'ye yürüme maliyeti toplamı ezmesin
-        // İsteğe bağlı üst sınır (yalnızca GÖSTERGE amaçlı): window.KANGAROO_DP_MAX = 19. Varsayılan: sınır yok.
-        // ⚠️ Sabit 19 üst sınırı #66+ bulmacalarda tuzak sayısını depo sınırının üstüne çıkarıp tespiti bozuyordu.
-        const userCap = (typeof window !== 'undefined' && Number(window.KANGAROO_DP_MAX) >= 2) ? Math.floor(Number(window.KANGAROO_DP_MAX)) : 99;
-        return Math.max(2, Math.min(userCap, Math.min(lo, hi)));
+        return Math.max(2, Math.min(19, Math.min(lo, hi)));
     }
 
     static modInvP(a) {
@@ -381,9 +378,13 @@ class RealPollardKangaroo {
         } else if (isKroneckerLattice) {
             // 🌟 Kronecker 8D Kafes için analitik Poisson DP Maskesi
             const spanBits = effSpan.toString(2).length;
-            // Taban 6 bit; >40 bitlik aralıklarda adaptiveDpBits (aralık + tuzak sınırına göre) bunu yükseltir.
-            this.dpMask = 0x3Fn;
-            this.dpBits = 6;
+            if (spanBits <= 40) {
+                this.dpMask = 0x3Fn;
+                this.dpBits = 6;
+            } else {
+                this.dpMask = 0x7FFFFn; // 19-bit maske (her 524.288 adımda bir tuzak)
+                this.dpBits = 19;
+            }
         } else {
             const sqrtBits = sqrtSpan.toString(2).length;
             if (sqrtBits <= 6) {
@@ -408,10 +409,10 @@ class RealPollardKangaroo {
         }
     }
 
-    // 🗄️ Sürü başına tuzak sınırı (varsayılan 25k). Havuz lideri sekmede dışarıdan büyütülür.
+    // 🗄️ Sürü başına tuzak sınırı (varsayılan 250k). Havuz lideri sekmede dışarıdan büyütülür.
     _trapCap() {
         const c = Number(this.trapCap);
-        return (Number.isFinite(c) && c >= 1000) ? Math.floor(c) : 25000;
+        return (Number.isFinite(c) && c >= 1000) ? Math.floor(c) : 250000;
     }
 
     // trapCap kurucudan sonra atandığı için DP sıklığı yeniden hesaplanmalı (tüm sekmeler lider cap'iyle aynı dp'yi kullanmalı)
@@ -425,7 +426,7 @@ class RealPollardKangaroo {
         this._pruneMap(map, cap, Math.max(1, Math.floor(cap / 10)));
     }
 
-    _pruneMap(map, maxSize = 25000, pruneCount = 2500) {
+    _pruneMap(map, maxSize = 250000, pruneCount = 25000) {
         if (!map || map.size <= maxSize) return;
         const it = map.keys();
         for (let i = 0; i < pruneCount; i++) {

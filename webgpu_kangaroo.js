@@ -347,9 +347,9 @@ class WebGpuKangarooEngine {
         this.trapHeaderBuf = null;
         this.trapRecordsBuf = null;
         this.trapReadbackBuf = null;
-        this.numKangaroos = 2048; // 64 workgroup x 32 threads
-        this.stepsPerCall = 16;   // AMD/WDDM uyumlu adım sayısı (2-4ms pass: Windows DWM ve masaüstü donmasını engeller)
-        this.maxTraps = 512;
+        this.numKangaroos = 2048; // 64 workgroup x 32 threads (Hızlı CPU başlangıcı + GPU tam verim)
+        this.stepsPerCall = 64;   // Yüksek verimli adım sayısı
+        this.maxTraps = 1024;
 
         this.targetPubHex = '';
         this.rangeMin = 0n;
@@ -374,7 +374,7 @@ class WebGpuKangarooEngine {
     }
 
     setStepsPerCall(steps) {
-        const s = Math.max(4, Math.min(Number(steps) || 16, 64));
+        const s = Math.max(8, Math.min(Number(steps) || 64, 256));
         this.stepsPerCall = s;
         if (this.paramsBuf && this.device) {
             const paramsData = new Uint32Array([

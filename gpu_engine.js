@@ -689,9 +689,9 @@ class GpuEngine {
         this.paramsBuf   = null;
         this.readbackBuf = null;
         this.bindGroup   = null;
-        this.maxBatchSize = 2048;
-        this.batchSize   = (typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'ECO') ? 64
-                         : ((typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'MAX') ? 256 : 128);
+        this.maxBatchSize = 32768;
+        this.batchSize   = (typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'ECO') ? 2048
+                         : ((typeof gpuCurrentIntensity !== 'undefined' && gpuCurrentIntensity === 'MAX') ? 16384 : 8192);
         this.isInitialized = false;
         this.adapterInfo = null;
     }
@@ -997,9 +997,17 @@ let workerKangarooEngine = null;
 let workerHuntRunning = false;
 
 let workerIntensity = 'BALANCED';
-let workerThrottleDelay = 35;
-let workerStepsPerCall = 16;
-let workerBatchSize = 128;
+let workerThrottleDelay = 2;
+let workerStepsPerCall = 64;
+let workerBatchSize = 8192;
+
+const kChannel = new MessageChannel();
+kChannel.port1.onmessage = () => { if (workerHuntRunning) workerKangarooLoop(); };
+function workerNextKangaroo() { kChannel.port2.postMessage(null); }
+
+const hChannel = new MessageChannel();
+hChannel.port1.onmessage = () => { if (workerHuntRunning) workerHuntLoop(); };
+function workerNextHunt() { hChannel.port2.postMessage(null); }
 
 let workerCfg = null;
 let workerTotalKeys = 0;
@@ -1077,7 +1085,11 @@ async function workerKangarooLoop() {
         }
 
         if (workerHuntRunning) {
-            setTimeout(workerKangarooLoop, workerThrottleDelay);
+            if (workerThrottleDelay <= 0) {
+                workerNextKangaroo();
+            } else {
+                setTimeout(workerKangarooLoop, workerThrottleDelay);
+            }
         }
     } catch(err) {
         console.error('[WebGPU Worker Kangaroo Error]:', err);
@@ -1205,7 +1217,11 @@ async function workerHuntLoop() {
         }
 
         if (!found && workerHuntRunning) {
-            setTimeout(workerHuntLoop, workerThrottleDelay);
+            if (workerThrottleDelay <= 0) {
+                workerNextHunt();
+            } else {
+                setTimeout(workerHuntLoop, workerThrottleDelay);
+            }
         }
     } catch(err) {
         console.error('[WebGPU Worker Standard Loop Error]:', err);
@@ -1238,9 +1254,9 @@ self.onmessage = async function(e) {
     } else if (data.cmd === 'start') {
         workerCfg = data.config;
         workerIntensity = data.intensity || 'BALANCED';
-        workerThrottleDelay = data.throttleDelay || 35;
-        workerStepsPerCall = data.stepsPerCall || 16;
-        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+        workerThrottleDelay = (data.throttleDelay !== undefined) ? data.throttleDelay : 2;
+        workerStepsPerCall = data.stepsPerCall || 64;
+        workerBatchSize = (workerIntensity === 'ECO') ? 2048 : ((workerIntensity === 'MAX') ? 16384 : 8192);
 
         workerTotalKeys = 0;
         workerLastTime = performance.now();
@@ -1309,9 +1325,9 @@ self.onmessage = async function(e) {
         }
     } else if (data.cmd === 'setIntensity') {
         workerIntensity = data.intensity || workerIntensity;
-        workerThrottleDelay = data.throttleDelay || workerThrottleDelay;
+        workerThrottleDelay = (data.throttleDelay !== undefined) ? data.throttleDelay : workerThrottleDelay;
         workerStepsPerCall = data.stepsPerCall || workerStepsPerCall;
-        workerBatchSize = (workerIntensity === 'ECO') ? 512 : ((workerIntensity === 'MAX') ? 4096 : 2048);
+        workerBatchSize = (workerIntensity === 'ECO') ? 2048 : ((workerIntensity === 'MAX') ? 16384 : 8192);
 
         if (workerKangarooEngine) {
             workerKangarooEngine.setStepsPerCall(workerStepsPerCall);
@@ -1329,15 +1345,7 @@ function createGpuWorker() {
         gpuWorker = null;
     }
 
-    // 1. Önce doğrudan gpu_worker.js dosyasını dene (HTTP / Web Server ortamı)
-    try {
-        const w = new Worker('gpu_worker.js');
-        return w;
-    } catch(err) {
-        console.warn('[GPU] Doğrudan Worker("gpu_worker.js") açılamadı (file:// CORS kısıtlaması olabilir), Blob Worker deneniyor...', err.message);
-    }
-
-    // 2. Local file:// altında CORS hatasını aşmak için DOM'daki kütüphanelerle dinamik Blob Worker oluştur
+    // 100% Çevrimdışı & Güvenli: DOM'daki hazır kütüphaneleri (CryptoJS + elliptic) doğrudan içeren dinamik Blob Worker
     try {
         if (gpuWorkerBlobUrl) {
             try { URL.revokeObjectURL(gpuWorkerBlobUrl); } catch(e) {}
@@ -1371,8 +1379,12 @@ ${GPU_WORKER_RUNNER_LOGIC}
         gpuWorkerBlobUrl = URL.createObjectURL(blob);
         return new Worker(gpuWorkerBlobUrl);
     } catch(err) {
-        console.warn('[GPU] Blob Worker oluşturulamadı:', err);
-        return null;
+        console.warn('[GPU] Blob Worker açılamadı, doğrudan gpu_worker.js deneniyor...', err.message);
+        try {
+            return new Worker('gpu_worker.js');
+        } catch(e) {
+            return null;
+        }
     }
 }
 
@@ -1420,8 +1432,9 @@ async function initWebGpuEngine() {
         if (w) {
             const workerInitOk = await new Promise((resolve) => {
                 const timeout = setTimeout(() => {
+                    console.warn('[GPU] Web Worker init zaman aşımı (10s), ana thread deneniyor...');
                     resolve(false);
-                }, 2000);
+                }, 10000);
 
                 w.onmessage = function(e) {
                     const data = e.data;
@@ -2264,41 +2277,41 @@ async function gpuHuntBatch() {
     }
 }
 
-let gpuThrottleDelay = 35; // Varsayılan: 35ms dinlenme payı (akıcı 60 FPS masaüstü, AMD DWM uyumlu)
+let gpuThrottleDelay = 2; // Varsayılan: 2ms nefes payı (yüksek verimli GPU döngüsü)
 let gpuCurrentIntensity = 'BALANCED';
-let gpuCurrentStepsPerCall = 16;
+let gpuCurrentStepsPerCall = 64;
 
 function setGpuIntensity(level) {
     if (!level) return;
     const l = String(level).toUpperCase();
     if (l.includes('ECO') || l.includes('LIGHT') || l.includes('LOW')) {
         gpuCurrentIntensity = 'ECO';
-        gpuThrottleDelay = 80; // 80ms dinlenme payı: GPU ve CPU %90+ serbest, sıfır kasma/donma
-        gpuCurrentStepsPerCall = 8;
-        if (gpuEngine) gpuEngine.batchSize = 512;
-        if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
-            webGpuKangarooInstance.setStepsPerCall(8);
-        }
-        console.log('[GPU] 🟢 Ultra Hafif / Eco moduna geçildi (Batch: 512, Steps: 8, Gecikme: 80ms - Sıfır Kasma)');
-    } else if (l.includes('MAX') || l.includes('TURBO') || l.includes('HIGH')) {
-        gpuCurrentIntensity = 'MAX';
-        gpuThrottleDelay = 15; // 15ms: Windows DWM ve fare imlecinin akıcı kalması için AMD uyumlu nefes payı
+        gpuThrottleDelay = 8; // 8ms dinlenme payı: Sessiz/soğuk çalışma
         gpuCurrentStepsPerCall = 32;
-        if (gpuEngine) gpuEngine.batchSize = 4096;
+        if (gpuEngine) gpuEngine.batchSize = 2048;
         if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
             webGpuKangarooInstance.setStepsPerCall(32);
         }
-        console.log('[GPU] 🔴 Tam Güç moduna geçildi (Batch: 4096, Steps: 32, Gecikme: 15ms)');
+        console.log('[GPU] 🟢 Ultra Hafif / Eco moduna geçildi (Batch: 2048, Steps: 32, Gecikme: 8ms)');
+    } else if (l.includes('MAX') || l.includes('TURBO') || l.includes('HIGH')) {
+        gpuCurrentIntensity = 'MAX';
+        gpuThrottleDelay = 0; // 0ms: Tam güç, sıfır gecikmeli boru hattı doygunluğu
+        gpuCurrentStepsPerCall = 128;
+        if (gpuEngine) gpuEngine.batchSize = 16384;
+        if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
+            webGpuKangarooInstance.setStepsPerCall(128);
+        }
+        console.log('[GPU] 🔴 Maksimum Turbo moduna geçildi (Batch: 16384, Steps: 128, Gecikme: 0ms)');
     } else {
         // BALANCED (Varsayılan)
         gpuCurrentIntensity = 'BALANCED';
-        gpuThrottleDelay = 35; // 35ms: Akıcı 60 FPS masaüstü, AMD WDDM preemption uyumlu
-        gpuCurrentStepsPerCall = 16;
-        if (gpuEngine) gpuEngine.batchSize = 2048;
+        gpuThrottleDelay = 2; // 2ms: Dengeli yüksek hız
+        gpuCurrentStepsPerCall = 64;
+        if (gpuEngine) gpuEngine.batchSize = 8192;
         if (webGpuKangarooInstance && typeof webGpuKangarooInstance.setStepsPerCall === 'function') {
-            webGpuKangarooInstance.setStepsPerCall(16);
+            webGpuKangarooInstance.setStepsPerCall(64);
         }
-        console.log('[GPU] 🟡 Dengeli moduna geçildi (Batch: 2048, Steps: 16, Gecikme: 35ms - 60 FPS akıcı)');
+        console.log('[GPU] 🟡 Dengeli Yüksek Hız moduna geçildi (Batch: 8192, Steps: 64, Gecikme: 2ms)');
     }
 
     if (isGpuWorkerActive && gpuWorker) {
