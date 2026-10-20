@@ -1448,7 +1448,7 @@
                             <option value="KANGAROO_KRONECKER" style="color:#f59e0b; font-weight:bold;">⚡ 🦘 Kronecker-Kangaroo (İrrasyonel Kafes + Tam Homojen Eşdağılım)</option>
                             <option value="KANGAROO_SOBOL">🦘📐 Sobol-Kangaroo Hibrit</option>
                             <option value="KANGAROO_GLV">⚡🦘 GLV-Kangaroo (Endomorfizma 4-Way)</option>
-                            <option value="KANGAROO_MONTGOMERY">🦘⚡ SIMD Montgomery Herd (16-Way)</option>
+                            <option value="KANGAROO_MONTGOMERY">🦘⚡ SIMD Montgomery Herd (32-Way)</option>
                             <option value="KANGAROO_ROLLING">🦘🌀 Kayan Mikro-Pencere (O(√W))</option>
                             <option value="KANGAROO_ANCHOR">🦘⚓ Evrensel Çapa & Birikimli Tuzak</option>
                             <option value="KANGAROO_HOP_DWELL">🦘⏱️ Sıçra ve Pusuya Yat Radar</option>
@@ -5632,7 +5632,7 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'KANGAROO_KRONECKER': '⚡ 🦘 Kronecker-Kangaroo (8D İrrasyonel Kafes)',
             'KANGAROO_SOBOL': '🦘📐 Sobol-Kangaroo Hibrit',
             'KANGAROO_GLV': '⚡🦘 GLV-Kangaroo (Endomorfizma 4-Way)',
-            'KANGAROO_MONTGOMERY': '🦘⚡ SIMD Montgomery Herd (16-Way)',
+            'KANGAROO_MONTGOMERY': '🦘⚡ SIMD Montgomery Herd (32-Way)',
             'KANGAROO_ROLLING': '🦘🌀 Kayan Mikro-Pencere (O(√W))',
             'KANGAROO_ANCHOR': '🦘⚓ Evrensel Çapa & Birikimli Tuzak',
             'KANGAROO_HOP_DWELL': '🦘⏱️ Sıçra ve Pusuya Yat Radar',
@@ -7055,15 +7055,15 @@ function generateLevyFlightKey(rangeStart, rangeEnd) {
     st.stepCount++;
     // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
     if (!st.seen || st.stepCount % 64n === 1n) {
-        const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
-        st.pos = s + ((span * frac) >> 64n);
+        if (st.anchorSpan !== span) { st.anchorSpan = span; st.anchorMult = ulamCoprimeMultiplier(span); }
+        st.pos = s + (((st.stepCount >> 6n) * st.anchorMult) % span);   // tam çözünürlük (span 2^64'ü aşsa da düşük bitler kaybolmaz)
         st.seen = new Set();
     }
     const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
     const uFloat = Number(u) / 4294967296.0 + 0.0000001;
     const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
     const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
-    const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
+    const jump = (() => { const j = (baseJump * BigInt(Math.max(1, Math.floor(factor * 4096)))) >> 12n; return j > 0n ? j : 1n; })();   // BigInt: düşük bitler korunur
     const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
     let p = st.pos + dir * jump;
     for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
@@ -7119,12 +7119,12 @@ function generateUlamSpiralKey(rangeStart, rangeEnd) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
     const span = (e > s) ? (e - s + 1n) : 1n;
+    if (span <= 1n) return s;
+    if (mainUlamSpan !== span) { mainUlamSpan = span; mainUlamMult = ulamCoprimeMultiplier(span); }
     mainUlamStep++;
-    const n = mainUlamStep;
-    // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
-    const quad = (4n * n * n + 2n * n + 41n);
-    const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
-    return s + offset;
+    // Tek (span ile aralarında asal) çarpan: n·m mod span her kalıntı sınıfını tam bir kez gezer.
+    // (Çift sayılı bir 2^k aralıkta tek bir polinom/çarpan paritesi korur: 4n²+2n+41 hep TEK olduğundan yarısı hiç gezilmezdi.)
+    return s + ((mainUlamStep * mainUlamMult) % span);
 }
 
 // ============================================================
@@ -7218,15 +7218,16 @@ const FastH = (function () {
     const hex = u => { let s = ''; for (let i = 0; i < u.length; i++) s += HX[u[i]]; return s; };
     const buf = new Uint8Array(65);
     // --- hedef havuzu: ilk 32 bit -> [{p, h}] ---
-    let map = null, sig = '', sigActive = null;
+    let map = null, sig = '', sigActive = null, wantUnc = false;
     function build(active) {
         const all = (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES : [];
         const s = all.length + '|' + (active ? active.addr : '');
-        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map();
+        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map(); wantUnc = false;
         for (const p of [active, ...all]) {
             if (!p) continue;
             const h = String(p.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(p.addr) : '') || '').toLowerCase().replace(/^0x/, '');
             if (h.length !== 40) continue;
+            if (p.isUncompressed) wantUnc = true;
             const k = parseInt(h.slice(0, 8), 16) >>> 0; // sıra: aktif hedef önce gelir
             (map.get(k) || map.set(k, []).get(k)).push({ p, h });
         }
@@ -7245,11 +7246,14 @@ const FastH = (function () {
         const x = P.getX().toArray('be', 32), y = P.getY().toArray('be', 32);
         buf[0] = (y[31] & 1) ? 3 : 2; buf.set(x, 1);
         const hc = hash160(buf.subarray(0, 33));
-        buf[0] = 4; buf.set(y, 33);
-        const hu = hash160(buf);
+        let hu = null, lu = null;
+        if (wantUnc) { // sıkıştırılmamış hash yalnızca bir hedef sıkıştırılmamışsa hesaplanır (bulmaca adreslerinin tamamı compressed)
+            buf[0] = 4; buf.set(y, 33);
+            hu = hash160(buf);
+            lu = map.get(((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0);
+        }
         const kc = ((hc[0] << 24) | (hc[1] << 16) | (hc[2] << 8) | hc[3]) >>> 0;
-        const ku = ((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0;
-        const lc = map.get(kc), lu = map.get(ku);
+        const lc = map.get(kc);
         if (!lc && !lu) return null;
         if (lc) { const s = hex(hc); for (const e of lc) if (e.h === s) return { p: e.p, unc: false }; }
         if (lu) { const s = hex(hu); for (const e of lu) if (e.h === s) return { p: e.p, unc: true }; }
@@ -7582,7 +7586,7 @@ function huntBatch() {
                     rangeText = '⚡🦘 GLV-Kangaroo Hibrit [4-Way Endomorfizma O(√N)]';
                     document.getElementById('logRange').innerText = rangeText;
                 } else if (!isCircularMode && activeAlgo === 'KANGAROO_MONTGOMERY') {
-                    rangeText = '🦘⚡ SIMD Montgomery Herd [16-Way Batch O(√N)]';
+                    rangeText = '🦘⚡ SIMD Montgomery Herd [32-Way Batch O(√N)]';
                     document.getElementById('logRange').innerText = rangeText;
                 } else if (!isCircularMode && activeAlgo === 'KANGAROO_ROLLING') {
                     rangeText = '🦘🌀 Kayan Mikro-Pencere Doyum Ağı [O(√W) Sıçrama]';
@@ -8177,15 +8181,16 @@ const FastH = (function () {
     const hex = u => { let s = ''; for (let i = 0; i < u.length; i++) s += HX[u[i]]; return s; };
     const buf = new Uint8Array(65);
     // --- hedef havuzu: ilk 32 bit -> [{p, h}] ---
-    let map = null, sig = '', sigActive = null;
+    let map = null, sig = '', sigActive = null, wantUnc = false;
     function build(active) {
         const all = (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES : [];
         const s = all.length + '|' + (active ? active.addr : '');
-        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map();
+        if (map && s === sig && active === sigActive) return; sig = s; sigActive = active; map = new Map(); wantUnc = false;
         for (const p of [active, ...all]) {
             if (!p) continue;
             const h = String(p.targetHash160 || (typeof addressToHash160 === 'function' ? addressToHash160(p.addr) : '') || '').toLowerCase().replace(/^0x/, '');
             if (h.length !== 40) continue;
+            if (p.isUncompressed) wantUnc = true;
             const k = parseInt(h.slice(0, 8), 16) >>> 0; // sıra: aktif hedef önce gelir
             (map.get(k) || map.set(k, []).get(k)).push({ p, h });
         }
@@ -8204,11 +8209,14 @@ const FastH = (function () {
         const x = P.getX().toArray('be', 32), y = P.getY().toArray('be', 32);
         buf[0] = (y[31] & 1) ? 3 : 2; buf.set(x, 1);
         const hc = hash160(buf.subarray(0, 33));
-        buf[0] = 4; buf.set(y, 33);
-        const hu = hash160(buf);
+        let hu = null, lu = null;
+        if (wantUnc) { // sıkıştırılmamış hash yalnızca bir hedef sıkıştırılmamışsa hesaplanır (bulmaca adreslerinin tamamı compressed)
+            buf[0] = 4; buf.set(y, 33);
+            hu = hash160(buf);
+            lu = map.get(((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0);
+        }
         const kc = ((hc[0] << 24) | (hc[1] << 16) | (hc[2] << 8) | hc[3]) >>> 0;
-        const ku = ((hu[0] << 24) | (hu[1] << 16) | (hu[2] << 8) | hu[3]) >>> 0;
-        const lc = map.get(kc), lu = map.get(ku);
+        const lc = map.get(kc);
         if (!lc && !lu) return null;
         if (lc) { const s = hex(hc); for (const e of lc) if (e.h === s) return { p: e.p, unc: false }; }
         if (lu) { const s = hex(hu); for (const e of lu) if (e.h === s) return { p: e.p, unc: true }; }
@@ -8670,8 +8678,8 @@ const FastH = (function () {
         return [x3, y3];
     }
 
-    // 🚀 SİMETRİK ÇİFT YÖNLÜ (±iG) MONTGOMERY BATCH SABİTLERİ (128 Tablo × ±iG = Çapa Başına 255 Anahtar, 2x Hızlı Ters Alma & Maksimum Sıçrama Sıklığı!)
-    const MONT_STRIDE = 128;
+    // 🚀 SİMETRİK ÇİFT YÖNLÜ (±iG) MONTGOMERY BATCH SABİTLERİ (256 Tablo × ±iG = Çapa Başına 511 Anahtar, 2x Hızlı Ters Alma & Maksimum Sıçrama Sıklığı!)
+    const MONT_STRIDE = 256;
     const MONT_TABLE_G = [];
     let _montInitG = [SECP_Gx, SECP_Gy];
     MONT_TABLE_G.push(_montInitG);
@@ -8745,19 +8753,37 @@ const FastH = (function () {
         }
     };
 
+        const _px64 = new BigUint64Array(4), _px32 = new Uint32Array(_px64.buffer);
+    const _LE_OK = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1; // little-endian değilse eski yola düşer
+
     function fastPointToCompressedHash160WA(ptX, ptY) {
         const pfx = (ptY & 1n) === 0n ? 0x02 : 0x03;
 
         // 1. Tek Blok (64-Byte) 33-Byte Sıkıştırılmış Açık Anahtar SHA-256 Hazırlığı
-        _SHA256_W[0] = (pfx << 24) | Number((ptX >> 232n) & 0xFFFFFFn);
-        _SHA256_W[1] = Number((ptX >> 200n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[2] = Number((ptX >> 168n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[3] = Number((ptX >> 136n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[4] = Number((ptX >> 104n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[5] = Number((ptX >> 72n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[6] = Number((ptX >> 40n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[7] = Number((ptX >> 8n) & 0xFFFFFFFFn) | 0;
-        _SHA256_W[8] = (Number(ptX & 0xFFn) << 24) | 0x00800000;
+        if (_LE_OK) {
+            // 4 BigInt işlemiyle 32-bit kelimeler (eskiden 16 BigInt kaydırma/maskeleme); sonuç birebir aynı
+            _px64[0] = ptX; _px64[1] = ptX >> 64n; _px64[2] = ptX >> 128n; _px64[3] = ptX >> 192n;
+            const x0 = _px32[7], x1 = _px32[6], x2 = _px32[5], x3 = _px32[4], x4 = _px32[3], x5 = _px32[2], x6 = _px32[1], x7 = _px32[0];
+            _SHA256_W[0] = (pfx << 24) | (x0 >>> 8);
+            _SHA256_W[1] = (x0 << 24) | (x1 >>> 8);
+            _SHA256_W[2] = (x1 << 24) | (x2 >>> 8);
+            _SHA256_W[3] = (x2 << 24) | (x3 >>> 8);
+            _SHA256_W[4] = (x3 << 24) | (x4 >>> 8);
+            _SHA256_W[5] = (x4 << 24) | (x5 >>> 8);
+            _SHA256_W[6] = (x5 << 24) | (x6 >>> 8);
+            _SHA256_W[7] = (x6 << 24) | (x7 >>> 8);
+            _SHA256_W[8] = (x7 << 24) | 0x00800000;
+        } else {
+            _SHA256_W[0] = (pfx << 24) | Number((ptX >> 232n) & 0xFFFFFFn);
+            _SHA256_W[1] = Number((ptX >> 200n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[2] = Number((ptX >> 168n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[3] = Number((ptX >> 136n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[4] = Number((ptX >> 104n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[5] = Number((ptX >> 72n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[6] = Number((ptX >> 40n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[7] = Number((ptX >> 8n) & 0xFFFFFFFFn) | 0;
+            _SHA256_W[8] = (Number(ptX & 0xFFn) << 24) | 0x00800000;
+        }
         _SHA256_W[9] = 0; _SHA256_W[10] = 0; _SHA256_W[11] = 0;
         _SHA256_W[12] = 0; _SHA256_W[13] = 0; _SHA256_W[14] = 0;
         _SHA256_W[15] = 264; // 33 byte * 8 bit = 264 bit
@@ -9299,15 +9325,15 @@ const FastH = (function () {
         st.stepCount++;
         // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (tüm aralığa eşit yayılım), aralarda Lévy mikro-uçuşu
         if (!st.seen || st.stepCount % 64n === 1n) {
-            const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
-            st.pos = s + ((span * frac) >> 64n);
+            if (st.anchorSpan !== span) { st.anchorSpan = span; st.anchorMult = ulamCoprimeMultiplier(span); }
+            st.pos = s + (((st.stepCount >> 6n) * st.anchorMult) % span);   // tam çözünürlük (span 2^64'ü aşsa da düşük bitler kaybolmaz)
             st.seen = new Set();
         }
         const u = (st.stepCount * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFn;
         const uFloat = Number(u) / 4294967296.0 + 0.0000001;
         const factor = Math.min(Math.pow(uFloat, -0.75), 1000.0);      // Pareto-Lévy kuyruğu
         const baseJump = span > 1048576n ? (span / 1048576n) : 1n;
-        const jump = BigInt(Math.max(1, Math.floor(Number(baseJump) * factor)));
+        const jump = (() => { const j = (baseJump * BigInt(Math.max(1, Math.floor(factor * 4096)))) >> 12n; return j > 0n ? j : 1n; })();   // BigInt: düşük bitler korunur
         const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
         let p = st.pos + dir * jump;
         for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
@@ -9377,15 +9403,13 @@ const FastH = (function () {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const span = (e > s) ? (e - s + 1n) : 1n;
-        if (workerUlamStep === 1n) {
-            workerUlamStep = 1n + BigInt((typeof workerId !== 'undefined' ? workerId : 0) * 104729);
-        }
+        if (span <= 1n) return s;
+        if (workerUlamStep === 1n) { workerUlamStep = 1n + BigInt((typeof workerId !== 'undefined' ? workerId : 0) * 104729); }
+        if (workerUlamSpan !== span) { workerUlamSpan = span; workerUlamMult = ulamCoprimeMultiplier(span); }
         workerUlamStep++;
-        const n = workerUlamStep;
-        // Euler polinomu; 128-bit altın oran çarpanı ile tüm aralığa yayılır (küçük n'de başlangıçta sıkışmaz)
-        const quad = (4n * n * n + 2n * n + 41n);
-        const offset = (quad * 0x9E3779B97F4A7C15F39CC0605CEDC835n) % span;
-        return s + offset;
+        // Tek (span ile aralarında asal) çarpan: n·m mod span her kalıntı sınıfını tam bir kez gezer.
+        // (Çift sayılı bir 2^k aralıkta tek bir polinom/çarpan paritesi korur: 4n²+2n+41 hep TEK olduğundan yarısı hiç gezilmezdi.)
+        return s + ((workerUlamStep * workerUlamMult) % span);
     }
 
     let workerWeakCounter = 0;
@@ -9641,6 +9665,9 @@ const FastH = (function () {
     let workerKangarooLastSpan = 0n;
     let workerKangarooLastAlgo = null;
     let workerKangarooLastProgressPost = 0;
+    let workerKangarooLastTrapPost = 0;
+    let workerDynamicKangarooSteps = 2048;
+    let workerKangarooCalibCounter = 0;
     let workerGeneralLastProgressPost = 0;
     let workerGeneralAccumulatedCount = 0;
 
@@ -9780,18 +9807,24 @@ const FastH = (function () {
         if (!isWorking) return;
         if (!workerKangarooEngine || !workerKangarooEngine.isInitialized) return;
 
-        const res = workerKangarooEngine.step(256);
-        const delta = (res && res.stepsDelta !== undefined) ? res.stepsDelta : 256;
+        const batchStartTime = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+        const stepsToRun = workerDynamicKangarooSteps || 2048;
+        const res = workerKangarooEngine.step(stepsToRun);
+        const delta = (res && res.stepsDelta !== undefined) ? res.stepsDelta : stepsToRun;
         workerKangarooStepCount += delta;
 
+        const now = Date.now();
         if (workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0) {
-            const traps = workerKangarooEngine.newTrapsToBroadcast.slice();
-            workerKangarooEngine.newTrapsToBroadcast = [];
-            self.postMessage({
-                type: 'kangaroo_traps',
-                workerId: workerId,
-                traps: traps
-            });
+            if (now - workerKangarooLastTrapPost >= 80 || workerKangarooEngine.newTrapsToBroadcast.length >= 25) {
+                workerKangarooLastTrapPost = now;
+                const traps = workerKangarooEngine.newTrapsToBroadcast.slice();
+                workerKangarooEngine.newTrapsToBroadcast = [];
+                self.postMessage({
+                    type: 'kangaroo_traps',
+                    workerId: workerId,
+                    traps: traps
+                });
+            }
         }
 
         if (res.status === 'WIN' && res.solvedKey) {
@@ -9829,7 +9862,6 @@ const FastH = (function () {
             return;
         }
 
-        const now = Date.now();
         if (now - workerKangarooLastProgressPost >= 100) {
             workerKangarooLastProgressPost = now;
             const wTraps = (workerKangarooEngine.tameTraps.size + workerKangarooEngine.wildTraps.size);
@@ -9859,7 +9891,7 @@ const FastH = (function () {
                             : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_GLV')
                                 ? ('⚡🦘 GLV-Kangaroo [' + (workerKangarooEngine ? workerKangarooEngine.role : '4-Way GLV') + ' O(√N)]')
                                 : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_MONTGOMERY')
-                                    ? ('⚡🚀 SIMD Montgomery [' + (workerKangarooEngine ? workerKangarooEngine.role : '16-Herd') + ' O(√N)]')
+                                    ? ('⚡🚀 SIMD Montgomery [' + (workerKangarooEngine ? workerKangarooEngine.role : '32-Herd') + ' O(√N)]')
                                     : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_ROLLING')
                                         ? ('🦘🌀 Kayan Mikro-Pencere [' + (workerKangarooEngine ? workerKangarooEngine.role : 'O(√W) Doyum') + ']')
                                         : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_ANCHOR')
@@ -9869,6 +9901,17 @@ const FastH = (function () {
                                                 : ('🦘 Pollard Kangaroo [' + (workerKangarooEngine ? workerKangarooEngine.role : 'Sürü') + ' O(√N)]'))))))))
             });
             workerKangarooStepCount = 0;
+        }
+
+        // ⚡ OTO-KALİBRASYON: Kangaroo batch süresini dinamik olarak 10-22ms aralığında optimize et
+        const batchDuration = ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - batchStartTime;
+        workerKangarooCalibCounter++;
+        if (workerKangarooCalibCounter % 4 === 0) {
+            if (batchDuration < 10) {
+                workerDynamicKangarooSteps = Math.min(16384, workerDynamicKangarooSteps + 1024);
+            } else if (batchDuration > 22) {
+                workerDynamicKangarooSteps = Math.max(512, Math.round(workerDynamicKangarooSteps * 0.8));
+            }
         }
 
         if (isWorking) {
@@ -10691,7 +10734,15 @@ function getWorkerBlobUrl() {
             '    0x510E527FADE682D1n,\n' +
             '    0x9B05688C2B3E6C1Fn,\n' +
             '    0x1F83D9ABFB41BD6Bn,\n' +
-            '    0x5BD0AAFF55490AEFn\n' +
+            '    0x5BD0AAFF55490AEFn,\n' +
+            '    0xCBBB9D5DC1059ED8n,\n' +
+            '    0x629A292A367CD507n,\n' +
+            '    0x9159015A3070DD17n,\n' +
+            '    0x152FECD8F70E5939n,\n' +
+            '    0x67332667FFC00B31n,\n' +
+            '    0x8EB44A8768581511n,\n' +
+            '    0xDB0C2E0D64F98FA7n,\n' +
+            '    0x47B5481DBEFA4FA4n\n' +
             '];\n' +
             'self.SECP256K1_N = SECP256K1_N;\n' +
             'self.SECP256K1_P = SECP256K1_P;\n' +

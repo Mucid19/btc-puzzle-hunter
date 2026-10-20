@@ -71,7 +71,10 @@ class RealPollardKangaroo {
         const stepBits = Math.ceil(spanBits / 2) + 1;               // ~ log2(2·sqrt(N))
         const lo = stepBits + 2 - Math.floor(Math.log2(Math.max(2, cap))); // beklenen DP sayısı depoya sığsın (~3x pay)
         const hi = stepBits - 8;                                    // DP'ye yürüme maliyeti toplamı ezmesin
-        return Math.max(2, Math.min(lo, hi));
+        // İsteğe bağlı üst sınır (yalnızca GÖSTERGE amaçlı): window.KANGAROO_DP_MAX = 19. Varsayılan: sınır yok.
+        // ⚠️ Sabit 19 üst sınırı #66+ bulmacalarda tuzak sayısını depo sınırının üstüne çıkarıp tespiti bozuyordu.
+        const userCap = (typeof window !== 'undefined' && Number(window.KANGAROO_DP_MAX) >= 2) ? Math.floor(Number(window.KANGAROO_DP_MAX)) : 99;
+        return Math.max(2, Math.min(userCap, Math.min(lo, hi)));
     }
 
     static modInvP(a) {
@@ -154,8 +157,8 @@ class RealPollardKangaroo {
         this.dpMask = 0xFn;
         this.dpBits = 4;
 
-        // 🚀 SIMD ÇOKLU KANGARU SÜRÜSÜ (16-WAY MONTGOMERY BATCH HERD)
-        this.herdSize = 16;
+        // 🚀 SIMD ÇOKLU KANGARU SÜRÜSÜ (32-WAY MONTGOMERY BATCH HERD)
+        this.herdSize = 32;
         this.kangX = new Array(this.herdSize);
         this.kangY = new Array(this.herdSize);
         this.kangDist = new Array(this.herdSize);
@@ -277,7 +280,7 @@ class RealPollardKangaroo {
     calibrateJumpsAndDP(span) {
         const effSpan = (span > 0n) ? span : 1n;
         const sqrtSpan = this.bigIntSqrt(effSpan);
-        const meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
+        let meanJump = (sqrtSpan / 2n) > 0n ? (sqrtSpan / 2n) : 1n;
         const JUMP_COUNT = 64;
 
         this.jumps = [];
@@ -350,6 +353,12 @@ class RealPollardKangaroo {
             }
         }
 
+        // 📐 Sürü boyutuna göre ortalama sıçrama (ölçülmüş): 32'li sürüde K≈2,5–3,5.
+        //    #145 özel modu ve Kronecker kafesi kendi ayarlarını korur.
+        if (!isHyperGlv145 && !isKroneckerLattice) {
+            const scaledMean = (sqrtSpan * 5n);
+            meanJump = scaledMean > 0n ? scaledMean : 1n;
+        }
         const targetTotalSum = meanJump * BigInt(JUMP_COUNT);
         for (let i = 0; i < JUMP_COUNT; i++) {
             let jVal = (rawWeights[i] * targetTotalSum) / (sumWeights > 0n ? sumWeights : 1n);
@@ -372,31 +381,17 @@ class RealPollardKangaroo {
         } else if (isKroneckerLattice) {
             // 🌟 Kronecker 8D Kafes için analitik Poisson DP Maskesi
             const spanBits = effSpan.toString(2).length;
-            if (spanBits <= 40) {
-                this.dpMask = 0x3n;
-                this.dpBits = 2;
-            } else if (spanBits <= 64) {
-                // #57 vb. için 3 bit (her 8 adımda tuzak) çoklu sekmede taşmaya yol açıyordu
-                this.dpMask = 0xFFn;
-                this.dpBits = 8;
-            } else if (spanBits <= 96) {
-                this.dpMask = 0xFn;
-                this.dpBits = 4;
-            } else if (spanBits <= 130) {
-                this.dpMask = 0x1Fn;
-                this.dpBits = 5;
-            } else {
-                this.dpMask = 0x3Fn;
-                this.dpBits = 6;
-            }
+            // Taban 6 bit; >40 bitlik aralıklarda adaptiveDpBits (aralık + tuzak sınırına göre) bunu yükseltir.
+            this.dpMask = 0x3Fn;
+            this.dpBits = 6;
         } else {
             const sqrtBits = sqrtSpan.toString(2).length;
             if (sqrtBits <= 6) {
-                this.dpBits = 2;
+                this.dpBits = 6;
             } else if (sqrtBits <= 10) {
-                this.dpBits = Math.max(3, sqrtBits - 3);
+                this.dpBits = Math.max(6, sqrtBits - 2);
             } else if (sqrtBits <= 20) {
-                this.dpBits = Math.max(3, Math.min(6, Math.floor(sqrtBits * 0.30)));
+                this.dpBits = Math.max(6, Math.min(8, Math.floor(sqrtBits * 0.30)));
             } else {
                 // ⚠️ Alt sınır 8 bit: #57 gibi orta aralıklarda eski formül 4 bit (her 16 adımda 1 tuzak) veriyordu
                 // ve çoklu sekmede BroadcastChannel'ı boğup tarayıcıyı çökertiyordu. #145 için değer değişmez (8).
@@ -756,7 +751,7 @@ class RealPollardKangaroo {
      * 🚀 SIMD MONTGOMERY BATCH POINT ADDITION STEP
      * 32 kanguruyu aynı anda tek bir modüler ters alma ile zıplatır.
      */
-    step(steps = 256) {
+    step(steps = 2048) {
         if (!this.isInitialized || !this.targetPoint) {
             return { status: 'NO_TARGET', solvedKey: null };
         }
