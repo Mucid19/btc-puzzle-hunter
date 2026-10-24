@@ -48,7 +48,7 @@ if (typeof CryptoJS === 'undefined' || typeof elliptic === 'undefined') {
         w[totalWords - 2] = Math.floor(bitLen / 0x100000000) >>> 0;
 
         let H0 = 0x6a09e667, H1 = 0xbb67ae85, H2 = 0x3c6ef372, H3 = 0xa54ff53a;
-        let H4 = 0x510e527f, H5 = 0x9b05688c, H6 = 0x1f83d9ab, H7 = 0x5bd0aaff;
+        let H4 = 0x510e527f, H5 = 0x9b05688c, H6 = 0x1f83d9ab, H7 = 0x5be0cd19;
         const W = new Uint32Array(64);
 
         for (let chunk = 0; chunk < totalWords; chunk += 16) {
@@ -2513,7 +2513,7 @@ self.onmessage = async function(e) {
                 if (p.targetHash160) {
                     const cleanH = p.targetHash160.trim().toLowerCase();
                     workerTargetMap.set(cleanH, p);
-                    workerTargetWords0.add(parseInt(cleanH.substr(0, 8), 16) | 0);
+                    workerTargetWords0.add(parseInt(cleanH.substr(0, 8), 16) >>> 0);   // işaretsiz: arama tarafı (rw[0] >>> 0) ile aynı olmalı
                 }
             }
         }
