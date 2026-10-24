@@ -37,7 +37,7 @@
 }).call(typeof window !== 'undefined' ? window : this);
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
-    <script src="kangaroo_engine.js"></script>
+    <script src="kangaroo_engine.js?v=4xsimd"></script>
     <!-- WebGPU Kangaroo Engine — gerçek GPU Pollard's Kangaroo compute shader O(√N) -->
     <script src="webgpu_kangaroo.js"></script>
     <!-- WebGPU Engine — gerçek GPU compute shader (WGSL 1.0 uyumlu) -->
@@ -1374,9 +1374,9 @@
                 <!-- DONANIM / İŞLEMCİ ÇEKİRDEK & WEBGPU SEÇİCİ -->
                 <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="flex:1.2; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı & WebGPU Seçimi">
                     <option value="AUTO_SWARM" selected>⚡ Oto Sürü Dengele</option>
-                    <option value="GPU_ECO">🟢 GPU (Ultra Hafif / Sessiz — 2K Batch / 8ms)</option>
-                    <option value="GPU_BALANCED">🟡 GPU (Dengeli Yüksek Hız — 8K Batch / 2ms)</option>
-                    <option value="GPU_MAX">🔴 GPU (Maksimum Turbo — 16K Batch / 0ms)</option>
+                    <option value="GPU_ECO">🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)</option>
+                    <option value="GPU_BALANCED">🟡 GPU (Dengeli / Akıcı - 128 / 35ms)</option>
+                    <option value="GPU_MAX">🔴 GPU (Tam Güç - 256 / 15ms)</option>
                     <option value="4">🚀 4 Çekirdek</option>
                     <option value="8">⚡ 8 Çekirdek</option>
                     <option value="12">🔥 12 Çekirdek</option>
@@ -1399,12 +1399,14 @@
                     <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Standart & Fizik Arama Algoritmaları">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
                         <option value="AUTO" selected>🔄 Oto (Dönüşümlü Hibrit)</option>
+                        <option value="SEQUENTIAL">➡️ Ardışık Dilim (Örtüşmesiz, Hızlı Çapa)</option>
                         <option value="SCRAMBLED_SOBOL">🔀 Scrambled Sobol (Yüksek Entropi)</option>
                         <option value="SOBOL">📐 Sobol Quasi (Q-RNG Boşluksuz)</option>
                         <option value="KRONECKER_LATTICE">🌟📐 Kronecker Kafesi (Homojen)</option>
                         <option value="HALTON">🎲 Halton (Çok-Boyutlu Dizi)</option>
                         <option value="WEYL_GOLDEN">✨ Weyl Altın Kafesi (Homojen)</option>
                         <option value="COPRIME_STRIDE">🔢 Asal Modüler Adımlama</option>
+                        <option value="ALIGNED_PERM">🧩 Hizalı Permütasyon (Sıfır Tekrar)</option>
                         <option value="CHAOS">🌀 Deterministik Kaos (Lojistik Harita)</option>
                         <option value="HILBERT">🌀 Hilbert Fraktal Eğrisi (2B Uzay)</option>
                         <option value="RANDOM">🎲 Kriptografik Rastgele (CSPRNG)</option>
@@ -1421,6 +1423,28 @@
 
                 <!-- ENTROPİ DERİNLİĞİ (⚡ Sembollü) -->
                 
+
+                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+
+                <!-- 🎯 STANDART ALGORİTMA BAŞLANGIÇ VE OTO GEZGİN SEÇİCİ -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1.5; min-width:0;" title="Standart ve Fizik Algoritmaları İçin Başlangıç & Tohum Işınlama">
+                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Başlangıç Noktası">🎯</span>
+                    <select id="stdBaseFocusSelect" class="range-select" style="flex:1.2; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#a855f7;" onchange="applyStdBaseStart(this.value)">
+                        <option value="AUTO_HOP">🔄 Oto Gezgin (Pusu)</option>
+                        <option value="START_0" selected>🟢 Baştan Başla (%0)</option>
+                        <option value="START_50">⚖️ Ortadan Başla (%50)</option>
+                        <option value="START_382">🌟 Altın-1'den Başla (%38.2)</option>
+                        <option value="START_618">🌟 Altın-2'den Başla (%61.8)</option>
+                        <option value="START_85">🔴 Üstten Başla (%85)</option>
+                    </select>
+                    <!-- ⏱️ STANDART GEZGİN SÜRE SEÇİCİ -->
+                    <select id="stdHopDurationSelect" class="range-select" style="flex:0.8; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#a855f7; display:none;" onchange="onStdHopDurationChange(this.value)" title="Algoritmanın her stratejik merkezde kaç dakika tarama yapacağı">
+                        <option value="60">⏱️ 1 dk</option>
+                        <option value="180">⏱️ 3 dk</option>
+                        <option value="300" selected>⏱️ 5 dk</option>
+                        <option value="600">⏱️ 10 dk</option>
+                    </select>
+                </div>
 
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
@@ -1444,6 +1468,7 @@
                     <select id="kangarooAlgoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#06b6d4;" onchange="onAlgoSelectChange(this.value)">
                         <optgroup label="Klasik & Açık Anahtarlı Kanguru (O(√N))" style="background:#0f172a; color:#38bdf8;">
                             <option value="KANGAROO" selected>🦘 Pollard's Kangaroo</option>
+                        <option value="KANGAROO_ALIGNED" style="color:#a78bfa; font-weight:bold;">🦘🧩 Hizalı Sürü Kangaroo (Weyl Dağılımlı Başlangıç, K≈2)</option>
                             <option value="GLV_LATTICE_2D">🌐⚡ 2D Latis GLV Kafesi (Gaudry-Schost)</option>
                             <option value="KANGAROO_KRONECKER" style="color:#f59e0b; font-weight:bold;">⚡ 🦘 Kronecker-Kangaroo (İrrasyonel Kafes + Tam Homojen Eşdağılım)</option>
                             <option value="KANGAROO_SOBOL">🦘📐 Sobol-Kangaroo Hibrit</option>
@@ -1465,10 +1490,34 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Kanguru Sürü Rolü: Karışık, Evcil, Vahşi veya Çiftli">
                     <span style="font-size:11px; color:#10b981; flex-shrink:0; line-height:1;" title="Sürü Rolü">👥</span>
                     <select id="kangarooRoleSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#10b981;" onchange="onKangarooRoleChange(this.value)">
-                        <option value="MIXED" selected>🦘 Karışık (Oto)</option>
-                        <option value="TAME">🟢 Evcil (Tame)</option>
-                        <option value="WILD">🔴 Vahşi (Wild)</option>
-                        <option value="DUAL">⚡ Çiftli (Dual)</option>
+                        <option value="DUAL" selected>✨ Çiftli Dilim (Dual: Tame+Wild)</option>
+                        <option value="MIXED">🔀 Otomatik Sürü (Dual)</option>
+                        <option value="TAME">🟢 Evcil (Sadece Tame)</option>
+                        <option value="WILD">🔴 Vahşi (Sadece Wild)</option>
+                    </select>
+                </div>
+
+                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+
+                <!-- 🎯 BAŞLANGIÇ STRATEJİSİ SEÇİCİ & PUSU SÜRESİ -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:1.5; min-width:0;" title="Evcil Kanguru Başlangıç / Pusu Stratejisi">
+                    <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Başlangıç Noktası">🎯</span>
+                    <select id="kangarooBaseStrategySelect" class="range-select" style="flex:1.2; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onKangarooBaseStrategyChange(this.value)">
+                        <option value="AUTO_HOP">🔄 Oto Pusu</option>
+                        <option value="AUTO" selected>🧠 Oto Kafes</option>
+                        <option value="CENTER">⚖️ Merkez (%50)</option>
+                        <option value="GOLDEN_LOW">🌟 Altın-1 (%38.2)</option>
+                        <option value="GOLDEN_HIGH">🌟 Altın-2 (%61.8)</option>
+                        <option value="LOW_BASE">🟢 Alt Taban (%10)</option>
+                        <option value="HIGH_ROOF">🔴 Üst Tavan (%90)</option>
+                    </select>
+                    <!-- ⏱️ PUSU BEKLEME SÜRESİ SEÇİCİ -->
+                    <select id="kangarooHopDurationSelect" class="range-select" style="flex:0.8; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b; display:none;" onchange="onKangarooHopDurationChange(this.value)" title="Her stratejik durakta kaç dakika pusu kurulacağı">
+                        <option value="60">⏱️ 1 dk</option>
+                        <option value="180">⏱️ 3 dk</option>
+                        <option value="300" selected>⏱️ 5 dk (#140)</option>
+                        <option value="600">⏱️ 10 dk</option>
+                        <option value="900">⏱️ 15 dk</option>
                     </select>
                 </div>
 
@@ -1490,14 +1539,14 @@
             <div class="sweep-sub-row">
                 <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
                     <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn active" style="background:#059669; color:#ffffff; box-shadow:0 0 8px rgba(5,150,105,0.6);" onclick="toggleSpeedMode('AUTO')" title="🧠 Akıllı Otomatik Hız (Bulmaca bitine ve algoritmaya göre dinamik kalibre edilir)">🧠 Oto</button>
+                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn" onclick="toggleSpeedMode('AUTO')" title="🧠 Otomatik Kaydıraç Taraması: Aramayı başlattığınızda uzayı otomatik tarar">🧠 Oto</button>
                         <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Hızlı (120 ms / %0.20 Adım)">⚡ Hızlı</button>
                         <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Orta (200 ms / %0.10 Adım)">⏱️ Orta</button>
                         <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Yavaş (350 ms / %0.05 Adım)">🐢 Yavaş</button>
                         <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Mikro (600 ms / %0.02 Adım)">🔬 Mikro</button>
                     </div>
                     <div id="groupSliderRegime" class="auto-slider-speed-group">
-                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn active" style="background:#059669; color:#ffffff; box-shadow:0 0 8px rgba(5,150,105,0.6);" onclick="toggleRegimeAuto()" title="🧠 Akıllı Otomatik Rejim (Bulmaca ve algoritmaya göre dinamik rezonans/weyl/karekök) — açıkken tekrar basınca kapanır ve o an seçili rejime sabitlenir">🧠 Oto</button>
+                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn" onclick="toggleRegimeAuto()" title="🧠 Akıllı Matematiksel Rejim: Bulmaca ve algoritmaya göre dinamik rezonans/weyl/karekök seçer">🧠 Akıllı</button>
                         <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)">🦚 √N</button>
                         <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)">🌀 Weyl</button>
                         <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Kangaroo Doppler kilidi & ayak izi koruma)">🦘 Rzns</button>
@@ -1883,7 +1932,14 @@ function updateSliderUI() {
             badge.style.background = '#475569';
         } else {
             const hexDiffStr = rangeDiff.toString(16);
-            badge.innerText = `🎯 Kapsanan: 0x${hexDiffStr.length <= 12 ? hexDiffStr : hexDiffStr.substring(0, 10) + '...'}`;
+            const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+            let sliceNote = '';
+            if (part && part.isPartitioned && total > 0n) {
+                const sPct = ((Number((part.partStart - tStart) * 1000n / total)) / 10).toFixed(0);
+                const ePct = ((Number((part.partEnd - tStart) * 1000n / total)) / 10).toFixed(0);
+                sliceNote = ` [Dilim ${part.tabIndex + 1}/${part.totalTabs}: %${sPct}-%${ePct}]`;
+            }
+            badge.innerText = `🎯 Kapsanan: 0x${hexDiffStr.length <= 12 ? hexDiffStr : hexDiffStr.substring(0, 10) + '...'}${sliceNote}`;
             badge.style.background = rangeDiff <= 0x1000000n ? '#be185d' : (rangeDiff <= (total / 100n) ? '#0284c7' : '#0369a1');
         }
     }
@@ -1913,28 +1969,53 @@ function onHexSliderChange(type) {
         let minStep = isNaN(parseInt(minEl.value)) ? 0 : parseInt(minEl.value);
         let maxStep = isNaN(parseInt(maxEl.value)) ? 1000000000000 : parseInt(maxEl.value);
 
+        // 🌐 SÜRÜ DİLİM SINIRLARI: Sekmenin kendi payına düşen dilimi aşması kesin olarak engellenir
+        const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+        const limitMinStep = (part && part.isPartitioned) ? Number(part.partMinStep) : 0;
+        const limitMaxStep = (part && part.isPartitioned) ? Number(part.partMaxStep) : 1000000000000;
+
+        if (minStep < limitMinStep) {
+            minStep = limitMinStep;
+            minEl.value = minStep;
+        }
+        if (maxStep > limitMaxStep) {
+            maxStep = limitMaxStep;
+            maxEl.value = maxStep;
+        }
+
         const isCosetActive = (typeof isPrefixFilterActive !== 'undefined' && isPrefixFilterActive && typeof isPrefixAutoJump !== 'undefined' && isPrefixAutoJump);
         const minGap = isCosetActive ? 50000000000 : 100000000;
 
         if (minStep >= maxStep || (maxStep - minStep) < minGap) {
             if (type === 'MIN') {
-                minStep = Math.max(0, maxStep - minGap);
+                minStep = Math.max(limitMinStep, maxStep - minGap);
                 minEl.value = minStep;
             } else {
-                maxStep = Math.min(1000000000000, minStep + minGap);
+                maxStep = Math.min(limitMaxStep, minStep + minGap);
                 maxEl.value = maxStep;
             }
         }
 
+        const partStart = (part && part.isPartitioned) ? part.partStart : tStart;
+        const partEnd   = (part && part.isPartitioned) ? part.partEnd   : tEnd;
+
         sliderMinHex = tStart + (total * BigInt(minStep) / 1000000000000n);
         sliderMaxHex = tStart + (total * BigInt(maxStep) / 1000000000000n);
+
+        if (sliderMinHex < partStart) sliderMinHex = partStart;
+        if (sliderMaxHex > partEnd)   sliderMaxHex = partEnd;
+
         if (sliderMaxHex <= sliderMinHex) {
-            if (sliderMinHex + 1n <= tEnd) {
+            if (sliderMinHex + 1n <= partEnd) {
                 sliderMaxHex = sliderMinHex + 1n;
             } else {
-                sliderMaxHex = tEnd;
-                sliderMinHex = tEnd > tStart ? tEnd - 1n : tStart;
+                sliderMaxHex = partEnd;
+                sliderMinHex = partEnd > partStart ? partEnd - 1n : partStart;
             }
+        }
+
+        if (part && part.isPartitioned) {
+            window._userAdjustedSwarmPartition = true;
         }
 
         updateSliderUI(); broadcastWorkerConfig();
@@ -1957,47 +2038,57 @@ function onHexSliderInputChange(type) {
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
 
+    const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+    const limitStart = (part && part.isPartitioned) ? part.partStart : tStart;
+    const limitEnd   = (part && part.isPartitioned) ? part.partEnd   : tEnd;
+    const limitMinStep = (part && part.isPartitioned) ? Number(part.partMinStep) : 0;
+    const limitMaxStep = (part && part.isPartitioned) ? Number(part.partMaxStep) : 1000000000000;
+
     isSliderSyncBusy = true;
     try {
         if (type === 'MIN' && hexMinInp) {
             let raw = hexMinInp.value.trim().toLowerCase().replace(/^0x/, '').replace(/[^0-9a-f]/g, '');
             if (raw) {
                 let val = BigInt('0x' + raw);
-                if (val < tStart) val = tStart;
-                if (val > tEnd) val = tEnd;
+                if (val < limitStart) val = limitStart;
+                if (val > limitEnd) val = limitEnd;
                 if (sliderMaxHex !== null && val >= sliderMaxHex) {
-                    val = sliderMaxHex > tStart ? sliderMaxHex - 1n : tStart;
+                    val = sliderMaxHex > limitStart ? sliderMaxHex - 1n : limitStart;
                 }
                 sliderMinHex = val;
                 if (minEl && total > 0n) {
                     const step = Number(((sliderMinHex - tStart) * 1000000000000n) / total);
-                    minEl.value = Math.max(0, Math.min(1000000000000, Math.round(step)));
+                    minEl.value = Math.max(limitMinStep, Math.min(limitMaxStep, Math.round(step)));
                 }
             }
         } else if (type === 'MAX' && hexMaxInp) {
             let raw = hexMaxInp.value.trim().toLowerCase().replace(/^0x/, '').replace(/[^0-9a-f]/g, '');
             if (raw) {
                 let val = BigInt('0x' + raw);
-                if (val > tEnd) val = tEnd;
-                if (val < tStart) val = tStart;
+                if (val > limitEnd) val = limitEnd;
+                if (val < limitStart) val = limitStart;
                 if (sliderMinHex !== null && val <= sliderMinHex) {
-                    val = sliderMinHex < tEnd ? sliderMinHex + 1n : tEnd;
+                    val = sliderMinHex < limitEnd ? sliderMinHex + 1n : limitEnd;
                 }
                 sliderMaxHex = val;
                 if (maxEl && total > 0n) {
                     const step = Number(((sliderMaxHex - tStart) * 1000000000000n) / total);
-                    maxEl.value = Math.max(0, Math.min(1000000000000, Math.round(step)));
+                    maxEl.value = Math.max(limitMinStep, Math.min(limitMaxStep, Math.round(step)));
                 }
             }
         }
 
         if (sliderMaxHex <= sliderMinHex) {
-            if (sliderMinHex + 1n <= tEnd) {
+            if (sliderMinHex + 1n <= limitEnd) {
                 sliderMaxHex = sliderMinHex + 1n;
             } else {
-                sliderMaxHex = tEnd;
-                sliderMinHex = tEnd > tStart ? tEnd - 1n : tStart;
+                sliderMaxHex = limitEnd;
+                sliderMinHex = limitEnd > limitStart ? limitEnd - 1n : limitStart;
             }
+        }
+
+        if (part && part.isPartitioned) {
+            window._userAdjustedSwarmPartition = true;
         }
 
         if (typeof isPrefixAutoJump !== 'undefined' && isPrefixAutoJump && typeof ensureCosetMinimumSliderRange === 'function') {
@@ -2014,22 +2105,135 @@ function onHexSliderInputChange(type) {
     }
 }
 
+let stdAlgorithmStartOffsetRatio = 0.0; // 0.0 = Baştan, 0.5 = Ortadan, 0.382 = Altın-1
+let stdAutoHopTimer = null;
+let stdAutoHopIndex = 0;
+let stdHopDurationSec = 300; // Varsayılan 5 dakika
+const STD_HOP_CHAIN = [
+    { mode: 'START_50', ratio: 0.50, label: 'Ortadan Başla (%50)' },
+    { mode: 'START_382', ratio: 0.382, label: 'Altın-1\'den Başla (%38.2)' },
+    { mode: 'START_618', ratio: 0.618, label: 'Altın-2\'den Başla (%61.8)' },
+    { mode: 'START_0', ratio: 0.0, label: 'Baştan Başla (%0)' },
+    { mode: 'START_85', ratio: 0.85, label: 'Üstten Başla (%85)' }
+];
+
+function onStdHopDurationChange(secVal) {
+    stdHopDurationSec = parseInt(secVal) || 300;
+    if (typeof addLogMsg === 'function') {
+        addLogMsg(`⏱️ [Standart Gezgin Süresi] Her merkezde tarama süresi: ${Math.round(stdHopDurationSec / 60)} dakika olarak ayarlandı.`, '#a855f7');
+    }
+    const sel = document.getElementById('stdBaseFocusSelect');
+    if (sel && sel.value === 'AUTO_HOP') {
+        startStdAutoHop();
+    }
+}
+
+function applyStdBaseStart(startMode) {
+    const durSel = document.getElementById('stdHopDurationSelect');
+    if (durSel) {
+        durSel.style.display = (startMode === 'AUTO_HOP') ? 'inline-block' : 'none';
+    }
+
+    if (stdAutoHopTimer) {
+        clearInterval(stdAutoHopTimer);
+        stdAutoHopTimer = null;
+    }
+
+    if (startMode === 'AUTO_HOP') {
+        startStdAutoHop();
+    } else {
+        applySingleStdOffset(startMode);
+    }
+}
+
+function startStdAutoHop() {
+    if (stdAutoHopTimer) {
+        clearInterval(stdAutoHopTimer);
+        stdAutoHopTimer = null;
+    }
+    stdAutoHopIndex = 0;
+    executeStdHopStep(0);
+    const ms = stdHopDurationSec * 1000;
+    stdAutoHopTimer = setInterval(() => {
+        stdAutoHopIndex = (stdAutoHopIndex + 1) % STD_HOP_CHAIN.length;
+        executeStdHopStep(stdAutoHopIndex);
+    }, ms);
+    if (typeof addLogMsg === 'function') {
+        addLogMsg(`🔄 [Standart Gezgin] Otomatik tohum rotasyonu başlatıldı! Her ${Math.round(stdHopDurationSec / 60)} dakikada bir tohum ışınlanacak (Uzay bölünmez).`, '#a855f7');
+    }
+}
+
+function executeStdHopStep(idx) {
+    const item = STD_HOP_CHAIN[idx];
+    stdAlgorithmStartOffsetRatio = item.ratio;
+    applySeedToGenerators(item.ratio, `[Gezgin: ${idx + 1}/${STD_HOP_CHAIN.length}] ${item.label}`);
+    broadcastWorkerConfig();
+}
+
+function applySingleStdOffset(startMode) {
+    let ratio = 0.0;
+    let label = 'Baştan Başla (%0)';
+
+    if (startMode === 'START_50') {
+        ratio = 0.50; label = 'Ortadan Başla (%50)';
+    } else if (startMode === 'START_382') {
+        ratio = 0.382; label = 'Altın-1\'den Başla (%38.2)';
+    } else if (startMode === 'START_618') {
+        ratio = 0.618; label = 'Altın-2\'den Başla (%61.8)';
+    } else if (startMode === 'START_85') {
+        ratio = 0.85; label = 'Üstten Başla (%85)';
+    } else {
+        ratio = 0.0; label = 'Baştan Başla (%0)';
+    }
+
+    stdAlgorithmStartOffsetRatio = ratio;
+    applySeedToGenerators(ratio, label);
+    broadcastWorkerConfig();
+}
+
+function applySeedToGenerators(ratio, label) {
+    const target = getActiveTarget();
+    if (target) {
+        const origStart = toBigIntSafe(target.origStart || target.start);
+        const origEnd = toBigIntSafe(target.origEnd || target.end);
+        const total = origEnd - origStart;
+        if (total > 0n) {
+            const startKey = origStart + (total * BigInt(Math.round(ratio * 1000000)) / 1000000n);
+            const stepOffset = (total * BigInt(Math.round(ratio * 1000000)) / 1000000n);
+            mainCoprimeStep = stepOffset;
+            mainWeylStep = stepOffset;
+            mainSobolStep = Number(stepOffset & 0x7FFFFFFFn);
+            if (typeof addLogMsg === 'function') {
+                addLogMsg(`🎯 [Standart Arama] Uzay bölünmedi! Başlangıç tohumu ışınlandı: ${label} (0x${startKey.toString(16)})`, '#a855f7');
+            }
+        }
+    }
+}
+
 function setHexSliderBounds(sKey, eKey, labelText) {
     const bounds = getHexTargetBounds();
     if (!bounds) return;
     const { tStart, tEnd, total } = bounds;
 
+    const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+    const limitStart = (part && part.isPartitioned) ? part.partStart : tStart;
+    const limitEnd   = (part && part.isPartitioned) ? part.partEnd   : tEnd;
+
     sliderMinHex = toBigIntSafe(sKey);
     sliderMaxHex = toBigIntSafe(eKey);
-    if (sliderMinHex < tStart) sliderMinHex = tStart;
-    if (sliderMaxHex > tEnd) sliderMaxHex = tEnd;
+    if (sliderMinHex < limitStart) sliderMinHex = limitStart;
+    if (sliderMaxHex > limitEnd)   sliderMaxHex = limitEnd;
     if (sliderMaxHex <= sliderMinHex) {
-        if (sliderMinHex + 1n <= tEnd) {
+        if (sliderMinHex + 1n <= limitEnd) {
             sliderMaxHex = sliderMinHex + 1n;
         } else {
-            sliderMaxHex = tEnd;
-            sliderMinHex = tEnd > tStart ? tEnd - 1n : tStart;
+            sliderMaxHex = limitEnd;
+            sliderMinHex = limitEnd > limitStart ? limitEnd - 1n : limitStart;
         }
+    }
+
+    if (part && part.isPartitioned) {
+        window._userAdjustedSwarmPartition = true;
     }
 
     isDualSliderActive = true;
@@ -2057,9 +2261,9 @@ function setHexSliderBounds(sKey, eKey, labelText) {
 // ============================================================
 // 🎛️ OTO KAYDIRAÇ (RADAR / PENCERE TARAMASI) SİSTEMİ
 // ============================================================
-let isAutoSliderActive = true;
-let autoSliderSpeed = 'AUTO'; // 'AUTO', 'FAST', 'MEDIUM', 'SLOW', 'MICRO' or null when inactive
-let autoSliderRegime = 'AUTO'; // 'AUTO', 'RESONANCE', 'WEYL', 'SQRT', 'CLASSIC'
+let isAutoSliderActive = false;
+let autoSliderSpeed = null; // 'AUTO', 'FAST', 'MEDIUM', 'SLOW', 'MICRO' or null when inactive
+let autoSliderRegime = null; // 'AUTO', 'RESONANCE', 'WEYL', 'SQRT', 'CLASSIC' or null when inactive
 let autoRegimeStepCounter = 0;
 let autoSliderInterval = null;
 let autoSliderDirection = 1; // 1: İleri (0 -> 100), -1: Geri (100 -> 0)
@@ -2116,7 +2320,7 @@ function getEffectiveSliderRegime() {
     if (isKang) return 'RESONANCE';
 
     if (curAlgo === 'LEVY_FLIGHT' || curAlgo === 'ULAM_SPIRAL') return 'SQRT';
-    if (curAlgo === 'COPRIME_STRIDE') return 'CLASSIC';
+    if ((curAlgo === 'COPRIME_STRIDE' || curAlgo === 'ALIGNED_PERM')) return 'CLASSIC';
 
     let bits = 32;
     if (actT) {
@@ -2131,21 +2335,20 @@ function getEffectiveSliderRegime() {
 
 function setSliderRegime(regime, isRemoteSync = false) {
     if (!['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(regime)) return;
-    if (autoSliderRegime === regime && regime !== 'AUTO') {
-        autoSliderRegime = 'AUTO';
+    if (autoSliderRegime === regime) {
+        autoSliderRegime = null;
+        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
     } else {
         autoSliderRegime = regime;
+        try { localStorage.setItem('SIRIUS_SLIDER_REGIME', autoSliderRegime); } catch(e) {}
     }
     resonanceDwellCounter = 0;
-    try {
-        localStorage.setItem('SIRIUS_SLIDER_REGIME', autoSliderRegime);
-    } catch(e) {}
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
         broadcastSwarmSetting('SLIDER_REGIME', { regime: autoSliderRegime });
     }
     updateRegimeButtonStyles();
     updateAutoSliderUI();
-    if (typeof isRunning !== 'undefined' && isRunning) {
+    if (typeof isRunning !== 'undefined' && isRunning && isAutoSliderActive) {
         startAutoSliderTimer();
         broadcastWorkerConfig();
     }
@@ -2157,17 +2360,67 @@ function setSliderRegime(regime, isRemoteSync = false) {
             'RESONANCE': '🦘 Harmonik Rezonans (Kangaroo Doppler Kilidi & Ayak İzi Koruma)',
             'CLASSIC': '🏓 Klasik Doğrusal Radar (Eski Ping-Pong)'
         };
-        showToast(`🎛️ <strong>Kaydıraç Rejimi:</strong> ${labels[autoSliderRegime] || autoSliderRegime}`);
+        showToast(`🎛️ <strong>Kaydıraç Rejimi:</strong> ${labels[autoSliderRegime] || 'Kapalı'}`);
     }
 }
 
-// Oto butonu: kapalıyken açar; açıkken tekrar basılınca kapatır ve Oto'nun o an seçmiş olduğu rejime sabitler
+// Oto butonu: kapalıyken açar; açıkken tekrar basılınca kapatır
 function toggleRegimeAuto() {
     if (autoSliderRegime === 'AUTO') {
-        const eff = (typeof getEffectiveSliderRegime === 'function') ? getEffectiveSliderRegime() : 'WEYL';
-        setSliderRegime(['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(eff) ? eff : 'WEYL');
+        autoSliderRegime = null;
+        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
+        if (typeof broadcastSwarmSetting === 'function') {
+            broadcastSwarmSetting('SLIDER_REGIME', { regime: null });
+        }
+        // Oto kapatıldığında eğer hız da AUTO ise birlikte kapat ki sekmelerde açık kalmasın
+        if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
+            isAutoSliderActive = false;
+            autoSliderSpeed = null;
+            stopAutoSliderTimer();
+            try {
+                localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
+                localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
+            } catch(e) {}
+            if (typeof broadcastSwarmSetting === 'function') {
+                broadcastSwarmSetting('SLIDER_SPEED', { speed: null, active: false });
+            }
+            if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
+                applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
+            }
+        }
     } else {
-        setSliderRegime('AUTO');
+        autoSliderRegime = 'AUTO';
+        try { localStorage.setItem('SIRIUS_SLIDER_REGIME', 'AUTO'); } catch(e) {}
+        if (typeof broadcastSwarmSetting === 'function') {
+            broadcastSwarmSetting('SLIDER_REGIME', { regime: 'AUTO' });
+        }
+        // Oto butonu açıldığında hız modu da kapalıysa onu da AUTO yapalım ki kaydıraç hazır olsun
+        if (!isAutoSliderActive) {
+            isAutoSliderActive = true;
+            autoSliderSpeed = 'AUTO';
+            try {
+                localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '1');
+                localStorage.setItem('SIRIUS_AUTO_SLIDER_SPEED', 'AUTO');
+            } catch(e) {}
+            if (typeof broadcastSwarmSetting === 'function') {
+                broadcastSwarmSetting('SLIDER_SPEED', { speed: 'AUTO', active: true });
+            }
+        }
+        if (typeof isRunning !== 'undefined' && isRunning) {
+            startAutoSliderTimer();
+            broadcastWorkerConfig();
+        }
+    }
+    updateSpeedButtonStyles();
+    updateRegimeButtonStyles();
+    updateAutoSliderUI();
+    if (typeof showToast === 'function') {
+        if (autoSliderRegime === 'AUTO') {
+            const runNotice = (typeof isRunning !== 'undefined' && isRunning) ? 'Kaydıraç akıyor.' : 'Aramayı başlattığınızda otomatik akacaktır.';
+            showToast(`🧠 <strong>Akıllı Otomatik Mod Açıldı:</strong> ${runNotice}`);
+        } else {
+            showToast('⏸️ <strong>Akıllı Otomatik Mod Kapatıldı</strong>');
+        }
     }
 }
 
@@ -2237,6 +2490,14 @@ function toggleSpeedMode(speed, isRemoteSync = false) {
         isAutoSliderActive = false;
         autoSliderSpeed = null;
         stopAutoSliderTimer();
+        // Hız Oto kapatıldığında rejim de AUTO ise birlikte kapat ki sekmelerde açık kalmasın
+        if (autoSliderRegime === 'AUTO') {
+            autoSliderRegime = null;
+            try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
+            if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+                broadcastSwarmSetting('SLIDER_REGIME', { regime: null });
+            }
+        }
         if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
             applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
         }
@@ -2257,6 +2518,14 @@ function toggleSpeedMode(speed, isRemoteSync = false) {
         autoSliderDirection = 1;
         resonanceDwellCounter = 0;
 
+        if (speed === 'AUTO' && !autoSliderRegime) {
+            autoSliderRegime = 'AUTO';
+            try { localStorage.setItem('SIRIUS_SLIDER_REGIME', 'AUTO'); } catch(e) {}
+            if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+                broadcastSwarmSetting('SLIDER_REGIME', { regime: 'AUTO' });
+            }
+        }
+
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
             broadcastSwarmSetting('SLIDER_SPEED', { speed: speed, active: true });
         }
@@ -2267,7 +2536,8 @@ function toggleSpeedMode(speed, isRemoteSync = false) {
 
         const spdCfg = AUTO_SLIDER_SPEEDS[speed];
         const part = getTabPartitionBounds();
-        if (part) {
+        // DİKKAT: Arama henüz başlamadıysa (isRunning false) kaydıraç parmaklarını ASLA hareket ettirme!
+        if (part && typeof isRunning !== 'undefined' && isRunning) {
             const minEl = document.getElementById('rangeSliderMin');
             const maxEl = document.getElementById('rangeSliderMax');
             const partSpan = part.partMaxStep - part.partMinStep;
@@ -2302,9 +2572,7 @@ function toggleSpeedMode(speed, isRemoteSync = false) {
                 sliderMaxHex = part.tStart + (part.total * curMax / TOTAL_STEPS);
                 if (sliderMaxHex <= sliderMinHex) sliderMaxHex = sliderMinHex + 1n;
                 updateSliderUI();
-                if (typeof isRunning !== 'undefined' && isRunning) {
-                    broadcastWorkerConfig();
-                }
+                broadcastWorkerConfig();
             }
         }
 
@@ -2431,14 +2699,16 @@ function getAutoSliderIntervalAndStep() {
 function startAutoSliderTimer() {
     stopAutoSliderTimer();
     if (!isAutoSliderActive) return;
-    if (typeof isRunning !== 'undefined' && !isRunning) return;
+    if (typeof isRunning === 'undefined' || !isRunning) {
+        return;
+    }
 
     // Hemen ilk adımı işlet ki kullanıcı anında hareket görsün
     try { stepAutoSlider(); } catch(e) {}
 
     const timing = getAutoSliderIntervalAndStep();
     autoSliderInterval = setInterval(() => {
-        if (!isAutoSliderActive || (typeof isRunning !== 'undefined' && !isRunning)) {
+        if (!isAutoSliderActive || typeof isRunning === 'undefined' || !isRunning) {
             stopAutoSliderTimer();
             return;
         }
@@ -2454,7 +2724,10 @@ function stopAutoSliderTimer() {
 }
 
 function stepAutoSlider() {
-    if (typeof isRunning !== 'undefined' && !isRunning) return;
+    if (typeof isRunning === 'undefined' || !isRunning) {
+        stopAutoSliderTimer();
+        return;
+    }
     if (isSliderSyncBusy) return;
     const part = getTabPartitionBounds();
     if (!part) return;
@@ -2822,7 +3095,16 @@ function resetSpaceCrop(isRemoteSync = false) {
 
     updateCropUI(0, 100);
     updateSliderUI();
+    if (typeof recalculateKangarooRoles === 'function' && typeof kangarooPeers !== 'undefined' && Object.keys(kangarooPeers).length > 1) {
+        recalculateKangarooRoles();
+    }
+    if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && currentTarget) {
+        if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
+    }
     broadcastWorkerConfig();
+    if (typeof isGpuRunning !== 'undefined' && isGpuRunning && typeof startGpuHunting === 'function') {
+        startGpuHunting();
+    }
     if (!isRemoteSync && typeof showToast === 'function') {
         showToast('↩️ <strong>Uzay Sıfırlandı: Tam Bulmaca Uzayı (%0 - %100)</strong>', 2500);
     }
@@ -2861,7 +3143,16 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
 
     updateCropUI(minPct, maxPct);
     updateSliderUI();
+    if (typeof recalculateKangarooRoles === 'function' && typeof kangarooPeers !== 'undefined' && Object.keys(kangarooPeers).length > 1) {
+        recalculateKangarooRoles();
+    }
+    if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && currentTarget) {
+        if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
+    }
     broadcastWorkerConfig();
+    if (typeof isGpuRunning !== 'undefined' && isGpuRunning && typeof startGpuHunting === 'function') {
+        startGpuHunting();
+    }
 
     if (!isRemoteSync && typeof showToast === 'function') {
         showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
@@ -4017,9 +4308,10 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
         if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
         if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
         if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
+        if (activeA === 'ALIGNED_PERM') return generateAlignedPermKey(targetStart, targetEnd);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
-        if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_KRONECKER' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL') return generateKangarooKey(targetStart, targetEnd);
+        if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_KRONECKER' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL' || activeA === 'KANGAROO_ALIGNED') return generateKangarooKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
     }
     
@@ -4115,9 +4407,10 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
     if (activeA === 'SOBOL') return generateSobolKey(effStart, effEnd);
     if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(effStart, effEnd);
     if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(effStart, effEnd);
+    if (activeA === 'ALIGNED_PERM') return generateAlignedPermKey(effStart, effEnd);
     if (activeA === 'HILBERT') return generateHilbertKey(effStart, effEnd);
     if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(effStart, effEnd, bits);
-    if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_KRONECKER' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL') return generateKangarooKey(effStart, effEnd);
+    if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_KRONECKER' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL' || activeA === 'KANGAROO_ALIGNED') return generateKangarooKey(effStart, effEnd);
     return randomBigIntInRange(effStart, effEnd);
 }
 
@@ -4388,7 +4681,14 @@ function updateLogTargetLabel() {
             return;
         }
         const poolLen = (typeof unsolvedList !== 'undefined' && unsolvedList) ? unsolvedList.length : 77;
-        html = `🔁 Dairesel Döngü: #71 ➔ #160 (${poolLen} Açık Bulmaca)`;
+        const sTotal = (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) ? currentSwarmTotal : 1;
+        const sIdx = (typeof currentSwarmIndex !== 'undefined') ? currentSwarmIndex : 0;
+        if (sTotal > 1) {
+            const shardedCount = (unsolvedList || []).filter((_, idx) => (idx % sTotal) === (sIdx % sTotal)).length;
+            html = `🔁 Dairesel Döngü: #71 ➔ #160 [Sekme ${sIdx + 1}/${sTotal} - ${shardedCount} Bulmaca Odaklı / Toplam: ${poolLen}]`;
+        } else {
+            html = `🔁 Dairesel Döngü: #71 ➔ #160 (${poolLen} Açık Bulmaca)`;
+        }
     } else if (currentTarget) {
         html = `#${currentTarget.id} -> ${currentTarget.addr}`;
     }
@@ -4486,8 +4786,12 @@ function ensureCentralKangarooEngine() {
     const targetPub = pubInfo ? pubInfo.pubHex : (actT.pubHex || actT.pub || null);
     if (!targetPub) return null;
 
-    const s = toBigIntSafe(actT.origStart || actT.start || '1');
-    const e = toBigIntSafe(actT.origEnd || actT.end || '2');
+    let s = (typeof isSpaceCropped !== 'undefined' && isSpaceCropped && typeof spaceCropStart !== 'undefined' && spaceCropStart)
+        ? toBigIntSafe(spaceCropStart)
+        : toBigIntSafe(actT.origStart || actT.start || '1');
+    let e = (typeof isSpaceCropped !== 'undefined' && isSpaceCropped && typeof spaceCropEnd !== 'undefined' && spaceCropEnd)
+        ? toBigIntSafe(spaceCropEnd)
+        : toBigIntSafe(actT.origEnd || actT.end || '2');
     const cleanPub = targetPub.trim().toLowerCase().replace(/^0x/i, '');
 
     const herdMode = (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_KRONECKER')
@@ -4520,7 +4824,8 @@ function ensureCentralKangarooEngine() {
     }
 
     try {
-        kangarooRealEngine = new RealPollardKangaroo(cleanPub, s, e, { role: 'DUAL', herdMode: herdMode });
+        kangarooRealEngine = new RealPollardKangaroo(cleanPub, s, e, { role: 'DUAL', herdMode: herdMode, startLayout: (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY' });
+        kangarooRealEngine.trapCap = 250000;
         return kangarooRealEngine;
     } catch(e) {
         console.warn('[Central Kangaroo Engine Init Error]:', e);
@@ -4541,11 +4846,13 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
 // ============================================================
 const KANGAROO_CHANNEL_NAME = 'pe_kangaroo_swarm_network_v1';
 const KANGAROO_TAB_ID = 'kang_' + Math.random().toString(36).substring(2, 6) + '_' + Date.now().toString(36).slice(-3);
-const KANGAROO_TAB_BIRTH = Date.now();
+const KANGAROO_TAB_BIRTH = (typeof performance !== 'undefined' && performance.timeOrigin)
+    ? (performance.timeOrigin + performance.now())
+    : (Date.now() + Math.random());
 
 let kangarooChannel = null;
 let kangarooPeers = {}; // { [tabId]: { id, birth, role, lastSeen, algo, puzzleId, isRunning } }
-let kangarooAssignedRole = 'TAME (Lider)';
+let kangarooAssignedRole = 'DUAL (Tam Kapasite Sürü)';
 let kangarooSharedTraps = new Map(); // Map: pointHex -> { herd, tabId, time, dist }
 let kangarooTrapsCount = 0;
 let kangarooLastActivePuzzleId = null;
@@ -4572,7 +4879,7 @@ function getCombinedKangarooTrapCount() {
 kangarooPeers[KANGAROO_TAB_ID] = {
     id: KANGAROO_TAB_ID,
     birth: KANGAROO_TAB_BIRTH,
-    role: 'TAME (Lider)',
+    role: kangarooAssignedRole,
     lastSeen: Date.now(),
     algo: 'AUTO',
     puzzleId: null,
@@ -4581,7 +4888,7 @@ kangarooPeers[KANGAROO_TAB_ID] = {
 
 let kangarooCurrentScalar = 0n;
 let kangarooJumps = [];
-let kangarooHerdType = 'DUAL'; // Tek sekmede DUAL (hem evcil hem vahşi), çoklu sekmede TAME/WILD
+let kangarooHerdType = 'DUAL'; // Her sekme kendi diliminde DUAL (hem evcil hem vahşi) çalışır
 let kangarooStepCount = 0;
 let kangarooTargetPubHex = '';
 
@@ -4748,14 +5055,19 @@ function handleRemoteSwarmSync(data) {
                     }
                 }
             } else if (!data.active || !data.speed) {
-                if (isAutoSliderActive) {
+                if (isAutoSliderActive || autoSliderRegime === 'AUTO') {
                     isAutoSliderActive = false;
                     autoSliderSpeed = null;
                     stopAutoSliderTimer();
+                    if (autoSliderRegime === 'AUTO') {
+                        autoSliderRegime = null;
+                        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
+                    }
                     if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
                         applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
                     }
                     updateSpeedButtonStyles();
+                    updateRegimeButtonStyles();
                     updateAutoSliderUI();
                     try {
                         localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
@@ -4766,8 +5078,8 @@ function handleRemoteSwarmSync(data) {
                     }
                 }
             }
-        } else if (data.settingType === 'SLIDER_REGIME' && data.regime) {
-            if (['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(data.regime)) {
+        } else if (data.settingType === 'SLIDER_REGIME') {
+            if (data.regime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(data.regime)) {
                 if (autoSliderRegime !== data.regime) {
                     setSliderRegime(data.regime, true);
                     if (typeof showStatusToast === 'function') {
@@ -4779,6 +5091,29 @@ function handleRemoteSwarmSync(data) {
                             'CLASSIC': '🏓 Klasik'
                         };
                         showStatusToast(`⚡ Sürü Eşitlemesi: Kaydıraç Rejimi "${regimeLabels[data.regime] || data.regime}" senkronize edildi.`);
+                    }
+                }
+            } else if (!data.regime) {
+                if (autoSliderRegime !== null || (isAutoSliderActive && autoSliderSpeed === 'AUTO')) {
+                    autoSliderRegime = null;
+                    try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
+                    if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
+                        isAutoSliderActive = false;
+                        autoSliderSpeed = null;
+                        stopAutoSliderTimer();
+                        try {
+                            localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
+                            localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
+                        } catch(e) {}
+                        if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
+                            applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
+                        }
+                    }
+                    updateSpeedButtonStyles();
+                    updateRegimeButtonStyles();
+                    updateAutoSliderUI();
+                    if (typeof showStatusToast === 'function') {
+                        showStatusToast('⏸️ Sürü Eşitlemesi: Kaydıraç Rejimi kapatıldı.');
                     }
                 }
             }
@@ -4912,8 +5247,8 @@ function initKangarooSwarmChannel() {
                 case 'HELLO':
                     kangarooPeers[data.tabId] = {
                         id: data.tabId,
-                        birth: data.birth || now,
-                        role: data.role || 'WILD',
+                        birth: (typeof data.birth === 'number' && data.birth > 0) ? data.birth : (kangarooPeers[data.tabId] ? kangarooPeers[data.tabId].birth : now),
+                        role: data.role || 'DUAL',
                         lastSeen: now,
                         algo: data.algo,
                         puzzleId: data.puzzleId,
@@ -4921,7 +5256,7 @@ function initKangarooSwarmChannel() {
                         isRunning: !!data.isRunning,
                         sliderSpeed: data.sliderSpeed || null,
                         isAutoSliderActive: !!data.isAutoSliderActive,
-                        sliderRegime: data.sliderRegime || 'AUTO'
+                        sliderRegime: data.sliderRegime || null
                     };
                     try {
                         kangarooChannel.postMessage({
@@ -4935,7 +5270,7 @@ function initKangarooSwarmChannel() {
                             isRunning: (typeof isRunning !== 'undefined' && isRunning),
                             sliderSpeed: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive ? autoSliderSpeed : null),
                             isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
-                            sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : 'AUTO'),
+                            sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null),
                             isSpaceCropped: (typeof isSpaceCropped !== 'undefined' ? !!isSpaceCropped : false),
                             spaceCropMinPct: (typeof spaceCropMinPct === 'number' ? spaceCropMinPct : 0),
                             spaceCropMaxPct: (typeof spaceCropMaxPct === 'number' ? spaceCropMaxPct : 100),
@@ -4956,8 +5291,8 @@ function initKangarooSwarmChannel() {
                 case 'HELLO_ACK':
                     kangarooPeers[data.tabId] = {
                         id: data.tabId,
-                        birth: data.birth || now,
-                        role: data.role || 'WILD',
+                        birth: (typeof data.birth === 'number' && data.birth > 0) ? data.birth : (kangarooPeers[data.tabId] ? kangarooPeers[data.tabId].birth : now),
+                        role: data.role || 'DUAL',
                         lastSeen: now,
                         algo: data.algo,
                         puzzleId: data.puzzleId,
@@ -4965,7 +5300,7 @@ function initKangarooSwarmChannel() {
                         isRunning: !!data.isRunning,
                         sliderSpeed: data.sliderSpeed || null,
                         isAutoSliderActive: !!data.isAutoSliderActive,
-                        sliderRegime: data.sliderRegime || 'AUTO'
+                        sliderRegime: data.sliderRegime || null
                     };
                     if (!window._hasReceivedInitialSwarmSync) {
                         window._hasReceivedInitialSwarmSync = true;
@@ -5020,6 +5355,21 @@ function initKangarooSwarmChannel() {
                             if (autoSliderRegime !== data.sliderRegime) {
                                 setSliderRegime(data.sliderRegime, true);
                             }
+                        } else if (!data.sliderRegime && autoSliderRegime !== null) {
+                            autoSliderRegime = null;
+                            updateRegimeButtonStyles();
+                            updateAutoSliderUI();
+                        }
+                        if (data.isAutoSliderActive && data.sliderSpeed && typeof AUTO_SLIDER_SPEEDS !== 'undefined' && AUTO_SLIDER_SPEEDS[data.sliderSpeed]) {
+                            if (!isAutoSliderActive || autoSliderSpeed !== data.sliderSpeed) {
+                                toggleSpeedMode(data.sliderSpeed, true);
+                            }
+                        } else if (!data.isAutoSliderActive && isAutoSliderActive) {
+                            isAutoSliderActive = false;
+                            autoSliderSpeed = null;
+                            stopAutoSliderTimer();
+                            updateSpeedButtonStyles();
+                            updateAutoSliderUI();
                         }
                         if (data.isSpaceCropped && typeof data.spaceCropMinPct === 'number' && typeof data.spaceCropMaxPct === 'number') {
                             if (data.spaceCropStartHex && data.spaceCropEndHex) {
@@ -5040,8 +5390,8 @@ function initKangarooSwarmChannel() {
                 case 'HEARTBEAT':
                     kangarooPeers[data.tabId] = {
                         id: data.tabId,
-                        birth: data.birth || now,
-                        role: data.role || 'WILD',
+                        birth: (typeof data.birth === 'number' && data.birth > 0) ? data.birth : (kangarooPeers[data.tabId] ? kangarooPeers[data.tabId].birth : now),
+                        role: data.role || 'DUAL',
                         lastSeen: now,
                         algo: data.algo,
                         puzzleId: data.puzzleId,
@@ -5049,7 +5399,7 @@ function initKangarooSwarmChannel() {
                         isRunning: !!data.isRunning,
                         sliderSpeed: data.sliderSpeed || null,
                         isAutoSliderActive: !!data.isAutoSliderActive,
-                        sliderRegime: data.sliderRegime || 'AUTO'
+                        sliderRegime: data.sliderRegime || null
                     };
                     recalculateKangarooRoles();
                     updateKangarooSwarmUI();
@@ -5156,7 +5506,7 @@ function initKangarooSwarmChannel() {
                 isRunning: (typeof isRunning !== 'undefined' && isRunning),
                 sliderSpeed: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive ? autoSliderSpeed : null),
                 isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
-                sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : 'AUTO'),
+                sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null),
                 isSpaceCropped: (typeof isSpaceCropped !== 'undefined' ? !!isSpaceCropped : false),
                 spaceCropMinPct: (typeof spaceCropMinPct === 'number' ? spaceCropMinPct : 0),
                 spaceCropMaxPct: (typeof spaceCropMaxPct === 'number' ? spaceCropMaxPct : 100),
@@ -5196,7 +5546,7 @@ function initKangarooSwarmChannel() {
                 isRunning: (typeof isRunning !== 'undefined' && isRunning),
                 sliderSpeed: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive ? autoSliderSpeed : null),
                 isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
-                sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : 'AUTO')
+                sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null)
             };
 
             if (changed) {
@@ -5216,7 +5566,7 @@ function initKangarooSwarmChannel() {
                     isRunning: (typeof isRunning !== 'undefined' && isRunning),
                     sliderSpeed: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive ? autoSliderSpeed : null),
                     isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
-                    sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : 'AUTO')
+                    sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null)
                 });
             } catch(e) {}
 
@@ -5262,12 +5612,16 @@ function applySwarmPartitioning(myIndex, total) {
         if (sliderMinHex !== tStart || sliderMaxHex !== tEnd) {
             sliderMinHex = tStart;
             sliderMaxHex = tEnd;
+            window._userAdjustedSwarmPartition = false;
             if (typeof updateSliderUI === 'function') updateSliderUI();
             if (typeof isRunning !== 'undefined' && isRunning) {
                 if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
             }
+            if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && currentTarget) {
+                if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
+            }
             if (typeof addLogMsg === 'function') {
-                addLogMsg('🌐 [Sürü Senkron] Tek sekme kaldı; arama kaydıracı tüm uzaya (%100) genişletildi.', '#38bdf8');
+                addLogMsg('🌐 [Sürü Senkron] Tek sekme kaldı; arama kaydıracı tüm uzaya (%100) genişletildi (DUAL: Tame+Wild).', '#38bdf8');
             }
         }
         return;
@@ -5286,26 +5640,53 @@ function applySwarmPartitioning(myIndex, total) {
         return;
     }
 
+    // Eğer kullanıcı kaydıracı manuel olarak bu dilim [partStart..partEnd] içinde daraltmışsa:
+    // Dilim içinde kaldığı sürece heartbeat kullanıcının ayarını ezmemeli.
+    // Ancak dilim dışına taşmışsa (örneğin diğer sekmenin bölgesine) dilim sınırlarına çekilmelidir.
+    const isWithinSlice = (sliderMinHex !== null && sliderMaxHex !== null &&
+                           sliderMinHex >= partStart && sliderMaxHex <= partEnd &&
+                           sliderMinHex < sliderMaxHex);
+
+    if (window._userAdjustedSwarmPartition && isWithinSlice) {
+        return;
+    }
+
     if (sliderMinHex !== partStart || sliderMaxHex !== partEnd) {
         sliderMinHex = partStart;
         sliderMaxHex = partEnd;
+        window._userAdjustedSwarmPartition = false;
         if (typeof updateSliderUI === 'function') updateSliderUI();
         if (typeof isRunning !== 'undefined' && isRunning) {
             if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
         }
+        if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && currentTarget) {
+            if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
+        }
         if (typeof addLogMsg === 'function') {
             const pctStart = ((Number((partStart - tStart) * 10000n / fullRange)) / 100).toFixed(1);
             const pctEnd = ((Number((partEnd - tStart) * 10000n / fullRange)) / 100).toFixed(1);
-            addLogMsg(`🌐 [Sürü Senkron] Sekme ${myIndex + 1}/${total}: Kaydıraç %${pctStart} - %${pctEnd} aralığına odaklandı.`, '#38bdf8');
+            addLogMsg(`🌐 [Sürü Senkron] Sekme ${myIndex + 1}/${total}: Kaydıraç %${pctStart} - %${pctEnd} dilimine odaklandı [DUAL: Tame + Wild].`, '#38bdf8');
         }
     }
 }
 
 function recalculateKangarooRoles() {
-    const activeTabs = Object.values(kangarooPeers).sort((a, b) => a.birth - b.birth);
+    const activeTabs = Object.values(kangarooPeers).sort((a, b) => {
+        const diff = (a.birth || 0) - (b.birth || 0);
+        if (Math.abs(diff) > 0.0001) return diff;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+    });
     const myIndex = activeTabs.findIndex(t => t.id === KANGAROO_TAB_ID);
     const total = activeTabs.length;
     kangarooSwarmActive = total > 1;
+
+    // Sekme sayısı veya sıra değişirse dilimleri otomatik olarak yeniden taze başlat:
+    if (window._lastSwarmTotal !== total || window._lastSwarmIndex !== myIndex) {
+        window._lastSwarmTotal = total;
+        window._lastSwarmIndex = myIndex;
+        window._userAdjustedSwarmPartition = false;
+    }
+
     currentSwarmIndex = myIndex >= 0 ? myIndex : 0;
     currentSwarmTotal = total >= 1 ? total : 1;
 
@@ -5327,6 +5708,20 @@ function recalculateKangarooRoles() {
                 if (!isAutoSliderActive || autoSliderSpeed !== leader.sliderSpeed) {
                     toggleSpeedMode(leader.sliderSpeed, true);
                 }
+            } else if (!leader.isAutoSliderActive && isAutoSliderActive) {
+                isAutoSliderActive = false;
+                autoSliderSpeed = null;
+                updateSpeedButtonStyles();
+                updateAutoSliderUI();
+            }
+            if (leader.sliderRegime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(leader.sliderRegime)) {
+                if (autoSliderRegime !== leader.sliderRegime) {
+                    setSliderRegime(leader.sliderRegime, true);
+                }
+            } else if (!leader.sliderRegime && autoSliderRegime !== null) {
+                autoSliderRegime = null;
+                updateRegimeButtonStyles();
+                updateAutoSliderUI();
             }
         }
     }
@@ -5342,25 +5737,29 @@ function recalculateKangarooRoles() {
         if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
     }
 
-    let newRole = 'DUAL (Tam Kapasite Sürü)';
-    if (total <= 1) {
-        newRole = 'DUAL (Tam Kapasite Sürü)';
-        kangarooHerdType = 'DUAL';
-    } else if (myIndex === 0) {
-        newRole = 'TAME (Lider)';
-        kangarooHerdType = 'TAME';
-    } else if (myIndex === 1) {
-        newRole = 'WILD-1 (%15)';
-        kangarooHerdType = 'WILD';
-    } else if (myIndex === 2) {
-        newRole = 'WILD-2 (%45)';
-        kangarooHerdType = 'WILD';
-    } else if (myIndex === 3) {
-        newRole = 'WILD-3 (%75)';
-        kangarooHerdType = 'WILD';
+    const userManualRole = (function() {
+        const sel = document.getElementById('kangarooRoleSelect');
+        return (sel && (sel.value === 'TAME' || sel.value === 'WILD')) ? sel.value : null;
+    })();
+
+    let newRole = '';
+    if (userManualRole) {
+        newRole = `${userManualRole} (Manuel Dilim ${myIndex + 1}/${total})`;
+        kangarooHerdType = userManualRole;
     } else {
-        newRole = `WILD-${myIndex} (Dağınık)`;
-        kangarooHerdType = 'WILD';
+        // ✨ HER SEKME KENDİ DİLİMİNDE DUAL (Hem Tame hem Wild) ÇALIŞIR
+        newRole = (total <= 1)
+            ? 'DUAL (Tam Kapasite Sürü)'
+            : `DUAL (Dilim ${myIndex + 1}/${total} - Tame+Wild)`;
+        kangarooHerdType = 'DUAL';
+    }
+
+    if (kangarooPeers[KANGAROO_TAB_ID]) {
+        kangarooPeers[KANGAROO_TAB_ID].role = newRole;
+    }
+    const roleSel = document.getElementById('kangarooRoleSelect');
+    if (roleSel && !userManualRole && roleSel.value !== 'DUAL') {
+        roleSel.value = 'DUAL';
     }
 
     if (kangarooAssignedRole !== newRole) {
@@ -5414,7 +5813,7 @@ function updateKangarooSwarmUI() {
     if (bar) bar.style.display = 'none';
 }
 
-function broadcastKangarooTrap(pointXHex, herd, dist) {
+function broadcastKangarooTrap(pointXHex, herd, dist, branch = 0) {
     if (!kangarooChannel || !pointXHex) return;
     try {
         kangarooChannel.postMessage({
@@ -5423,12 +5822,13 @@ function broadcastKangarooTrap(pointXHex, herd, dist) {
             pointXHex: pointXHex,
             scalarHex: pointXHex,
             herd: herd,
-            dist: dist ? dist.toString(16) : ''
+            dist: dist ? dist.toString(16) : '',
+            branch: Number(branch) || 0
         });
     } catch(e) {}
 }
 
-function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist) {
+function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist, branch = 0) {
     if (!scalarOrPoint) return;
     const hex = scalarOrPoint.toString(16);
     const now = Date.now();
@@ -5467,7 +5867,7 @@ function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist) {
         uiRenderState.dirty = true;
     }
 
-    broadcastKangarooTrap(hex, herd, dist);
+    broadcastKangarooTrap(hex, herd, dist, branch);
 }
 
 function broadcastKangarooWin(puzzleId, keyHex, addr, targetAddr, reward) {
@@ -5516,6 +5916,7 @@ const KANGAROO_ALGO_SET = new Set([
     'KANGAROO_MONTGOMERY',
     'KANGAROO_ROLLING',
     'KANGAROO_ANCHOR',
+'KANGAROO_ALIGNED',
     'KANGAROO_HOP_DWELL',
     'ADDR_HOP_SWEEP'
 ]);
@@ -5562,18 +5963,110 @@ function switchAlgoCategory(cat, skipAlgoSet) {
 
 function onKangarooRoleChange(role) {
     if (typeof kangarooHerdType !== 'undefined') {
-        kangarooHerdType = role;
+        kangarooHerdType = (role === 'MIXED') ? 'DUAL' : role;
     }
     const roleSel = document.getElementById('kangarooRoleSelect');
     if (roleSel && roleSel.value !== role) roleSel.value = role;
 
-    if (role === 'MIXED') {
+    if (role === 'MIXED' || role === 'DUAL') {
         if (typeof recalculateKangarooRoles === 'function') recalculateKangarooRoles();
     } else {
         kangarooAssignedRole = role;
+        if (typeof kangarooPeers !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
+            kangarooPeers[KANGAROO_TAB_ID].role = role;
+        }
         if (typeof addLogMsg === 'function') {
             addLogMsg(`🦘 [Kangaroo Sürü] Rol manuel olarak ayarlandı: ${role}`, '#10b981');
         }
+        if (typeof isKangarooModeActive === 'function' && isKangarooModeActive() && currentTarget) {
+            const s = (typeof sliderMinHex !== 'undefined' && sliderMinHex !== null) ? sliderMinHex : (currentTarget.origStart || currentTarget.start);
+            const e = (typeof sliderMaxHex !== 'undefined' && sliderMaxHex !== null) ? sliderMaxHex : (currentTarget.origEnd || currentTarget.end);
+            if (typeof resetKangarooWalk === 'function') resetKangarooWalk(s, e, currentTarget.id);
+        }
+    }
+    broadcastWorkerConfig();
+    if (typeof updateKangarooSwarmUI === 'function') updateKangarooSwarmUI();
+}
+
+let kangarooBaseStrategy = 'AUTO';
+let kangarooAutoHopTimer = null;
+let kangarooAutoHopIndex = 0;
+let kangarooHopDurationSec = 300; // Varsayılan 5 dakika (300s)
+const KANGAROO_HOP_CHAIN = ['CENTER', 'GOLDEN_LOW', 'GOLDEN_HIGH', 'LOW_BASE', 'HIGH_ROOF'];
+
+function onKangarooHopDurationChange(secVal) {
+    kangarooHopDurationSec = parseInt(secVal) || 300;
+    if (typeof addLogMsg === 'function') {
+        addLogMsg(`⏱️ [Oto Pusu Süresi] Her durakta bekleme süresi: ${Math.round(kangarooHopDurationSec / 60)} dakika olarak güncellendi.`, '#38bdf8');
+    }
+    if (kangarooBaseStrategy === 'AUTO_HOP') {
+        // Zamanlayıcıyı yeni süreyle anında yeniden başlat
+        startKangarooAutoHop();
+    }
+}
+
+function onKangarooBaseStrategyChange(strategy) {
+    kangarooBaseStrategy = strategy;
+    const stratSel = document.getElementById('kangarooBaseStrategySelect');
+    if (stratSel && stratSel.value !== strategy) stratSel.value = strategy;
+
+    const durSel = document.getElementById('kangarooHopDurationSelect');
+    if (durSel) {
+        durSel.style.display = (strategy === 'AUTO_HOP') ? 'inline-block' : 'none';
+    }
+
+    if (kangarooAutoHopTimer) {
+        clearInterval(kangarooAutoHopTimer);
+        kangarooAutoHopTimer = null;
+    }
+
+    if (strategy === 'AUTO_HOP') {
+        startKangarooAutoHop();
+    } else {
+        const labels = {
+            'AUTO': '🧠 Oto Kafes',
+            'CENTER': '⚖️ Merkez (%50)',
+            'GOLDEN_LOW': '🌟 Altın-1 (%38.2)',
+            'GOLDEN_HIGH': '🌟 Altın-2 (%61.8)',
+            'LOW_BASE': '🟢 Alt Taban (%10)',
+            'HIGH_ROOF': '🔴 Üst Tavan (%90)'
+        };
+        if (typeof addLogMsg === 'function') {
+            addLogMsg(`🎯 [Kangaroo] Başlangıç / Pusu stratejisi: ${labels[strategy] || strategy}`, '#f59e0b');
+        }
+        broadcastWorkerConfig();
+    }
+}
+
+function startKangarooAutoHop() {
+    if (kangarooAutoHopTimer) {
+        clearInterval(kangarooAutoHopTimer);
+        kangarooAutoHopTimer = null;
+    }
+    kangarooAutoHopIndex = 0;
+    applyKangarooHopStep(0);
+    const ms = kangarooHopDurationSec * 1000;
+    kangarooAutoHopTimer = setInterval(() => {
+        kangarooAutoHopIndex = (kangarooAutoHopIndex + 1) % KANGAROO_HOP_CHAIN.length;
+        applyKangarooHopStep(kangarooAutoHopIndex);
+    }, ms);
+    if (typeof addLogMsg === 'function') {
+        addLogMsg(`🔄 [Oto Pusu] Döngü devrede! Her ${Math.round(kangarooHopDurationSec / 60)} dakikada bir sıradaki durağa pusu atılacak (Tuzaklar silinmez).`, '#f59e0b');
+    }
+}
+
+function applyKangarooHopStep(chainIdx) {
+    const activeSubStrategy = KANGAROO_HOP_CHAIN[chainIdx];
+    const subLabels = {
+        'CENTER': '⚖️ Merkez (%50)',
+        'GOLDEN_LOW': '🌟 Altın-1 (%38.2)',
+        'GOLDEN_HIGH': '🌟 Altın-2 (%61.8)',
+        'LOW_BASE': '🟢 Alt Taban (%10)',
+        'HIGH_ROOF': '🔴 Üst Tavan (%90)'
+    };
+    const mins = Math.round(kangarooHopDurationSec / 60);
+    if (typeof addLogMsg === 'function') {
+        addLogMsg(`🔄 [Oto Pusu: ${chainIdx + 1}/${KANGAROO_HOP_CHAIN.length}] Evcil kangurular pusuya yattı: ${subLabels[activeSubStrategy]} (${mins} dk süre başladı)`, '#f59e0b');
     }
     broadcastWorkerConfig();
 }
@@ -5613,9 +6106,11 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'AUTO': '🔄 Oto Hibrit Sürü (14 Algoritma Dönüşümlü)',
             'RANDOM': '🎲 Kriptografik Rastgele (CSPRNG)',
             'SOBOL': '🧬 Sobol Kuasi-Rastgele (Boşluksuz)',
+            'SEQUENTIAL': '➡️ Ardışık Dilim (Örtüşmesiz, Hızlı Çapa)',
             'SCRAMBLED_SOBOL': '🔀 Scrambled Sobol (Yüksek Entropi)',
             'WEYL_GOLDEN': '✨ Weyl Altın Kafesi (Homojen)',
             'COPRIME_STRIDE': '🔢 Asal Modüler Adımlama',
+            'ALIGNED_PERM': '🧩 Hizalı Permütasyon (Sıfır Tekrar)',
             'KRONECKER_LATTICE': '🌟📐 Kronecker Kafesi',
             'HALTON': '🎲 Halton (Çok-Boyutlu)',
             'CHAOS': '🌀 Deterministik Kaos (Lojistik Harita)',
@@ -5636,6 +6131,7 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'KANGAROO_ROLLING': '🦘🌀 Kayan Mikro-Pencere (O(√W))',
             'KANGAROO_ANCHOR': '🦘⚓ Evrensel Çapa & Birikimli Tuzak',
             'KANGAROO_HOP_DWELL': '🦘⏱️ Sıçra ve Pusuya Yat Radar',
+            'KANGAROO_ALIGNED': '🦘🧩 Hizalı Sürü Kangaroo',
             'ADDR_HOP_SWEEP': '🦘🧹 Sıçra & Süpür (Altın Sıçrama)',
             'LEVY_FLIGHT': '🦅 Lévy Uçuşu (Karekök Fraktal Sıçrama)',
             'CONTINUED_FRACTIONS': '✨ Sürekli Kesirler (Diophantine Kafesi)',
@@ -6316,7 +6812,7 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
     const pEnd   = toBigIntSafe(p.origEnd   || p.end);
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
-    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof isRunning !== 'undefined' && isRunning) {
         if (minEl) minEl.value = 0;
         if (maxEl) maxEl.value = 50000000000;
         sliderMinHex = pStart;
@@ -6360,7 +6856,30 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
         }
         if (typeof updateRegimeButtonStyles === 'function') updateRegimeButtonStyles();
         if (typeof updateSpeedButtonStyles === 'function') updateSpeedButtonStyles();
-        if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof startAutoSliderTimer === 'function') {
+        if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof isRunning !== 'undefined' && isRunning && typeof startAutoSliderTimer === 'function') {
+            const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+            if (part) {
+                const minEl = document.getElementById('rangeSliderMin');
+                const maxEl = document.getElementById('rangeSliderMax');
+                const partSpan = part.partMaxStep - part.partMinStep;
+                let curMin = minEl ? BigInt(minEl.value || 0) : part.partMinStep;
+                let curMax = maxEl ? BigInt(maxEl.value || 0) : part.partMaxStep;
+                if ((curMax - curMin) >= (partSpan * 90n / 100n)) {
+                    const spd = autoSliderSpeed || 'AUTO';
+                    let windowSpan = (spd === 'MICRO' ? (partSpan / 40n) : (spd === 'SLOW' ? (partSpan / 20n) : (partSpan / 16n)));
+                    if (windowSpan < 10000000n) windowSpan = 10000000n;
+                    if (windowSpan > partSpan) windowSpan = partSpan;
+                    curMin = part.partMinStep;
+                    curMax = curMin + windowSpan;
+                    if (minEl) minEl.value = Number(curMin);
+                    if (maxEl) maxEl.value = Number(curMax);
+                    const TOTAL_STEPS = 1000000000000n;
+                    sliderMinHex = part.tStart + (part.total * curMin / TOTAL_STEPS);
+                    sliderMaxHex = part.tStart + (part.total * curMax / TOTAL_STEPS);
+                    if (sliderMaxHex <= sliderMinHex) sliderMaxHex = sliderMinHex + 1n;
+                    if (typeof updateSliderUI === 'function') updateSliderUI();
+                }
+            }
             startAutoSliderTimer();
         }
     }
@@ -6417,6 +6936,9 @@ let mainSobolStep = 1;
 function generateSobolKey(rangeStart, rangeEnd) {
     mainSobolStep++;
     const totalRange = rangeEnd - rangeStart;
+    // Başlangıç ofseti (Standart Başlangıç seçicisi): önceden bu değişken yalnızca Weyl/Coprime içinde tanımlıydı, Sobol'da ReferenceError veriyordu
+    const baseOffset = (typeof stdAlgorithmStartOffsetRatio !== 'undefined' && stdAlgorithmStartOffsetRatio > 0)
+        ? (totalRange * BigInt(Math.round(stdAlgorithmStartOffsetRatio * 1000000))) / 1000000n : 0n;
     if (totalRange <= 0n) return rangeStart;
     let n = BigInt(mainSobolStep);
     let rev = 0n;
@@ -6441,7 +6963,7 @@ function generateSobolKey(rangeStart, rangeEnd) {
     } else {
         offset = (mix * (totalRange + 1n)) >> 64n;
     }
-    const cand = rangeStart + offset;
+    const cand = rangeStart + ((baseOffset + offset) % (totalRange + 1n));
     return cand > rangeEnd ? rangeEnd : cand;
 }
 let mainScrambledSobolStep = 1;
@@ -6551,6 +7073,9 @@ function generateWeylGoldenKey(rangeStart, rangeEnd) {
     mainWeylStep++;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
+    const baseOffset = (typeof stdAlgorithmStartOffsetRatio !== 'undefined' && stdAlgorithmStartOffsetRatio > 0)
+        ? (totalRange * BigInt(Math.round(stdAlgorithmStartOffsetRatio * 1000000)) / 1000000n)
+        : 0n;
     const weylFrac = (mainWeylStep * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
     const spanBits = totalRange.toString(2).length;
     let offset;
@@ -6571,13 +7096,39 @@ function generateWeylGoldenKey(rangeStart, rangeEnd) {
 }
 
 let mainCoprimeStep = 1n;
+// 🧩 HİZALI PERMÜTASYON (ana thread yedek yolu): idx = (i·g) mod W, gcd(g,W)=1 -> aralığın TÜM anahtarları sıfır tekrarla, altın oranlı yayılımla gezilir
+const _alignedMainState = new Map();
+function _alignedGcd(a, b) { while (b) { const t = a % b; a = b; b = t; } return a; }
+function generateAlignedPermKey(rangeStart, rangeEnd) {
+    const s = toBigIntSafe(rangeStart);
+    const e = toBigIntSafe(rangeEnd);
+    const W = (e > s) ? (e - s + 1n) : 1n;
+    const key = s.toString(16) + ':' + e.toString(16);
+    let st = _alignedMainState.get(key);
+    if (!st) {
+        let g = (W * 6180339887n) / 10000000000n;
+        if (g < 1n) g = 1n;
+        while (_alignedGcd(g, W) !== 1n) g++;
+        const r64 = (BigInt(Math.floor(Math.random() * 4294967296)) << 32n) | BigInt(Math.floor(Math.random() * 4294967296));
+        st = { g: g, i: r64 % W, W: W };
+        if (_alignedMainState.size >= 64) _alignedMainState.clear();
+        _alignedMainState.set(key, st);
+    }
+    const idx = (st.i * st.g) % st.W;
+    st.i = (st.i + 1n) % st.W;
+    return s + idx;
+}
+
 function generateCoprimeStrideKey(rangeStart, rangeEnd) {
     mainCoprimeStep++;
     const totalRange = rangeEnd - rangeStart;
     if (totalRange <= 0n) return rangeStart;
     const mod = totalRange + 1n;
     const stride = (totalRange > 0xFFFFFFFFFFFFFFFFn) ? ((0xC6A4A7935BD1E995n * 0x9E3779B97F4A7C15n) | 1n) : (0xC6A4A7935BD1E995n | 1n);
-    const offset = (mainCoprimeStep * stride) % mod;
+    const baseOffset = (typeof stdAlgorithmStartOffsetRatio !== 'undefined' && stdAlgorithmStartOffsetRatio > 0)
+        ? (totalRange * BigInt(Math.round(stdAlgorithmStartOffsetRatio * 1000000)) / 1000000n)
+        : 0n;
+    const offset = (baseOffset + (mainCoprimeStep * stride)) % mod;
     return rangeStart + (offset < 0n ? -offset : offset);
 }
 
@@ -6856,12 +7407,15 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
 
     // %100 GERÇEK Pollard Kangaroo Eliptik Eğri Motoru
     if (typeof RealPollardKangaroo === 'function' && kangarooTargetPubHex) {
-        let herdRole = 'DUAL';
+        let herdRole = (typeof kangarooHerdType !== 'undefined' && (kangarooHerdType === 'TAME' || kangarooHerdType === 'WILD'))
+            ? kangarooHerdType
+            : 'DUAL';
         const hasMultipleTabs = (typeof kangarooSwarmActive !== 'undefined' && kangarooSwarmActive) && 
                                 (typeof kangarooPeers !== 'undefined' && Object.keys(kangarooPeers).length > 1);
         if (hasMultipleTabs && typeof kangarooAssignedRole !== 'undefined' && kangarooAssignedRole) {
             if (kangarooAssignedRole.startsWith('WILD')) herdRole = 'WILD';
             else if (kangarooAssignedRole.startsWith('TAME')) herdRole = 'TAME';
+            else herdRole = 'DUAL';
         }
         const herdMode = (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_KRONECKER')
             ? 'KRONECKER_LATTICE'
@@ -6895,7 +7449,7 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
                 kangarooRealEngine.span = (e > s) ? (e - s) : 1n;
             }
         } else {
-            kangarooRealEngine = new RealPollardKangaroo(kangarooTargetPubHex, s, e, { role: herdRole, herdMode: herdMode });
+            kangarooRealEngine = new RealPollardKangaroo(kangarooTargetPubHex, s, e, { role: herdRole, herdMode: herdMode, startLayout: (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY' });
         }
 
         kangarooTrapsCount = getCombinedKangarooTrapCount();
@@ -6923,7 +7477,7 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
         if (typeof uiRenderState !== 'undefined') {
             uiRenderState.trapText = `📍 ${trapK} Tuzak`;
         }
-        if (!kangarooTargetPubHex && (selectedAlgorithm === 'KANGAROO' || selectedAlgorithm === 'GLV_LATTICE_2D' || selectedAlgorithm === 'KANGAROO_KRONECKER' || selectedAlgorithm === 'KANGAROO_SOBOL' || selectedAlgorithm === 'KANGAROO_GLV' || selectedAlgorithm === 'KANGAROO_MONTGOMERY' || selectedAlgorithm === 'KANGAROO_ROLLING' || selectedAlgorithm === 'KANGAROO_ANCHOR' || selectedAlgorithm === 'KANGAROO_HOP_DWELL')) {
+        if (!kangarooTargetPubHex && (selectedAlgorithm === 'KANGAROO' || selectedAlgorithm === 'GLV_LATTICE_2D' || selectedAlgorithm === 'KANGAROO_KRONECKER' || selectedAlgorithm === 'KANGAROO_SOBOL' || selectedAlgorithm === 'KANGAROO_GLV' || selectedAlgorithm === 'KANGAROO_MONTGOMERY' || selectedAlgorithm === 'KANGAROO_ROLLING' || selectedAlgorithm === 'KANGAROO_ANCHOR' || selectedAlgorithm === 'KANGAROO_HOP_DWELL' || selectedAlgorithm === 'KANGAROO_ALIGNED')) {
             console.log(`[Kangaroo] ℹ️ #${pid} için blokzincirde ifşa edilmiş açık anahtar bulunamadı. Desteklenen açık anahtarlı bulmacalar: #19, #23, #38, #57, #66, #67, #130, #135, #140, #145, #150, #155, #160`);
         }
     }
@@ -7275,19 +7829,25 @@ function huntBatch() {
         const batchSize = 200;
         let lastKeyHex = '';
         let lastAddr = '';
-        let activeTarget = null;
+        let activeTarget = currentTarget;
         let lastBoundMin = 0n, lastBoundMax = 0n;
         let activeAlgo = selectedAlgorithm;
         let isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
         
-        for (let i = 0; i < batchSize; i++) {
-            if (isCircularMode) {
-                activeTarget = unsolvedList[circularIndex];
-                circularIndex = (circularIndex + 1) % unsolvedList.length;
-            } else {
-                activeTarget = currentTarget;
+        if (isCircularMode && unsolvedList && unsolvedList.length > 0) {
+            const sTotal = (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) ? currentSwarmTotal : 1;
+            const sIdx = (typeof currentSwarmIndex !== 'undefined') ? currentSwarmIndex : 0;
+            let tabPuzzles = unsolvedList;
+            if (sTotal > 1) {
+                const sharded = unsolvedList.filter((_, idx) => (idx % sTotal) === (sIdx % sTotal));
+                if (sharded.length > 0) tabPuzzles = sharded;
             }
+            if (typeof circularIndex === 'undefined') circularIndex = 0;
+            activeTarget = tabPuzzles[circularIndex % tabPuzzles.length];
+            circularIndex = (circularIndex + 1) % tabPuzzles.length;
+        }
 
+        for (let i = 0; i < batchSize; i++) {
             if (!activeTarget) continue;
 
             // 🎯 OTOMATİK ARALIK DİLİMİ (Sadece Yüzdelik Modunda ve büyük uzaylarda dilimleme yapılır)
@@ -7469,6 +8029,8 @@ function huntBatch() {
                 currentKey = generateWeylGoldenKey(subMin, subMax);
             } else if (activeAlgo === 'COPRIME_STRIDE') {
                 currentKey = generateCoprimeStrideKey(subMin, subMax);
+            } else if (activeAlgo === 'ALIGNED_PERM') {
+                currentKey = generateAlignedPermKey(subMin, subMax);
             } else if (activeAlgo === 'CHAOS') {
                 currentKey = generateDeterministicChaosKey(subMin, subMax);
             } else if (activeAlgo === 'HILBERT') {
@@ -7540,6 +8102,8 @@ function huntBatch() {
                     algoPrefix = '✨ Weyl Altın Kafesi + ';
                 } else if (activeAlgo === 'COPRIME_STRIDE') {
                     algoPrefix = '🔢 Asal Adımlama + ';
+                } else if (activeAlgo === 'ALIGNED_PERM') {
+                    algoPrefix = '🧩 Hizalı Permütasyon + ';
                 } else if (activeAlgo === 'HILBERT') {
                     algoPrefix = '🌀 Hilbert + ';
                 } else if (activeAlgo === 'CHAOS') {
@@ -7640,6 +8204,7 @@ function huntBatch() {
                     'HALTON':            '🎲 Halton (Çok-Boyutlu)',
                     'WEYL_GOLDEN':       '✨ Weyl Altın Kafesi',
                     'COPRIME_STRIDE':    '🔢 Asal Modüler Adımlama',
+                    'ALIGNED_PERM':      '🧩 Hizalı Permütasyon (Sıfır Tekrar)',
                     'CHAOS':             '🌀 Deterministik Kaos',
                     'HILBERT':           '🌀 Hilbert Fraktal',
                     'SPHERICAL_ORBITAL': '⚛️ Küresel Kuantum Orbitali',
@@ -7657,6 +8222,7 @@ function huntBatch() {
                     'KANGAROO_ROLLING':  '🦘🌀 Kayan Mikro-Pencere',
                     'KANGAROO_ANCHOR':   '🦘⚓ Evrensel Çapa',
                     'KANGAROO_HOP_DWELL':'🦘⏱️ Pusu Radarı',
+                    'KANGAROO_ALIGNED':'🦘🧩 Hizalı Sürü',
                     'KANGAROO_KRONECKER':'⚡ 🦘 Kronecker-Kangaroo'
                 };
                 const currentAutoAlgoName = algoNames[autoAlgoList[autoAlgoIndex]] || autoAlgoList[autoAlgoIndex] || 'Rastgele';
@@ -8271,6 +8837,40 @@ const FastH = (function () {
     let workerTargetWords0 = new Set();
     let workerKangarooFailedTargetId = null;
 
+    // 🚀 SOTA SiriuS Native WebAssembly (WASM) Çekirdeği (Worker İçi 511-Nokta Montgomery + Hash160 + Bloom Hızlandırıcı)
+    let workerWasmEx = null;
+    let workerWasmMem64 = null;
+    let workerWasmMem32 = null;
+    let workerWasmMem8 = null;
+
+    function writeWorkerWasmFe(byteOffset, val) {
+        if (!workerWasmMem64) return;
+        const idx = byteOffset >> 3;
+        const v = val || 0n;
+        workerWasmMem64[idx]     = v & 0xFFFFFFFFFFFFFFFFn;
+        workerWasmMem64[idx + 1] = (v >> 64n) & 0xFFFFFFFFFFFFFFFFn;
+        workerWasmMem64[idx + 2] = (v >> 128n) & 0xFFFFFFFFFFFFFFFFn;
+        workerWasmMem64[idx + 3] = (v >> 192n) & 0xFFFFFFFFFFFFFFFFn;
+    }
+
+    function readWorkerWasmFe(byteOffset) {
+        if (!workerWasmMem64) return 0n;
+        const idx = byteOffset >> 3;
+        return workerWasmMem64[idx] | (workerWasmMem64[idx + 1] << 64n) | (workerWasmMem64[idx + 2] << 128n) | (workerWasmMem64[idx + 3] << 192n);
+    }
+
+    function syncWorkerWasmBloomFilter() {
+        if (!workerWasmMem8) return;
+        workerWasmMem8.fill(0, 0x13000, 0x13000 + 8192);
+        workerTargetWords0.forEach(function(w0) {
+            const u = w0 >>> 0;
+            const b1 = u & 0xFFFF;
+            const b2 = (u >>> 16) & 0xFFFF;
+            workerWasmMem8[0x13000 + (b1 >> 3)] |= (1 << (b1 & 7));
+            workerWasmMem8[0x13000 + (b2 >> 3)] |= (1 << (b2 & 7));
+        });
+    }
+
     const WORKER_B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     const WORKER_B58_MAP = {};
     for (let i = 0; i < WORKER_B58_ALPHABET.length; i++) WORKER_B58_MAP[WORKER_B58_ALPHABET[i]] = i;
@@ -8375,6 +8975,7 @@ const FastH = (function () {
                 }
             }
         }
+        syncWorkerWasmBloomFilter();
     }
     let workerId = 0;
     let cfg = {};
@@ -8383,6 +8984,23 @@ const FastH = (function () {
     let workerActiveTarget = null;
     let workerDynamicBatchSize = 60;
     let workerBatchCalibCounter = 0;
+    let _workerLoopChannel = null;
+    let _workerYieldCounter = 0;
+    function scheduleNextWorkerBatch(forceMacroYield = false) {
+        if (!isWorking) return;
+        _workerYieldCounter = (_workerYieldCounter + 1) & 7;
+        if (!forceMacroYield && _workerYieldCounter !== 0 && typeof MessageChannel !== 'undefined') {
+            if (!_workerLoopChannel) {
+                _workerLoopChannel = new MessageChannel();
+                _workerLoopChannel.port1.onmessage = function() {
+                    if (isWorking) workBatch();
+                };
+            }
+            _workerLoopChannel.port2.postMessage(0);
+        } else {
+            setTimeout(workBatch, 0);
+        }
+    }
     let brainCounter = 0;
     let brainIdx = 0;
     let physicsStep = 0;
@@ -8611,9 +9229,12 @@ const FastH = (function () {
         return [X3, Y3, Z3];
     }
 
+    const _fbOutPt = [0n, 0n];
+
     function workerFixedBaseAnchor(inst, k) {
         if (workerFbBroken || !inst || k <= 0n) return null;
-        let R = null;
+        const P = SECP_P;
+        let RX = 0n, RY = 0n, RZ = 1n, hasR = false;
         let kk = k;
         let j = 0;
         while (kk > 0n) {
@@ -8621,43 +9242,78 @@ const FastH = (function () {
             kk >>= 8n;
             if (d !== 0) {
                 const row = workerFbEnsure(inst, j);
-                const x = row[d][0];
-                const y = row[d][1];
-                if (R === null) R = [x, y, 1n];
-                else { R = workerFbMadd(R[0], R[1], R[2], x, y); if (R === null) return null; }
+                const x2 = row[d][0];
+                const y2 = row[d][1];
+                if (!hasR) {
+                    RX = x2; RY = y2; RZ = 1n; hasR = true;
+                } else if (RZ === 1n) {
+                    // İlk toplama Z1=1 olduğundan Z1^2 ve Z1^3 çarpmaları tamamen atlanır (4 modüler çarpma tasarrufu!)
+                    const H = (x2 - RX + P) % P;
+                    const r = (y2 - RY + P) % P;
+                    if (H === 0n) return null;
+                    const HH = (H * H) % P;
+                    const HHH = (H * HH) % P;
+                    const V = (RX * HH) % P;
+                    const X3 = (((r * r - HHH - 2n * V) % P) + 2n * P) % P;
+                    RY = (((r * (V - X3 + P) - RY * HHH) % P) + P) % P;
+                    RX = X3;
+                    RZ = H;
+                } else {
+                    const Z1Z1 = (RZ * RZ) % P;
+                    const U2 = (x2 * Z1Z1) % P;
+                    const S2 = (y2 * RZ * Z1Z1) % P;
+                    const H = (U2 - RX + P) % P;
+                    const r = (S2 - RY + P) % P;
+                    if (H === 0n) return null;
+                    const HH = (H * H) % P;
+                    const HHH = (H * HH) % P;
+                    const V = (RX * HH) % P;
+                    const X3 = (((r * r - HHH - 2n * V) % P) + 2n * P) % P;
+                    RY = (((r * (V - X3 + P) - RY * HHH) % P) + P) % P;
+                    RX = X3;
+                    RZ = (RZ * H) % P;
+                }
             }
             j++;
             if (j > 32) return null;
         }
-        if (R === null) return null;
-        const zi = fastInvModP(R[2]);
-        const zi2 = (zi * zi) % SECP_P;
-        const pt = [(R[0] * zi2) % SECP_P, (((R[1] * zi2) % SECP_P) * zi) % SECP_P];
+        if (!hasR) return null;
+        if (RZ === 1n) {
+            _fbOutPt[0] = RX;
+            _fbOutPt[1] = RY;
+        } else {
+            const zi = fastInvModP(RZ);
+            const zi2 = (zi * zi) % P;
+            _fbOutPt[0] = (RX * zi2) % P;
+            _fbOutPt[1] = (((RY * zi2) % P) * zi) % P;
+        }
         if (workerFbChecks < 5) {
             workerFbChecks++;
             const pub = inst.keyFromPrivate(k.toString(16).padStart(64, '0'), 'hex').getPublic();
             const ex = BigInt('0x' + pub.getX().toString('hex'));
             const ey = BigInt('0x' + pub.getY().toString('hex'));
-            if (ex !== pt[0] || ey !== pt[1]) {
+            if (ex !== _fbOutPt[0] || ey !== _fbOutPt[1]) {
                 workerFbBroken = true;
                 console.error('[Worker] Sabit-tabanlı çapa elliptic ile uyuşmuyor: devre dışı bırakıldı, elliptic yoluna dönüldü');
                 return null;
             }
         }
-        return pt;
+        return _fbOutPt;
     }
 
     function fastInvModP(a) {
-        let u = (a % SECP_P + SECP_P) % SECP_P;
+        let u = (a >= 0n && a < SECP_P) ? a : ((a % SECP_P + SECP_P) % SECP_P);
+        if (u === 0n) return 0n;
         let v = SECP_P, x1 = 1n, x2 = 0n;
-        while (u !== 0n) {
-            let q = v / u;
-            let r = v - q * u;
-            let x = x2 - q * x1;
+        while (u !== 1n && u !== 0n) {
+            const q = v / u;
+            const r = v - q * u;
+            const x = x2 - q * x1;
             v = u; u = r;
             x2 = x1; x1 = x;
         }
-        return (x2 % SECP_P + SECP_P) % SECP_P;
+        if (u === 0n) return (x2 % SECP_P + SECP_P) % SECP_P;
+        return x1 < 0n ? x1 + SECP_P : (x1 >= SECP_P ? x1 % SECP_P : x1);
     }
 
     function fastPointAddG(x1, y1) {
@@ -8681,10 +9337,11 @@ const FastH = (function () {
     // 🚀 SİMETRİK ÇİFT YÖNLÜ (±iG) MONTGOMERY BATCH SABİTLERİ (256 Tablo × ±iG = Çapa Başına 511 Anahtar, 2x Hızlı Ters Alma & Maksimum Sıçrama Sıklığı!)
     const MONT_STRIDE = 256;
     const MONT_TABLE_G = [];
-    let _montInitG = [SECP_Gx, SECP_Gy];
+    let _montInitG = [SECP_Gx, SECP_Gy, SECP_P - SECP_Gy];
     MONT_TABLE_G.push(_montInitG);
     for (let _gi = 1; _gi < MONT_STRIDE - 1; _gi++) {
-        _montInitG = fastPointAddG(_montInitG[0], _montInitG[1]);
+        const _nextG = fastPointAddG(_montInitG[0], _montInitG[1]);
+        _montInitG = [_nextG[0], _nextG[1], SECP_P - _nextG[1]];
         MONT_TABLE_G.push(_montInitG);
     }
     const _montDx = new Array(MONT_STRIDE - 1);
@@ -8706,6 +9363,9 @@ const FastH = (function () {
         0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     ]);
     const _SHA256_W = new Int32Array(64);
+    _SHA256_W[9] = 0; _SHA256_W[10] = 0; _SHA256_W[11] = 0;
+    _SHA256_W[12] = 0; _SHA256_W[13] = 0; _SHA256_W[14] = 0;
+    _SHA256_W[15] = 264; // 33 byte * 8 bit = 264 bit (Sabit ön-yükleme: sıcak döngüde tekrar yazılmaz!)
     const _RMD_ZL = new Uint8Array([
         0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
         7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8,
@@ -8738,11 +9398,53 @@ const FastH = (function () {
     _RMD_X[8] = 0x00000080;
     _RMD_X[14] = 256; // 32 byte * 8 bit = 256 bit (Little-Endian)
 
+    // ⚡ Worker Native WASM Çekirdeğini Başlat (255-Adım Montgomery + 511× SHA-256 + RIPEMD-160 + L1 Bloom Filtresi)
+    (function initWorkerWasmCore() {
+        try {
+            const mod = (typeof self !== 'undefined' && typeof self.getSiriuSWasmModule === 'function')
+                ? self.getSiriuSWasmModule()
+                : null;
+            if (!mod) return;
+            const inst = new WebAssembly.Instance(mod);
+            workerWasmEx = inst.exports;
+            workerWasmMem64 = new BigUint64Array(workerWasmEx.memory.buffer);
+            workerWasmMem32 = new Uint32Array(workerWasmEx.memory.buffer);
+            workerWasmMem8  = new Uint8Array(workerWasmEx.memory.buffer);
+            writeWorkerWasmFe(0x0020, SECP_BETA);
+            writeWorkerWasmFe(0x0040, (SECP_BETA * SECP_BETA) % SECP_P);
+            workerWasmMem64[0x0060 >> 3] = WORKER_KRONECKER_CONSTANTS_64[0];
+            writeWorkerWasmFe(0x0160, 1n);
+            new Int32Array(workerWasmEx.memory.buffer, 0x0200, 64).set(_SHA256_K);
+            workerWasmMem32[(0x0300 + 60) >> 2] = 264;
+            workerWasmMem8.set(_RMD_ZL, 0x0400);
+            workerWasmMem8.set(_RMD_ZR, 0x0450);
+            workerWasmMem8.set(_RMD_SL, 0x04A0);
+            workerWasmMem8.set(_RMD_SR, 0x04F0);
+            workerWasmMem32[(0x0540 + 32) >> 2] = 0x80;
+            workerWasmMem32[(0x0540 + 56) >> 2] = 256;
+            for (let mIdx = 0; mIdx < MONT_STRIDE - 1; mIdx++) {
+                const gi = MONT_TABLE_G[mIdx];
+                writeWorkerWasmFe(0x5000 + (mIdx << 5), gi[0]);
+                writeWorkerWasmFe(0x7000 + (mIdx << 5), gi[1]);
+                writeWorkerWasmFe(0x9000 + (mIdx << 5), gi[2]);
+            }
+            syncWorkerWasmBloomFilter();
+        } catch (e) {
+            workerWasmEx = null;
+        }
+    })();
+
+    let _rmdH1 = 0, _rmdH2 = 0, _rmdH3 = 0, _rmdH4 = 0;
     const _fastH160Words = [0, 0, 0, 0, 0];
     const _fastH160WABuf = {
         words: _fastH160Words,
         sigBytes: 20,
         toString: function() {
+            // Lazy 160-bit tamamlayıcı: yalnızca 32-bit w0 filtresini geçen adaylar için kalan 4 kelimeyi byte-swap yapar!
+            _fastH160Words[1] = (16711935 & (_rmdH1 << 8 | _rmdH1 >>> 24)) | (4278255360 & (_rmdH1 << 24 | _rmdH1 >>> 8));
+            _fastH160Words[2] = (16711935 & (_rmdH2 << 8 | _rmdH2 >>> 24)) | (4278255360 & (_rmdH2 << 24 | _rmdH2 >>> 8));
+            _fastH160Words[3] = (16711935 & (_rmdH3 << 8 | _rmdH3 >>> 24)) | (4278255360 & (_rmdH3 << 24 | _rmdH3 >>> 8));
+            _fastH160Words[4] = (16711935 & (_rmdH4 << 8 | _rmdH4 >>> 24)) | (4278255360 & (_rmdH4 << 24 | _rmdH4 >>> 8));
             return (
                 (_fastH160Words[0] >>> 0).toString(16).padStart(8, '0') +
                 (_fastH160Words[1] >>> 0).toString(16).padStart(8, '0') +
@@ -8761,7 +9463,6 @@ const FastH = (function () {
 
         // 1. Tek Blok (64-Byte) 33-Byte Sıkıştırılmış Açık Anahtar SHA-256 Hazırlığı
         if (_LE_OK) {
-            // 4 BigInt işlemiyle 32-bit kelimeler (eskiden 16 BigInt kaydırma/maskeleme); sonuç birebir aynı
             _px64[0] = ptX; _px64[1] = ptX >> 64n; _px64[2] = ptX >> 128n; _px64[3] = ptX >> 192n;
             const x0 = _px32[7], x1 = _px32[6], x2 = _px32[5], x3 = _px32[4], x4 = _px32[3], x5 = _px32[2], x6 = _px32[1], x7 = _px32[0];
             _SHA256_W[0] = (pfx << 24) | (x0 >>> 8);
@@ -8784,9 +9485,6 @@ const FastH = (function () {
             _SHA256_W[7] = Number((ptX >> 8n) & 0xFFFFFFFFn) | 0;
             _SHA256_W[8] = (Number(ptX & 0xFFn) << 24) | 0x00800000;
         }
-        _SHA256_W[9] = 0; _SHA256_W[10] = 0; _SHA256_W[11] = 0;
-        _SHA256_W[12] = 0; _SHA256_W[13] = 0; _SHA256_W[14] = 0;
-        _SHA256_W[15] = 264; // 33 byte * 8 bit = 264 bit
 
         for (let f = 16; f < 64; f++) {
             const d = _SHA256_W[f - 15];
@@ -8814,7 +9512,7 @@ const FastH = (function () {
         const s6 = (0x1f83d9ab + h) | 0;
         const s7 = (0x5be0cd19 + l) | 0;
 
-        // 2. Tek Blok (64-Byte) 32-Byte RIPEMD-160 (Little-Endian Byte Swap)
+        // 2. Tek Blok (64-Byte) 32-Byte RIPEMD-160 (Little-Endian Byte Swap & 5-Tur Sıfır Dallanmalı Döngü)
         _RMD_X[0] = (16711935 & (s0 << 8 | s0 >>> 24)) | (4278255360 & (s0 << 24 | s0 >>> 8));
         _RMD_X[1] = (16711935 & (s1 << 8 | s1 >>> 24)) | (4278255360 & (s1 << 24 | s1 >>> 8));
         _RMD_X[2] = (16711935 & (s2 << 8 | s2 >>> 24)) | (4278255360 & (s2 << 24 | s2 >>> 8));
@@ -8827,39 +9525,63 @@ const FastH = (function () {
         let al = 1732584193 | 0, bl = 4023233417 | 0, cl = 2562383102 | 0, dl = 271733878 | 0, el = 3285377520 | 0;
         let ar = al, br = bl, cr = cl, dr = dl, er = el;
 
-        for (let r = 0; r < 80; r++) {
-            let tl = (al + _RMD_X[_RMD_ZL[r]]) | 0;
-            if (r < 16) tl = (tl + (bl ^ cl ^ dl)) | 0;
-            else if (r < 32) tl = (tl + ((bl & cl) | (~bl & dl)) + 1518500249) | 0;
-            else if (r < 48) tl = (tl + ((bl | ~cl) ^ dl) + 1859775393) | 0;
-            else if (r < 64) tl = (tl + ((bl & dl) | (cl & ~dl)) + 2400959708) | 0;
-            else tl = (tl + (bl ^ (cl | ~dl)) + 2840853838) | 0;
-            const sl = _RMD_SL[r];
+        for (let r = 0; r < 16; r++) {
+            const sl = _RMD_SL[r], sr = _RMD_SR[r];
+            let tl = (al + (bl ^ cl ^ dl) + _RMD_X[r]) | 0;
             tl = (((tl << sl) | (tl >>> (32 - sl))) + el) | 0;
             al = el; el = dl; dl = (cl << 10) | (cl >>> 22); cl = bl; bl = tl;
 
-            let tr = (ar + _RMD_X[_RMD_ZR[r]]) | 0;
-            if (r < 16) tr = (tr + (br ^ (cr | ~dr)) + 1352829926) | 0;
-            else if (r < 32) tr = (tr + ((br & dr) | (cr & ~dr)) + 1548603684) | 0;
-            else if (r < 48) tr = (tr + ((br | ~cr) ^ dr) + 1836072691) | 0;
-            else if (r < 64) tr = (tr + ((br & cr) | (~br & dr)) + 2053994217) | 0;
-            else tr = (tr + (br ^ cr ^ dr)) | 0;
-            const sr = _RMD_SR[r];
+            let tr = (ar + (br ^ (cr | ~dr)) + _RMD_X[_RMD_ZR[r]] + 1352829926) | 0;
+            tr = (((tr << sr) | (tr >>> (32 - sr))) + er) | 0;
+            ar = er; er = dr; dr = (cr << 10) | (cr >>> 22); cr = br; br = tr;
+        }
+        for (let r = 16; r < 32; r++) {
+            const sl = _RMD_SL[r], sr = _RMD_SR[r];
+            let tl = (al + ((bl & cl) | (~bl & dl)) + _RMD_X[_RMD_ZL[r]] + 1518500249) | 0;
+            tl = (((tl << sl) | (tl >>> (32 - sl))) + el) | 0;
+            al = el; el = dl; dl = (cl << 10) | (cl >>> 22); cl = bl; bl = tl;
+
+            let tr = (ar + ((br & dr) | (cr & ~dr)) + _RMD_X[_RMD_ZR[r]] + 1548603684) | 0;
+            tr = (((tr << sr) | (tr >>> (32 - sr))) + er) | 0;
+            ar = er; er = dr; dr = (cr << 10) | (cr >>> 22); cr = br; br = tr;
+        }
+        for (let r = 32; r < 48; r++) {
+            const sl = _RMD_SL[r], sr = _RMD_SR[r];
+            let tl = (al + ((bl | ~cl) ^ dl) + _RMD_X[_RMD_ZL[r]] + 1859775393) | 0;
+            tl = (((tl << sl) | (tl >>> (32 - sl))) + el) | 0;
+            al = el; el = dl; dl = (cl << 10) | (cl >>> 22); cl = bl; bl = tl;
+
+            let tr = (ar + ((br | ~cr) ^ dr) + _RMD_X[_RMD_ZR[r]] + 1836072691) | 0;
+            tr = (((tr << sr) | (tr >>> (32 - sr))) + er) | 0;
+            ar = er; er = dr; dr = (cr << 10) | (cr >>> 22); cr = br; br = tr;
+        }
+        for (let r = 48; r < 64; r++) {
+            const sl = _RMD_SL[r], sr = _RMD_SR[r];
+            let tl = (al + ((bl & dl) | (cl & ~dl)) + _RMD_X[_RMD_ZL[r]] + 2400959708) | 0;
+            tl = (((tl << sl) | (tl >>> (32 - sl))) + el) | 0;
+            al = el; el = dl; dl = (cl << 10) | (cl >>> 22); cl = bl; bl = tl;
+
+            let tr = (ar + ((br & cr) | (~br & dr)) + _RMD_X[_RMD_ZR[r]] + 2053994217) | 0;
+            tr = (((tr << sr) | (tr >>> (32 - sr))) + er) | 0;
+            ar = er; er = dr; dr = (cr << 10) | (cr >>> 22); cr = br; br = tr;
+        }
+        for (let r = 64; r < 80; r++) {
+            const sl = _RMD_SL[r], sr = _RMD_SR[r];
+            let tl = (al + (bl ^ (cl | ~dl)) + _RMD_X[_RMD_ZL[r]] + 2840853838) | 0;
+            tl = (((tl << sl) | (tl >>> (32 - sl))) + el) | 0;
+            al = el; el = dl; dl = (cl << 10) | (cl >>> 22); cl = bl; bl = tl;
+
+            let tr = (ar + (br ^ cr ^ dr) + _RMD_X[_RMD_ZR[r]]) | 0;
             tr = (((tr << sr) | (tr >>> (32 - sr))) + er) | 0;
             ar = er; er = dr; dr = (cr << 10) | (cr >>> 22); cr = br; br = tr;
         }
 
         const h0 = (4023233417 + cl + dr) | 0;
-        const h1 = (2562383102 + dl + er) | 0;
-        const h2 = (271733878  + el + ar) | 0;
-        const h3 = (3285377520 + al + br) | 0;
-        const h4 = (1732584193 + bl + cr) | 0;
-
         _fastH160Words[0] = (16711935 & (h0 << 8 | h0 >>> 24)) | (4278255360 & (h0 << 24 | h0 >>> 8));
-        _fastH160Words[1] = (16711935 & (h1 << 8 | h1 >>> 24)) | (4278255360 & (h1 << 24 | h1 >>> 8));
-        _fastH160Words[2] = (16711935 & (h2 << 8 | h2 >>> 24)) | (4278255360 & (h2 << 24 | h2 >>> 8));
-        _fastH160Words[3] = (16711935 & (h3 << 8 | h3 >>> 24)) | (4278255360 & (h3 << 24 | h3 >>> 8));
-        _fastH160Words[4] = (16711935 & (h4 << 8 | h4 >>> 24)) | (4278255360 & (h4 << 24 | h4 >>> 8));
+        _rmdH1 = (2562383102 + dl + er) | 0;
+        _rmdH2 = (271733878  + el + ar) | 0;
+        _rmdH3 = (3285377520 + al + br) | 0;
+        _rmdH4 = (1732584193 + bl + cr) | 0;
 
         return _fastH160WABuf;
     }
@@ -8967,13 +9689,14 @@ const FastH = (function () {
             if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
             if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
             if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
+            if (activeA === 'ALIGNED_PERM') return generateAlignedPermKey(targetStart, targetEnd);
             if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
             if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
             if (activeA === 'ADDR_HOP_SWEEP') return generateWorkerAddrHopSweepKey(targetStart, targetEnd);
             if (activeA === 'LEVY_FLIGHT') return generateWorkerLevyFlightKey(targetStart, targetEnd);
             if (activeA === 'CONTINUED_FRACTIONS') return generateWorkerContinuedFractionsKey(targetStart, targetEnd);
             if (activeA === 'ULAM_SPIRAL') return generateWorkerUlamSpiralKey(targetStart, targetEnd);
-            if (activeA === 'KANGAROO' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL') return generateSobolKey(targetStart, targetEnd);
+            if (activeA === 'KANGAROO' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL' || activeA === 'KANGAROO_ALIGNED') return generateSobolKey(targetStart, targetEnd);
             return randomBigIntInRange(targetStart, targetEnd);
         }
 
@@ -9042,13 +9765,14 @@ const FastH = (function () {
         if (activeA === 'SOBOL') return generateSobolKey(targetStart, targetEnd);
         if (activeA === 'WEYL_GOLDEN') return generateWeylGoldenKey(targetStart, targetEnd);
         if (activeA === 'COPRIME_STRIDE') return generateCoprimeStrideKey(targetStart, targetEnd);
+        if (activeA === 'ALIGNED_PERM') return generateAlignedPermKey(targetStart, targetEnd);
         if (activeA === 'HILBERT') return generateHilbertKey(targetStart, targetEnd);
         if (activeA === 'WEAK_ENTROPY' && bits !== -1) return generateWeakEntropyKey(targetStart, targetEnd, bits);
         if (activeA === 'ADDR_HOP_SWEEP') return generateWorkerAddrHopSweepKey(targetStart, targetEnd);
         if (activeA === 'LEVY_FLIGHT') return generateWorkerLevyFlightKey(targetStart, targetEnd);
         if (activeA === 'CONTINUED_FRACTIONS') return generateWorkerContinuedFractionsKey(targetStart, targetEnd);
         if (activeA === 'ULAM_SPIRAL') return generateWorkerUlamSpiralKey(targetStart, targetEnd);
-        if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL') return generateSobolKey(targetStart, targetEnd);
+        if (activeA === 'KANGAROO' || activeA === 'GLV_LATTICE_2D' || activeA === 'KANGAROO_SOBOL' || activeA === 'KANGAROO_GLV' || activeA === 'KANGAROO_MONTGOMERY' || activeA === 'KANGAROO_ROLLING' || activeA === 'KANGAROO_ANCHOR' || activeA === 'KANGAROO_HOP_DWELL' || activeA === 'KANGAROO_ALIGNED') return generateSobolKey(targetStart, targetEnd);
         return randomBigIntInRange(targetStart, targetEnd);
     }
 
@@ -9196,6 +9920,43 @@ const FastH = (function () {
             a = t;
         }
         return a;
+    }
+
+    // 🧩 HİZALI PERMÜTASYON: aralık, çapa penceresi kadar (2·(MONT_STRIDE−1)+1 = 511) anahtarlık hücrelere bölünür; hücre sırası
+    //    idx = (i·g) mod W (gcd(g,W)=1) ile tam permüte edilir -> pencereler örtüşmez, tekrar yok.
+    //    İşçi w, i = w + K·j indekslerini alır -> işçiler arasında da sıfır tekrar (ortogonal işçi modunda alt aralıklar zaten ayrıktır, K=1).
+    const _alignedWState = new Map();
+    function _alignedWGcd(a, b) { while (b) { const t = a % b; a = b; b = t; } return a; }
+    function generateAlignedPermKey(rangeStart, rangeEnd) {
+        const s = toBigIntSafe(rangeStart);
+        const e = toBigIntSafe(rangeEnd);
+        const WIN = BigInt(2 * (MONT_STRIDE - 1) + 1);
+        const HALF = BigInt(MONT_STRIDE - 1);
+        const total = (e > s) ? (e - s + 1n) : 1n;
+        const W = (total + WIN - 1n) / WIN;
+        let K = (cfg && cfg.totalWorkers && cfg.totalWorkers > 0) ? cfg.totalWorkers : 1;
+        if (cfg && cfg.isOrthogonalWorker) K = 1;
+        const wid = (K > 1 && typeof workerId !== 'undefined') ? (workerId % K) : 0;
+        const key = s.toString(16) + ':' + e.toString(16) + ':' + K + ':' + wid;
+        let st = _alignedWState.get(key);
+        if (!st) {
+            let g = (W * 6180339887n) / 10000000000n;
+            if (g < 1n) g = 1n;
+            while (_alignedWGcd(g, W) !== 1n) g++;
+            let bigK = BigInt(K), bigW = BigInt(wid);
+            let J = (W - bigW + bigK - 1n) / bigK;                 // bu işçiye düşen hücre sayısı (i = wid + K·j < W)
+            if (J <= 0n) { bigK = 1n; bigW = BigInt(wid) % W; J = W; } // hücre sayısı işçi sayısından azsa: tekrarı kabul et
+            const r64 = (BigInt(Math.floor(Math.random() * 4294967296)) << 32n) | BigInt(Math.floor(Math.random() * 4294967296));
+            st = { g: g, W: W, wid: bigW, K: bigK, J: J, j: r64 % J };
+            if (_alignedWState.size >= 64) _alignedWState.clear();
+            _alignedWState.set(key, st);
+        }
+        const i = st.wid + st.K * st.j;
+        st.j = (st.j + 1n) % st.J;
+        const idx = (i * st.g) % st.W;
+        let anchor = s + idx * WIN + HALF;
+        if (anchor > e) anchor = e;
+        return anchor;
     }
 
     let workerCoprimeStep = 1n;
@@ -9417,6 +10178,119 @@ const FastH = (function () {
     let workerWeakCounter = 0;
     let workerAutoIndex = 0;
     let workerAutoStepCounter = 0;
+    // ➡️ ARDIŞIK DİLİM MODU: işçi başına ayrık, ardışık dilim; çapa = önceki çapa + 511·G (tek nokta toplama)
+    const SEQ_STRIDE = 511n;
+    let _seqKey = null, _seqBoundSig = '', _seqSliceMin = 0n, _seqSliceMax = 0n;
+    let _seqPt = null, _seqPtKey = null, _seqG511 = null, _seqWraps = 0, _seqCalls = 0, _seqBroken = false;
+    function _seqAddAffine(x1, y1, x2, y2) {
+        const P = SECP_P;
+        if (x1 === x2) return null;
+        const dx = (x2 - x1 + P) % P;
+        const lam = (((y2 - y1 + P) % P) * fastInvModP(dx)) % P;
+        const x3 = (((lam * lam - x1 - x2) % P) + 2n * P) % P;
+        const y3 = (((lam * (x1 - x3 + P) - y1) % P) + P) % P;
+        return [x3, y3];
+    }
+    function workerSequentialNextKey(bMin, bMax, numW, wId) {
+        const sig = bMin.toString(16) + ':' + bMax.toString(16) + ':' + numW + ':' + wId;
+        if (sig !== _seqBoundSig) {
+            _seqBoundSig = sig;
+            const span = bMax - bMin;
+            const n = BigInt(numW > 0 ? numW : 1);
+            if (n > 1n && span >= n * 1024n) {
+                const len = span / n;
+                const id = BigInt(wId) % n;
+                _seqSliceMin = bMin + len * id;
+                _seqSliceMax = (id === n - 1n) ? bMax : (_seqSliceMin + len - 1n);
+            } else {
+                _seqSliceMin = bMin;
+                _seqSliceMax = bMax;
+            }
+            _seqKey = null; _seqPt = null; _seqPtKey = null;
+        }
+        if (_seqKey === null || _seqKey - 255n > _seqSliceMax) {
+            if (_seqKey !== null) _seqWraps++;
+            _seqKey = _seqSliceMin + 255n;   // ilk çapa [dilimBaşı, dilimBaşı+510] aralığını kapsar
+        }
+        const k = (_seqKey > bMax) ? bMax : _seqKey;
+        _seqKey += SEQ_STRIDE;
+        return k;
+    }
+    const SEQ_BATCH = 64;
+    let _seqTab = null, _seqQ = [], _seqQHead = 0, _seqQKey = null;
+    // Sonraki 64 çapayı (base + j·511·G) TEK modüler ters alma ile toplu hesapla (Montgomery hilesi)
+    function _seqRefill(inst, bx, by, baseKey) {
+        const P = SECP_P, n = SEQ_BATCH;
+        if (_seqTab === null) {
+            _seqTab = [];
+            for (let j = 1; j <= n; j++) {
+                const g = inst.g.mul((SEQ_STRIDE * BigInt(j)).toString(16));
+                _seqTab.push([BigInt('0x' + g.getX().toString(16)), BigInt('0x' + g.getY().toString(16))]);
+            }
+        }
+        const dx = new Array(n), pre = new Array(n + 1);
+        pre[0] = 1n;
+        for (let j = 0; j < n; j++) {
+            const d = (_seqTab[j][0] - bx + P) % P;
+            if (d === 0n) return false;
+            dx[j] = d;
+            pre[j + 1] = (pre[j] * d) % P;
+        }
+        let inv = fastInvModP(pre[n]);
+        if (inv === 0n) return false;
+        const out = new Array(n);
+        for (let j = n - 1; j >= 0; j--) {
+            const invd = (inv * pre[j]) % P;
+            inv = (inv * dx[j]) % P;
+            const tx = _seqTab[j][0], ty = _seqTab[j][1];
+            const lam = (((ty - by + P) % P) * invd) % P;
+            const x3 = (((lam * lam - bx - tx) % P) + 2n * P) % P;
+            const y3 = (((lam * (bx - x3 + P) - by) % P) + P) % P;
+            out[j] = [x3, y3];
+        }
+        _seqQ = out; _seqQHead = 0; _seqQKey = baseKey + SEQ_STRIDE;
+        return true;
+    }
+    function workerSeqAnchor(inst, key) {
+        if (_seqBroken) return null;
+        let pt = null;
+        if (_seqPt !== null && _seqPtKey !== null && key === _seqPtKey + SEQ_STRIDE) {
+            if (_seqQHead >= _seqQ.length || _seqQKey !== key) {
+                _seqRefill(inst, _seqPt[0], _seqPt[1], _seqPtKey);
+            }
+            if (_seqQHead < _seqQ.length && _seqQKey === key) {
+                pt = _seqQ[_seqQHead++];
+                _seqQKey += SEQ_STRIDE;
+            } else {
+                if (_seqG511 === null) {
+                    const g = inst.g.mul('1ff');
+                    _seqG511 = [BigInt('0x' + g.getX().toString(16)), BigInt('0x' + g.getY().toString(16))];
+                }
+                pt = _seqAddAffine(_seqPt[0], _seqPt[1], _seqG511[0], _seqG511[1]);
+            }
+        }
+        if (pt === null) {
+            _seqQ = []; _seqQHead = 0;
+            const fb = workerFixedBaseAnchor(inst, key);
+            if (fb) pt = [fb[0], fb[1]];
+        }
+        if (pt !== null) {
+            _seqCalls++;
+            if (_seqCalls <= 8 || (_seqCalls & 4095) === 0) {   // öz-denetim: elliptic ile karşılaştır
+                const chk = inst.g.mul(key.toString(16));
+                if (BigInt('0x' + chk.getX().toString(16)) !== pt[0] || BigInt('0x' + chk.getY().toString(16)) !== pt[1]) {
+                    _seqBroken = true;
+                    console.error('[Worker] Ardışık çapa elliptic ile uyuşmuyor: devre dışı');
+                    _seqPt = null; _seqPtKey = null; _seqQ = [];
+                    return null;
+                }
+            }
+            _seqPt = pt; _seqPtKey = key;
+        } else {
+            _seqPt = null; _seqPtKey = null; _seqQ = [];
+        }
+        return pt;
+    }
     const WORKER_AUTO_ALGO_LIST = [
         'SCRAMBLED_SOBOL',
         'SOBOL',
@@ -9706,7 +10580,7 @@ const FastH = (function () {
         } else if (typeof workerKangarooHerdType !== 'undefined' && (workerKangarooHerdType === 'TAME' || workerKangarooHerdType === 'WILD' || workerKangarooHerdType === 'DUAL')) {
             role = workerKangarooHerdType;
         } else {
-            role = (cfg && cfg.totalWorkers === 1) ? 'DUAL' : ((workerId % 2 === 0) ? 'TAME' : 'WILD');
+            role = 'DUAL';
         }
 
         const herdMode = (cfg && cfg.selectedAlgorithm === 'KANGAROO_KRONECKER')
@@ -9761,11 +10635,18 @@ const FastH = (function () {
 
         if (KangarooClass && targetPub) {
             const cleanTargetHex = targetPub.trim().toLowerCase().replace(/^0x/i, '');
+            const baseStrat = (cfg && cfg.kangarooBaseStrategy) ? cfg.kangarooBaseStrategy : 'AUTO';
+            const startLayout = (cfg && cfg.selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY';
             // 🎯 EĞER AYNI HEDEFSE VE MOTOR MEVCUTSA: TUZAKLARI ASLA SİLME, SADECE ARALIĞI GÜNCELLE!
             if (workerKangarooEngine && workerKangarooEngine.targetPubHex && workerKangarooEngine.targetPubHex.toLowerCase() === cleanTargetHex) {
                 workerKangarooEngine.role = role;
-                const modeChanged = Boolean(workerKangarooEngine.options && workerKangarooEngine.options.herdMode !== herdMode);
-                if (workerKangarooEngine.options) workerKangarooEngine.options.herdMode = herdMode;
+                const modeChanged = Boolean(workerKangarooEngine.options && (workerKangarooEngine.options.herdMode !== herdMode || workerKangarooEngine.baseStrategy !== baseStrat || workerKangarooEngine.options.startLayout !== startLayout));
+                if (workerKangarooEngine.options) {
+                    workerKangarooEngine.options.herdMode = herdMode;
+                    workerKangarooEngine.options.baseStrategy = baseStrat;
+                    workerKangarooEngine.options.startLayout = startLayout;
+                }
+                workerKangarooEngine.baseStrategy = baseStrat;
                 if (typeof workerKangarooEngine.updateRange === 'function') {
                     workerKangarooEngine.updateRange(s, e, true, modeChanged);
                 } else {
@@ -9775,7 +10656,7 @@ const FastH = (function () {
                 }
             } else {
                 try {
-                    workerKangarooEngine = new KangarooClass(targetPub, s, e, { role: role, workerId: workerId, herdMode: herdMode });
+                    workerKangarooEngine = new KangarooClass(targetPub, s, e, { role: role, workerId: workerId, herdMode: herdMode, baseStrategy: baseStrat, startLayout: startLayout });
                 } catch(err) {
                     console.error(`[Worker #${workerId} Kangaroo Init Error]:`, err);
                     workerKangarooEngine = null;
@@ -9816,8 +10697,9 @@ const FastH = (function () {
         workerKangarooStepCount += delta;
 
         const now = Date.now();
+        let didPostEvent = false;
         if (workerKangarooEngine.newTrapsToBroadcast && workerKangarooEngine.newTrapsToBroadcast.length > 0) {
-            if (now - workerKangarooLastTrapPost >= 80 || workerKangarooEngine.newTrapsToBroadcast.length >= 25) {
+            if (now - workerKangarooLastTrapPost >= 60 || workerKangarooEngine.newTrapsToBroadcast.length >= 20) {
                 workerKangarooLastTrapPost = now;
                 const traps = workerKangarooEngine.newTrapsToBroadcast.slice();
                 workerKangarooEngine.newTrapsToBroadcast = [];
@@ -9826,6 +10708,7 @@ const FastH = (function () {
                     workerId: workerId,
                     traps: traps
                 });
+                didPostEvent = true;
             }
         }
 
@@ -9893,7 +10776,7 @@ const FastH = (function () {
                             : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_GLV')
                                 ? ('⚡🦘 GLV-Kangaroo [' + (workerKangarooEngine ? workerKangarooEngine.role : '4-Way GLV') + ' O(√N)]')
                                 : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_MONTGOMERY')
-                                    ? ('⚡🚀 SIMD Montgomery [' + (workerKangarooEngine ? workerKangarooEngine.role : '32-Herd') + ' O(√N)]')
+                                    ? ('⚡🚀 SIMD Montgomery [' + (workerKangarooEngine ? workerKangarooEngine.role : '64-Herd') + ' O(√N)]')
                                     : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_ROLLING')
                                         ? ('🦘🌀 Kayan Mikro-Pencere [' + (workerKangarooEngine ? workerKangarooEngine.role : 'O(√W) Doyum') + ']')
                                         : ((cfg && cfg.selectedAlgorithm === 'KANGAROO_ANCHOR')
@@ -9903,21 +10786,22 @@ const FastH = (function () {
                                                 : ('🦘 Pollard Kangaroo [' + (workerKangarooEngine ? workerKangarooEngine.role : 'Sürü') + ' O(√N)]'))))))))
             });
             workerKangarooStepCount = 0;
+            didPostEvent = true;
         }
 
-        // ⚡ OTO-KALİBRASYON: Kangaroo batch süresini dinamik olarak 10-22ms aralığında optimize et
+        // ⚡ OTO-KALİBRASYON: Kangaroo batch süresini dinamik olarak 10-20ms aralığında optimize et (64-Way Herd)
         const batchDuration = ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - batchStartTime;
         workerKangarooCalibCounter++;
         if (workerKangarooCalibCounter % 4 === 0) {
-            if (batchDuration < 10) {
-                workerDynamicKangarooSteps = Math.min(16384, workerDynamicKangarooSteps + 1024);
+            if (batchDuration < 12) {
+                workerDynamicKangarooSteps = Math.min(28672, workerDynamicKangarooSteps + 2048);
             } else if (batchDuration > 22) {
-                workerDynamicKangarooSteps = Math.max(512, Math.round(workerDynamicKangarooSteps * 0.8));
+                workerDynamicKangarooSteps = Math.max(512, (Math.round((workerDynamicKangarooSteps * 0.8) / 64) * 64) || 512);
             }
         }
 
         if (isWorking) {
-            setTimeout(workBatch, 0);
+            scheduleNextWorkerBatch(didPostEvent);
         }
     }
 
@@ -10040,29 +10924,41 @@ const FastH = (function () {
 
         if (cfg.isCircularMode && cfg.unsolvedList && cfg.unsolvedList.length > 0) {
             circularStepCounter++;
-            const totalUnsolved = cfg.unsolvedList.length;
+            const sTotal = (cfg.swarmTotal && cfg.swarmTotal > 1) ? cfg.swarmTotal : 1;
+            const sIdx = (cfg.swarmIndex !== undefined) ? cfg.swarmIndex : 0;
 
-            // 🧠 DENGELİ OLASILIK AĞIRLIKLI DÖNGÜSEL SÜRE (Hızlı Rotasyon + Çözülebilir Hedef Önceliği):
-            let curBits = 32;
+            // 🌐 [İYİLEŞTİRME 2]: SEKMELER ARASI KESİŞİMSİZ BULMACA PAYLAŞIMI (SWARM SHARDING)
+            // Çoklu sekme açıkken tüm bulmacalar sekmeler arasında modüler (interleaved) paylaştırılır.
+            // Sekmeler birbirinin işini asla tekrarlamaz, toplam arama gücü tam katlanır!
+            let tabPuzzles = cfg.unsolvedList;
+            if (sTotal > 1) {
+                const sharded = cfg.unsolvedList.filter((_, idx) => (idx % sTotal) === (sIdx % sTotal));
+                if (sharded.length > 0) {
+                    tabPuzzles = sharded;
+                }
+            }
+            const totalTabPuzzles = tabPuzzles.length;
+
+            // ⚡ [İYİLEŞTİRME 3]: DWELL TIME & CPU ÖNBELLEK OPTİMİZASYONU
+            // Her çekirdek her bulmacada ~400-1200 batch (24k-72k anahtar / ~1.5-2.5 sn) kalarak
+            // L1/L2 önbellek verimini maksimize eder, context-switch ve string tahsis kaybını önler:
+            let curBits = 71;
             if (workerActiveTarget) {
                 if (workerActiveTarget.origEnd) curBits = workerActiveTarget.origEnd.toString(16).length * 4;
                 else if (workerActiveTarget.id && !isNaN(parseInt(workerActiveTarget.id, 10))) curBits = parseInt(workerActiveTarget.id, 10);
             }
-            const dynamicDwell = Math.max(15, Math.min(120, Math.round(3600 / Math.max(20, curBits))));
+            const dynamicDwell = Math.max(400, Math.min(1200, Math.round(48000 / Math.max(30, curBits))));
 
             if (!workerActiveTarget || circularStepCounter >= dynamicDwell) {
                 circularStepCounter = 0;
                 if (!workerActiveTarget) {
                     const numWorkers = (cfg.totalWorkers && cfg.totalWorkers > 0) ? cfg.totalWorkers : 16;
-                    const sIdx = (cfg.swarmIndex !== undefined) ? cfg.swarmIndex : 0;
-                    // İş parçacıklarını tüm bulmacaların arasına eşit ve homojen olarak paylaştır:
-                    const workerOffset = Math.floor((workerId * totalUnsolved) / Math.max(1, numWorkers));
-                    circularIdx = (workerOffset + sIdx * 3) % totalUnsolved;
+                    // Bu sekmedeki iş parçacıklarını kendi havuzuna homojen dağıt:
+                    circularIdx = Math.floor((workerId * totalTabPuzzles) / Math.max(1, numWorkers)) % totalTabPuzzles;
                 } else {
-                    const sTotal = (cfg.swarmTotal && cfg.swarmTotal > 1) ? cfg.swarmTotal : 1;
-                    circularIdx = (circularIdx + sTotal) % totalUnsolved;
+                    circularIdx = (circularIdx + 1) % totalTabPuzzles;
                 }
-                workerActiveTarget = cfg.unsolvedList[circularIdx];
+                workerActiveTarget = tabPuzzles[circularIdx];
             }
             activeTarget = workerActiveTarget;
         } else {
@@ -10091,10 +10987,6 @@ const FastH = (function () {
             if (cfg.isCircularMode || (isEffectivePrefix && !cfg.isPrefixAutoJump && cfg.userPrefix)) {
                 let minStep = (cfg.sliderMinStep !== undefined && cfg.sliderMinStep !== null) ? BigInt(Math.round(cfg.sliderMinStep)) : 0n;
                 let maxStep = (cfg.sliderMaxStep !== undefined && cfg.sliderMaxStep !== null) ? BigInt(Math.round(cfg.sliderMaxStep)) : 1000000000000n;
-                if (cfg.isSpaceCropped && (cfg.spaceCropMinPct > 0 || cfg.spaceCropMaxPct < 100)) {
-                    minStep = BigInt(Math.round(cfg.spaceCropMinPct * 10000000000));
-                    maxStep = BigInt(Math.round(cfg.spaceCropMaxPct * 10000000000));
-                }
                 if ((minStep > 0n || maxStep < 1000000000000n) && curBoundSpan > 1n) {
                     const prevMin = boundMin;
                     const prevMax = boundMax;
@@ -10146,7 +11038,7 @@ const FastH = (function () {
             if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
                 workerActiveAlgo = 'RANDOM';
             }
-            if (workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ROLLING' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_HOP_DWELL') {
+            if (workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ROLLING' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_HOP_DWELL' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
                 const targetObj = (typeof activeTarget !== 'undefined' && activeTarget) ? activeTarget : (cfg && cfg.activeTarget ? cfg.activeTarget : null);
                 const targetId = targetObj ? targetObj.id : null;
                 const tNum = targetId !== null ? parseInt(targetId, 10) : null;
@@ -10192,6 +11084,8 @@ const FastH = (function () {
             }
 
             // 2. Fizik ve Kaotik Formüller (Yüksek Çözünürlüklü 10^12 Simetrik Pencere — Sıfır Merkez Kayması!)
+            //    Not: Küçük/orta ölçekli bulmacalarda (effRange <= 50.000.000) veya Hizalı Permütasyon (ALIGNED_PERM) modunda
+            //    aralığı %5 / %0.01 dilime sıkıştırmak yerine tam uzay taranır; böylece eşleşme gecikmesi %100 önlenir!
             if (f === 'PREFIX') {
                 // Salt ön ek modu
             } else if (f === 'GRID') {
@@ -10201,15 +11095,15 @@ const FastH = (function () {
                 const hMax = toBigIntSafe(cfg.userHexEnd);
                 subMin = (hMin < boundMin) ? boundMin : (hMin > boundMax ? boundMin : hMin);
                 subMax = (hMax > boundMax) ? boundMax : (hMax < subMin ? boundMax : hMax);
-            } else if (mode === 'PERCENT' && cfg.sliceModeActive && totalR > 10000n) {
+            } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ROLLING' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_HOP_DWELL' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
+                subMin = boundMin;
+                subMax = boundMax;
+            } else if (mode === 'PERCENT' && cfg.sliceModeActive && effRange > 50000000n) {
                 const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 10000000000));
                 const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 10000000000));
                 subMin = boundMin + (effRange * sBig / 1000000000000n);
                 subMax = boundMin + (effRange * eBig / 1000000000000n);
-            } else if (workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ROLLING' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_HOP_DWELL') {
-                subMin = boundMin;
-                subMax = boundMax;
-            } else if (f === 'OMNI_CHAOS' || mode === 'PHYSICS' || f === 'QUANTUM_TUNNEL' || f === 'QUANTUM' || f === 'RIEMANN_ZETA' || f === 'RIEMANN' || f === 'GOLDEN_SINGULARITY' || f === 'DETERMINISTIC_CHAOS' || f === 'WEYL_GOLDEN' || f === 'COPRIME_STRIDE' || f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL') {
+            } else if (effRange > 50000000n && (f === 'OMNI_CHAOS' || mode === 'PHYSICS' || f === 'QUANTUM_TUNNEL' || f === 'QUANTUM' || f === 'RIEMANN_ZETA' || f === 'RIEMANN' || f === 'GOLDEN_SINGULARITY' || f === 'DETERMINISTIC_CHAOS' || f === 'WEYL_GOLDEN' || f === 'COPRIME_STRIDE' || f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL')) {
                 physicsStep++;
                 const physFormula = (f === 'OMNI_CHAOS') ? 'GOLDEN_SINGULARITY' : ((f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL') ? 'SPHERICAL_ORBITAL' : f);
                 const centerPct = getNextPhysicsPercent(physFormula);
@@ -10230,7 +11124,9 @@ const FastH = (function () {
             // ----------------------------------------------------
             // 🤖 AŞAMA 2: SEÇİLEN ALGORİTMAYI BU UZAYDA ÇALIŞTIRMA
             // ----------------------------------------------------
-            if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
+            if (workerActiveAlgo === 'SEQUENTIAL') {
+                currentKey = workerSequentialNextKey(boundMin, boundMax, (cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1)), workerId);
+            } else if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
                 currentKey = generateScrambledSobolKey(subMin, subMax);
             } else if (workerActiveAlgo === 'SOBOL') {
                 currentKey = generateSobolKey(subMin, subMax);
@@ -10242,6 +11138,8 @@ const FastH = (function () {
                 currentKey = generateWeylGoldenKey(subMin, subMax);
             } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
                 currentKey = generateCoprimeStrideKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'ALIGNED_PERM') {
+                currentKey = generateAlignedPermKey(subMin, subMax);
             } else if (workerActiveAlgo === 'CHAOS') {
                 currentKey = generateDeterministicChaosKey(subMin, subMax);
             } else if (workerActiveAlgo === 'HILBERT') {
@@ -10274,73 +11172,77 @@ const FastH = (function () {
                 }
             }
 
-            // 4. Durum Açıklama Metni (baseDesc)
-            const pParts = [];
-            if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
-                pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 6) + '..-0x' + boundMax.toString(16).substring(0, 6) + '..]');
-            }
-            if (isEffectivePrefix) {
-                pParts.push(cfg.isPrefixAutoJump ? ('🔄 ' + (activeWorkerPrefix || 'Coset-M')) : ('🧩 Ön Ek: 0x' + (activeWorkerPrefix || cfg.userPrefix || '...')));
-            }
-            if (f === 'OMNI_CHAOS') pParts.push('💥 Hibrit Kaos');
-            else if (f === 'DETERMINISTIC_CHAOS') pParts.push('♾️ Deterministik Kaos');
-            else if (f !== 'PREFIX' && f !== 'GRID') pParts.push('🌀 Fizik [' + f + ']');
-            baseDesc = pParts.join(' + ') || 'Standart';
+            // 4. Durum Açıklama Metni (baseDesc) — Yalnızca son adımda üretilir (Döngü içi gereksiz string tahsisini %98 önler)
+            if (i === batchSize - 1) {
+                const pParts = [];
+                if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
+                    pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 6) + '..-0x' + boundMax.toString(16).substring(0, 6) + '..]');
+                }
+                if (isEffectivePrefix) {
+                    pParts.push(cfg.isPrefixAutoJump ? ('🔄 ' + (activeWorkerPrefix || 'Coset-M')) : ('🧩 Ön Ek: 0x' + (activeWorkerPrefix || cfg.userPrefix || '...')));
+                }
+                if (f === 'OMNI_CHAOS') pParts.push('💥 Hibrit Kaos');
+                else if (f === 'DETERMINISTIC_CHAOS') pParts.push('♾️ Deterministik Kaos');
+                else if (f !== 'PREFIX' && f !== 'GRID') pParts.push('🌀 Fizik [' + f + ']');
+                baseDesc = pParts.join(' + ') || 'Standart';
 
-            let algoPrefix = '';
-            if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
-                algoPrefix = '🔀 Scrambled Sobol + ';
-            } else if (workerActiveAlgo === 'SOBOL') {
-                algoPrefix = '📐 Sobol + ';
-            } else if (workerActiveAlgo === 'KRONECKER_LATTICE') {
-                algoPrefix = '🌟 Kronecker Kafesi + ';
-            } else if (workerActiveAlgo === 'HALTON') {
-                algoPrefix = '🎲 Halton + ';
-            } else if (workerActiveAlgo === 'WEYL_GOLDEN') {
-                algoPrefix = '✨ Altın Oran (Weyl) + ';
-            } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
-                algoPrefix = '🔢 Asal Adım (Coprime) + ';
-            } else if (workerActiveAlgo === 'CHAOS') {
-                algoPrefix = '🌀 Kaotik (Logistic/Tent) + ';
-            } else if (workerActiveAlgo === 'HILBERT') {
-                algoPrefix = '🗺️ Hilbert Eğrisi + ';
-            } else if (workerActiveAlgo === 'SPHERICAL_ORBITAL') {
-                algoPrefix = '🪐 Küresel Yörünge + ';
-            } else if (workerActiveAlgo === 'ADDR_HOP_SWEEP') {
-                algoPrefix = '🎯 Sıçrama + Süpürme + ';
-            } else if (workerActiveAlgo === 'LEVY_FLIGHT') {
-                algoPrefix = '🦅 Lévy Uçuşu + ';
-            } else if (workerActiveAlgo === 'CONTINUED_FRACTIONS') {
-                algoPrefix = '✨ Sürekli Kesirler + ';
-            } else if (workerActiveAlgo === 'ULAM_SPIRAL') {
-                algoPrefix = '🌀 Ulam Spirali + ';
-            } else if (workerActiveAlgo === 'RANDOM') {
-                algoPrefix = '🎲 Kriptografik Rastgele + ';
-            }
-            const puzzleBitLen =  ((baseEnd.toString(16).length * 4) + 'b');
-            const puzzleLabel = '🎯 #' + activeTarget.id + ' (' + puzzleBitLen + ')';
-            if (cfg.isCircularMode) {
-                currentRangeText = puzzleLabel + ' | ' + algoPrefix + baseDesc;
-            } else if (workerActiveAlgo === 'GLV_LATTICE_2D') {
-                currentRangeText = '🌐⚡ 2D Latis GLV Kafesi [Gaudry-Schost O(√N)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO') {
-                currentRangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_SOBOL') {
-                currentRangeText = '🦘📐 Sobol-Kangaroo [Quasi-Herd O(√N)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_GLV') {
-                currentRangeText = '⚡🦘 GLV-Kangaroo [4-Way Endomorfizma O(√N)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_MONTGOMERY') {
-                currentRangeText = '⚡🚀 SIMD Montgomery [32-Way Herd O(√N)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_ROLLING') {
-                currentRangeText = '🦘🌀 Kayan Mikro-Pencere [O(√W)] (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_ANCHOR') {
-                currentRangeText = '🦘⚓ Evrensel Çapa & Birikimli Tuzak (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_HOP_DWELL') {
-                currentRangeText = '🦘⏱️ Hibrit Weyl Sıçrama & Pusu Radarı (Tam Aralık)';
-            } else if (workerActiveAlgo === 'KANGAROO_KRONECKER') {
-                currentRangeText = '⚡ 🦘 Kronecker-Kangaroo [8D İrrasyonel Kafes O(√N)] (Tam Aralık)';
-            } else {
-                currentRangeText = algoPrefix + baseDesc;
+                let algoPrefix = '';
+                if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
+                    algoPrefix = '🔀 Scrambled Sobol + ';
+                } else if (workerActiveAlgo === 'SOBOL') {
+                    algoPrefix = '📐 Sobol + ';
+                } else if (workerActiveAlgo === 'KRONECKER_LATTICE') {
+                    algoPrefix = '🌟 Kronecker Kafesi + ';
+                } else if (workerActiveAlgo === 'HALTON') {
+                    algoPrefix = '🎲 Halton + ';
+                } else if (workerActiveAlgo === 'WEYL_GOLDEN') {
+                    algoPrefix = '✨ Altın Oran (Weyl) + ';
+                } else if (workerActiveAlgo === 'COPRIME_STRIDE') {
+                    algoPrefix = '🔢 Asal Adım (Coprime) + ';
+                } else if (workerActiveAlgo === 'ALIGNED_PERM') {
+                    algoPrefix = '🧩 Hizalı Permütasyon + ';
+                } else if (workerActiveAlgo === 'CHAOS') {
+                    algoPrefix = '🌀 Kaotik (Logistic/Tent) + ';
+                } else if (workerActiveAlgo === 'HILBERT') {
+                    algoPrefix = '🗺️ Hilbert Eğrisi + ';
+                } else if (workerActiveAlgo === 'SPHERICAL_ORBITAL') {
+                    algoPrefix = '🪐 Küresel Yörünge + ';
+                } else if (workerActiveAlgo === 'ADDR_HOP_SWEEP') {
+                    algoPrefix = '🎯 Sıçrama + Süpürme + ';
+                } else if (workerActiveAlgo === 'LEVY_FLIGHT') {
+                    algoPrefix = '🦅 Lévy Uçuşu + ';
+                } else if (workerActiveAlgo === 'CONTINUED_FRACTIONS') {
+                    algoPrefix = '✨ Sürekli Kesirler + ';
+                } else if (workerActiveAlgo === 'ULAM_SPIRAL') {
+                    algoPrefix = '🌀 Ulam Spirali + ';
+                } else if (workerActiveAlgo === 'RANDOM') {
+                    algoPrefix = '🎲 Kriptografik Rastgele + ';
+                }
+                const puzzleBitLen = ((baseEnd.toString(16).length * 4) + 'b');
+                const puzzleLabel = '🎯 #' + activeTarget.id + ' (' + puzzleBitLen + ')';
+                if (cfg.isCircularMode) {
+                    currentRangeText = puzzleLabel + ' | ' + algoPrefix + baseDesc;
+                } else if (workerActiveAlgo === 'GLV_LATTICE_2D') {
+                    currentRangeText = '🌐⚡ 2D Latis GLV Kafesi [Gaudry-Schost O(√N)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO') {
+                    currentRangeText = '🦘 Pollard Kangaroo [Eliptik Eğri O(√N)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_SOBOL') {
+                    currentRangeText = '🦘📐 Sobol-Kangaroo [Quasi-Herd O(√N)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_GLV') {
+                    currentRangeText = '⚡🦘 GLV-Kangaroo [4-Way Endomorfizma O(√N)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_MONTGOMERY') {
+                    currentRangeText = '⚡🚀 SIMD Montgomery [64-Way Herd O(√N)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_ROLLING') {
+                    currentRangeText = '🦘🌀 Kayan Mikro-Pencere [O(√W)] (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_ANCHOR') {
+                    currentRangeText = '🦘⚓ Evrensel Çapa & Birikimli Tuzak (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_HOP_DWELL') {
+                    currentRangeText = '🦘⏱️ Hibrit Weyl Sıçrama & Pusu Radarı (Tam Aralık)';
+                } else if (workerActiveAlgo === 'KANGAROO_KRONECKER') {
+                    currentRangeText = '⚡ 🦘 Kronecker-Kangaroo [8D İrrasyonel Kafes O(√N)] (Tam Aralık)';
+                } else {
+                    currentRangeText = algoPrefix + baseDesc;
+                }
             }
             
             // 🛡️ HER DURUMDA KESİN SINIR DÜZELTME & SARMALAMA (Hedef/Aralık Değişimi Çöküşünü Önler)
@@ -10353,16 +11255,15 @@ const FastH = (function () {
                 currentKey = boundMin;
             }
 
-            lastKeyHex = currentKey.toString(16).padStart(64, '0');
-            workerPersistentLastKey = lastKeyHex;
-
-            // 🚀 ULTRA-HIZLI ÇİFT YÖNLÜ (±iG) SİMETRİK MONTGOMERY BATCH ADIM MOTORU (Çapa Başına 255 Anahtar!)
+            // 🚀 ULTRA-HIZLI ÇİFT YÖNLÜ (±iG) SİMETRİK MONTGOMERY BATCH ADIM MOTORU (Çapa Başına 511 Anahtar!)
             let inst = getEc();
             let anchorPt = null;
             if (inst) {
                 try {
-                    anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
+                    if (workerActiveAlgo === 'SEQUENTIAL') anchorPt = workerSeqAnchor(inst, currentKey);
+                    if (!anchorPt) anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
                     if (!anchorPt) {
+                        lastKeyHex = currentKey.toString(16).padStart(64, '0');
                         let pub = inst.keyFromPrivate(lastKeyHex, 'hex').getPublic();
                         anchorPt = [BigInt('0x' + pub.getX().toString('hex')), BigInt('0x' + pub.getY().toString('hex'))];
                     }
@@ -10372,6 +11273,8 @@ const FastH = (function () {
             if (!anchorPt) {
                 // Yedek tek anahtar kontrolü (EC başlatılamazsa)
                 count++;
+                lastKeyHex = currentKey.toString(16).padStart(64, '0');
+                workerPersistentLastKey = lastKeyHex;
                 const compH160 = privkeyToHash160(lastKeyHex);
                 const matched = compH160 ? workerTargetMap.get(compH160) : null;
                 if (matched) {
@@ -10389,47 +11292,132 @@ const FastH = (function () {
                     return;
                 }
             } else {
+                const P = SECP_P;
                 const x0 = anchorPt[0];
                 const y0 = anchorPt[1];
                 let curX = x0;
                 let curY = y0;
                 let curKey = currentKey;
                 const STRIDE = MONT_STRIDE;
-
-                // 🚀 SİMETRİK MONTGOMERY BATCH INVERSION (127 Δx için TEK modüler ters alma ile hem +iG hem -iG = 255 nokta!)
-                let montBatchValid = true;
                 const strideCount = MONT_STRIDE - 1;
-                _montC[0] = 1n;
-                for (let mIdx = 0; mIdx < strideCount; mIdx++) {
-                    const gi = MONT_TABLE_G[mIdx];
-                    let dx = gi[0] - x0;
-                    if (dx < 0n) dx += SECP_P;
-                    if (dx === 0n) { montBatchValid = false; break; }
-                    let dy = gi[1] - y0;
-                    if (dy < 0n) dy += SECP_P;
-                    _montDx[mIdx] = dx;
-                    _montDy[mIdx] = dy;
-                    _montC[mIdx + 1] = (_montC[mIdx] * dx) % SECP_P;
-                }
+                const hasCustomHashSet = Boolean(workerCustomHashSet && workerCustomHashSet.size > 0);
+                const needUncompTarget = Boolean(activeTarget && activeTarget.isUncompressed);
 
-                if (montBatchValid) {
-                    let invAll = fastInvModP(_montC[strideCount]);
-                    if (invAll === 0n) {
-                        montBatchValid = false;
-                    } else {
-                        for (let mIdx = strideCount - 1; mIdx >= 0; mIdx--) {
-                            _montInvDx[mIdx] = (invAll * _montC[mIdx]) % SECP_P;
-                            invAll = (invAll * _montDx[mIdx]) % SECP_P;
+                // ⚡ SOTA NATIVE WASM 511-NOKTA MONTGOMERY + HASH160 + L1 BLOOM MOTORU (Sıkıştırılmış Hedefler İçin)
+                let handledByWasm = false;
+                if (workerWasmEx && workerWasmMem64 && workerWasmMem32 && !needUncompTarget) {
+                    writeWorkerWasmFe(0x00A0, x0);
+                    writeWorkerWasmFe(0x00C0, y0);
+                    if (workerWasmEx.normal_prepare_mont(strideCount) === 1) {
+                        const accC = readWorkerWasmFe(0x0080);
+                        const invAll = fastInvModP(accC);
+                        if (invAll !== 0n) {
+                            writeWorkerWasmFe(0x0080, invAll);
+                            const maxPosS = (boundMax >= currentKey)
+                                ? ((boundMax - currentKey) >= BigInt(strideCount) ? strideCount : Number(boundMax - currentKey))
+                                : 0;
+                            const maxNegS = (currentKey >= boundMin)
+                                ? ((currentKey - boundMin) >= BigInt(strideCount) ? strideCount : Number(currentKey - boundMin))
+                                : 0;
+                            const packedRes = workerWasmEx.normal_sweep_511(strideCount, maxPosS, maxNegS);
+                            const checkedKeys = (packedRes >>> 16) & 0xFFFF;
+                            const matchCount  = packedRes & 0xFFFF;
+                            count += checkedKeys;
+                            handledByWasm = true;
+
+                            if (matchCount > 0) {
+                                for (let m = 0; m < matchCount; m++) {
+                                    const base32 = (0x15000 + m * 28) >> 2;
+                                    const s   = workerWasmMem32[base32];
+                                    const dir = workerWasmMem32[base32 + 1];
+                                    const w0  = workerWasmMem32[base32 + 2] >>> 0;
+                                    if (!workerTargetWords0.has(w0)) continue;
+
+                                    const w1 = workerWasmMem32[base32 + 3] >>> 0;
+                                    const w2 = workerWasmMem32[base32 + 4] >>> 0;
+                                    const w3 = workerWasmMem32[base32 + 5] >>> 0;
+                                    const w4 = workerWasmMem32[base32 + 6] >>> 0;
+                                    const compH160Str =
+                                        w0.toString(16).padStart(8, '0') +
+                                        w1.toString(16).padStart(8, '0') +
+                                        w2.toString(16).padStart(8, '0') +
+                                        w3.toString(16).padStart(8, '0') +
+                                        w4.toString(16).padStart(8, '0');
+                                    const hitKey = (s === 0) ? currentKey : ((dir === 0) ? (currentKey + BigInt(s)) : (currentKey - BigInt(s)));
+
+                                    const matched = workerTargetMap.get(compH160Str);
+                                    if (matched) {
+                                        lastKeyHex = hitKey.toString(16).padStart(64, '0');
+                                        self.postMessage({
+                                            type: 'win',
+                                            workerId: workerId,
+                                            keyHex: lastKeyHex,
+                                            targetId: matched.id,
+                                            targetAddr: matched.addr,
+                                            reward: matched.reward,
+                                            isUncompressed: false,
+                                            matchType: 'TARGET_COMP'
+                                        });
+                                        isWorking = false;
+                                        return;
+                                    }
+                                    if (hasCustomHashSet && workerCustomHashSet.has(compH160Str)) {
+                                        lastKeyHex = hitKey.toString(16).padStart(64, '0');
+                                        self.postMessage({
+                                            type: 'win',
+                                            workerId: workerId,
+                                            keyHex: lastKeyHex,
+                                            targetId: 'İlave',
+                                            targetAddr: 'İlave Adres Eşleşmesi',
+                                            reward: 'İlave Havuz',
+                                            isUncompressed: false,
+                                            matchType: 'CUSTOM_COMP'
+                                        });
+                                        isWorking = false;
+                                        return;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                const hasCustomHashSet = Boolean(workerCustomHashSet && workerCustomHashSet.size > 0);
-                const needUncompTarget = Boolean(activeTarget && activeTarget.isUncompressed);
+                if (!handledByWasm) {
+                // 🚀 SİMETRİK MONTGOMERY BATCH INVERSION (255 Δx için TEK modüler ters alma ile hem +iG hem -iG = 511 nokta!)
+                let montBatchValid = true;
+                let accC = 1n;
+                _montC[0] = 1n;
+                for (let mIdx = 0; mIdx < strideCount; mIdx++) {
+                    const gi = MONT_TABLE_G[mIdx];
+                    let dx = gi[0] - x0;
+                    if (dx < 0n) dx += P;
+                    if (dx === 0n) { montBatchValid = false; break; }
+                    let dy = gi[1] - y0;
+                    if (dy < 0n) dy += P;
+                    _montDx[mIdx] = dx;
+                    _montDy[mIdx] = dy;
+                    accC = (accC * dx) % P;
+                    _montC[mIdx + 1] = accC;
+                }
+
+                if (montBatchValid) {
+                    let invAll = fastInvModP(accC);
+                    if (invAll === 0n) {
+                        montBatchValid = false;
+                    } else {
+                        for (let mIdx = strideCount - 1; mIdx >= 0; mIdx--) {
+                            _montInvDx[mIdx] = (invAll * _montC[mIdx]) % P;
+                            invAll = (invAll * _montDx[mIdx]) % P;
+                        }
+                    }
+                }
+
+                let sBig = 0n;
 
                 for (let s = 0; s < STRIDE; s++) {
                     // Çift yönlü simetrik tarama: s=0 çapa noktası (k0), s>0 için dir=0 (+sG => k0+s) ve dir=1 (-sG => k0-s)
                     const maxDir = (s === 0 || !montBatchValid) ? 1 : 2;
+                    if (s > 0) sBig++;
                     for (let dir = 0; dir < maxDir; dir++) {
                         if (s === 0) {
                             curX = x0;
@@ -10440,25 +11428,24 @@ const FastH = (function () {
                             const gi = MONT_TABLE_G[mIdx];
                             const invDx = _montInvDx[mIdx];
                             if (dir === 0) {
-                                curKey = currentKey + BigInt(s);
+                                curKey = currentKey + sBig;
                                 if (curKey > boundMax) continue;
-                                const lam = (_montDy[mIdx] * invDx) % SECP_P;
-                                curX = (lam * lam - x0 - gi[0]) % SECP_P;
-                                if (curX < 0n) curX += SECP_P;
-                                curY = (lam * (x0 - curX) - y0) % SECP_P;
-                                if (curY < 0n) curY += SECP_P;
+                                const lam = (_montDy[mIdx] * invDx) % P;
+                                curX = (lam * lam - x0 - gi[0]) % P;
+                                if (curX < 0n) curX += P;
+                                curY = (lam * (x0 - curX) - y0) % P;
+                                if (curY < 0n) curY += P;
                             } else {
-                                const sBig = BigInt(s);
                                 if (currentKey < boundMin + sBig) continue;
                                 curKey = currentKey - sBig;
                                 // -sG = (gx, SECP_P - gy) aynı Δx paydasını paylaşır -> SIFIR ek ters alma maliyeti!
-                                let dyNeg = SECP_P - gi[1] - y0;
-                                if (dyNeg < 0n) dyNeg += SECP_P;
-                                const lamNeg = (dyNeg * invDx) % SECP_P;
-                                curX = (lamNeg * lamNeg - x0 - gi[0]) % SECP_P;
-                                if (curX < 0n) curX += SECP_P;
-                                curY = (lamNeg * (x0 - curX) - y0) % SECP_P;
-                                if (curY < 0n) curY += SECP_P;
+                                let dyNeg = gi[2] - y0;
+                                if (dyNeg < 0n) dyNeg += P;
+                                const lamNeg = (dyNeg * invDx) % P;
+                                curX = (lamNeg * lamNeg - x0 - gi[0]) % P;
+                                if (curX < 0n) curX += P;
+                                curY = (lamNeg * (x0 - curX) - y0) % P;
+                                if (curY < 0n) curY += P;
                             }
                         } else {
                             curKey = curKey + 1n;
@@ -10498,7 +11485,7 @@ const FastH = (function () {
                         }
 
                         // 📦 2. ÖZEL ADRES HAVUZU KONTROLÜ
-                        if (hasCustomHashSet) {
+                        if (hasCustomHashSet && workerTargetWords0.has(w0)) {
                             if (!compH160Str) compH160Str = compWA.toString();
                             if (workerCustomHashSet.has(compH160Str)) {
                                 lastKeyHex = curKey.toString(16).padStart(64, '0');
@@ -10541,15 +11528,20 @@ const FastH = (function () {
                         }
                     }
                 }
-                lastKeyHex = curKey.toString(16).padStart(64, '0');
-                workerPersistentLastKey = lastKeyHex;
+                }
+                if (i === batchSize - 1) {
+                    lastKeyHex = curKey.toString(16).padStart(64, '0');
+                    workerPersistentLastKey = lastKeyHex;
+                }
             }
         }
         
         workerGeneralAccumulatedCount += count;
         const now = Date.now();
+        let didPostProgress = false;
         if (now - workerGeneralLastProgressPost >= 100) {
             workerGeneralLastProgressPost = now;
+            didPostProgress = true;
             const wTraps = (workerKangarooEngine && workerKangarooEngine.isInitialized)
                 ? (workerKangarooEngine.tameTraps.size + workerKangarooEngine.wildTraps.size)
                 : 0;
@@ -10574,10 +11566,10 @@ const FastH = (function () {
         // ⚡ OTO-KALİBRASYON: Batch süresini ölç ve dinamik olarak uyarla
         const batchDuration = ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - batchStartTime;
         workerBatchCalibCounter++;
-        if (workerBatchCalibCounter % 5 === 0) {
-            if (batchDuration < 10) {
-                // CPU rahat, event-loop overhead'ini azaltmak için batch'i kademeli büyüt (maksimum 400)
-                workerDynamicBatchSize = Math.min(400, Math.round(workerDynamicBatchSize * 1.25) + 5);
+        if (workerBatchCalibCounter % 4 === 0) {
+            if (batchDuration < 12) {
+                // CPU rahat, event-loop overhead'ini azaltmak için batch'i kademeli büyüt (maksimum 450)
+                workerDynamicBatchSize = Math.min(450, Math.round(workerDynamicBatchSize * 1.25) + 5);
             } else if (batchDuration > 22) {
                 // İşlem süresi uzadı, yanıt verebilirliği korumak için batch'i küçült (minimum 30)
                 workerDynamicBatchSize = Math.max(30, Math.round(workerDynamicBatchSize * 0.8));
@@ -10585,7 +11577,7 @@ const FastH = (function () {
         }
 
         if (isWorking) {
-            setTimeout(workBatch, 0);
+            scheduleNextWorkerBatch(didPostProgress);
         }
     } catch (err) {
         isWorking = false;
@@ -10637,7 +11629,7 @@ const FastH = (function () {
             if (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD' || cfg.kangarooHerdType === 'DUAL') {
                 workerKangarooHerdType = cfg.kangarooHerdType;
             } else {
-                workerKangarooHerdType = (cfg.totalWorkers === 1) ? 'DUAL' : ((workerId % 2 === 0) ? 'TAME' : 'WILD');
+                workerKangarooHerdType = 'DUAL';
             }
             activeWorkerPrefix = cfg.userPrefix || '';
             activeWorkerGridCell = (cfg.userGridCell !== undefined && cfg.userGridCell !== null) ? cfg.userGridCell : 0;
@@ -10665,7 +11657,7 @@ const FastH = (function () {
                 if (d.config.kangarooHerdType === 'TAME' || d.config.kangarooHerdType === 'WILD' || d.config.kangarooHerdType === 'DUAL') {
                     workerKangarooHerdType = d.config.kangarooHerdType;
                 } else {
-                    workerKangarooHerdType = (workerId % 2 === 0) ? 'TAME' : 'WILD';
+                    workerKangarooHerdType = 'DUAL';
                 }
                 if (workerKangarooEngine) {
                     workerKangarooEngine.role = workerKangarooHerdType;
@@ -10680,7 +11672,7 @@ const FastH = (function () {
             }
         } else if (d.cmd === 'addTrap') {
             if (workerKangarooEngine && d.pointKey && d.herd && d.dist) {
-                workerKangarooEngine.addRemoteTrap(d.pointKey, d.herd, d.dist);
+                workerKangarooEngine.addRemoteTrap(d.pointKey, d.herd, d.dist, d.branch);
                 if (workerKangarooEngine.isSolved && workerKangarooEngine.solvedKey) {
                     const keyHex = workerKangarooEngine.solvedKey.toString(16).padStart(64, '0');
                     const tAddr = (cfg && cfg.activeTarget) ? cfg.activeTarget.addr : '';
@@ -10755,6 +11747,9 @@ function getWorkerBlobUrl() {
             'self.SECP256K1_BETA2 = SECP256K1_BETA2;\n' +
             'self.SECP256K1_LAMBDA2 = SECP256K1_LAMBDA2;\n' +
             'self.KRONECKER_IRRATIONAL_CONSTANTS = KRONECKER_IRRATIONAL_CONSTANTS;\n' +
+            (typeof SIRIUS_WASM_B64 === 'string' ? ('const SIRIUS_WASM_B64 = "' + SIRIUS_WASM_B64 + '";\nlet _SIRIUS_WASM_MODULE = null;\n') : '') +
+            (typeof SIRIUS_WASM_SIMD_B64 === 'string' ? ('const SIRIUS_WASM_SIMD_B64 = "' + SIRIUS_WASM_SIMD_B64 + '";\n') : '') +
+            (typeof getSiriuSWasmModule === 'function' ? (getSiriuSWasmModule.toString() + ';\nself.getSiriuSWasmModule = getSiriuSWasmModule;\n') : '') +
             RealPollardKangaroo.toString() + ';\nself.RealPollardKangaroo = RealPollardKangaroo;\n' +
             (typeof CoppersmithSmallRootsAnalyzer === 'function' ? (CoppersmithSmallRootsAnalyzer.toString() + ';\nself.CoppersmithSmallRootsAnalyzer = CoppersmithSmallRootsAnalyzer;\n') : '');
     }
@@ -10907,17 +11902,17 @@ async function addGpuOptionIfSupported() {
 
         const optMax = document.createElement('option');
         optMax.value = 'GPU_MAX';
-        optMax.innerText = '🔴 GPU (Maksimum Turbo — 16K Batch / 0ms)';
+        optMax.innerText = '🔴 GPU (Tam Güç - 256 / 15ms)';
         optMax.style.fontWeight = 'bold';
 
         const optBal = document.createElement('option');
         optBal.value = 'GPU_BALANCED';
-        optBal.innerText = '🟡 GPU (Dengeli Yüksek Hız — 8K Batch / 2ms)';
+        optBal.innerText = '🟡 GPU (Dengeli / Akıcı - 128 / 35ms)';
         optBal.style.fontWeight = 'bold';
 
         const optEco = document.createElement('option');
         optEco.value = 'GPU_ECO';
-        optEco.innerText = '🟢 GPU (Ultra Hafif / Sessiz — 2K Batch / 8ms)';
+        optEco.innerText = '🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)';
         optEco.style.fontWeight = 'bold';
 
         sel.insertBefore(optMax, sel.firstChild);
@@ -10993,8 +11988,8 @@ function getCurrentWorkerConfig() {
             const effRegime = (typeof getEffectiveSliderRegime === 'function') ? getEffectiveSliderRegime() : 'AUTO';
             return isAutoSliderActive && (effRegime === 'WEYL' || (effRegime === 'AUTO' && !isKangaroo));
         })(),
-        sliderRegime: (typeof autoSliderRegime !== 'undefined') ? autoSliderRegime : 'AUTO',
-        sliderSpeedMode: (typeof autoSliderSpeed !== 'undefined') ? autoSliderSpeed : 'AUTO',
+        sliderRegime: (typeof autoSliderRegime !== 'undefined') ? autoSliderRegime : null,
+        sliderSpeedMode: (typeof autoSliderSpeed !== 'undefined') ? autoSliderSpeed : null,
         sliderMinHex: (sliderMinHex !== null && sliderMinHex !== undefined) ? sliderMinHex.toString(16) : null,
         sliderMaxHex: (sliderMaxHex !== null && sliderMaxHex !== undefined) ? sliderMaxHex.toString(16) : null,
         sliderMinStep: (function() {
@@ -11008,7 +12003,9 @@ function getCurrentWorkerConfig() {
         isSpaceCropped: (typeof isSpaceCropped !== 'undefined') ? isSpaceCropped : false,
         spaceCropMinPct: (typeof spaceCropMinPct !== 'undefined') ? spaceCropMinPct : 0,
         spaceCropMaxPct: (typeof spaceCropMaxPct !== 'undefined') ? spaceCropMaxPct : 100,
-        kangarooHerdType: (typeof kangarooHerdType !== 'undefined') ? kangarooHerdType : 'MIXED',
+        stdAlgorithmStartOffsetRatio: (typeof stdAlgorithmStartOffsetRatio !== 'undefined') ? stdAlgorithmStartOffsetRatio : 0.0,
+        kangarooHerdType: (typeof kangarooHerdType !== 'undefined' && kangarooHerdType) ? kangarooHerdType : 'DUAL',
+        kangarooBaseStrategy: (typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'AUTO_HOP') ? KANGAROO_HOP_CHAIN[kangarooAutoHopIndex] : ((typeof kangarooBaseStrategy !== 'undefined') ? kangarooBaseStrategy : 'AUTO'),
         exposedKangarooPubkeys: Object.assign({}, (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') ? EXPOSED_KANGAROO_PUBKEYS : {}, (typeof userCustomPuzzlePubkeys !== 'undefined') ? userCustomPuzzlePubkeys : {}),
         targetPubHex: (typeof resolveCurrentTargetPubkey === 'function' && resolveCurrentTargetPubkey()) ? resolveCurrentTargetPubkey().pubHex : '',
         allPuzzlesList: (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES.map(p => ({
@@ -11054,8 +12051,8 @@ function onThreadCountSelectChange(isRemoteSync = false) {
         }
         if (typeof showToast === 'function') {
             const label = val.includes('ECO') 
-                ? '🟢 Ultra Hafif: 2K batch / 8ms - Sessiz' 
-                : (val.includes('MAX') ? '🔴 Maksimum Turbo: 16K batch / 0ms' : '🟡 Dengeli: 8K batch / 2ms - Yüksek Hız');
+                ? '🟢 Ultra Hafif: 64 batch / 80ms - Sıfır Donma' 
+                : (val.includes('MAX') ? '🔴 Tam Güç: 256 batch / 15ms' : '🟡 Dengeli: 128 batch / 35ms - Akıcı 60 FPS');
             showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
         }
     } else if (val === 'AUTO_SWARM') {
@@ -11346,7 +12343,7 @@ function handleWorkerMessage(e) {
                     }
                 }
                 if (typeof broadcastKangarooTrap === 'function') {
-                    broadcastKangarooTrap(k, t.herd, t.dist);
+                    broadcastKangarooTrap(k, t.herd, t.dist, t.branch);
                 }
                 const centralEngine = (typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine)
                     ? kangarooRealEngine
@@ -11387,7 +12384,13 @@ function handleWorkerMessage(e) {
                     attempts += data.count;
                 }
             }
-            if (sliceModeActive && data.count) sliceAttempts += data.count;
+            if (sliceModeActive && data.count) {
+                sliceAttempts += data.count;
+                if (typeof isRangeAuto !== 'undefined' && isRangeAuto && sliceAttempts >= 250000) {
+                    sliceAttempts = 0;
+                    if (typeof pickNextRandomSlice === 'function') pickNextRandomSlice();
+                }
+            }
             
             uiRenderState.attempts = attempts;
             
@@ -11590,6 +12593,29 @@ function toggleHunter(isRemoteSync = false) {
         }
 
         if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+            const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+            if (part) {
+                const minEl = document.getElementById('rangeSliderMin');
+                const maxEl = document.getElementById('rangeSliderMax');
+                const partSpan = part.partMaxStep - part.partMinStep;
+                let curMin = minEl ? BigInt(minEl.value || 0) : part.partMinStep;
+                let curMax = maxEl ? BigInt(maxEl.value || 0) : part.partMaxStep;
+                if ((curMax - curMin) >= (partSpan * 90n / 100n)) {
+                    const spd = autoSliderSpeed || 'AUTO';
+                    let windowSpan = (spd === 'MICRO' ? (partSpan / 40n) : (spd === 'SLOW' ? (partSpan / 20n) : (partSpan / 16n)));
+                    if (windowSpan < 10000000n) windowSpan = 10000000n;
+                    if (windowSpan > partSpan) windowSpan = partSpan;
+                    curMin = part.partMinStep;
+                    curMax = curMin + windowSpan;
+                    if (minEl) minEl.value = Number(curMin);
+                    if (maxEl) maxEl.value = Number(curMax);
+                    const TOTAL_STEPS = 1000000000000n;
+                    sliderMinHex = part.tStart + (part.total * curMin / TOTAL_STEPS);
+                    sliderMaxHex = part.tStart + (part.total * curMax / TOTAL_STEPS);
+                    if (sliderMaxHex <= sliderMinHex) sliderMaxHex = sliderMinHex + 1n;
+                    if (typeof updateSliderUI === 'function') updateSliderUI();
+                }
+            }
             startAutoSliderTimer();
         } else if (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ROLLING') {
             toggleSpeedMode('MICRO');
@@ -11615,6 +12641,7 @@ function toggleHunter(isRemoteSync = false) {
                         'HALTON': '🎲 Halton',
                         'WEYL_GOLDEN': '✨ Weyl Altın Kafesi',
                         'COPRIME_STRIDE': '🔢 Asal Modüler Adımlama',
+                        'ALIGNED_PERM': '🧩 Hizalı Permütasyon (Sıfır Tekrar)',
                         'CHAOS': '🌀 Deterministik Kaos',
                         'HILBERT': '🌀 Hilbert Fraktal',
                         'SPHERICAL_ORBITAL': '⚛️ Kuantum Orbitali',
@@ -11896,7 +12923,30 @@ function syncGuiRunning(running) {
             btn.className = 'action-btn btn-stop';
             btn.innerText = '⏹ Aramayı Durdur';
         }
-        if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof startAutoSliderTimer === 'function') {
+        if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof isRunning !== 'undefined' && isRunning && typeof startAutoSliderTimer === 'function') {
+            const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+            if (part) {
+                const minEl = document.getElementById('rangeSliderMin');
+                const maxEl = document.getElementById('rangeSliderMax');
+                const partSpan = part.partMaxStep - part.partMinStep;
+                let curMin = minEl ? BigInt(minEl.value || 0) : part.partMinStep;
+                let curMax = maxEl ? BigInt(maxEl.value || 0) : part.partMaxStep;
+                if ((curMax - curMin) >= (partSpan * 90n / 100n)) {
+                    const spd = autoSliderSpeed || 'AUTO';
+                    let windowSpan = (spd === 'MICRO' ? (partSpan / 40n) : (spd === 'SLOW' ? (partSpan / 20n) : (partSpan / 16n)));
+                    if (windowSpan < 10000000n) windowSpan = 10000000n;
+                    if (windowSpan > partSpan) windowSpan = partSpan;
+                    curMin = part.partMinStep;
+                    curMax = curMin + windowSpan;
+                    if (minEl) minEl.value = Number(curMin);
+                    if (maxEl) maxEl.value = Number(curMax);
+                    const TOTAL_STEPS = 1000000000000n;
+                    sliderMinHex = part.tStart + (part.total * curMin / TOTAL_STEPS);
+                    sliderMaxHex = part.tStart + (part.total * curMax / TOTAL_STEPS);
+                    if (sliderMaxHex <= sliderMinHex) sliderMaxHex = sliderMinHex + 1n;
+                    if (typeof updateSliderUI === 'function') updateSliderUI();
+                }
+            }
             startAutoSliderTimer();
         }
         if (!startTime) startTime = Date.now();
@@ -12006,15 +13056,23 @@ window.onload = function() {
 
     try {
         const savedReg = localStorage.getItem('SIRIUS_SLIDER_REGIME');
-        if (savedReg && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(savedReg)) {
+        if (savedReg && ['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(savedReg)) {
             setSliderRegime(savedReg, true);
         } else {
-            autoSliderRegime = 'AUTO';
+            // Varsayılan: Rejim OTO kapalı
+            autoSliderRegime = null;
             updateRegimeButtonStyles();
         }
-        // Varsayılan: OTO hız ve rejimle başla
-        isAutoSliderActive = true;
-        autoSliderSpeed = 'AUTO';
+
+        // Varsayılan: Hız OTO (Kaydıraç Taraması) kapalı
+        const savedAutoSpeed = localStorage.getItem('SIRIUS_AUTO_SLIDER_ACTIVE');
+        if (savedAutoSpeed === '1') {
+            isAutoSliderActive = true;
+            autoSliderSpeed = localStorage.getItem('SIRIUS_AUTO_SLIDER_SPEED') || 'AUTO';
+        } else {
+            isAutoSliderActive = false;
+            autoSliderSpeed = null;
+        }
         updateSpeedButtonStyles();
         updateRegimeButtonStyles();
         updateAutoSliderUI();
@@ -12092,7 +13150,13 @@ if (typeof window !== 'undefined') {
         } else if (e.key === 'SIRIUS_SLIDER_REGIME') {
             const reg = localStorage.getItem('SIRIUS_SLIDER_REGIME');
             if (reg && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(reg)) {
-                setSliderRegime(reg, true);
+                if (autoSliderRegime !== reg) setSliderRegime(reg, true);
+            } else {
+                if (autoSliderRegime !== null) {
+                    autoSliderRegime = null;
+                    updateRegimeButtonStyles();
+                    updateAutoSliderUI();
+                }
             }
         } else if (e.key === 'SIRIUS_IS_SPACE_CROPPED' || e.key === 'SIRIUS_SPACE_CROP_MIN' || e.key === 'SIRIUS_SPACE_CROP_MAX') {
             const isCrop = localStorage.getItem('SIRIUS_IS_SPACE_CROPPED') === '1';
@@ -12229,8 +13293,11 @@ function updateSwarmMeshModalUI() {
     const now = Date.now();
     let tameCount = 0;
     let wildCount = 0;
+    let dualCount = 0;
     peers.forEach(p => {
-        if (p.role === 'TAME') tameCount++;
+        const r = (p.role || '').toUpperCase();
+        if (r.includes('DUAL')) dualCount++;
+        else if (r.includes('TAME')) tameCount++;
         else wildCount++;
     });
 
@@ -12238,7 +13305,13 @@ function updateSwarmMeshModalUI() {
     if (elTabCount) elTabCount.innerText = `${Math.max(1, peers.length)} Sekme / Node`;
 
     const elRoles = document.getElementById('meshStatTabRoles');
-    if (elRoles) elRoles.innerText = `${tameCount} Tame (Evcil) / ${wildCount} Wild (Vahşi)`;
+    if (elRoles) {
+        if (dualCount > 0) {
+            elRoles.innerText = `${dualCount} Sekme DUAL (Tame+Wild / Kendi Diliminde)`;
+        } else {
+            elRoles.innerText = `${tameCount} Tame (Evcil) / ${wildCount} Wild (Vahşi)`;
+        }
+    }
 
     const combinedTraps = (typeof getCombinedKangarooTrapCount === 'function') ? getCombinedKangarooTrapCount() : Object.keys(typeof kangarooSharedTraps !== 'undefined' ? kangarooSharedTraps : {}).length;
     const elTrapCount = document.getElementById('meshStatTrapCount');
@@ -12248,7 +13321,7 @@ function updateSwarmMeshModalUI() {
     if (elPartition) {
         const myIdx = (typeof currentSwarmIndex !== 'undefined') ? currentSwarmIndex : 0;
         const total = (typeof currentSwarmTotal !== 'undefined') ? currentSwarmTotal : 1;
-        elPartition.innerText = `${myIdx + 1} / ${total} Dilim (${((myIdx / total) * 100).toFixed(1)}% - ${(((myIdx + 1) / total) * 100).toFixed(1)}%)`;
+        elPartition.innerText = `${myIdx + 1} / ${total} Dilim (${((myIdx / total) * 100).toFixed(1)}% - ${(((myIdx + 1) / total) * 100).toFixed(1)}%) [DUAL]`;
     }
 
     const tbodyPeers = document.getElementById('meshPeersTableBody');
@@ -12257,7 +13330,8 @@ function updateSwarmMeshModalUI() {
         peers.forEach(p => {
             const isMe = (typeof KANGAROO_TAB_ID !== 'undefined') && p.id === KANGAROO_TAB_ID;
             const diffSec = Math.max(0, Math.floor((now - (p.lastSeen || now)) / 1000));
-            const roleColor = p.role === 'TAME' ? '#10b981' : '#f59e0b';
+            const r = (p.role || '').toUpperCase();
+            const roleColor = r.includes('DUAL') ? '#06b6d4' : (r.includes('TAME') ? '#10b981' : '#f59e0b');
             const statusBadge = p.isRunning ? '<span style="color:#34d399;">● Çalışıyor</span>' : '<span style="color:#94a3b8;">○ Beklemede</span>';
             html += `<tr style="border-bottom:1px solid #1e293b; background:${isMe ? 'rgba(6,182,212,0.06)' : 'transparent'};">
                 <td style="padding:5px 6px; color:#e2e8f0; font-weight:bold;">${p.id.slice(-6)} ${isMe ? '<span style="color:#38bdf8; font-size:9.5px;">(Bu Sekme)</span>' : ''}</td>
@@ -12269,11 +13343,11 @@ function updateSwarmMeshModalUI() {
             </tr>`;
         });
         if (!peers.length) {
-            const myRole = (typeof kangarooAssignedRole !== 'undefined') ? kangarooAssignedRole : 'WILD';
+            const myRole = (typeof kangarooAssignedRole !== 'undefined') ? kangarooAssignedRole : 'DUAL (Tam Kapasite Sürü)';
             const myId = (typeof KANGAROO_TAB_ID !== 'undefined') ? KANGAROO_TAB_ID.slice(-6) : 'local';
             html = `<tr style="border-bottom:1px solid #1e293b; background:rgba(6,182,212,0.06);">
                 <td style="padding:5px 6px; color:#e2e8f0; font-weight:bold;">${myId} <span style="color:#38bdf8; font-size:9.5px;">(Bu Sekme)</span></td>
-                <td style="padding:5px 6px; color:#10b981; font-weight:bold;">${myRole}</td>
+                <td style="padding:5px 6px; color:#06b6d4; font-weight:bold;">${myRole}</td>
                 <td style="padding:5px 6px; color:#a78bfa;">${(typeof currentTarget !== 'undefined' && currentTarget) ? '#' + currentTarget.id : '-'}</td>
                 <td style="padding:5px 6px; color:#cbd5e1;">${(typeof selectedAlgorithm !== 'undefined') ? selectedAlgorithm : 'AUTO'}</td>
                 <td style="padding:5px 6px;"><span style="color:#34d399;">● Hazır</span></td>
