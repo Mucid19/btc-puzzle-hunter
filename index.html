@@ -38,10 +38,6 @@
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
     <script src="kangaroo_engine.js?v=4xsimd"></script>
-    <!-- WebGPU Kangaroo Engine — gerçek GPU Pollard's Kangaroo compute shader O(√N) -->
-    <script src="webgpu_kangaroo.js"></script>
-    <!-- WebGPU Engine — gerçek GPU compute shader (WGSL 1.0 uyumlu) -->
-    <script src="gpu_engine.js"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -1362,7 +1358,7 @@
         <!-- 🌟 BİRLEŞİK FİZİK & HİBRİT PANELİ -->
         <div id="panelPhysics" class="mode-sub-panel" style="display:flex; flex-direction:column; gap:4px; background:#130b20; border:1px solid #a855f7; border-radius:6px; padding:4px 6px; box-shadow:0 0 10px rgba(168,85,247,0.25); box-sizing:border-box; width:100%;">
             
-            <!-- 1. SATIR: İŞLEMCİ ÇEKİRDEK & WEBGPU + SÜRÜ/TUZAK ROZETLERİ -->
+            <!-- 1. SATIR: İŞLEMCİ ÇEKİRDEK + SÜRÜ/TUZAK ROZETLERİ -->
             <div style="display:flex; align-items:center; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
                 <!-- CMD ROZETİ (Çevrimdışı yazısız, kompakt) -->
@@ -1371,12 +1367,9 @@
                     <span id="cmdBadgeText" style="white-space:nowrap; font-size:10px;">CMD</span>
                 </div>
 
-                <!-- DONANIM / İŞLEMCİ ÇEKİRDEK & WEBGPU SEÇİCİ -->
-                <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="flex:1.2; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı & WebGPU Seçimi">
+                <!-- DONANIM / İŞLEMCİ ÇEKİRDEK SEÇİCİ -->
+                <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="flex:1.2; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı Seçimi">
                     <option value="AUTO_SWARM" selected>⚡ Oto Sürü Dengele</option>
-                    <option value="GPU_ECO">🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)</option>
-                    <option value="GPU_BALANCED">🟡 GPU (Dengeli / Akıcı - 128 / 35ms)</option>
-                    <option value="GPU_MAX">🔴 GPU (Tam Güç - 256 / 15ms)</option>
                     <option value="4">🚀 4 Çekirdek</option>
                     <option value="8">⚡ 8 Çekirdek</option>
                     <option value="12">🔥 12 Çekirdek</option>
@@ -1535,7 +1528,7 @@
     <div class="dual-slider-bar">
         <!-- 🎛️ OTO KAYDIRAÇ & UZAY KIRPMA KONTROL ÇUBUĞU -->
         <div class="auto-slider-sweep-bar">
-            <!-- 1. SATIR: Hız Seçiciler, Rejim Seçiciler & Radar Konum Rozeti -->
+            <!-- 1. SATIR: Hız Seçiciler & Rejim Seçiciler -->
             <div class="sweep-sub-row">
                 <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
                     <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
@@ -1550,7 +1543,7 @@
                         <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)">🦚 √N</button>
                         <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)">🌀 Weyl</button>
                         <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Kangaroo Doppler kilidi & ayak izi koruma)">🦘 Rzns</button>
-                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Radar (Eski Ping-Pong)">🏓 Clas</button>
+                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Tarama (Ping-Pong)">🏓 Clas</button>
                     </div>
                 </div>
                 <div class="auto-slider-info-group">
@@ -2259,7 +2252,7 @@ function setHexSliderBounds(sKey, eKey, labelText) {
 }
 
 // ============================================================
-// 🎛️ OTO KAYDIRAÇ (RADAR / PENCERE TARAMASI) SİSTEMİ
+// 🎛️ OTO KAYDIRAÇ (PENCERE TARAMASI) SİSTEMİ
 // ============================================================
 let isAutoSliderActive = false;
 let autoSliderSpeed = null; // 'AUTO', 'FAST', 'MEDIUM', 'SLOW', 'MICRO' or null when inactive
@@ -2300,7 +2293,6 @@ function getEffectiveSliderRegime() {
     const pId = actT ? (actT.id || actT) : null;
     const pNum = pId ? parseInt(String(pId).replace(/[^\d]/g, ''), 10) : NaN;
     const hasPub = Boolean((actT && (actT.pubHex || actT.pubkeyHex)) || 
-                   (typeof userCustomPuzzlePubkeys !== 'undefined' && userCustomPuzzlePubkeys && (userCustomPuzzlePubkeys[pId] || userCustomPuzzlePubkeys[String(pId)] || (!isNaN(pNum) && userCustomPuzzlePubkeys[pNum]))) || 
                    (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && (EXPOSED_KANGAROO_PUBKEYS[pId] || EXPOSED_KANGAROO_PUBKEYS[String(pId)] || (!isNaN(pNum) && EXPOSED_KANGAROO_PUBKEYS[pNum]))));
 
     let curAlgo = (typeof selectedAlgorithm === 'string') ? selectedAlgorithm : 'AUTO';
@@ -2333,14 +2325,13 @@ function getEffectiveSliderRegime() {
     return 'WEYL';
 }
 
-function setSliderRegime(regime, isRemoteSync = false) {
+function setSliderRegime(regime, isRemoteSync = false, forceState = null) {
     if (!['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(regime)) return;
-    if (autoSliderRegime === regime) {
+    const shouldDeactivate = (forceState === false) || (forceState === null && autoSliderRegime === regime);
+    if (shouldDeactivate) {
         autoSliderRegime = null;
-        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
     } else {
         autoSliderRegime = regime;
-        try { localStorage.setItem('SIRIUS_SLIDER_REGIME', autoSliderRegime); } catch(e) {}
     }
     resonanceDwellCounter = 0;
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
@@ -2358,53 +2349,36 @@ function setSliderRegime(regime, isRemoteSync = false) {
             'SQRT': '🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)',
             'WEYL': '🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)',
             'RESONANCE': '🦘 Harmonik Rezonans (Kangaroo Doppler Kilidi & Ayak İzi Koruma)',
-            'CLASSIC': '🏓 Klasik Doğrusal Radar (Eski Ping-Pong)'
+            'CLASSIC': '🏓 Klasik Doğrusal Tarama (Ping-Pong)'
         };
         showToast(`🎛️ <strong>Kaydıraç Rejimi:</strong> ${labels[autoSliderRegime] || 'Kapalı'}`);
     }
 }
 
 // Oto butonu: kapalıyken açar; açıkken tekrar basılınca kapatır
-function toggleRegimeAuto() {
-    if (autoSliderRegime === 'AUTO') {
+function toggleRegimeAuto(isRemoteSync = false, forceState = null) {
+    const shouldDeactivate = (forceState === false) || (forceState === null && autoSliderRegime === 'AUTO');
+    if (shouldDeactivate) {
         autoSliderRegime = null;
-        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
-        if (typeof broadcastSwarmSetting === 'function') {
-            broadcastSwarmSetting('SLIDER_REGIME', { regime: null });
-        }
-        // Oto kapatıldığında eğer hız da AUTO ise birlikte kapat ki sekmelerde açık kalmasın
         if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
             isAutoSliderActive = false;
             autoSliderSpeed = null;
             stopAutoSliderTimer();
-            try {
-                localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
-                localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
-            } catch(e) {}
-            if (typeof broadcastSwarmSetting === 'function') {
-                broadcastSwarmSetting('SLIDER_SPEED', { speed: null, active: false });
-            }
             if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
                 applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
             }
         }
+        if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+            broadcastSwarmSetting('SLIDER_SPEED', { speed: null, active: false, regime: null });
+        }
     } else {
         autoSliderRegime = 'AUTO';
-        try { localStorage.setItem('SIRIUS_SLIDER_REGIME', 'AUTO'); } catch(e) {}
-        if (typeof broadcastSwarmSetting === 'function') {
-            broadcastSwarmSetting('SLIDER_REGIME', { regime: 'AUTO' });
-        }
-        // Oto butonu açıldığında hız modu da kapalıysa onu da AUTO yapalım ki kaydıraç hazır olsun
         if (!isAutoSliderActive) {
             isAutoSliderActive = true;
             autoSliderSpeed = 'AUTO';
-            try {
-                localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '1');
-                localStorage.setItem('SIRIUS_AUTO_SLIDER_SPEED', 'AUTO');
-            } catch(e) {}
-            if (typeof broadcastSwarmSetting === 'function') {
-                broadcastSwarmSetting('SLIDER_SPEED', { speed: 'AUTO', active: true });
-            }
+        }
+        if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+            broadcastSwarmSetting('SLIDER_SPEED', { speed: 'AUTO', active: true, regime: 'AUTO' });
         }
         if (typeof isRunning !== 'undefined' && isRunning) {
             startAutoSliderTimer();
@@ -2414,7 +2388,7 @@ function toggleRegimeAuto() {
     updateSpeedButtonStyles();
     updateRegimeButtonStyles();
     updateAutoSliderUI();
-    if (typeof showToast === 'function') {
+    if (!isRemoteSync && typeof showToast === 'function') {
         if (autoSliderRegime === 'AUTO') {
             const runNotice = (typeof isRunning !== 'undefined' && isRunning) ? 'Kaydıraç akıyor.' : 'Aramayı başlattığınızda otomatik akacaktır.';
             showToast(`🧠 <strong>Akıllı Otomatik Mod Açıldı:</strong> ${runNotice}`);
@@ -2482,32 +2456,25 @@ function updateRegimeButtonStyles() {
     });
 }
 
-function toggleSpeedMode(speed, isRemoteSync = false) {
+function toggleSpeedMode(speed, isRemoteSync = false, forceState = null) {
     if (!AUTO_SLIDER_SPEEDS[speed]) return;
 
-    if (isAutoSliderActive && autoSliderSpeed === speed) {
-        // Zaten seçili olan hıza tekrar basıldı -> Kapat
+    const shouldDeactivate = (forceState === false) || (forceState === null && isAutoSliderActive && autoSliderSpeed === speed);
+    if (shouldDeactivate) {
+        // Zaten seçili olan hıza tekrar basıldı veya kapatılması istendi -> Kapat
         isAutoSliderActive = false;
         autoSliderSpeed = null;
         stopAutoSliderTimer();
         // Hız Oto kapatıldığında rejim de AUTO ise birlikte kapat ki sekmelerde açık kalmasın
         if (autoSliderRegime === 'AUTO') {
             autoSliderRegime = null;
-            try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
-            if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
-                broadcastSwarmSetting('SLIDER_REGIME', { regime: null });
-            }
         }
         if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
             applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
         }
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
-            broadcastSwarmSetting('SLIDER_SPEED', { speed: null, active: false });
+            broadcastSwarmSetting('SLIDER_SPEED', { speed: null, active: false, regime: null });
         }
-        try {
-            localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
-            localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
-        } catch(e) {}
         if (!isRemoteSync && typeof showToast === 'function') {
             showToast('⏸️ <strong>Kaydıraç Taraması Kapatıldı</strong>');
         }
@@ -2520,19 +2487,11 @@ function toggleSpeedMode(speed, isRemoteSync = false) {
 
         if (speed === 'AUTO' && !autoSliderRegime) {
             autoSliderRegime = 'AUTO';
-            try { localStorage.setItem('SIRIUS_SLIDER_REGIME', 'AUTO'); } catch(e) {}
-            if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
-                broadcastSwarmSetting('SLIDER_REGIME', { regime: 'AUTO' });
-            }
         }
 
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
-            broadcastSwarmSetting('SLIDER_SPEED', { speed: speed, active: true });
+            broadcastSwarmSetting('SLIDER_SPEED', { speed: speed, active: true, regime: autoSliderRegime });
         }
-        try {
-            localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '1');
-            localStorage.setItem('SIRIUS_AUTO_SLIDER_SPEED', speed);
-        } catch(e) {}
 
         const spdCfg = AUTO_SLIDER_SPEEDS[speed];
         const part = getTabPartitionBounds();
@@ -3073,14 +3032,6 @@ function resetSpaceCrop(isRemoteSync = false) {
         sliderMaxHex = toBigIntSafe(target.origEnd || target.end);
     }
 
-    try {
-        localStorage.setItem('SIRIUS_IS_SPACE_CROPPED', '0');
-        localStorage.removeItem('SIRIUS_SPACE_CROP_MIN');
-        localStorage.removeItem('SIRIUS_SPACE_CROP_MAX');
-        localStorage.removeItem('SIRIUS_SPACE_CROP_START_HEX');
-        localStorage.removeItem('SIRIUS_SPACE_CROP_END_HEX');
-    } catch(e) {}
-
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
         broadcastSwarmSetting('SPACE_CROP', {
             isCropped: false,
@@ -3102,9 +3053,6 @@ function resetSpaceCrop(isRemoteSync = false) {
         if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
     }
     broadcastWorkerConfig();
-    if (typeof isGpuRunning !== 'undefined' && isGpuRunning && typeof startGpuHunting === 'function') {
-        startGpuHunting();
-    }
     if (!isRemoteSync && typeof showToast === 'function') {
         showToast('↩️ <strong>Uzay Sıfırlandı: Tam Bulmaca Uzayı (%0 - %100)</strong>', 2500);
     }
@@ -3122,14 +3070,6 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
 
     sliderMinHex = spaceCropStart;
     sliderMaxHex = spaceCropEnd;
-
-    try {
-        localStorage.setItem('SIRIUS_IS_SPACE_CROPPED', '1');
-        localStorage.setItem('SIRIUS_SPACE_CROP_MIN', String(minPct));
-        localStorage.setItem('SIRIUS_SPACE_CROP_MAX', String(maxPct));
-        localStorage.setItem('SIRIUS_SPACE_CROP_START_HEX', spaceCropStart ? spaceCropStart.toString(16) : '');
-        localStorage.setItem('SIRIUS_SPACE_CROP_END_HEX', spaceCropEnd ? spaceCropEnd.toString(16) : '');
-    } catch(e) {}
 
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
         broadcastSwarmSetting('SPACE_CROP', {
@@ -3150,9 +3090,6 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
         if (typeof resetKangarooWalk === 'function') resetKangarooWalk(sliderMinHex, sliderMaxHex, currentTarget.id);
     }
     broadcastWorkerConfig();
-    if (typeof isGpuRunning !== 'undefined' && isGpuRunning && typeof startGpuHunting === 'function') {
-        startGpuHunting();
-    }
 
     if (!isRemoteSync && typeof showToast === 'function') {
         showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
@@ -4745,20 +4682,12 @@ const EXPOSED_KANGAROO_PUBKEYS = {
 };
 
 
-let userCustomPuzzlePubkeys = {};
-try {
-    const saved = localStorage.getItem('SIRIUS_CUSTOM_PUBKEYS');
-    if (saved) userCustomPuzzlePubkeys = JSON.parse(saved);
-} catch(e) {}
-
 function resolveCurrentTargetPubkey() {
     const actT = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : ((typeof getActiveTarget === 'function') ? getActiveTarget() : null);
     if (!actT) return null;
     let pub = null;
     if (actT.pubHex) pub = actT.pubHex;
-    else if (userCustomPuzzlePubkeys && (userCustomPuzzlePubkeys[actT.id] || userCustomPuzzlePubkeys[String(actT.id)])) {
-        pub = userCustomPuzzlePubkeys[actT.id] || userCustomPuzzlePubkeys[String(actT.id)];
-    } else if (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') {
+    else if (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') {
         const pNum = actT.id !== null && actT.id !== undefined ? parseInt(String(actT.id).replace(/[^\d]/g, ''), 10) : null;
         pub = EXPOSED_KANGAROO_PUBKEYS[actT.id] || EXPOSED_KANGAROO_PUBKEYS[String(actT.id)] || (pNum !== null && !isNaN(pNum) ? EXPOSED_KANGAROO_PUBKEYS[pNum] : null) || null;
     }
@@ -4974,10 +4903,12 @@ function broadcastAlgoChange(algo) {
     }
 }
 
+let _remoteSyncDebounceTimer = null;
 function handleRemoteSwarmSync(data) {
-    if (!data || !data.settingType || isSwarmSyncingRemote) return;
+    if (!data || !data.settingType) return;
     isSwarmSyncingRemote = true;
     clearTimeout(window._multiPuzzleBroadcastDebounce);
+    clearTimeout(_remoteSyncDebounceTimer);
     try {
         if (data.settingType === 'ALGO' && data.algo) {
             if (typeof setAlgorithm === 'function') {
@@ -5047,74 +4978,52 @@ function handleRemoteSwarmSync(data) {
             }
         } else if (data.settingType === 'SLIDER_SPEED') {
             if (data.active && data.speed && typeof AUTO_SLIDER_SPEEDS !== 'undefined' && AUTO_SLIDER_SPEEDS[data.speed]) {
-                if (!isAutoSliderActive || autoSliderSpeed !== data.speed) {
-                    toggleSpeedMode(data.speed, true);
-                    if (typeof showStatusToast === 'function') {
-                        const lbl = AUTO_SLIDER_SPEEDS[data.speed] ? AUTO_SLIDER_SPEEDS[data.speed].label : data.speed;
-                        showStatusToast(`⚡ Sürü Eşitlemesi: Kaydıraç Hızı "${lbl}" olarak senkronize edildi.`);
-                    }
+                if (data.regime && typeof setSliderRegime === 'function') {
+                    setSliderRegime(data.regime, true, true);
+                }
+                toggleSpeedMode(data.speed, true, true);
+                if (typeof showStatusToast === 'function') {
+                    const lbl = AUTO_SLIDER_SPEEDS[data.speed] ? AUTO_SLIDER_SPEEDS[data.speed].label : data.speed;
+                    showStatusToast(`⚡ Sürü Eşitlemesi: Kaydıraç Hızı "${lbl}" olarak senkronize edildi.`);
                 }
             } else if (!data.active || !data.speed) {
-                if (isAutoSliderActive || autoSliderRegime === 'AUTO') {
-                    isAutoSliderActive = false;
-                    autoSliderSpeed = null;
-                    stopAutoSliderTimer();
-                    if (autoSliderRegime === 'AUTO') {
-                        autoSliderRegime = null;
-                        try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
-                    }
-                    if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
-                        applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
-                    }
-                    updateSpeedButtonStyles();
-                    updateRegimeButtonStyles();
-                    updateAutoSliderUI();
-                    try {
-                        localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
-                        localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
-                    } catch(e) {}
-                    if (typeof showStatusToast === 'function') {
-                        showStatusToast('⏸️ Sürü Eşitlemesi: Kaydıraç taraması kapatıldı.');
-                    }
+                toggleSpeedMode(autoSliderSpeed || 'AUTO', true, false);
+                if (data.regime === null && autoSliderRegime === 'AUTO') {
+                    autoSliderRegime = null;
+                }
+                updateSpeedButtonStyles();
+                updateRegimeButtonStyles();
+                updateAutoSliderUI();
+                if (typeof showStatusToast === 'function') {
+                    showStatusToast('⏸️ Sürü Eşitlemesi: Kaydıraç taraması kapatıldı.');
                 }
             }
         } else if (data.settingType === 'SLIDER_REGIME') {
             if (data.regime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(data.regime)) {
-                if (autoSliderRegime !== data.regime) {
-                    setSliderRegime(data.regime, true);
-                    if (typeof showStatusToast === 'function') {
-                        const regimeLabels = {
-                            'AUTO': '🧠 Akıllı',
-                            'SQRT': '🦚 Karekök O(√N)',
-                            'WEYL': '🌀 Weyl Altın',
-                            'RESONANCE': '🦘 Rezonans',
-                            'CLASSIC': '🏓 Klasik'
-                        };
-                        showStatusToast(`⚡ Sürü Eşitlemesi: Kaydıraç Rejimi "${regimeLabels[data.regime] || data.regime}" senkronize edildi.`);
-                    }
+                setSliderRegime(data.regime, true, true);
+                if (data.regime === 'AUTO') {
+                    toggleSpeedMode('AUTO', true, true);
+                }
+                if (typeof showStatusToast === 'function') {
+                    const regimeLabels = {
+                        'AUTO': '🧠 Akıllı',
+                        'SQRT': '🦚 Karekök O(√N)',
+                        'WEYL': '🌀 Weyl Altın',
+                        'RESONANCE': '🦘 Rezonans',
+                        'CLASSIC': '🏓 Klasik'
+                    };
+                    showStatusToast(`⚡ Sürü Eşitlemesi: Kaydıraç Rejimi "${regimeLabels[data.regime] || data.regime}" senkronize edildi.`);
                 }
             } else if (!data.regime) {
-                if (autoSliderRegime !== null || (isAutoSliderActive && autoSliderSpeed === 'AUTO')) {
-                    autoSliderRegime = null;
-                    try { localStorage.removeItem('SIRIUS_SLIDER_REGIME'); } catch(e) {}
-                    if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
-                        isAutoSliderActive = false;
-                        autoSliderSpeed = null;
-                        stopAutoSliderTimer();
-                        try {
-                            localStorage.setItem('SIRIUS_AUTO_SLIDER_ACTIVE', '0');
-                            localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
-                        } catch(e) {}
-                        if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
-                            applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
-                        }
-                    }
-                    updateSpeedButtonStyles();
-                    updateRegimeButtonStyles();
-                    updateAutoSliderUI();
-                    if (typeof showStatusToast === 'function') {
-                        showStatusToast('⏸️ Sürü Eşitlemesi: Kaydıraç Rejimi kapatıldı.');
-                    }
+                setSliderRegime('CLASSIC', true, false);
+                if (autoSliderSpeed === 'AUTO') {
+                    toggleSpeedMode('AUTO', true, false);
+                }
+                updateSpeedButtonStyles();
+                updateRegimeButtonStyles();
+                updateAutoSliderUI();
+                if (typeof showStatusToast === 'function') {
+                    showStatusToast('⏸️ Sürü Eşitlemesi: Kaydıraç Rejimi kapatıldı.');
                 }
             }
         } else if (data.settingType === 'SPACE_CROP') {
@@ -5209,14 +5118,14 @@ function handleRemoteSwarmSync(data) {
                     onThreadCountSelectChange(true);
                 }
                 if (typeof showStatusToast === 'function') {
-                    showStatusToast(`🔄 Sürü Eşitlemesi: Donanım/GPU "${data.threadVal}" olarak güncellendi.`);
+                    showStatusToast(`🔄 Sürü Eşitlemesi: Donanım "${data.threadVal}" olarak güncellendi.`);
                 }
             }
         }
     } catch(err) {
         console.warn('[Remote Sync Handling Error]:', err);
     } finally {
-        setTimeout(() => { isSwarmSyncingRemote = false; }, 200);
+        _remoteSyncDebounceTimer = setTimeout(() => { isSwarmSyncingRemote = false; }, 200);
     }
 }
 
@@ -5352,24 +5261,16 @@ function initKangarooSwarmChannel() {
                             }
                         }
                         if (data.sliderRegime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(data.sliderRegime)) {
-                            if (autoSliderRegime !== data.sliderRegime) {
-                                setSliderRegime(data.sliderRegime, true);
-                            }
+                            setSliderRegime(data.sliderRegime, true, true);
                         } else if (!data.sliderRegime && autoSliderRegime !== null) {
                             autoSliderRegime = null;
                             updateRegimeButtonStyles();
                             updateAutoSliderUI();
                         }
                         if (data.isAutoSliderActive && data.sliderSpeed && typeof AUTO_SLIDER_SPEEDS !== 'undefined' && AUTO_SLIDER_SPEEDS[data.sliderSpeed]) {
-                            if (!isAutoSliderActive || autoSliderSpeed !== data.sliderSpeed) {
-                                toggleSpeedMode(data.sliderSpeed, true);
-                            }
+                            toggleSpeedMode(data.sliderSpeed, true, true);
                         } else if (!data.isAutoSliderActive && isAutoSliderActive) {
-                            isAutoSliderActive = false;
-                            autoSliderSpeed = null;
-                            stopAutoSliderTimer();
-                            updateSpeedButtonStyles();
-                            updateAutoSliderUI();
+                            toggleSpeedMode(autoSliderSpeed || 'AUTO', true, false);
                         }
                         if (data.isSpaceCropped && typeof data.spaceCropMinPct === 'number' && typeof data.spaceCropMaxPct === 'number') {
                             if (data.spaceCropStartHex && data.spaceCropEndHex) {
@@ -5705,19 +5606,12 @@ function recalculateKangarooRoles() {
                 }
             }
             if (leader.isAutoSliderActive && leader.sliderSpeed && typeof AUTO_SLIDER_SPEEDS !== 'undefined' && AUTO_SLIDER_SPEEDS[leader.sliderSpeed]) {
-                if (!isAutoSliderActive || autoSliderSpeed !== leader.sliderSpeed) {
-                    toggleSpeedMode(leader.sliderSpeed, true);
-                }
+                toggleSpeedMode(leader.sliderSpeed, true, true);
             } else if (!leader.isAutoSliderActive && isAutoSliderActive) {
-                isAutoSliderActive = false;
-                autoSliderSpeed = null;
-                updateSpeedButtonStyles();
-                updateAutoSliderUI();
+                toggleSpeedMode(autoSliderSpeed || 'AUTO', true, false);
             }
             if (leader.sliderRegime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(leader.sliderRegime)) {
-                if (autoSliderRegime !== leader.sliderRegime) {
-                    setSliderRegime(leader.sliderRegime, true);
-                }
+                setSliderRegime(leader.sliderRegime, true, true);
             } else if (!leader.sliderRegime && autoSliderRegime !== null) {
                 autoSliderRegime = null;
                 updateRegimeButtonStyles();
@@ -5838,7 +5732,6 @@ function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist, branch = 0) {
     if (actT && actT.targetHash160 && typeof privkeyToHash160 === 'function') {
         const th = actT.targetHash160;
         if (privkeyToHash160(hex) === th) {
-            stopGpuHunting(true);
             handleWin(actT.id, hex, privkeyToAddress(hex), actT.addr, (actT.reward || '') + ' [🦘 Kangaroo Tuzak]');
             return;
         }
@@ -6222,22 +6115,11 @@ document.addEventListener('click', function() {
 });
 
 function loadSelectedPuzzleIds() {
-    try {
-        const saved = localStorage.getItem('SELECTED_PUZZLE_IDS');
-        if (saved) {
-            const arr = JSON.parse(saved);
-            if (Array.isArray(arr) && arr.length > 0) {
-                return new Set(arr.map(String));
-            }
-        }
-    } catch(e) {}
     return null;
 }
 
 function saveSelectedPuzzleIds() {
-    try {
-        localStorage.setItem('SELECTED_PUZZLE_IDS', JSON.stringify(Array.from(selectedPuzzleIds)));
-    } catch(e) {}
+    // Hafızada saklanmaz (Saf RAM)
 }
 
 function updateActiveUnsolvedList(shouldBroadcast = true, shouldSave = true) {
@@ -6313,12 +6195,9 @@ function buildCustomMenus() {
     
     const SECP256K1_MAX = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140n;
 
-    const savedSet = loadSelectedPuzzleIds();
-    if (savedSet) {
-        selectedPuzzleIds = savedSet;
-    } else if (selectedPuzzleIds.size === 0) {
-        allUnsolvedPool.forEach(p => selectedPuzzleIds.add(String(p.id)));
-    }
+    // Varsayılan: Çözülmemiş bulmacaların HEPSİ seçili başlar (Hafızada saklanmaz)
+    selectedPuzzleIds.clear();
+    allUnsolvedPool.forEach(p => selectedPuzzleIds.add(String(p.id)));
     updateActiveUnsolvedList(false, false);
 
     // 📌 Sabit Üst Kontrol Çubuğu (Tümü / Temizle / Hızlı Filtre / Arama / Seçilenleri Ara)
@@ -6651,34 +6530,8 @@ function buildCustomMenus() {
         });
     });
 
-    const savedMode = localStorage.getItem('SIRIUS_TARGET_MODE');
-    const savedSingleId = localStorage.getItem('SIRIUS_SINGLE_TARGET_ID');
-    if (savedMode === 'SINGLE' && savedSingleId) {
-        let targetP = allUnsolvedPool.find(x => String(x.id) === String(savedSingleId));
-        if (!targetP) {
-            const raw = ALL_PUZZLES.find(x => String(x.id) === String(savedSingleId));
-            if (raw) {
-                targetP = {
-                    id: raw.id,
-                    start: BigInt('0x' + raw.start),
-                    end: BigInt('0x' + raw.end),
-                    addr: raw.addr,
-                    targetHash160: addressToHash160(raw.addr),
-                    reward: raw.reward,
-                    startHex: raw.start,
-                    endHex: raw.end,
-                    isUncompressed: Boolean(raw.isUncompressed)
-                };
-            }
-        }
-        if (targetP) {
-            selectSinglePuzzle(targetP, true);
-        } else {
-            enableCircularMode(true);
-        }
-    } else {
-        enableCircularMode(true);
-    }
+    // Varsayılan hedef modu daima tüm çözülmemiş bulmacalar ("Hepsi" / Circular) olarak başlar
+    enableCircularMode(true);
 }
 
 function resetStats() {
@@ -6694,9 +6547,6 @@ function enableCircularMode(isRemoteSync = false) {
     isCircularMode = true;
     currentTarget = null;
     circularIndex = 0;
-    try {
-        localStorage.setItem('SIRIUS_TARGET_MODE', 'CIRCULAR');
-    } catch(e) {}
     if (typeof kangarooPeers !== 'undefined' && typeof KANGAROO_TAB_ID !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
         kangarooPeers[KANGAROO_TAB_ID].puzzleId = null;
         kangarooPeers[KANGAROO_TAB_ID].isCircularMode = true;
@@ -6780,10 +6630,6 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
     
     isCircularMode = false;
     currentTarget = p;
-    try {
-        localStorage.setItem('SIRIUS_TARGET_MODE', 'SINGLE');
-        localStorage.setItem('SIRIUS_SINGLE_TARGET_ID', String(p.id));
-    } catch(e) {}
     if (typeof kangarooPeers !== 'undefined' && typeof KANGAROO_TAB_ID !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
         kangarooPeers[KANGAROO_TAB_ID].puzzleId = p.id;
         kangarooPeers[KANGAROO_TAB_ID].isCircularMode = false;
@@ -6836,7 +6682,6 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
     // 🦘 GERÇEK AÇIK ANAHTAR KONTROLÜ: Yalnızca doğrulanmış açık anahtarı (public key) olan bulmacalarda Kangaroo moduna geç
     const pNum = parseInt(String(p.id).replace(/[^\d]/g, ''), 10);
     const pubHex = (p && (p.pubHex || p.pubkeyHex)) || 
-                   (typeof userCustomPuzzlePubkeys !== 'undefined' && userCustomPuzzlePubkeys && (userCustomPuzzlePubkeys[p.id] || userCustomPuzzlePubkeys[String(p.id)] || (!isNaN(pNum) && userCustomPuzzlePubkeys[pNum]))) || 
                    (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined' && (EXPOSED_KANGAROO_PUBKEYS[p.id] || EXPOSED_KANGAROO_PUBKEYS[String(p.id)] || (!isNaN(pNum) && EXPOSED_KANGAROO_PUBKEYS[pNum]))) || null;
     const hasKangarooKey = Boolean(pubHex);
 
@@ -6903,7 +6748,7 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
 }
 
 // ============================================================
-// 🌀 HILBERT FRAKTAL 2B UZAY VE RADAR MOTORU (%100 KAPSAMA - SPACE FILLING)
+// 🌀 HILBERT FRAKTAL 2B UZAY MOTORU (%100 KAPSAMA - SPACE FILLING)
 // ============================================================
 let hilbertStep = 0n;
 const HILBERT_ORDER = 8; // 256x256 Grid = 65,536 hücre
@@ -7390,8 +7235,7 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
     kangarooTargetPubHex = (pid && EXPOSED_KANGAROO_PUBKEYS[pid]) ? EXPOSED_KANGAROO_PUBKEYS[pid] 
                          : ((pid && EXPOSED_KANGAROO_PUBKEYS[String(pid)]) ? EXPOSED_KANGAROO_PUBKEYS[String(pid)]
                          : ((pNum !== null && !isNaN(pNum) && EXPOSED_KANGAROO_PUBKEYS[pNum]) ? EXPOSED_KANGAROO_PUBKEYS[pNum]
-                         : ((typeof userCustomPuzzlePubkeys !== 'undefined' && userCustomPuzzlePubkeys && (userCustomPuzzlePubkeys[pid] || userCustomPuzzlePubkeys[String(pid)] || (!isNaN(pNum) && userCustomPuzzlePubkeys[pNum]))) ? (userCustomPuzzlePubkeys[pid] || userCustomPuzzlePubkeys[String(pid)] || userCustomPuzzlePubkeys[pNum])
-                         : ((currentTarget && (currentTarget.pubHex || currentTarget.pubkeyHex)) ? (currentTarget.pubHex || currentTarget.pubkeyHex) : ''))));
+                         : ((currentTarget && (currentTarget.pubHex || currentTarget.pubkeyHex)) ? (currentTarget.pubHex || currentTarget.pubkeyHex) : '')));
 
     const isDifferentTarget = (pid !== null && kangarooLastActivePuzzleId !== null && String(kangarooLastActivePuzzleId) !== String(pid));
     if (isDifferentTarget) {
@@ -7682,7 +7526,7 @@ function generateUlamSpiralKey(rangeStart, rangeEnd) {
 }
 
 // ============================================================
-// 🌐 WebGPU & Harici Motorlar İçin Algoritma Fonksiyonlarını Window'a Export Etme
+// 🌐 Harici Motorlar İçin Algoritma Fonksiyonlarını Window'a Export Etme
 // ============================================================
 if (typeof window !== 'undefined') {
     window.generateSobolKey = generateSobolKey;
@@ -8486,9 +8330,8 @@ function handleWin(puzzleId, keyHex, addr, targetAddr, reward, isRemoteWin = fal
     reward = verifiedReward || reward;
     targetAddr = verifiedTargetAddr || targetAddr;
 
-    // 🛑 ARAMAYI ANINDA VE EKSİKSİZ DURDUR (GPU, CPU Worker, Zamanlayıcı, UI Butonu)
+    // 🛑 ARAMAYI ANINDA VE EKSİKSİZ DURDUR (CPU Worker, Zamanlayıcı, UI Butonu)
     isRunning = false;
-    stopGpuHunting(true);
     stopWorkerPool();
     if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
         try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
@@ -9402,7 +9245,7 @@ const FastH = (function () {
     (function initWorkerWasmCore() {
         try {
             const mod = (typeof self !== 'undefined' && typeof self.getSiriuSWasmModule === 'function')
-                ? self.getSiriuSWasmModule()
+                ? self.getSiriuSWasmModule(true)
                 : null;
             if (!mod) return;
             const inst = new WebAssembly.Instance(mod);
@@ -9930,31 +9773,38 @@ const FastH = (function () {
     function generateAlignedPermKey(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
-        const WIN = BigInt(2 * (MONT_STRIDE - 1) + 1);
-        const HALF = BigInt(MONT_STRIDE - 1);
+        const WIN = BigInt(2 * (MONT_STRIDE - 1) + 1); // 511n
+        const HALF = BigInt(MONT_STRIDE - 1); // 255n
         const total = (e > s) ? (e - s + 1n) : 1n;
         const W = (total + WIN - 1n) / WIN;
         let K = (cfg && cfg.totalWorkers && cfg.totalWorkers > 0) ? cfg.totalWorkers : 1;
         if (cfg && cfg.isOrthogonalWorker) K = 1;
         const wid = (K > 1 && typeof workerId !== 'undefined') ? (workerId % K) : 0;
         const key = s.toString(16) + ':' + e.toString(16) + ':' + K + ':' + wid;
+        const CLUSTER_SIZE = 32n; // 32 hücrelik (16.352 anahtar) ardışık süpürme kümesi (Maksimum Montgomery hızı)
+        const numClusters = (W + CLUSTER_SIZE - 1n) / CLUSTER_SIZE;
         let st = _alignedWState.get(key);
         if (!st) {
-            let g = (W * 6180339887n) / 10000000000n;
+            let g = (numClusters * 6180339887n) / 10000000000n;
             if (g < 1n) g = 1n;
-            while (_alignedWGcd(g, W) !== 1n) g++;
+            while (_alignedWGcd(g, numClusters) !== 1n) g++;
             let bigK = BigInt(K), bigW = BigInt(wid);
-            let J = (W - bigW + bigK - 1n) / bigK;                 // bu işçiye düşen hücre sayısı (i = wid + K·j < W)
-            if (J <= 0n) { bigK = 1n; bigW = BigInt(wid) % W; J = W; } // hücre sayısı işçi sayısından azsa: tekrarı kabul et
+            let J = (numClusters - bigW + bigK - 1n) / bigK;
+            if (J <= 0n) { bigK = 1n; bigW = BigInt(wid) % numClusters; J = numClusters; }
             const r64 = (BigInt(Math.floor(Math.random() * 4294967296)) << 32n) | BigInt(Math.floor(Math.random() * 4294967296));
-            st = { g: g, W: W, wid: bigW, K: bigK, J: J, j: r64 % J };
+            st = { g: g, numClusters: numClusters, W: W, wid: bigW, K: bigK, J: J, j: r64 % J, cStep: 0n, curClusterIdx: 0n };
             if (_alignedWState.size >= 64) _alignedWState.clear();
             _alignedWState.set(key, st);
         }
-        const i = st.wid + st.K * st.j;
-        st.j = (st.j + 1n) % st.J;
-        const idx = (i * st.g) % st.W;
-        let anchor = s + idx * WIN + HALF;
+        if (st.cStep === 0n) {
+            const i = st.wid + st.K * st.j;
+            st.j = (st.j + 1n) % st.J;
+            st.curClusterIdx = (i * st.g) % st.numClusters;
+        }
+        const cellIdx = st.curClusterIdx * CLUSTER_SIZE + st.cStep;
+        st.cStep = (st.cStep + 1n) % CLUSTER_SIZE;
+        const finalCell = (cellIdx < st.W) ? cellIdx : (cellIdx % st.W);
+        let anchor = s + finalCell * WIN + HALF;
         if (anchor > e) anchor = e;
         return anchor;
     }
@@ -9974,14 +9824,14 @@ const FastH = (function () {
     }
 
     // ============================================================
-    // 🦘🧹 WORKER ADDR_HOP_SWEEP (SIÇRA & SÜPÜR)
+    // 🦘🧹 WORKER ADDR_HOP_SWEEP (SIÇRA & SÜPÜR - 511-LİK HIZLI SÜPÜRME)
     // ============================================================
 
     let workerAddrHopSweepState = {
         anchor: 0n,
         sweepIndex: 0,
         hopCount: 0n,
-        blockSize: 128,
+        blockSize: 32, // Her durakta 32 x 511 = 16.352 anahtarlık ultra-hızlı Montgomery süpürmesi
         rangeStart: 0n,
         rangeEnd: 0n
     };
@@ -9989,27 +9839,29 @@ const FastH = (function () {
     function generateWorkerAddrHopSweepKey(rangeStart, rangeEnd) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
+        const HALF = BigInt(MONT_STRIDE - 1); // 255n
         if (workerAddrHopSweepState.rangeStart !== s || workerAddrHopSweepState.rangeEnd !== e || workerAddrHopSweepState.anchor === 0n) {
             workerAddrHopSweepState.rangeStart = s;
             workerAddrHopSweepState.rangeEnd = e;
             workerAddrHopSweepState.sweepIndex = 0;
             const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
             workerAddrHopSweepState.hopCount = wId * 10007n;
-            workerAddrHopSweepState.anchor = s;
+            workerAddrHopSweepState.anchor = s + HALF;
         }
         const span = (e > s) ? (e - s + 1n) : 1n;
 
         if (workerAddrHopSweepState.sweepIndex === 0) {
             workerAddrHopSweepState.hopCount++;
             const weylFrac = (workerAddrHopSweepState.hopCount * 6180339887498948482n) % 10000000000000000000n;
-            workerAddrHopSweepState.anchor = s + (span * weylFrac) / 10000000000000000000n;
+            const hopBase = s + (span * weylFrac) / 10000000000000000000n;
+            workerAddrHopSweepState.anchor = hopBase + HALF;
         }
 
-        const cand = workerAddrHopSweepState.anchor + BigInt(workerAddrHopSweepState.sweepIndex);
+        const cand = workerAddrHopSweepState.anchor + (BigInt(workerAddrHopSweepState.sweepIndex) * SEQ_STRIDE);
         workerAddrHopSweepState.sweepIndex = (workerAddrHopSweepState.sweepIndex + 1) % workerAddrHopSweepState.blockSize;
 
         if (cand > e || cand < s) {
-            return s + ((cand - s) % span);
+            return s + HALF + (((cand - s - HALF) % span) + span) % span;
         }
         return cand;
     }
@@ -11160,6 +11012,15 @@ const FastH = (function () {
                 currentKey = generateSobolKey(subMin, subMax);
             }
 
+            // 2B. Standart Başlangıç Noktası / Tohum Işınlama (%0, %50, %38.2, %61.8, %85, AUTO_HOP)
+            //     Tüm standart arama algoritmalarında (Sequential, Sobol, Halton, Kronecker, Weyl, Kaos, Random vb.)
+            //     anahtarı seçilen başlangıç oranına göre uzayı bozmadan modüler olarak odaklar!
+            const stdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
+            if (stdRatio > 0.0 && effRange > 0n) {
+                const stdStartOffset = (effRange * BigInt(Math.round(stdRatio * 1000000))) / 1000000n;
+                currentKey = boundMin + ((currentKey - boundMin + stdStartOffset) % (effRange + 1n));
+            }
+
             // 3. Çekirdekler Arası Çakışmasız Modüler Kafes (Coset Partitioning - Oto Ön Ek Modunda)
             if (isEffectivePrefix && (cfg.isPrefixAutoJump || !cfg.userPrefix)) {
                 const COSET_MOD = 256n;
@@ -11260,7 +11121,7 @@ const FastH = (function () {
             let anchorPt = null;
             if (inst) {
                 try {
-                    if (workerActiveAlgo === 'SEQUENTIAL') anchorPt = workerSeqAnchor(inst, currentKey);
+                    if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'ADDR_HOP_SWEEP') anchorPt = workerSeqAnchor(inst, currentKey);
                     if (!anchorPt) anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
                     if (!anchorPt) {
                         lastKeyHex = currentKey.toString(16).padStart(64, '0');
@@ -11308,11 +11169,17 @@ const FastH = (function () {
                 if (workerWasmEx && workerWasmMem64 && workerWasmMem32 && !needUncompTarget) {
                     writeWorkerWasmFe(0x00A0, x0);
                     writeWorkerWasmFe(0x00C0, y0);
-                    if (workerWasmEx.normal_prepare_mont(strideCount) === 1) {
+                    let _prepOk = false;
+                    if (typeof workerWasmEx.normal_prepare_inv === 'function') {
+                        // ⚡ Toplu ters alma WASM içinde (Fermat zinciri): BigInt okuma/yazma ve JS tersi gerekmez
+                        _prepOk = (workerWasmEx.normal_prepare_inv(strideCount) === 1);
+                    } else if (workerWasmEx.normal_prepare_mont(strideCount) === 1) {
                         const accC = readWorkerWasmFe(0x0080);
                         const invAll = fastInvModP(accC);
-                        if (invAll !== 0n) {
-                            writeWorkerWasmFe(0x0080, invAll);
+                        if (invAll !== 0n) { writeWorkerWasmFe(0x0080, invAll); _prepOk = true; }
+                    }
+                    if (_prepOk) {
+                        {
                             const maxPosS = (boundMax >= currentKey)
                                 ? ((boundMax - currentKey) >= BigInt(strideCount) ? strideCount : Number(boundMax - currentKey))
                                 : 0;
@@ -11788,13 +11655,13 @@ function syncSwarmThreadBalancing() {
         autoOpt.innerText = `⚡ Oto Sürü (${effectiveThreads}T / ${swarmCount} Sekme)`;
     }
 
-    if (isAuto && isRunning && !isGpuRunning) {
+    if (isAuto && isRunning) {
         adjustWorkerPoolSize(effectiveThreads);
     }
 }
 
 function adjustWorkerPoolSize(desiredCount) {
-    if (!isRunning || isGpuRunning) return;
+    if (!isRunning) return;
     if (!desiredCount || desiredCount < 1) desiredCount = 1;
     if (workerPool.length === desiredCount) return;
 
@@ -11863,79 +11730,13 @@ function initThreadCountUI() {
         sel.appendChild(opt);
     });
 
-    try {
-        const saved = localStorage.getItem('PREF_THREAD_COUNT');
-        if (saved && Array.from(sel.options).some(o => String(o.value) === String(saved))) {
-            sel.value = String(saved);
-        } else {
-            sel.value = 'AUTO_SWARM';
-        }
-    } catch(e) {
-        sel.value = 'AUTO_SWARM';
-    }
+    sel.value = 'AUTO_SWARM';
     sel.onchange = onThreadCountSelectChange;
-    if (typeof addGpuOptionIfSupported === 'function') {
-        addGpuOptionIfSupported();
-    }
     if (typeof syncSwarmThreadBalancing === 'function') {
         syncSwarmThreadBalancing();
     }
 }
 
-// GPU seçeneklerini (Eco, Dengeli, Turbo) asenkron olarak dropdown'a ekle / güncelle
-async function addGpuOptionIfSupported() {
-    try {
-        const sel = document.getElementById('threadCountSelect');
-        if (!sel) return;
-        if (!navigator.gpu) {
-            Array.from(sel.options).filter(o => o.value && o.value.startsWith('GPU')).forEach(o => o.remove());
-            return;
-        }
-        const adapter = await navigator.gpu.requestAdapter();
-        if (!adapter) {
-            Array.from(sel.options).filter(o => o.value && o.value.startsWith('GPU')).forEach(o => o.remove());
-            return;
-        }
-
-        // Varsa eski GPU seçeneklerini temizle ve güncel AMD uyumlu etiketlerle ekle
-        Array.from(sel.options).filter(o => o.value && o.value.startsWith('GPU')).forEach(o => o.remove());
-
-        const optMax = document.createElement('option');
-        optMax.value = 'GPU_MAX';
-        optMax.innerText = '🔴 GPU (Tam Güç - 256 / 15ms)';
-        optMax.style.fontWeight = 'bold';
-
-        const optBal = document.createElement('option');
-        optBal.value = 'GPU_BALANCED';
-        optBal.innerText = '🟡 GPU (Dengeli / Akıcı - 128 / 35ms)';
-        optBal.style.fontWeight = 'bold';
-
-        const optEco = document.createElement('option');
-        optEco.value = 'GPU_ECO';
-        optEco.innerText = '🟢 GPU (Ultra Hafif / 0 Donma - 64 / 80ms)';
-        optEco.style.fontWeight = 'bold';
-
-        sel.insertBefore(optMax, sel.firstChild);
-        sel.insertBefore(optBal, sel.firstChild);
-        sel.insertBefore(optEco, sel.firstChild);
-
-        try {
-            const saved = localStorage.getItem('PREF_THREAD_COUNT');
-            if (saved && Array.from(sel.options).some(o => o.value === saved)) {
-                sel.value = saved;
-            }
-        } catch(e) {}
-
-        if (sel.value && sel.value.startsWith('GPU') && typeof window.setGpuIntensity === 'function') {
-            window.setGpuIntensity(sel.value);
-        }
-
-        console.log('[GPU] ✅ WebGPU destekleniyor — dropdown\'a AMD/DWM uyumlu GPU Güç seviyeleri eklendi');
-    } catch(e) {
-        console.log('[GPU] WebGPU kontrol hatası:', e.message);
-    }
-}
-addGpuOptionIfSupported();
 
 function getCurrentWorkerConfig() {
     const actT = currentTarget || getActiveTarget();
@@ -12006,7 +11807,7 @@ function getCurrentWorkerConfig() {
         stdAlgorithmStartOffsetRatio: (typeof stdAlgorithmStartOffsetRatio !== 'undefined') ? stdAlgorithmStartOffsetRatio : 0.0,
         kangarooHerdType: (typeof kangarooHerdType !== 'undefined' && kangarooHerdType) ? kangarooHerdType : 'DUAL',
         kangarooBaseStrategy: (typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'AUTO_HOP') ? KANGAROO_HOP_CHAIN[kangarooAutoHopIndex] : ((typeof kangarooBaseStrategy !== 'undefined') ? kangarooBaseStrategy : 'AUTO'),
-        exposedKangarooPubkeys: Object.assign({}, (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') ? EXPOSED_KANGAROO_PUBKEYS : {}, (typeof userCustomPuzzlePubkeys !== 'undefined') ? userCustomPuzzlePubkeys : {}),
+        exposedKangarooPubkeys: Object.assign({}, (typeof EXPOSED_KANGAROO_PUBKEYS !== 'undefined') ? EXPOSED_KANGAROO_PUBKEYS : {}),
         targetPubHex: (typeof resolveCurrentTargetPubkey === 'function' && resolveCurrentTargetPubkey()) ? resolveCurrentTargetPubkey().pubHex : '',
         allPuzzlesList: (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) ? ALL_PUZZLES.map(p => ({
             id: p.id,
@@ -12022,48 +11823,15 @@ function getCurrentWorkerConfig() {
 }
 
 
-// GPU tamamen kaldırıldı (Saf CPU Web Worker)
-let isGpuSupported = false;
-let isGpuRunning = false;
 
 function onThreadCountSelectChange(isRemoteSync = false) {
     const sel = document.getElementById('threadCountSelect');
     if (!sel) return;
     const val = sel.value;
-    try { localStorage.setItem('PREF_THREAD_COUNT', val); } catch(e) {}
-    if (val && val.startsWith('GPU')) {
-        if (typeof window.setGpuIntensity === 'function') {
-            window.setGpuIntensity(val);
-        }
-        if (typeof isRunning !== 'undefined' && isRunning && !isGpuRunning) {
-            stopWorkerPool();
-            const spEl = document.getElementById('statSpeed');
-            if (spEl) spEl.innerText = '⚡ GPU Hazırlanıyor...';
-            if (typeof initWebGpuEngine === 'function') {
-                initWebGpuEngine().then(ok => {
-                    if (ok && isRunning) {
-                        isGpuRunning = true;
-                        isGpuSupported = true;
-                        if (typeof startGpuHunting === 'function') startGpuHunting();
-                    }
-                });
-            }
-        }
-        if (typeof showToast === 'function') {
-            const label = val.includes('ECO') 
-                ? '🟢 Ultra Hafif: 64 batch / 80ms - Sıfır Donma' 
-                : (val.includes('MAX') ? '🔴 Tam Güç: 256 batch / 15ms' : '🟡 Dengeli: 128 batch / 35ms - Akıcı 60 FPS');
-            showToast('⚡ <strong>GPU Modu Değiştirildi</strong><br><span style="font-size:11px;">' + label + '</span>', 3000);
-        }
-    } else if (val === 'AUTO_SWARM') {
+    if (val === 'AUTO_SWARM') {
         const eff = getEffectiveThreadCount();
         if (typeof isRunning !== 'undefined' && isRunning) {
-            if (isGpuRunning) {
-                stopGpuHunting();
-                startWorkerPool(eff);
-            } else {
-                adjustWorkerPoolSize(eff);
-            }
+            adjustWorkerPoolSize(eff);
         }
         if (typeof showToast === 'function') {
             const tabs = (typeof currentSwarmTotal !== 'undefined') ? currentSwarmTotal : 1;
@@ -12072,10 +11840,7 @@ function onThreadCountSelectChange(isRemoteSync = false) {
     } else {
         const parsed = parseInt(val, 10);
         if (typeof isRunning !== 'undefined' && isRunning) {
-            if (isGpuRunning) {
-                stopGpuHunting();
-                if (!isNaN(parsed)) startWorkerPool(parsed);
-            } else if (!isNaN(parsed)) {
+            if (!isNaN(parsed)) {
                 adjustWorkerPoolSize(parsed);
             }
         }
@@ -12086,15 +11851,6 @@ function onThreadCountSelectChange(isRemoteSync = false) {
 
     if (!isRemoteSync && typeof isSwarmSyncingRemote !== 'undefined' && !isSwarmSyncingRemote && typeof broadcastSwarmSetting === 'function') {
         broadcastSwarmSetting('HARDWARE', { threadVal: val });
-    }
-}
-
-function stopGpuHunting(immediate) {
-    isGpuRunning = false;
-    if (typeof window !== 'undefined' && typeof window._gpuEngineStop === 'function') {
-        try { window._gpuEngineStop(immediate); } catch(e) {}
-    } else if (typeof window !== 'undefined' && typeof window.stopGpuHunting === 'function' && window.stopGpuHunting !== stopGpuHunting) {
-        try { window.stopGpuHunting(immediate); } catch(e) {}
     }
 }
 
@@ -12121,14 +11877,9 @@ function startWorkerPool(threadCount) {
                 console.error('[WORKER #' + i + ' ERROR]:', err.message || err.type, 'line:', err.lineno, 'col:', err.colno, 'file:', err.filename);
                 workerErrors++;
                 if (workerErrors >= threadCount && !workerHasReceivedProgress && isRunning) {
-                    if (isGpuRunning) {
-                        console.warn('[MULTI-THREAD] Yerel dosya/tarayıcı kısıtlaması nedeniyle CPU Workerları başlatılamadı. GPU tek başına tam güç devam ediyor.');
-                        stopWorkerPool();
-                    } else {
-                        console.warn('[MULTI-THREAD] Tüm Workerlar hata verdi / yerel dosya kısıtlandı. CPU motoru (huntBatch) doğrudan devreye alınıyor!');
-                        stopWorkerPool();
-                        huntBatch();
-                    }
+                    console.warn('[MULTI-THREAD] Tüm Workerlar hata verdi / yerel dosya kısıtlandı. CPU motoru (huntBatch) doğrudan devreye alınıyor!');
+                    stopWorkerPool();
+                    huntBatch();
                 }
             };
             w.postMessage({
@@ -12375,14 +12126,10 @@ function handleWorkerMessage(e) {
 
         if (data.type === 'progress') {
             workerHasReceivedProgress = true;
-            if (isGpuRunning) {
-                if (data.count) attempts += data.count;
-            } else {
-                if (data.totalScanned !== undefined && data.totalScanned > 0) {
-                    attempts = data.totalScanned;
-                } else if (data.count) {
-                    attempts += data.count;
-                }
+            if (data.totalScanned !== undefined && data.totalScanned > 0) {
+                attempts = data.totalScanned;
+            } else if (data.count) {
+                attempts += data.count;
             }
             if (sliceModeActive && data.count) {
                 sliceAttempts += data.count;
@@ -12538,7 +12285,6 @@ function toggleHunter(isRemoteSync = false) {
         if (cmdConnected && cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
             try { cmdSocket.send(JSON.stringify({ cmd: 'stop' })); } catch(e) {}
         }
-        stopGpuHunting();
         stopWorkerPool();
         releaseWakeLock();
         btn.className = 'action-btn btn-start';
@@ -12674,47 +12420,7 @@ function toggleHunter(isRemoteSync = false) {
         const threadVal   = document.getElementById('threadCountSelect')?.value;
         const threadCount = (typeof getEffectiveThreadCount === 'function') ? getEffectiveThreadCount() : (parseInt(threadVal) || 8);
 
-        if (threadVal && threadVal.startsWith('GPU')) {
-            // ⚡ WebGPU modu
-            if (typeof window.setGpuIntensity === 'function') {
-                window.setGpuIntensity(threadVal);
-            }
-            const spEl = document.getElementById('statSpeed');
-            if (spEl) spEl.innerText = '⚡ GPU Hazırlanıyor...';
-            console.log('[GPU] WebGPU seçildi (' + threadVal + ') — GPU engine başlatılıyor...');
-            initWebGpuEngine().then(ok => {
-                if (ok && isRunning) {
-                    isGpuRunning = true;
-                    isGpuSupported = true;
-                    startGpuHunting();
-                    const modeStr = (typeof isGpuWorkerActive !== 'undefined' && isGpuWorkerActive) ? '🚀 İzole Web Worker (0 Donma)' : '⚡ Standart GPU';
-                    console.log('[GPU] ✅ GPU arama aktif [' + modeStr + '].');
-                    if (typeof showToast === 'function') {
-                        showToast(`⚡ <strong>WebGPU Aktif</strong><br><span style="font-size:11px;">${modeStr}</span>`, 2500);
-                    }
-                } else if (!ok) {
-                    console.warn('[GPU] ⚠️ WebGPU başlatılamadı, otomatik CPU moduna geçiliyor');
-                    isGpuRunning = false;
-                    if (typeof showToast === 'function') {
-                        showToast(`⚠️ <strong>WebGPU Başlatılamadı</strong><br><span style="font-size:11px;">Arama kesintisiz olarak ${threadCount}x CPU İş Parçacığı ile başlatıldı.</span>`, 4000);
-                    }
-                    if (isRunning) {
-                        if (window.Worker) startWorkerPool(threadCount);
-                        else huntBatch();
-                    }
-                }
-            }).catch(err => {
-                console.error('[GPU] GPU init exception:', err);
-                isGpuRunning = false;
-                if (typeof showToast === 'function') {
-                    showToast('⚠️ <strong>WebGPU Hatası:</strong> ' + (err.message || err) + '<br><span style="font-size:11px;">Otomatik CPU moduna geçildi.</span>', 4000);
-                }
-                if (isRunning) {
-                    if (window.Worker) startWorkerPool(threadCount);
-                    else huntBatch();
-                }
-            });
-        } else if (window.Worker) {
+        if (window.Worker) {
             startWorkerPool(threadCount);
         } else {
             huntBatch();
@@ -12838,10 +12544,8 @@ function initCmdMotorWebSocket() {
                     if (data.isRunning && !isRunning) {
                         syncGuiRunning(true);
                     } else if (isRunning && !data.isRunning) {
-                        if (!(threadVal && threadVal.startsWith('GPU')) && !isGpuRunning) {
-                            if (cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
-                                cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
-                            }
+                        if (cmdSocket && cmdSocket.readyState === WebSocket.OPEN) {
+                            cmdSocket.send(JSON.stringify({ cmd: 'start', config: getCurrentWorkerConfig() }));
                         }
                     }
                     if (data.lastWin) {
@@ -12849,10 +12553,7 @@ function initCmdMotorWebSocket() {
                     }
                 } else if (data.type === 'status') {
                     if (data.isRunning !== undefined) {
-                        const threadVal = document.getElementById('threadCountSelect')?.value;
-                        if (!isGpuRunning && !(threadVal && threadVal.startsWith('GPU'))) {
-                            syncGuiRunning(data.isRunning);
-                        }
+                        syncGuiRunning(data.isRunning);
                     }
                 } else if (data.type === 'selectPuzzle') {
                     if (data.puzzleId && typeof allUnsolvedPool !== 'undefined') {
@@ -13055,45 +12756,41 @@ window.onload = function() {
     if (typeof applyFormulaPreset === 'function') applyFormulaPreset(activeFormula);
 
     try {
-        const savedReg = localStorage.getItem('SIRIUS_SLIDER_REGIME');
-        if (savedReg && ['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(savedReg)) {
-            setSliderRegime(savedReg, true);
-        } else {
-            // Varsayılan: Rejim OTO kapalı
-            autoSliderRegime = null;
-            updateRegimeButtonStyles();
-        }
-
-        // Varsayılan: Hız OTO (Kaydıraç Taraması) kapalı
-        const savedAutoSpeed = localStorage.getItem('SIRIUS_AUTO_SLIDER_ACTIVE');
-        if (savedAutoSpeed === '1') {
-            isAutoSliderActive = true;
-            autoSliderSpeed = localStorage.getItem('SIRIUS_AUTO_SLIDER_SPEED') || 'AUTO';
-        } else {
-            isAutoSliderActive = false;
-            autoSliderSpeed = null;
-        }
+        // 🎛️ Kaydıraç ve Rejim ayarları: varsayılan daima KAPALI ve hatırlanmaz
+        autoSliderRegime = null;
+        isAutoSliderActive = false;
+        autoSliderSpeed = null;
         updateSpeedButtonStyles();
         updateRegimeButtonStyles();
         updateAutoSliderUI();
-        if (localStorage.getItem('SIRIUS_IS_SPACE_CROPPED') === '1') {
-            const minP = parseFloat(localStorage.getItem('SIRIUS_SPACE_CROP_MIN'));
-            const maxP = parseFloat(localStorage.getItem('SIRIUS_SPACE_CROP_MAX'));
-            const sHex = localStorage.getItem('SIRIUS_SPACE_CROP_START_HEX');
-            const eHex = localStorage.getItem('SIRIUS_SPACE_CROP_END_HEX');
-            if (!isNaN(minP) && !isNaN(maxP)) {
-                if (sHex && eHex) {
-                    spaceCropStart = toBigIntSafe('0x' + sHex.replace(/^0x/i, ''));
-                    spaceCropEnd = toBigIntSafe('0x' + eHex.replace(/^0x/i, ''));
-                    isSpaceCropped = true;
-                    spaceCropMinPct = minP;
-                    spaceCropMaxPct = maxP;
-                    finalizeSpaceCrop(minP, maxP, true);
-                } else {
-                    applySpaceCrop(minP, maxP, true);
-                }
+
+        // 🌌 Uzay Kırpma (Space Crop): varsayılan daima sıfır / tam uzay ve hatırlanmaz
+        isSpaceCropped = false;
+        spaceCropStart = null;
+        spaceCropEnd = null;
+        spaceCropMinPct = 0;
+        spaceCropMaxPct = 100;
+        if (typeof updateCropUI === 'function') updateCropUI(0, 100);
+
+        // Eski veya kalıntı localStorage anahtarlarını tamamen temizle
+        try {
+            localStorage.removeItem('SIRIUS_SLIDER_REGIME');
+            localStorage.removeItem('SIRIUS_AUTO_SLIDER_ACTIVE');
+            localStorage.removeItem('SIRIUS_AUTO_SLIDER_SPEED');
+            localStorage.removeItem('SIRIUS_IS_SPACE_CROPPED');
+            localStorage.removeItem('SIRIUS_SPACE_CROP_MIN');
+            localStorage.removeItem('SIRIUS_SPACE_CROP_MAX');
+            localStorage.removeItem('SIRIUS_SPACE_CROP_START_HEX');
+            localStorage.removeItem('SIRIUS_SPACE_CROP_END_HEX');
+            localStorage.removeItem('SIRIUS_CUSTOM_PUBKEYS');
+            localStorage.removeItem('SELECTED_PUZZLE_IDS');
+            localStorage.removeItem('PREF_THREAD_COUNT');
+            localStorage.removeItem('SIRIUS_SINGLE_TARGET_ID');
+            localStorage.removeItem('SIRIUS_TARGET_MODE');
+            if (typeof indexedDB !== 'undefined') {
+                try { indexedDB.deleteDatabase('pe_kangaroo_traps_v1'); } catch(e) {}
             }
-        }
+        } catch(e) {}
         // Varsayılan ön ek / modüler kafes ilk açılışta daima KAPALI başlar
         isPrefixFilterActive = false;
         isPrefixAutoJump = false;
@@ -13101,6 +12798,7 @@ window.onload = function() {
         try {
             localStorage.removeItem('SIRIUS_PREFIX_FILTER_ACTIVE');
             localStorage.removeItem('SIRIUS_PREFIX_AUTO_JUMP');
+            localStorage.removeItem('SIRIUS_USER_PREFIX');
         } catch(e) {}
         const pInp = document.getElementById('prefixInput');
         if (pInp) {
@@ -13130,73 +12828,7 @@ window.onload = function() {
 
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', function(e) {
-        if (e.key === 'SIRIUS_AUTO_SLIDER_ACTIVE' || e.key === 'SIRIUS_AUTO_SLIDER_SPEED') {
-            const isActive = localStorage.getItem('SIRIUS_AUTO_SLIDER_ACTIVE') === '1';
-            const speed = localStorage.getItem('SIRIUS_AUTO_SLIDER_SPEED');
-            if (isActive && speed && typeof AUTO_SLIDER_SPEEDS !== 'undefined' && AUTO_SLIDER_SPEEDS[speed]) {
-                if (!isAutoSliderActive || autoSliderSpeed !== speed) {
-                    toggleSpeedMode(speed, true);
-                }
-            } else if (!isActive && isAutoSliderActive) {
-                isAutoSliderActive = false;
-                autoSliderSpeed = null;
-                stopAutoSliderTimer();
-                if (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) {
-                    applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
-                }
-                updateSpeedButtonStyles();
-                updateAutoSliderUI();
-            }
-        } else if (e.key === 'SIRIUS_SLIDER_REGIME') {
-            const reg = localStorage.getItem('SIRIUS_SLIDER_REGIME');
-            if (reg && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(reg)) {
-                if (autoSliderRegime !== reg) setSliderRegime(reg, true);
-            } else {
-                if (autoSliderRegime !== null) {
-                    autoSliderRegime = null;
-                    updateRegimeButtonStyles();
-                    updateAutoSliderUI();
-                }
-            }
-        } else if (e.key === 'SIRIUS_IS_SPACE_CROPPED' || e.key === 'SIRIUS_SPACE_CROP_MIN' || e.key === 'SIRIUS_SPACE_CROP_MAX') {
-            const isCrop = localStorage.getItem('SIRIUS_IS_SPACE_CROPPED') === '1';
-            if (isCrop) {
-                const minP = parseFloat(localStorage.getItem('SIRIUS_SPACE_CROP_MIN'));
-                const maxP = parseFloat(localStorage.getItem('SIRIUS_SPACE_CROP_MAX'));
-                const sHex = localStorage.getItem('SIRIUS_SPACE_CROP_START_HEX');
-                const eHex = localStorage.getItem('SIRIUS_SPACE_CROP_END_HEX');
-                if (!isNaN(minP) && !isNaN(maxP)) {
-                    if (sHex && eHex) {
-                        spaceCropStart = toBigIntSafe('0x' + sHex.replace(/^0x/i, ''));
-                        spaceCropEnd = toBigIntSafe('0x' + eHex.replace(/^0x/i, ''));
-                        isSpaceCropped = true;
-                        spaceCropMinPct = minP;
-                        spaceCropMaxPct = maxP;
-                        finalizeSpaceCrop(minP, maxP, true);
-                    } else {
-                        applySpaceCrop(minP, maxP, true);
-                    }
-                }
-            } else if (isSpaceCropped) {
-                resetSpaceCrop(true);
-            }
-        } else if (e.key === 'SELECTED_PUZZLE_IDS' && e.newValue) {
-            try {
-                const arr = JSON.parse(e.newValue);
-                if (Array.isArray(arr)) {
-                    selectedPuzzleIds.clear();
-                    arr.forEach(id => selectedPuzzleIds.add(String(id)));
-                    updateActiveUnsolvedList(false, false);
-                    if (typeof window.refreshPuzzleCheckboxes === 'function') window.refreshPuzzleCheckboxes();
-                    else if (typeof refreshPuzzleCheckboxes === 'function') refreshPuzzleCheckboxes();
-                    if (typeof window.syncCircularStateIfActive === 'function') window.syncCircularStateIfActive();
-                    else if (typeof syncCircularStateIfActive === 'function') syncCircularStateIfActive();
-                    const badge = document.getElementById('puzzleSelectedBadge');
-                    if (badge) badge.innerText = selectedPuzzleIds.size;
-                    broadcastWorkerConfig();
-                }
-            } catch(err) {}
-        } else if (e.key === 'SIRIUS_PREFIX_FILTER_ACTIVE' || e.key === 'SIRIUS_PREFIX_AUTO_JUMP' || e.key === 'SIRIUS_USER_PREFIX') {
+        if (e.key === 'SIRIUS_PREFIX_FILTER_ACTIVE' || e.key === 'SIRIUS_PREFIX_AUTO_JUMP' || e.key === 'SIRIUS_USER_PREFIX') {
             isPrefixFilterActive = localStorage.getItem('SIRIUS_PREFIX_FILTER_ACTIVE') === '1';
             isPrefixAutoJump = localStorage.getItem('SIRIUS_PREFIX_AUTO_JUMP') === '1';
             const savedPfx = localStorage.getItem('SIRIUS_USER_PREFIX') || '';
@@ -13207,14 +12839,6 @@ if (typeof window !== 'undefined') {
             if (chk) chk.checked = isPrefixAutoJump;
             if (typeof updateModeVisuals === 'function') updateModeVisuals();
             if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
-        } else if (e.key === 'PREF_THREAD_COUNT' && e.newValue) {
-            const sel = document.getElementById('threadCountSelect');
-            if (sel && sel.value !== e.newValue) {
-                sel.value = e.newValue;
-                if (typeof onThreadCountSelectChange === 'function') {
-                    onThreadCountSelectChange(true);
-                }
-            }
         }
     });
 }
