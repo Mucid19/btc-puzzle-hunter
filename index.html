@@ -12,11 +12,13 @@
             m.href = 'manifest.json';
             document.head.appendChild(m);
             if ('serviceWorker' in navigator) {
-                try {
-                    navigator.serviceWorker.getRegistrations().then(regs => {
-                        for (let r of regs) r.unregister();
-                    }).catch(() => {});
-                } catch(e) {}
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js').then((reg) => {
+                        console.log('[SW] Service Worker kayıt başarılı:', reg.scope);
+                    }).catch((err) => {
+                        console.warn('[SW] Service Worker kayıt hatası:', err);
+                    });
+                });
             }
         }
     </script>
@@ -13303,18 +13305,7 @@ window.onload = function() {
         broadcastWorkerConfig();
     } catch(e) {}
 
-    if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
-        try {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let reg of registrations) reg.unregister();
-            }).catch(() => {});
-        } catch(e) {}
-        if (window.caches) {
-            try {
-                caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
-            } catch(e) {}
-        }
-    }
+    // PWA Service Worker ve Cache yönetimi sw.js üzerinden sağlanır
 };
 
 if (typeof window !== 'undefined') {

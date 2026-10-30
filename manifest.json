@@ -1,8 +1,9 @@
 {
   "name": "SiriuS BTC Puzzle Hunter",
   "short_name": "SiriuS",
-  "description": "High-Performance WebGPU & Multi-threaded Secp256k1 Puzzle Hunter",
+  "description": "High-Performance Multi-threaded Secp256k1 Puzzle Hunter",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#10b981",

@@ -1,10 +1,7 @@
-const CACHE_NAME = 'btc-puzzle-v6';
+const CACHE_NAME = 'btc-puzzle-v7';
 const ASSETS = [
   './',
   './index.html',
-  './gpu_engine.js',
-  './gpu_worker.js',
-  './webgpu_kangaroo.js',
   './kangaroo_engine.js',
   './all_160_puzzles.json',
   './manifest.json',
@@ -18,7 +15,15 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.all(
+        ASSETS.map((url) => {
+          return cache.add(url).catch((err) => {
+            console.warn('[SW] Önbelleğe alınamadı:', url, err);
+          });
+        })
+      );
+    })
   );
 });
 
@@ -36,7 +41,13 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    fetch(e.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => caches.match(e.request).then((res) => res || (e.request.mode === 'navigate' ? caches.match('./index.html') : null)))
   );
 });
