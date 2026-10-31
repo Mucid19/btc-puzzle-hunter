@@ -12,13 +12,11 @@
             m.href = 'manifest.json';
             document.head.appendChild(m);
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js').then((reg) => {
-                        console.log('[SW] Service Worker kayıt başarılı:', reg.scope);
-                    }).catch((err) => {
-                        console.warn('[SW] Service Worker kayıt hatası:', err);
-                    });
-                });
+                try {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        for (let r of regs) r.unregister();
+                    }).catch(() => {});
+                } catch(e) {}
             }
         }
     </script>
@@ -4587,14 +4585,12 @@ function generatePrefixKey(targetStart, targetEnd, prefixHex, suffixHex = '', al
 
     // Eğer ön ek + son ek uzunluğu toplam uzunluğu aşıyorsa:
     if (p.length + s.length >= targetLen) {
-        const remainLen = Math.max(0, targetLen - p.length);
-        let randPart = '';
-        {
-            while (randPart.length < remainLen) {
-                randPart += Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
-            }
-        }
-        let val = BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+        // ⚠️ DÜZELTME: Önek+sonek toplamı hedef uzunluğu karşılıyor/aşıyorsa eskiden sonek TAMAMEN atlanıyordu
+        // (yalnızca önek + rastgele dolgu kullanılıyordu). Artık önek, sonek için yer bırakacak şekilde kırpılır
+        // ve sonek korunur: "...önek-kuyruğu + TAM SONEK" birleşimi targetLen'e tamamlanır.
+        const pUse = p.slice(0, Math.max(0, targetLen - s.length));
+        let fullHex = (pUse + s).slice(-targetLen).padStart(targetLen, '0');
+        let val = BigInt('0x' + (fullHex || '0'));
         if (val < effStart) val = effStart;
         if (val > effEnd) val = effEnd;
         return val;
@@ -9322,8 +9318,10 @@ const FastH = (function () {
     let _workerYieldCounter = 0;
     function scheduleNextWorkerBatch(forceMacroYield = false) {
         if (!isWorking) return;
-        _workerYieldCounter = (_workerYieldCounter + 1) & 7;
-        if (!forceMacroYield && _workerYieldCounter !== 0 && typeof MessageChannel !== 'undefined') {
+        // ⚡ setTimeout(...,0) tamamen kaldırıldı: tarayıcılar bunu 1-15.6ms geciktirebilir (clamp), MessageChannel
+        // bu gecikmeye tabi değildir. forceMacroYield artık yalnızca kanalı tazelemek için kullanılır, ayrı bir
+        // zamanlayıcıya düşürmez.
+        if (typeof MessageChannel !== 'undefined') {
             if (!_workerLoopChannel) {
                 _workerLoopChannel = new MessageChannel();
                 _workerLoopChannel.port1.onmessage = function() {
@@ -10059,14 +10057,10 @@ const FastH = (function () {
         const s = suffixHex || '';
 
         if (p.length + s.length >= targetLen) {
-            const remainLen = Math.max(0, targetLen - p.length);
-            let randPart = '';
-            {
-                while (randPart.length < remainLen) {
-                    randPart += Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
-                }
-            }
-            let val = BigInt('0x' + (p + randPart.slice(0, remainLen) || '0'));
+            // ⚠️ DÜZELTME: aynı sonek-atlama hatası worker kopyasında da vardı; önek kırpılıp sonek korunuyor.
+            const pUse = p.slice(0, Math.max(0, targetLen - s.length));
+            let fullHex = (pUse + s).slice(-targetLen).padStart(targetLen, '0');
+            let val = BigInt('0x' + (fullHex || '0'));
             if (val < targetStart) val = targetStart;
             if (val > targetEnd) val = targetEnd;
             return val;
@@ -11329,9 +11323,11 @@ const baseStart = (span * basePpm) / 1000000n;
         const batchDuration = ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - batchStartTime;
         workerKangarooCalibCounter++;
         if (workerKangarooCalibCounter % 4 === 0) {
-            if (batchDuration < 12) {
-                workerDynamicKangarooSteps = Math.min(65536, workerDynamicKangarooSteps + 4096);
-            } else if (batchDuration > 22) {
+            // ⚡ Hedef aralık 10-20ms'den ~70-130ms'e çıkarıldı: event-loop'a dönüş sıklığını saniyede ~26'dan ~6-8'e
+            // düşürür (UI hâlâ saniyede birkaç kez güncellenir, duyarlılık kaybı önemsizdir). Tavan 65536 -> 262144.
+            if (batchDuration < 70) {
+                workerDynamicKangarooSteps = Math.min(262144, workerDynamicKangarooSteps + 16384);
+            } else if (batchDuration > 130) {
                 workerDynamicKangarooSteps = Math.max(512, (Math.round((workerDynamicKangarooSteps * 0.8) / 64) * 64) || 512);
             }
         }
@@ -13305,7 +13301,18 @@ window.onload = function() {
         broadcastWorkerConfig();
     } catch(e) {}
 
-    // PWA Service Worker ve Cache yönetimi sw.js üzerinden sağlanır
+    if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
+        try {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let reg of registrations) reg.unregister();
+            }).catch(() => {});
+        } catch(e) {}
+        if (window.caches) {
+            try {
+                caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+            } catch(e) {}
+        }
+    }
 };
 
 if (typeof window !== 'undefined') {

@@ -247,10 +247,21 @@ class RealPollardKangaroo {
         this.fullSpan = (this.baseMax > this.baseMin) ? (this.baseMax - this.baseMin) : 1n;
 
         // Model 1: Rolling Micro-Window (Kayan Mikro Pencere O(√W))
-        this.rollingWindowIndex = 0;
-        this.rollingStepsBudget = 30000;
-        this.rollingStepsInWindow = 0;
         this.rollingWindowSpan = (this.fullSpan > 40n) ? (this.fullSpan / 40n) : this.fullSpan;
+        {
+            // 🎯 Pencere DİZİSİNİN başlangıcı da Başlangıç Noktası seçicisine bağlanır (daha önce yalnızca
+            // evcil kanguru konumu bağlıydı; pencere dizisinin hangi pencereden başladığı değil).
+            const shift0 = (this.rollingWindowSpan > 2n) ? (this.rollingWindowSpan / 2n) : 1n;
+            const maxIdx0 = (this.fullSpan > this.rollingWindowSpan) ? Number((this.fullSpan - this.rollingWindowSpan) / shift0) : 0;
+            const ppm0 = this._tameStartPpm();
+            let startOff0 = (this.fullSpan * ppm0) / 1000000n - (this.rollingWindowSpan / 2n);
+            if (startOff0 < 0n) startOff0 = 0n;
+            let idx0 = Number(startOff0 / shift0);
+            if (idx0 > maxIdx0) idx0 = maxIdx0;
+            this.rollingWindowIndex = idx0;
+        }
+        this.rollingStepsBudget = 30000;
+        this.rollingStepsInWindow = (this._tameStartPpm() > 0n) ? this.rollingStepsBudget : 0;
 
         // Model 2: Global Anchor & Relative Wild (Evrensel Çapa & Birikimli Tuzak)
         this.isGlobalAnchor = Boolean(this.options && this.options.herdMode === 'GLOBAL_ANCHOR');
@@ -259,8 +270,12 @@ class RealPollardKangaroo {
         this.dwellDurationMs = 5000;
         this.lastHopTimestamp = Date.now();
         this.hopCount = 0;
-        this.hopPhase = 0.0;
-        this.dwellStepsInHop = 0;
+        {
+            // 🎯 İlk sıçramanın hedefi de seçiciye bağlanır: bir sonraki +0.618 adımı tam seçilen orana gitsin.
+            const ppm0 = this._tameStartPpm();
+            this.hopPhase = (ppm0 > 0n) ? ((Number(ppm0) / 1000000 - 0.618033988749895 + 1.0) % 1.0) : 0.0;
+        }
+        this.dwellStepsInHop = (this._tameStartPpm() > 0n) ? 500000 : 0;
 
         this.init();
     }
@@ -1049,6 +1064,7 @@ class RealPollardKangaroo {
         if (this._wasmEx && this._wasmMem64 && this._wasmMem8) {
             const wEx = this._wasmEx;
             const wMem8 = this._wasmMem8;
+            const glvFlag = isGlv ? 1 : 0;
             const kronFlag = isKronecker ? 1 : 0;
             const dpMaskLo = BigInt.asIntN(64, dpMask);
             const fastMode = this._fastDistMode;
@@ -1111,10 +1127,12 @@ class RealPollardKangaroo {
                     }
                 }
 
-                // 1. AŞAMA (WASM): DP Bitmask Tespiti ve Montgomery Batch Hazırlığı
-                // Not: glvFlag=0 geçilerek her adımda 128 adet 256-bit modüler çarpma atlanır;
-                // 6-yönlü kanonik GLV otomorfizma temsilcisi yalnızca DP yakalandığında (<%0.4) hesaplanır!
-                const rawHitMask = wEx.kang_prepare_step(M, 0, kronFlag, dpMaskLo);
+                // 1. AŞAMA (WASM): Kanonik GLV X, DP Bitmask Tespiti ve Montgomery Batch Hazırlığı
+                // ⚠️ glvFlag=0 ile "atlama" denendi: WASM o zaman DP testini ham (kanonik olmayan) X üzerinde yapıyor,
+                // bu da aynı simetri sınıfındaki 3 temsilin farklı DP sonucu vermesine ve kanguru takasının (collision)
+                // kaçmasına yol açıyor. Ölçüldü: GLV_HYBRID 36 bit'te adım/√N 16.4 → 21.3 (+%30), bazı anahtarlar 120s'de
+                // bitmedi. Doğruluk için glvFlag=(isGlv?1:0) olarak GERİ ALINDI; WASM zaten canonX'i 0x4100'e yazıyor.
+                const rawHitMask = wEx.kang_prepare_step(M, glvFlag, kronFlag, dpMaskLo);
                 let hitMask = BigInt.asUintN(64, rawHitMask);
 
                 // Yalnızca DP yakalandığında bitmask üzerinden işle (Sıfır gereksiz döngü yükü!)
@@ -1126,14 +1144,8 @@ class RealPollardKangaroo {
                     hitMask ^= lowBit;
 
                     flushDistOne(i);
-                    let canonX = this._readWasmFe(0x0800 + (i << 5));
-                    let pBranch = 0;
-                    if (isGlv) {
-                        const x2 = (canonX * BETA) % P;
-                        const x3 = (canonX * BETA2) % P;
-                        if (x2 < canonX) { canonX = x2; pBranch = 1; }
-                        if (x3 < canonX) { canonX = x3; pBranch = 2; }
-                    }
+                    const canonX = this._readWasmFe(0x4100 + (i << 5));
+                    const pBranch = wMem8[0x4040 + i];
                     const pKey = canonX.toString(16).padStart(64, '0');
                     const pCell = Number(canonX & 15n);
                     const curDist = kangDist[i];
