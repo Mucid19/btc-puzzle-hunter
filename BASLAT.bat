@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 chcp 65001 >nul
 title SiriuS Secp256k1 Puzzle Hunter
 echo =======================================================
