@@ -1818,6 +1818,7 @@ let spaceCropStart = null;
 let spaceCropEnd = null;
 let spaceCropMinPct = 0;
 let spaceCropMaxPct = 100;
+let spaceCropMode = null; // 'PERCENT' or 'SQRT_N'
 
 function getHexTargetBounds() {
     const target = getActiveTarget();
@@ -3105,7 +3106,10 @@ function updateCropUI(minPct, maxPct) {
         const eHex = spaceCropEnd.toString(16);
         const sShort = '0x' + (sHex.length <= 8 ? sHex : sHex.substring(0, 6) + '...');
         const eShort = '0x' + (eHex.length <= 8 ? eHex : eHex.substring(0, 6) + '...');
-        lblStatus.innerText = `✂️ %${Number(minPct).toFixed(0)}-%${Number(maxPct).toFixed(0)}`;
+        const countSuffix = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
+            ? ` (${unsolvedList.length})`
+            : '';
+        lblStatus.innerText = `✂️ %${Number(minPct).toFixed(0)}-%${Number(maxPct).toFixed(0)}${countSuffix}`;
         lblStatus.title = `Kırpılmış Uzay: ${sShort} - ${eShort} (%${Number(minPct).toFixed(2)} - %${Number(maxPct).toFixed(2)})`;
         lblStatus.style.display = 'inline-block';
     } else {
@@ -3158,9 +3162,10 @@ function cropSpaceSqrtN() {
     spaceCropStart = newStart;
     spaceCropEnd = newEnd;
     isSpaceCropped = true;
+    spaceCropMode = 'SQRT_N';
 
-    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000n) / origTotal) / 100 : 0;
-    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000n) / origTotal) / 100 : 100;
+    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000000000n) / origTotal) / 100000000 : 0;
+    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000000000n) / origTotal) / 100000000 : 100;
 
     spaceCropMinPct = minPct;
     spaceCropMaxPct = maxPct;
@@ -3168,7 +3173,10 @@ function cropSpaceSqrtN() {
     finalizeSpaceCrop(minPct, maxPct, false);
 
     if (typeof showToast === 'function') {
-        showToast(`🦚 <strong>Karekök O(√N) Uzayı Kilitlendi!</strong><br><span style="font-size:11px; color:#38bdf8;">Pencere Boyutu: 0x${sqrtWindow.toString(16)} anahtar (%${minPct.toFixed(4)} - %${maxPct.toFixed(4)})</span>`, 3500);
+        const countNote = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
+            ? ` (${unsolvedList.length})`
+            : '';
+        showToast(`🦚 <strong>Karekök O(√N) Uzayı Kilitlendi!${countNote}</strong><br><span style="font-size:11px; color:#38bdf8;">Pencere Boyutu: 0x${sqrtWindow.toString(16)} anahtar (%${minPct.toFixed(4)} - %${maxPct.toFixed(4)})</span>`, 3500);
     }
 }
 
@@ -3214,14 +3222,15 @@ function applySpaceCrop(minPct, maxPct, isRemoteSync = false) {
     const origTotal = origEnd - origStart;
     if (origTotal <= 0n) return;
 
+    spaceCropMode = 'PERCENT';
     spaceCropMinPct = minPct;
     spaceCropMaxPct = maxPct;
 
-    const minRatio = BigInt(Math.round(minPct * 10000000));
-    const maxRatio = BigInt(Math.round(maxPct * 10000000));
+    const minRatio = BigInt(Math.round(minPct * 10000000000));
+    const maxRatio = BigInt(Math.round(maxPct * 10000000000));
 
-    spaceCropStart = origStart + (origTotal * minRatio / 1000000000n);
-    spaceCropEnd = origStart + (origTotal * maxRatio / 1000000000n);
+    spaceCropStart = origStart + (origTotal * minRatio / 1000000000000n);
+    spaceCropEnd = origStart + (origTotal * maxRatio / 1000000000000n);
     if (spaceCropEnd <= spaceCropStart) spaceCropEnd = spaceCropStart + 1n;
 
     isSpaceCropped = (minPct > 0 || maxPct < 100);
@@ -3236,14 +3245,15 @@ function cropSpaceToCurrentSelection() {
     spaceCropStart = sliderMinHex;
     spaceCropEnd = sliderMaxHex;
     isSpaceCropped = true;
+    spaceCropMode = 'PERCENT';
 
     const target = getActiveTarget();
     const origStart = toBigIntSafe(target.origStart || target.start);
     const origEnd = toBigIntSafe(target.origEnd || target.end);
     const origTotal = origEnd - origStart;
 
-    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000n) / origTotal) / 100 : 0;
-    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000n) / origTotal) / 100 : 100;
+    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000000000n) / origTotal) / 100000000 : 0;
+    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000000000n) / origTotal) / 100000000 : 100;
 
     spaceCropMinPct = minPct;
     spaceCropMaxPct = maxPct;
@@ -3253,6 +3263,7 @@ function cropSpaceToCurrentSelection() {
 
 function resetSpaceCrop(isRemoteSync = false) {
     isSpaceCropped = false;
+    spaceCropMode = null;
     spaceCropStart = null;
     spaceCropEnd = null;
     spaceCropMinPct = 0;
@@ -3286,7 +3297,10 @@ function resetSpaceCrop(isRemoteSync = false) {
     }
     broadcastWorkerConfig();
     if (!isRemoteSync && typeof showToast === 'function') {
-        showToast('↩️ <strong>Uzay Sıfırlandı: Tam Bulmaca Uzayı (%0 - %100)</strong>', 2500);
+        const countNote = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
+            ? ` (${unsolvedList.length})`
+            : '';
+        showToast(`↩️ <strong>Uzay Sıfırlandı: Tam Uzay (%0 - %100)${countNote}</strong>`, 2500);
     }
 }
 
@@ -3308,6 +3322,7 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
             isCropped: true,
             minPct: minPct,
             maxPct: maxPct,
+            mode: spaceCropMode,
             startHex: spaceCropStart ? spaceCropStart.toString(16) : '',
             endHex: spaceCropEnd ? spaceCropEnd.toString(16) : ''
         });
@@ -3324,7 +3339,10 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
     broadcastWorkerConfig();
 
     if (!isRemoteSync && typeof showToast === 'function') {
-        showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
+        const countNote = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
+            ? ` (${unsolvedList.length})`
+            : '';
+        showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}${countNote}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
     }
 }
 
@@ -5365,6 +5383,7 @@ function handleRemoteSwarmSync(data) {
                     spaceCropStart = toBigIntSafe('0x' + data.startHex.replace(/^0x/i, ''));
                     spaceCropEnd = toBigIntSafe('0x' + data.endHex.replace(/^0x/i, ''));
                     isSpaceCropped = true;
+                    spaceCropMode = data.mode || 'PERCENT';
                     spaceCropMinPct = data.minPct;
                     spaceCropMaxPct = data.maxPct;
                     finalizeSpaceCrop(data.minPct, data.maxPct, true);
@@ -5507,6 +5526,7 @@ function initKangarooSwarmChannel() {
                             isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
                             sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null),
                             isSpaceCropped: (typeof isSpaceCropped !== 'undefined' ? !!isSpaceCropped : false),
+                            spaceCropMode: (typeof spaceCropMode !== 'undefined' ? spaceCropMode : null),
                             spaceCropMinPct: (typeof spaceCropMinPct === 'number' ? spaceCropMinPct : 0),
                             spaceCropMaxPct: (typeof spaceCropMaxPct === 'number' ? spaceCropMaxPct : 100),
                             spaceCropStartHex: (typeof spaceCropStart !== 'undefined' && spaceCropStart ? spaceCropStart.toString(16) : ''),
@@ -5603,6 +5623,7 @@ function initKangarooSwarmChannel() {
                                 spaceCropStart = toBigIntSafe('0x' + data.spaceCropStartHex.replace(/^0x/i, ''));
                                 spaceCropEnd = toBigIntSafe('0x' + data.spaceCropEndHex.replace(/^0x/i, ''));
                                 isSpaceCropped = true;
+                                spaceCropMode = data.spaceCropMode || data.mode || 'PERCENT';
                                 spaceCropMinPct = data.spaceCropMinPct;
                                 spaceCropMaxPct = data.spaceCropMaxPct;
                                 finalizeSpaceCrop(data.spaceCropMinPct, data.spaceCropMaxPct, true);
@@ -5735,6 +5756,7 @@ function initKangarooSwarmChannel() {
                 isAutoSliderActive: (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive),
                 sliderRegime: (typeof autoSliderRegime !== 'undefined' ? autoSliderRegime : null),
                 isSpaceCropped: (typeof isSpaceCropped !== 'undefined' ? !!isSpaceCropped : false),
+                spaceCropMode: (typeof spaceCropMode !== 'undefined' ? spaceCropMode : null),
                 spaceCropMinPct: (typeof spaceCropMinPct === 'number' ? spaceCropMinPct : 0),
                 spaceCropMaxPct: (typeof spaceCropMaxPct === 'number' ? spaceCropMaxPct : 100),
                 spaceCropStartHex: (typeof spaceCropStart !== 'undefined' && spaceCropStart ? spaceCropStart.toString(16) : ''),
@@ -6511,6 +6533,8 @@ function updateActiveUnsolvedList(shouldBroadcast = true, shouldSave = true) {
                     id: raw.id,
                     start: BigInt('0x' + raw.start),
                     end: BigInt('0x' + raw.end),
+                    origStart: BigInt('0x' + raw.start),
+                    origEnd: BigInt('0x' + raw.end),
                     addr: raw.addr,
                     targetHash160: (typeof addressToHash160 === 'function') ? addressToHash160(raw.addr) : '',
                     reward: raw.reward,
@@ -6564,6 +6588,8 @@ function buildCustomMenus() {
         id: p.id,
         start: BigInt('0x' + p.start),
         end: BigInt('0x' + p.end),
+        origStart: BigInt('0x' + p.start),
+        origEnd: BigInt('0x' + p.end),
         addr: p.addr,
         targetHash160: addressToHash160(p.addr),
         reward: p.reward,
@@ -6596,12 +6622,10 @@ function buildCustomMenus() {
                 <button type="button" id="btnApplySelectedSearch" style="background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer;" title="Seçili bulmacaları dairesel aramaya alır">🔁 Seçilenleri Ara</button>
             </div>
         </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 4px;">
-            <div style="display: flex; gap: 4px;">
-                <button type="button" id="btnFilter6080" style="background: rgba(147, 51, 234, 0.2); border: 1px solid #a855f7; color: #c084fc; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; cursor: pointer;" title="60-80 Bit arasındaki hedefleri seçer">⚡ 60-80 Bit</button>
-                <button type="button" id="btnFilter130Plus" style="background: rgba(234, 88, 12, 0.2); border: 1px solid #f97316; color: #fb923c; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; cursor: pointer;" title="130+ Bit açık anahtarlı Kangaroo hedeflerini seçer">🦘 130+ Bit</button>
-            </div>
-            <input type="text" id="puzzleSearchFilterInput" placeholder="🔍 No veya Hane Ara..." style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; color: #f1f5f9; font-size: 10px; padding: 2px 6px; border-radius: 4px; width: 110px; outline: none;">
+        <div style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 4px;">
+            <button type="button" id="btnFilter6090" style="flex: 1; background: rgba(147, 51, 234, 0.2); border: 1px solid #a855f7; color: #c084fc; font-size: 9.5px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap;" title="60-90 Bit arasındaki hedefleri seçer">⚡ 60-90 Bit</button>
+            <button type="button" id="btnFilter91125" style="flex: 1; background: rgba(6, 182, 212, 0.2); border: 1px solid #06b6d4; color: #38bdf8; font-size: 9.5px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap;" title="91-125 Bit arasındaki hedefleri seçer">🎯 91-125 Bit</button>
+            <button type="button" id="btnFilter130Plus" style="flex: 1; background: rgba(234, 88, 12, 0.2); border: 1px solid #f97316; color: #fb923c; font-size: 9.5px; font-weight: 700; padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap;" title="130+ Bit açık anahtarlı Kangaroo hedeflerini seçer">🦘 130+ Bit</button>
         </div>
     `;
     popUnsolved.appendChild(headerBar);
@@ -6730,6 +6754,7 @@ function buildCustomMenus() {
                 document.getElementById('labelUnsolved').innerText = `🔁 Seçili (${count})`;
             }
             if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
+            if (typeof updateCropUI === 'function') updateCropUI(spaceCropMinPct, spaceCropMaxPct);
             broadcastWorkerConfig();
         }
     }
@@ -6751,14 +6776,34 @@ function buildCustomMenus() {
         syncCircularStateIfActive();
     };
 
-    const btn6080 = headerBar.querySelector('#btnFilter6080');
-    if (btn6080) {
-        btn6080.onclick = function(e) {
+    const btn6090 = headerBar.querySelector('#btnFilter6090');
+    if (btn6090) {
+        btn6090.onclick = function(e) {
             e.stopPropagation();
             selectedPuzzleIds.clear();
             allUnsolvedPool.forEach(p => {
                 const num = parseInt(p.id, 10);
-                if (!isNaN(num) && num >= 60 && num <= 80) {
+                if (!isNaN(num) && num >= 60 && num <= 90) {
+                    selectedPuzzleIds.add(String(p.id));
+                }
+            });
+            if (selectedPuzzleIds.size === 0 && allUnsolvedPool[0]) {
+                selectedPuzzleIds.add(String(allUnsolvedPool[0].id));
+            }
+            updateActiveUnsolvedList();
+            refreshPuzzleCheckboxes();
+            syncCircularStateIfActive();
+        };
+    }
+
+    const btn91125 = headerBar.querySelector('#btnFilter91125');
+    if (btn91125) {
+        btn91125.onclick = function(e) {
+            e.stopPropagation();
+            selectedPuzzleIds.clear();
+            allUnsolvedPool.forEach(p => {
+                const num = parseInt(p.id, 10);
+                if (!isNaN(num) && num >= 91 && num <= 129) {
                     selectedPuzzleIds.add(String(p.id));
                 }
             });
@@ -6788,24 +6833,6 @@ function buildCustomMenus() {
             updateActiveUnsolvedList();
             refreshPuzzleCheckboxes();
             syncCircularStateIfActive();
-        };
-    }
-
-    const searchInput = headerBar.querySelector('#puzzleSearchFilterInput');
-    if (searchInput) {
-        searchInput.onclick = function(e) { e.stopPropagation(); };
-        searchInput.oninput = function(e) {
-            e.stopPropagation();
-            const q = (this.value || '').trim().toLowerCase().replace(/^#/i, '');
-            popUnsolved.querySelectorAll('.popup-item').forEach(el => {
-                if (el.classList.contains('popup-item-loop') ) return;
-                if (!q) {
-                    el.style.display = '';
-                } else {
-                    const rowText = el.textContent.toLowerCase();
-                    el.style.display = (rowText.includes(q)) ? '' : 'none';
-                }
-            });
         };
     }
 
@@ -8166,12 +8193,35 @@ function huntBatch() {
             let currentKey = 0n;
 
             // 🎚️ UZAY DARALTMA KAYDIRACI & ÖN EK ALT-UZAY ENTEGRASYONU (12 Basamak / 1 Trilyon Adım Pico-Hassasiyet)
-            const baseStartKey = toBigIntSafe(activeTarget.origStart || activeTarget.start);
-            const baseEndKey   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
-            const baseRange    = baseEndKey - baseStartKey;
+            const pOrigStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
+            const pOrigEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
+            const baseEndKey = pOrigEnd;
+            const pOrigRange = pOrigEnd - pOrigStart;
 
-            let boundMin = baseStartKey;
-            let boundMax = baseEndKey;
+            let boundMin = toBigIntSafe(activeTarget.start || activeTarget.origStart);
+            let boundMax = toBigIntSafe(activeTarget.end   || activeTarget.origEnd);
+
+            if (isSpaceCropped && pOrigRange > 0n && boundMin === pOrigStart && boundMax === pOrigEnd) {
+                if (typeof spaceCropMode !== 'undefined' && spaceCropMode === 'SQRT_N') {
+                    const sqrtWin = bigintSqrt(pOrigRange);
+                    if (sqrtWin > 0n) {
+                        const center = pOrigStart + pOrigRange / 2n;
+                        boundMin = center - (sqrtWin / 2n);
+                        if (boundMin < pOrigStart) boundMin = pOrigStart;
+                        boundMax = boundMin + sqrtWin;
+                        if (boundMax > pOrigEnd) {
+                            boundMax = pOrigEnd;
+                            boundMin = boundMax > sqrtWin ? boundMax - sqrtWin : pOrigStart;
+                        }
+                    }
+                } else if (typeof spaceCropMinPct === 'number' && typeof spaceCropMaxPct === 'number' && (spaceCropMinPct > 0 || spaceCropMaxPct < 100)) {
+                    const minRatio = BigInt(Math.round(spaceCropMinPct * 10000000000));
+                    const maxRatio = BigInt(Math.round(spaceCropMaxPct * 10000000000));
+                    boundMin = pOrigStart + (pOrigRange * minRatio / 1000000000000n);
+                    boundMax = pOrigStart + (pOrigRange * maxRatio / 1000000000000n);
+                    if (boundMax <= boundMin) boundMax = boundMin + 1n;
+                }
+            }
             isEffectivePrefix = (activeFormula === 'PREFIX' || activeRangeMode === 'PREFIX' || isPrefixFilterActive);
 
             // 1A. Sabit Ön Ek Aktifse: Önce temel uzayı sabit ön ek alt-uzayına [pMin, pMax] daralt, kaydıracı bu ön ek uzayı içinde çalıştır!
@@ -11584,12 +11634,40 @@ const baseStart = (span * basePpm) / 1000000n;
         }
         if (!activeTarget) return;
 
-        const baseStart = toBigIntSafe(activeTarget.origStart || activeTarget.start || '1');
-        const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end   || '2');
+        const baseStart = toBigIntSafe(activeTarget.start || activeTarget.origStart || '1');
+        const baseEnd   = toBigIntSafe(activeTarget.end   || activeTarget.origEnd   || '2');
         const totalR    = baseEnd - baseStart;
 
         let boundMin = baseStart;
         let boundMax = baseEnd;
+
+        // ✂️ ÇOKLU BULMACA UZAY KIRPMA KORUMASI (Eğer start/end henüz kırpılmamışsa):
+        if (cfg.isSpaceCropped && cfg.isCircularMode && activeTarget.origStart && activeTarget.origEnd) {
+            const pOrigStart = toBigIntSafe(activeTarget.origStart);
+            const pOrigEnd   = toBigIntSafe(activeTarget.origEnd);
+            const pOrigTotal = pOrigEnd - pOrigStart;
+            if (pOrigTotal > 0n && baseStart === pOrigStart && baseEnd === pOrigEnd) {
+                if (cfg.spaceCropMode === 'SQRT_N') {
+                    const sqrtWin = bigintSqrt(pOrigTotal);
+                    if (sqrtWin > 0n) {
+                        const center = pOrigStart + pOrigTotal / 2n;
+                        boundMin = center - (sqrtWin / 2n);
+                        if (boundMin < pOrigStart) boundMin = pOrigStart;
+                        boundMax = boundMin + sqrtWin;
+                        if (boundMax > pOrigEnd) {
+                            boundMax = pOrigEnd;
+                            boundMin = boundMax > sqrtWin ? boundMax - sqrtWin : pOrigStart;
+                        }
+                    }
+                } else if (typeof cfg.spaceCropMinPct === 'number' && typeof cfg.spaceCropMaxPct === 'number' && (cfg.spaceCropMinPct > 0 || cfg.spaceCropMaxPct < 100)) {
+                    const minRatio = BigInt(Math.round(cfg.spaceCropMinPct * 10000000000));
+                    const maxRatio = BigInt(Math.round(cfg.spaceCropMaxPct * 10000000000));
+                    boundMin = pOrigStart + (pOrigTotal * minRatio / 1000000000000n);
+                    boundMax = pOrigStart + (pOrigTotal * maxRatio / 1000000000000n);
+                    if (boundMax <= boundMin) boundMax = boundMin + 1n;
+                }
+            }
+        }
 
         // 1A. Sabit Ön Ek Aktifse: Önce temel uzayı sabit ön ek alt-uzayına [pMin, pMax] daralt
         // Böylece tüm 16 CPU çekirdeği (Orthogonal Worker) ve kaydıraç %100 bu ön ek uzayı içinde çalışır!
@@ -12563,15 +12641,45 @@ function getCurrentWorkerConfig() {
             isUncompressed: Boolean(actT.isUncompressed),
                     } : null,
                                         isCircularMode: isCircularMode,
-        unsolvedList: (unsolvedList || []).map(p => ({
-            id: p.id,
-            start: (p.origStart || p.start).toString(16),
-            end: (p.origEnd || p.end).toString(16),
-            addr: p.addr,
-            targetHash160: p.targetHash160 || addressToHash160(p.addr),
-            reward: p.reward,
-            isUncompressed: Boolean(p.isUncompressed)
-        })),
+        unsolvedList: (unsolvedList || []).map(p => {
+            const pStart = toBigIntSafe(p.origStart || p.start);
+            const pEnd = toBigIntSafe(p.origEnd || p.end);
+            const pTotal = pEnd - pStart;
+            let effPStart = pStart;
+            let effPEnd = pEnd;
+            if (isSpaceCropped && pTotal > 0n) {
+                if (typeof spaceCropMode !== 'undefined' && spaceCropMode === 'SQRT_N') {
+                    const sqrtWin = bigintSqrt(pTotal);
+                    if (sqrtWin > 0n) {
+                        const center = pStart + pTotal / 2n;
+                        effPStart = center - (sqrtWin / 2n);
+                        if (effPStart < pStart) effPStart = pStart;
+                        effPEnd = effPStart + sqrtWin;
+                        if (effPEnd > pEnd) {
+                            effPEnd = pEnd;
+                            effPStart = effPEnd > sqrtWin ? effPEnd - sqrtWin : pStart;
+                        }
+                    }
+                } else if (typeof spaceCropMinPct === 'number' && typeof spaceCropMaxPct === 'number' && (spaceCropMinPct > 0 || spaceCropMaxPct < 100)) {
+                    const minRatio = BigInt(Math.round(spaceCropMinPct * 10000000000));
+                    const maxRatio = BigInt(Math.round(spaceCropMaxPct * 10000000000));
+                    effPStart = pStart + (pTotal * minRatio / 1000000000000n);
+                    effPEnd = pStart + (pTotal * maxRatio / 1000000000000n);
+                    if (effPEnd <= effPStart) effPEnd = effPStart + 1n;
+                }
+            }
+            return {
+                id: p.id,
+                start: effPStart.toString(16),
+                end: effPEnd.toString(16),
+                origStart: pStart.toString(16),
+                origEnd: pEnd.toString(16),
+                addr: p.addr,
+                targetHash160: p.targetHash160 || addressToHash160(p.addr),
+                reward: p.reward,
+                isUncompressed: Boolean(p.isUncompressed)
+            };
+        }),
         swarmIndex: (typeof currentSwarmIndex !== 'undefined') ? currentSwarmIndex : 0,
         swarmTotal: (typeof currentSwarmTotal !== 'undefined') ? currentSwarmTotal : 1,
         activeRangeMode: activeRangeMode,
@@ -12613,6 +12721,7 @@ function getCurrentWorkerConfig() {
             return maxEl ? parseFloat(maxEl.value || 1000000000000) : 1000000000000;
         })(),
         isSpaceCropped: (typeof isSpaceCropped !== 'undefined') ? isSpaceCropped : false,
+        spaceCropMode: (typeof spaceCropMode !== 'undefined') ? spaceCropMode : null,
         spaceCropMinPct: (typeof spaceCropMinPct !== 'undefined') ? spaceCropMinPct : 0,
         spaceCropMaxPct: (typeof spaceCropMaxPct !== 'undefined') ? spaceCropMaxPct : 100,
         stdAlgorithmStartOffsetRatio: (typeof stdAlgorithmStartOffsetRatio !== 'undefined') ? stdAlgorithmStartOffsetRatio : 0.0,
