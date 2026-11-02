@@ -240,21 +240,38 @@
         .sweep-sub-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
             gap: 4px;
             box-sizing: border-box;
         }
+        #lblCropStatus:empty {
+            display: none !important;
+        }
+
+        .auto-slider-buttons-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 760px;
+            gap: 6px;
+            box-sizing: border-box;
+            margin: 0 auto;
+        }
 
         .auto-slider-speed-group {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             background: #0b1320;
             border: 1px solid #334155;
-            border-radius: 4px;
-            padding: 1px;
+            border-radius: 5px;
+            padding: 2px;
             gap: 2px;
-            flex-shrink: 0;
+            flex: 1 1 0;
+            min-width: 0;
+            height: 26px;
+            box-sizing: border-box;
         }
 
         .crop-mini-group {
@@ -262,10 +279,12 @@
             align-items: center;
             background: #0b1320;
             border: 1px solid #334155;
-            border-radius: 4px;
-            padding: 1px 3px;
+            border-radius: 5px;
+            padding: 2px;
             gap: 2px;
             flex-shrink: 0;
+            height: 26px;
+            box-sizing: border-box;
         }
 
         .mini-crop-btn {
@@ -273,9 +292,9 @@
             align-items: center;
             justify-content: center;
             white-space: nowrap;
-            padding: 1px 5px;
-            height: 20px;
-            font-size: 10px;
+            padding: 0 10px;
+            height: 100%;
+            font-size: 13px;
             font-weight: 600;
             border-radius: 3px;
             cursor: pointer;
@@ -298,11 +317,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
             white-space: nowrap;
-            padding: 2px 8px;
-            height: 22px;
-            font-size: 10px;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0 4px;
+            height: 100%;
+            font-size: 12.5px;
             font-weight: bold;
             border-radius: 3px;
             cursor: pointer;
@@ -869,7 +889,7 @@
             .sweep-sub-row {
                 display: flex !important;
                 align-items: center !important;
-                justify-content: space-between !important;
+                justify-content: center !important;
                 width: 100% !important;
                 gap: 3px !important;
                 box-sizing: border-box !important;
@@ -930,11 +950,13 @@
                 font-size: 8.5px !important;
                 padding: 1px 4px !important;
                 height: 20px !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+                align-items: center;
+                justify-content: center;
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
+            }
+            #lblCropStatus:empty {
+                display: none !important;
             }
             .slider-item {
                 padding: 4px 6px;
@@ -956,8 +978,8 @@
                 padding: 1px 3px !important;
             }
             .thread-select-box {
-                min-width: 0 !important;
-                max-width: 95px !important;
+                min-width: 120px !important;
+                max-width: 170px !important;
                 font-size: 9.5px !important;
                 padding: 1px 2px !important;
             }
@@ -1341,39 +1363,39 @@
         <!-- 🌟 BİRLEŞİK FİZİK & HİBRİT PANELİ -->
         <div id="panelPhysics" class="mode-sub-panel" style="display:flex; flex-direction:column; gap:4px; background:#130b20; border:1px solid #a855f7; border-radius:6px; padding:4px 6px; box-shadow:0 0 10px rgba(168,85,247,0.25); box-sizing:border-box; width:100%;">
             
-            <!-- 1. SATIR: İŞLEMCİ ÇEKİRDEK + SÜRÜ/TUZAK ROZETLERİ | ÖN EK / SON EK BLOĞU (Oto Sürü ile Aynı Hizada) -->
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
+            <!-- 1. SATIR: İŞLEMCİ ÇEKİRDEK (SOL) | SÜRÜ & TUZAK ROZETLERİ (ORTA) | ÖN EK / SON EK BLOĞU (SAĞ) -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; box-sizing:border-box; flex-wrap:wrap;">
                 
-                <!-- SOL: DONANIM / İŞLEMCİ ÇEKİRDEK SEÇİCİ + SÜRÜ ROZETLERİ -->
-                <div style="display:inline-flex; align-items:center; gap:4px; flex:1.2; min-width:0;">
-                    <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="flex:1; min-width:0; padding:1px 3px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı Seçimi">
+                <!-- SOL: DONANIM / İŞLEMCİ ÇEKİRDEK SEÇİCİ -->
+                <div style="display:inline-flex; align-items:center; justify-content:flex-start; flex:1 1 0; min-width:130px;">
+                    <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="width:100%; max-width:180px; min-width:125px; padding:1px 4px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı Seçimi">
                         <option value="AUTO_SWARM" selected>⚡ Oto Sürü Dengele</option>
                         <option value="4">🚀 4 Çekirdek</option>
                         <option value="8">⚡ 8 Çekirdek</option>
                         <option value="12">🔥 12 Çekirdek</option>
                         <option value="16">🌌 16 Çekirdek (Cihaz)</option>
                     </select>
-
-                    <!-- 🦘 SÜRÜ & TUZAK ROZETLERİ -->
-                    <div style="display:inline-flex; align-items:center; gap:3px; flex-shrink:0;">
-                        <span id="kangarooSwarmTrapCount" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; font-size:9.5px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Sürü Tarafından Kaydedilen Distinguished Point (Tuzak) Sayısı — Ağ Durumunu Görmek İçin Tıklayın">📍 0</span>
-                        <span id="kangarooSwarmTabCountBadge" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #10b981; color:#34d399; font-size:9.5px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın">🟢 1</span>
-                    </div>
                 </div>
 
-                <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
+                <!-- ORTA: SÜRÜ & TUZAK ROZETLERİ (TAM ORTALI) -->
+                <div id="kangarooSwarmBadgesGroup" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; flex-shrink:0; margin:0 auto;">
+                    <span id="kangarooSwarmTrapCount" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; font-size:9.5px; padding:2px 6px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Sürü Tarafından Kaydedilen Distinguished Point (Tuzak) Sayısı — Ağ Durumunu Görmek İçin Tıklayın">📍 0</span>
+                    <span id="kangarooSwarmTabCountBadge" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #10b981; color:#34d399; font-size:9.5px; padding:2px 6px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın">🟢 1</span>
+                </div>
 
-                <!-- SAĞ: ÖN EK / SON EK BLOĞU (Oto Sürü Satırı ile Aynı Hizada) -->
-                <div id="blockPrefix" style="display:inline-flex; align-items:center; gap:2px; flex:0 0 205px; max-width:205px; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; background:#0f172a; transition:all 0.2s ease; opacity:0.85; box-sizing:border-box; height:24px;">
-                    <button type="button" id="btnFixModeToggle" onclick="event.stopPropagation(); toggleFixMode()" style="padding:1px 5px; height:22px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek (MSB Alt Aralık) ile Son Ek (LSB Modüler Kafes) Arasında Geçiş Yapın">
-                        📌 Ön Ek
-                    </button>
-                    <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:11px; flex-shrink:0; opacity:0.8;" title="Hex Değeri">0x</span>
-                    <input type="text" id="prefixInput" class="prefix-input-box" value="" style="padding:1px 4px; height:22px; font-size:11px; font-family:monospace; flex:1; min-width:32px; border-radius:3px; color:#94a3b8; background:#1e293b; border:1px solid #334155; opacity:0.7;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="onPrefixInputFocus()" placeholder="Ön Ek Hex">
-                    <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:22px; font-size:11px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#94a3b8; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Modüler Kafes / Otomatik Geçiş">
-                        🔄 Oto
-                    </button>
-                    <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
+                <!-- SAĞ: ÖN EK / SON EK BLOĞU -->
+                <div style="display:inline-flex; align-items:center; justify-content:flex-end; flex:1 1 0; min-width:165px;">
+                    <div id="blockPrefix" style="display:inline-flex; align-items:center; gap:2px; width:205px; max-width:205px; min-width:165px; padding:1px 3px; border-radius:4px; border:1px solid #334155; background:#0f172a; transition:all 0.2s ease; opacity:0.85; box-sizing:border-box; height:24px;">
+                        <button type="button" id="btnFixModeToggle" onclick="event.stopPropagation(); toggleFixMode()" style="padding:1px 5px; height:22px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek (MSB Alt Aralık) ile Son Ek (LSB Modüler Kafes) Arasında Geçiş Yapın">
+                            📌 Ön Ek
+                        </button>
+                        <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:11px; flex-shrink:0; opacity:0.8;" title="Hex Değeri">0x</span>
+                        <input type="text" id="prefixInput" class="prefix-input-box" value="" style="padding:1px 4px; height:22px; font-size:11px; font-family:monospace; flex:1; min-width:32px; border-radius:3px; color:#94a3b8; background:#1e293b; border:1px solid #334155; opacity:0.7;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="onPrefixInputFocus()" placeholder="Ön Ek Hex">
+                        <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:22px; font-size:11px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#94a3b8; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Modüler Kafes / Otomatik Geçiş">
+                            🔄 Oto
+                        </button>
+                        <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
+                    </div>
                 </div>
 
             </div>
@@ -1383,7 +1405,6 @@
                 
                 <!-- SOL: STANDART ALGORİTMA SEÇİCİ (📐 Sembollü) -->
                 <div style="display:inline-flex; align-items:center; gap:3px; flex:1.2; min-width:0;" title="Arama Algoritması">
-                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Standart Arama Algoritmaları">📐</span>
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:24px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
                         <option value="AUTO" selected>🔄 Oto (Dönüşümlü Hibrit)</option>
                         <option value="BSGS_NEGATION" style="color:#38bdf8; font-weight:bold;">🎯⚡ Negation BSGS (Deterministik Çözücü O(√W))</option>
@@ -1416,7 +1437,6 @@
 
                 <!-- SAĞ: 🎯 STANDART ALGORİTMA BAŞLANGIÇ VE OTO GEZGİN SEÇİCİ (Son Ek/Ön Ek'in Tam Altında) -->
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 205px; max-width:205px; min-width:0;" title="Standart Algoritmalar İçin Başlangıç & Tohum Işınlama">
-                    <span style="font-size:11px; color:#a855f7; flex-shrink:0; line-height:1;" title="Başlangıç Noktası">🎯</span>
                     <select id="stdBaseFocusSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:24px; border-radius:3px; border-color:#a855f7;" onchange="applyStdBaseStart(this.value)">
                         <option value="AUTO_HOP">🔄 Oto Gezgin (Pusu)</option>
                         <option value="AUTO">🧠 Oto Kafes</option>
@@ -1515,42 +1535,29 @@
     <div class="dual-slider-bar">
         <!-- 🎛️ OTO KAYDIRAÇ & UZAY KIRPMA KONTROL ÇUBUĞU -->
         <div class="auto-slider-sweep-bar">
-            <!-- 1. SATIR: Hız Seçiciler & Rejim Seçiciler -->
+            <!-- 1. SATIR: Hız Seçiciler & Rejim Seçiciler & Uzay Kırpma -->
             <div class="sweep-sub-row">
-                <div style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <div class="auto-slider-buttons-wrapper">
                     <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn" onclick="toggleSpeedMode('AUTO')" title="🧠 Otomatik Kaydıraç Taraması: Aramayı başlattığınızda uzayı otomatik tarar">🧠 Oto</button>
-                        <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="Hızlı (120 ms / %0.20 Adım)">⚡ Hızlı</button>
-                        <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="Orta (200 ms / %0.10 Adım)">⏱️ Orta</button>
-                        <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="Yavaş (350 ms / %0.05 Adım)">🐢 Yavaş</button>
-                        <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="Mikro (600 ms / %0.02 Adım)">🔬 Mikro</button>
+                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn" onclick="toggleSpeedMode('AUTO')" title="🔄 Otomatik Hız (Bulmacaya göre dinamik hız)">🔄</button>
+                        <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="⚡ Hızlı (120 ms / %0.20 Adım)">⚡</button>
+                        <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="⏱️ Orta (200 ms / %0.10 Adım)">⏱️</button>
+                        <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="🐢 Yavaş (350 ms / %0.05 Adım)">🐢</button>
+                        <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="🔬 Mikro (600 ms / %0.02 Adım)">🔬</button>
                     </div>
                     <div id="groupSliderRegime" class="auto-slider-speed-group">
-                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn" onclick="toggleRegimeAuto()" title="🧠 Akıllı Matematiksel Rejim: Bulmaca ve algoritmaya göre dinamik rezonans/weyl/karekök seçer">🧠 Akıllı</button>
-                        <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)">🦚 √N</button>
-                        <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)">🌀 Weyl</button>
-                        <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Kangaroo Doppler kilidi & ayak izi koruma)">🦘 Rzns</button>
-                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Tarama (Ping-Pong)">🏓 Clas</button>
+                        <button type="button" id="btnRegimeAuto" class="auto-speed-btn" onclick="toggleRegimeAuto()" title="🔄 Akıllı Matematiksel Rejim (Dinamik Rezonans / Weyl / √N)">🔄</button>
+                        <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Kuadratik Sıçrama)">🦚</button>
+                        <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması (Ergodik)">🌀</button>
+                        <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Doppler / Ayak İzi Koruma)">🦘</button>
+                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Tarama (Ping-Pong)">🏓</button>
                     </div>
+                    <div class="crop-mini-group">
+                        <button type="button" class="mini-crop-btn" id="btnCropSelection" onclick="cropSpaceToCurrentSelection()" style="background:transparent; color:#94a3b8; border:1px solid transparent;" title="Seçili aralığı yeni uzay olarak kırp & sabitle">✂️</button>
+                        <button type="button" class="mini-crop-btn" id="btnResetCrop" onclick="resetSpaceCrop()" style="background:#991b1b; color:#fff; border-color:#ef4444; font-weight:bold; display:none;" title="Uzayı Sıfırla (Tam Uzay %0-%100)">↩️</button>
+                    </div>
+                    <span id="lblCropStatus" style="color:#f59e0b; font-size:10px; font-family:monospace; font-weight:bold; display:none; background:#1e1b4b; padding:1px 5px; border-radius:3px; border:1px solid #6366f1; white-space:nowrap; flex-shrink:0;"></span>
                 </div>
-                <div class="auto-slider-info-group">
-                    <span id="badgeSpaceRatio" class="slider-space-badge" style="display:none !important;">🎯 Kapsanan: Tam Uzay</span>
-                    <span id="badgeAutoSliderStatus" style="display:none !important;">%0.0 - %100.0</span>
-                    <input type="checkbox" id="chkEnableDualSlider" style="display:none;" checked onchange="onDualSliderToggle()">
-                </div>
-            </div>
-
-            <!-- 2. SATIR: Uzay Kırpma Butonları & Kırpma Rozeti -->
-            <div class="sweep-sub-row">
-                <div class="crop-mini-group">
-                    <button type="button" class="mini-crop-btn" id="btnCropSqrt" onclick="cropSpaceSqrtN()" title="Uzayı O(√N) Karekök Penceresine Ayarla" style="color:#38bdf8; font-weight:bold;">🦚 √N</button>
-                    <button type="button" class="mini-crop-btn" id="btnCropQuarter" onclick="cycleQuarterCrop()" title="Çeyrek Dilim (%25) Kes & Döngü (%0-25 ➔ %25-50 ➔ %50-75 ➔ %75-100)">%25</button>
-                    <button type="button" class="mini-crop-btn" onclick="applySpaceCrop(50, 100)" title="İlk %50'yi kes, üst yarıyı (%50-%100) tara">%50▲</button>
-                    <button type="button" class="mini-crop-btn" onclick="applySpaceCrop(0, 50)" title="Son %50'yi kes, alt yarıyı (%0-%50) tara">%50▼</button>
-                    <button type="button" class="mini-crop-btn" id="btnCropSelection" onclick="cropSpaceToCurrentSelection()" style="background:#0284c7; color:#fff; border-color:#38bdf8; font-weight:bold;" title="Seçili aralığı yeni uzay olarak kırp & sabitle">✂️</button>
-                    <button type="button" class="mini-crop-btn" id="btnResetCrop" onclick="resetSpaceCrop()" style="background:#991b1b; color:#fff; border-color:#ef4444; font-weight:bold; display:none;" title="Uzayı Sıfırla (Tam Uzay %0-%100)">↩️</button>
-                </div>
-                <span id="lblCropStatus" style="color:#f59e0b; font-size:10px; font-family:monospace; font-weight:bold; display:none; background:#1e1b4b; padding:1px 5px; border-radius:3px; border:1px solid #6366f1; white-space:nowrap; flex-shrink:0;"></span>
             </div>
         </div>
 
@@ -1933,7 +1940,7 @@ function updateSliderUI() {
             if (part && part.isPartitioned && total > 0n) {
                 const sPct = ((Number((part.partStart - tStart) * 1000n / total)) / 10).toFixed(0);
                 const ePct = ((Number((part.partEnd - tStart) * 1000n / total)) / 10).toFixed(0);
-                sliceNote = ` [Dilim ${part.tabIndex + 1}/${part.totalTabs}: %${sPct}-%${ePct}]`;
+                sliceNote = ` [${part.tabIndex + 1}/${part.totalTabs}: %${sPct}-%${ePct}]`;
             }
             const countStr = (rangeDiff <= 100000000n) ? ` (${Number(rangeDiff).toLocaleString('tr-TR')} anahtar)` : '';
             badge.innerText = `🎯 Kapsanan: 0x${hexDiffStr.length <= 12 ? hexDiffStr : hexDiffStr.substring(0, 10) + '...'}${countStr}${sliceNote}`;
@@ -3098,9 +3105,16 @@ function updateAutoSliderUI() {
 function updateCropUI(minPct, maxPct) {
     const btnReset = document.getElementById('btnResetCrop');
     const lblStatus = document.getElementById('lblCropStatus');
+    const btnCrop = document.getElementById('btnCropSelection');
     if (!btnReset || !lblStatus) return;
 
     if (isSpaceCropped && spaceCropStart && spaceCropEnd) {
+        if (btnCrop) {
+            btnCrop.style.background = '#0284c7';
+            btnCrop.style.borderColor = '#38bdf8';
+            btnCrop.style.color = '#ffffff';
+            btnCrop.style.boxShadow = '0 0 8px rgba(2, 132, 199, 0.7)';
+        }
         btnReset.style.display = 'inline-flex';
         const sHex = spaceCropStart.toString(16);
         const eHex = spaceCropEnd.toString(16);
@@ -3113,6 +3127,12 @@ function updateCropUI(minPct, maxPct) {
         lblStatus.title = `Kırpılmış Uzay: ${sShort} - ${eShort} (%${Number(minPct).toFixed(2)} - %${Number(maxPct).toFixed(2)})`;
         lblStatus.style.display = 'inline-block';
     } else {
+        if (btnCrop) {
+            btnCrop.style.background = 'transparent';
+            btnCrop.style.borderColor = 'transparent';
+            btnCrop.style.color = '#94a3b8';
+            btnCrop.style.boxShadow = 'none';
+        }
         btnReset.style.display = 'none';
         lblStatus.innerText = '';
         lblStatus.style.display = 'none';
@@ -3704,16 +3724,32 @@ function showToast(msg, duration = 3500) {
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'appToast';
-        toast.style.cssText = 'position:fixed; bottom:24px; right:24px; max-width:420px; background:#0f172a; border:1.5px solid #10b981; color:#34d399; font-size:12px; font-weight:700; padding:10px 16px; border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,0.85); z-index:999999; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity:0; transform:translateY(15px); pointer-events:none; display:flex; align-items:center; gap:8px; line-height:1.4;';
+        toast.style.cssText = 'position:fixed; z-index:999999; max-width:min(90vw, 440px); background:rgba(15, 23, 42, 0.96); border:1.5px solid #10b981; color:#34d399; font-size:12px; font-weight:700; padding:10px 18px; border-radius:8px; box-shadow:0 12px 30px rgba(0,0,0,0.85); transition:opacity 0.25s ease, transform 0.25s ease; opacity:0; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; line-height:1.4; backdrop-filter:blur(6px); box-sizing:border-box; left:50%;';
         document.body.appendChild(toast);
     }
+
+    const btnToggle = document.getElementById('btnToggle');
+    if (btnToggle) {
+        const rect = btnToggle.getBoundingClientRect();
+        const bottomOffset = Math.max(20, Math.round(window.innerHeight - rect.top + 14));
+        toast.style.bottom = bottomOffset + 'px';
+    } else {
+        toast.style.bottom = '85px';
+    }
+
+    toast.style.left = '50%';
+    toast.style.transform = 'translate(-50%, 10px)';
     toast.innerHTML = msg;
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translate(-50%, 0)';
+    });
+
     clearTimeout(toast._timer);
     toast._timer = setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(15px)';
+        toast.style.transform = 'translate(-50%, 10px)';
     }, duration);
 }
 
@@ -6044,8 +6080,10 @@ function updateKangarooSwarmUI() {
         const anyRunning = (typeof isRunning !== 'undefined' && isRunning) || 
                            (typeof kangarooPeers !== 'undefined' && Object.values(kangarooPeers).some(p => p.isRunning));
         const dot = anyRunning ? '🟢' : '⚪';
-        const sliceInfo = totalTabs > 1 ? ` [Dilim ${currentSwarmIndex + 1}/${totalTabs}]` : '';
-        tabCountBadge.innerText = `${dot} ${totalTabs}${sliceInfo}`;
+        tabCountBadge.innerText = `${dot} ${totalTabs}`;
+        tabCountBadge.title = totalTabs > 1 
+            ? `Sekme ${currentSwarmIndex + 1}/${totalTabs} (${totalTabs} Aktif Sekme) — Ağ Durumunu Görmek İçin Tıklayın`
+            : `Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın`;
         tabCountBadge.style.color = anyRunning ? '#34d399' : '#94a3b8';
         tabCountBadge.style.borderColor = anyRunning ? 'rgba(16, 185, 129, 0.35)' : 'rgba(148, 163, 184, 0.25)';
     }
