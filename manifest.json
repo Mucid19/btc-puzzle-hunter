@@ -1,6 +1,6 @@
 {
-  "name": "SiriuS BTC Puzzle Hunter",
-  "short_name": "SiriuS",
+  "name": "BTC puzzle",
+  "short_name": "BTC puzzle",
   "description": "High-Performance Multi-threaded Secp256k1 Puzzle Hunter",
   "start_url": "./",
   "scope": "./",

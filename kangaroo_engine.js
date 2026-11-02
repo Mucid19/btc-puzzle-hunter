@@ -75,20 +75,6 @@ class RealPollardKangaroo {
         return KRONECKER_IRRATIONAL_CONSTANTS;
     }
 
-    static get PUZZLE_145_CONSTANTS() {
-        return {
-            PUBKEY: '03afdda497369e219a2c1c369954a930e4d3740968e5e4352475bcffce3140dae5',
-            BASE_OFFSET: 1n << 144n, // 0x1000000000000000000000000000000000000
-            T145_X: 0xb6459e0ee3662ec8d23540c223bcbdc571cbcb967d79424f3cf29eb3de6b80efn,
-            T145_Y: 0x067c876d06f3e06de1dadf16e5661db3c4b3ae6d48e35b2ff30bf0b61a71ba45n,
-            Q145_X: 0xafdda497369e219a2c1c369954a930e4d3740968e5e4352475bcffce3140dae5n,
-            Q145_Y: 0x05ef677a7008d2a7f5b69a81526a35dfd3c4a175c3848577f19959ceded988ce3n,
-            Q_PRIME_X: 0x29e2d895abf4b3fc21e990e6099c261eba4a9dfe75df6730ad9839d74777694cn,
-            Q_PRIME_Y: 0x72d2c714878b39edd5c377a5e576cb3dc6b66157fa5098c3e0f3645aef0fb7den,
-            Q_PRIME_COMPRESSED: '0229e2d895abf4b3fc21e990e6099c261eba4a9dfe75df6730ad9839d74777694c'
-        };
-    }
-
     /**
      * 📏 ARALIĞA GÖRE OTOMATİK TUZAK (DP) SIKLIĞI
      * Beklenen toplam adım ≈ 2·√span. DP bitleri, toplam tuzak ihtiyacı ~2^17 (≈131k)
@@ -172,18 +158,8 @@ class RealPollardKangaroo {
         this.targetY = 0n;
         this.span = 1n;
 
-        // ⚡ PUZZLE #145 ÖZEL HYPER GLV & TABAN ÖTELEME MODU
-        const p145 = RealPollardKangaroo.PUZZLE_145_CONSTANTS;
-        this.isHyperGlv145 = Boolean(
-            (this.options && this.options.herdMode === 'HYPER_GLV_145') ||
-            (this.targetPubHex && this.targetPubHex.toLowerCase() === p145.PUBKEY.toLowerCase())
-        );
         this.isKroneckerLattice = Boolean(this.options && this.options.herdMode === 'KRONECKER_LATTICE');
         this.isGpr4Way = Boolean(this.options && this.options.herdMode === 'GPR_4WAY');
-        this.baseOffset = this.isHyperGlv145 ? p145.BASE_OFFSET : 0n;
-        this.qPrimeX = this.isHyperGlv145 ? p145.Q_PRIME_X : 0n;
-        this.qPrimeY = this.isHyperGlv145 ? p145.Q_PRIME_Y : 0n;
-        this.qPrimePoint = null;
 
         this.jumps = [];
         this.jumpPoints = [];
@@ -241,41 +217,13 @@ class RealPollardKangaroo {
         this.newTrapsToBroadcast = [];
         this.isInitialized = false;
 
-        // 🌀 HAREKETLİ & DİNAMİK ARALIK MODLARI (ROLLING, ANCHOR, HOP-DWELL)
+        // 🌀 HAREKETLİ & DİNAMİK ARALIK MODLARI (ANCHOR)
         this.baseMin = typeof rangeMin === 'bigint' ? rangeMin : BigInt('0x' + rangeMin.toString().replace(/^0x/i, ''));
         this.baseMax = typeof rangeMax === 'bigint' ? rangeMax : BigInt('0x' + rangeMax.toString().replace(/^0x/i, ''));
         this.fullSpan = (this.baseMax > this.baseMin) ? (this.baseMax - this.baseMin) : 1n;
 
-        // Model 1: Rolling Micro-Window (Kayan Mikro Pencere O(√W))
-        this.rollingWindowSpan = (this.fullSpan > 40n) ? (this.fullSpan / 40n) : this.fullSpan;
-        {
-            // 🎯 Pencere DİZİSİNİN başlangıcı da Başlangıç Noktası seçicisine bağlanır (daha önce yalnızca
-            // evcil kanguru konumu bağlıydı; pencere dizisinin hangi pencereden başladığı değil).
-            const shift0 = (this.rollingWindowSpan > 2n) ? (this.rollingWindowSpan / 2n) : 1n;
-            const maxIdx0 = (this.fullSpan > this.rollingWindowSpan) ? Number((this.fullSpan - this.rollingWindowSpan) / shift0) : 0;
-            const ppm0 = this._tameStartPpm();
-            let startOff0 = (this.fullSpan * ppm0) / 1000000n - (this.rollingWindowSpan / 2n);
-            if (startOff0 < 0n) startOff0 = 0n;
-            let idx0 = Number(startOff0 / shift0);
-            if (idx0 > maxIdx0) idx0 = maxIdx0;
-            this.rollingWindowIndex = idx0;
-        }
-        this.rollingStepsBudget = 30000;
-        this.rollingStepsInWindow = (this._tameStartPpm() > 0n) ? this.rollingStepsBudget : 0;
-
         // Model 2: Global Anchor & Relative Wild (Evrensel Çapa & Birikimli Tuzak)
         this.isGlobalAnchor = Boolean(this.options && this.options.herdMode === 'GLOBAL_ANCHOR');
-
-        // Model 3: Hop-and-Dwell (Sıçra ve Pusuya Yat Radar)
-        this.dwellDurationMs = 5000;
-        this.lastHopTimestamp = Date.now();
-        this.hopCount = 0;
-        {
-            // 🎯 İlk sıçramanın hedefi de seçiciye bağlanır: bir sonraki +0.618 adımı tam seçilen orana gitsin.
-            const ppm0 = this._tameStartPpm();
-            this.hopPhase = (ppm0 > 0n) ? ((Number(ppm0) / 1000000 - 0.618033988749895 + 1.0) % 1.0) : 0.0;
-        }
-        this.dwellStepsInHop = (this._tameStartPpm() > 0n) ? 500000 : 0;
 
         this.init();
     }
@@ -391,10 +339,9 @@ class RealPollardKangaroo {
         this.jumpX = new Array(JUMP_COUNT);
         this.jumpY = new Array(JUMP_COUNT);
 
-        const isHyperGlv145 = Boolean(this.isHyperGlv145 || (this.options && this.options.herdMode === 'HYPER_GLV_145'));
         const isSobolHybrid = (this.options && this.options.herdMode === 'SOBOL_HYBRID');
-        const isGlvHybrid = isHyperGlv145 || (this.options && (this.options.herdMode === 'GLV_HYBRID' || this.options.herdMode === 'GLV_LATTICE_2D'));
-        const isMontgomeryHerd = (this.options && (this.options.herdMode === 'MONTGOMERY_HERD' || this.options.herdMode === 'ROLLING_WINDOW' || this.options.herdMode === 'GLOBAL_ANCHOR' || this.options.herdMode === 'HOP_DWELL'));
+        const isGlvHybrid = (this.options && (this.options.herdMode === 'GLV_HYBRID' || this.options.herdMode === 'GLV_LATTICE_2D'));
+        const isMontgomeryHerd = (this.options && (this.options.herdMode === 'MONTGOMERY_HERD' || this.options.herdMode === 'GLOBAL_ANCHOR'));
         const isKroneckerLattice = Boolean(this.isKroneckerLattice || (this.options && this.options.herdMode === 'KRONECKER_LATTICE'));
 
         let seed = 0x12345678n;
@@ -402,16 +349,7 @@ class RealPollardKangaroo {
         const rawWeights = [];
 
         for (let i = 0; i < JUMP_COUNT; i++) {
-            if (isHyperGlv145) {
-                // ⚡ Puzzle #145 Hyper GLV Latis Sıçraması (√W/4 ortalama adım, Weyl & GLV simetrisi)
-                const exp = Math.floor((i * 12) / JUMP_COUNT);
-                const baseW = 1n << BigInt(exp);
-                const weylPart = BigInt(Math.floor((((i + 1) * 0.618033988749895) % 1.0) * 1000000));
-                const glvPart = BigInt(((i * 73 + 19) * 31) % 256);
-                const w = (baseW * 256n) + (weylPart % 128n) + glvPart;
-                rawWeights.push(w);
-                sumWeights += w;
-            } else if (isKroneckerLattice) {
+            if (isKroneckerLattice) {
                 // 🌟 8-Boyutlu İrrasyonel Kronecker Kafes Sıçraması (Weyl-Kronecker Düşük Tutarsızlıklı Kafes)
                 const KRON_CONSTS = RealPollardKangaroo.KRONECKER_IRRATIONAL_CONSTANTS;
                 const exp = Math.floor((i * 12) / JUMP_COUNT);
@@ -457,8 +395,8 @@ class RealPollardKangaroo {
         }
 
         // 📐 SOTA D4-GPR Simetrik Sıçrama Ölçeği (K≈1.15, düşük varyanslı çarpışma):
-        //    #145 özel modu ve Kronecker kafesi kendi ayarlarını korur.
-        if (!isHyperGlv145 && !isKroneckerLattice) {
+        //    Kronecker kafesi kendi ayarlarını korur.
+        if (!isKroneckerLattice) {
             const scaledMean = (sqrtSpan * 3n) / 2n;
             meanJump = scaledMean > 0n ? scaledMean : 1n;
         }
@@ -487,11 +425,7 @@ class RealPollardKangaroo {
         this._fastDistMode = (this.maxJump < (1n << 36n)) ? 1 : ((this.maxJump < (1n << 108n)) ? 2 : 0);
 
         // 🎯 Poisson Süreci DP Optimizasyonu (D4-GPR Düşük Gecikmeli Tuzak Maskesi):
-        if (isHyperGlv145) {
-            // Puzzle 145 için analitik 6-bit maske: her 64 adımda bir tuzak
-            this.dpBits = 6;
-            this.dpMask = 0x3Fn;
-        } else if (isKroneckerLattice) {
+        if (isKroneckerLattice) {
             // 🌟 Kronecker 8D Kafes için analitik Poisson DP Maskesi
             const spanBits = effSpan.toString(2).length;
             if (spanBits <= 26) {
@@ -524,7 +458,7 @@ class RealPollardKangaroo {
                 this.dpBits = Math.max(5, Math.min(8, Math.floor(sqrtBits * 0.30)));
             } else {
                 // ⚠️ Alt sınır 8 bit: #57 gibi orta aralıklarda eski formül 4 bit (her 16 adımda 1 tuzak) veriyordu
-                // ve çoklu sekmede BroadcastChannel'ı boğup tarayıcıyı çökertiyordu. #145 için değer değişmez (8).
+                // ve çoklu sekmede BroadcastChannel'ı boğup tarayıcıyı çökertiyordu.
                 this.dpBits = Math.max(8, Math.min(10, Math.floor(sqrtBits * 0.12)));
             }
             this.dpMask = (1n << BigInt(this.dpBits)) - 1n;
@@ -587,14 +521,6 @@ class RealPollardKangaroo {
                     console.warn('[Kangaroo] Açık anahtar yüklenemedi:', pe);
                 }
             }
-            if (this.isHyperGlv145) {
-                try {
-                    const qpKey = this.ec.keyFromPublic(RealPollardKangaroo.PUZZLE_145_CONSTANTS.Q_PRIME_COMPRESSED, 'hex');
-                    this.qPrimePoint = qpKey.getPublic();
-                } catch(e) {
-                    console.warn('[Kangaroo] Q_Prime yüklenemedi:', e);
-                }
-            }
 
             // 2. Dinamik Sıçrama ve Tuzak Kalibrasyonu
             this.span = (this.rangeMax > this.rangeMin) ? (this.rangeMax - this.rangeMin) : 1n;
@@ -636,8 +562,7 @@ class RealPollardKangaroo {
             case 'LOW_BASE': return 100000n;
             case 'AUTO':
             default:
-                // Kayan pencere modunda %10 başlangıç, anahtar bulma oranını düşürüyor (ölçüm: 5/12 → merkez 10/12); orada merkez korunur
-                return (this.options && this.options.herdMode === 'ROLLING_WINDOW') ? 500000n : 100000n;
+                return 100000n;
         }
     }
 
@@ -720,10 +645,7 @@ class RealPollardKangaroo {
                 ? (combinedId * baseM + BigInt(k))
                 : (combinedId * baseM + BigInt(k - 32));
             let tDist;
-            if (this.isHyperGlv145) {
-                const kShift = (initialShift + effIdx * stepStride) % spanEff;
-                tDist = ((baseStart + kShift) % spanEff);
-            } else if (this.options && this.options.herdMode === 'KRONECKER_LATTICE') {
+            if (this.options && this.options.herdMode === 'KRONECKER_LATTICE') {
                 const KRON_CONSTS = RealPollardKangaroo.KRONECKER_IRRATIONAL_CONSTANTS;
                 const n = effIdx + 1n;
                 const v0 = (n * KRON_CONSTS[0]) & 0xFFFFFFFFFFFFFFFFn;
@@ -774,7 +696,7 @@ class RealPollardKangaroo {
         // 🎯 VAHŞİ (WILD) KANGURULAR (D4-GPR 4-Fold Dihedral Equivalence Class):
         // İlk 32 vahşi kanguru Q noktasından, 32..63 arası ise Q_refl = (min+max)G - Q ve Q_half = Q + (span/2)G simetri noktalarından başlar!
         let d4Targets = null;
-        if (wildCount > 0 && !this.isHyperGlv145 && this.targetPoint && this.G && this.span > 4n) {
+        if (wildCount > 0 && this.targetPoint && this.G && this.span > 4n) {
             try {
                 const sumBounds = this.rangeMin + this.rangeMax;
                 const halfSpan = this.span / 2n;
@@ -817,8 +739,8 @@ class RealPollardKangaroo {
             this.kangDist[idx] = wShift;
             this.kangIsWild[idx] = (w >= 32 && d4Targets) ? 2 : 1;
 
-            let baseX = this.isHyperGlv145 ? this.qPrimeX : this.targetX;
-            let baseY = this.isHyperGlv145 ? this.qPrimeY : this.targetY;
+            let baseX = this.targetX;
+            let baseY = this.targetY;
             if (this.isGpr4Way && d4Targets && d4Targets[1]) {
                 // GPR 4-Way Wild 2: Q_half = Q + (span/4)G noktasından başlar
                 if (w % 32 >= 16) {
@@ -901,7 +823,7 @@ class RealPollardKangaroo {
             this.calibrateJumpsAndDP(this.span);
             const shouldKeep = (keepTraps !== null)
                 ? keepTraps
-                : Boolean(this.options && (this.options.herdMode === 'GLOBAL_ANCHOR' || this.options.herdMode === 'HOP_DWELL'));
+                : Boolean(this.options && this.options.herdMode === 'GLOBAL_ANCHOR');
             this.resetWalk(shouldKeep);
         }
     }
@@ -977,14 +899,7 @@ class RealPollardKangaroo {
 
         for (let diff of candidates) {
             if (diff === 0n) continue;
-            const testKeys = [];
-            if (this.isHyperGlv145 && this.baseOffset > 0n) {
-                testKeys.push(((this.baseOffset + diff) % SECP256K1_N + SECP256K1_N) % SECP256K1_N);
-                testKeys.push(((this.baseOffset - diff) % SECP256K1_N + SECP256K1_N) % SECP256K1_N);
-                testKeys.push(diff);
-            } else {
-                testKeys.push(diff);
-            }
+            const testKeys = [diff];
 
             for (let tk of testKeys) {
                 if (tk <= 0n) continue;
@@ -1113,8 +1028,8 @@ class RealPollardKangaroo {
                             if (kangDist[i] > maxAllowedWildDist) {
                                 const resetIdx = (c + i) & 63;
                                 kangDist[i] = jumps[resetIdx];
-                                const bx = kangWildBaseX[i] || (this.isHyperGlv145 ? this.qPrimeX : this.targetX);
-                                const by = kangWildBaseY[i] || (this.isHyperGlv145 ? this.qPrimeY : this.targetY);
+                                const bx = kangWildBaseX[i] || this.targetX;
+                                const by = kangWildBaseY[i] || this.targetY;
                                 if (bx) {
                                     const wPt = RealPollardKangaroo.pointAddAffine(bx, by, jumpX[resetIdx], jumpY[resetIdx]);
                                     kangX[i] = wPt[0];
@@ -1278,8 +1193,8 @@ class RealPollardKangaroo {
                     const resetIdx = (c + i) & 63;
                     const newShift = jumps[resetIdx];
                     kangDist[i] = newShift;
-                    const bx = kangWildBaseX[i] || (this.isHyperGlv145 ? this.qPrimeX : this.targetX);
-                    const by = kangWildBaseY[i] || (this.isHyperGlv145 ? this.qPrimeY : this.targetY);
+                    const bx = kangWildBaseX[i] || this.targetX;
+                    const by = kangWildBaseY[i] || this.targetY;
                     if (bx) {
                         const wPt = RealPollardKangaroo.pointAddAffine(bx, by, jumpX[resetIdx], jumpY[resetIdx]);
                         curX = wPt[0];
@@ -1376,44 +1291,7 @@ class RealPollardKangaroo {
         const mode = this.options ? this.options.herdMode : '';
         const dynMeta = {};
 
-        if (mode === 'ROLLING_WINDOW') {
-            this.rollingStepsInWindow += cycles * M;
-            if (this.rollingStepsInWindow >= this.rollingStepsBudget) {
-                this.rollingStepsInWindow = 0;
-                this.rollingWindowIndex++;
-                const shift = (this.rollingWindowSpan > 2n) ? (this.rollingWindowSpan / 2n) : 1n;
-                let nextMin = this.baseMin + BigInt(this.rollingWindowIndex) * shift;
-                if (nextMin + this.rollingWindowSpan > this.baseMax) {
-                    this.rollingWindowIndex = 0;
-                    nextMin = this.baseMin;
-                }
-                const nextMax = nextMin + this.rollingWindowSpan;
-                this.updateRange(nextMin, nextMax, false);
-            }
-            dynMeta.rollingWindowIndex = this.rollingWindowIndex;
-            dynMeta.windowMin = this.rangeMin.toString(16);
-            dynMeta.windowMax = this.rangeMax.toString(16);
-            dynMeta.rollingProgress = Math.min(100, Math.round((this.rollingStepsInWindow / this.rollingStepsBudget) * 100));
-        } else if (mode === 'HOP_DWELL') {
-            this.dwellStepsInHop += cycles * M;
-            const now = Date.now();
-            if (now - this.lastHopTimestamp >= this.dwellDurationMs || this.dwellStepsInHop >= 500000) {
-                this.hopCount++;
-                this.dwellStepsInHop = 0;
-                this.lastHopTimestamp = now;
-                // Altın oran Weyl adımı ile yeni konuma sıçra
-                this.hopPhase = (this.hopPhase + 0.618033988749895) % 1.0;
-                const hopSpan = (this.fullSpan > (1n << 38n)) ? (1n << 38n) : this.fullSpan;
-                const maxOffset = (this.fullSpan > hopSpan) ? (this.fullSpan - hopSpan) : 0n;
-                const offset = BigInt(Math.floor(this.hopPhase * 1000000)) * maxOffset / 1000000n;
-                const hopMin = this.baseMin + offset;
-                const hopMax = hopMin + hopSpan;
-                this.updateRange(hopMin, hopMax, true); // Tuzakları sakla ve yeni bölgeye pusu kur!
-            }
-            dynMeta.hopCount = this.hopCount;
-            dynMeta.dwellElapsed = now - this.lastHopTimestamp;
-            dynMeta.dwellDuration = this.dwellDurationMs;
-        } else if (mode === 'GLOBAL_ANCHOR') {
+        if (mode === 'GLOBAL_ANCHOR') {
             dynMeta.isAnchorActive = true;
             dynMeta.cumulativeTraps = this.tameTraps.size + this.wildTraps.size;
         }
