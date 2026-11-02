@@ -978,8 +978,8 @@
                 padding: 1px 3px !important;
             }
             .thread-select-box {
-                min-width: 120px !important;
-                max-width: 170px !important;
+                min-width: 0 !important;
+                max-width: 140px !important;
                 font-size: 9.5px !important;
                 padding: 1px 2px !important;
             }
@@ -1364,12 +1364,12 @@
         <div id="panelPhysics" class="mode-sub-panel" style="display:flex; flex-direction:column; gap:4px; background:#130b20; border:1px solid #a855f7; border-radius:6px; padding:4px 6px; box-shadow:0 0 10px rgba(168,85,247,0.25); box-sizing:border-box; width:100%;">
             
             <!-- 1. SATIR: İŞLEMCİ ÇEKİRDEK (SOL) | SÜRÜ & TUZAK ROZETLERİ (ORTA) | ÖN EK / SON EK BLOĞU (SAĞ) -->
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; box-sizing:border-box; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap;">
                 
                 <!-- SOL: DONANIM / İŞLEMCİ ÇEKİRDEK SEÇİCİ -->
-                <div style="display:inline-flex; align-items:center; justify-content:flex-start; flex:1 1 0; min-width:130px;">
-                    <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="width:100%; max-width:180px; min-width:125px; padding:1px 4px; font-size:10px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı Seçimi">
-                        <option value="AUTO_SWARM" selected>⚡ Oto Sürü Dengele</option>
+                <div style="display:inline-flex; align-items:center; justify-content:flex-start; flex:1 1 auto; min-width:0; max-width:160px;">
+                    <select id="threadCountSelect" class="range-select thread-select-box" onchange="onThreadCountSelectChange()" style="width:100%; min-width:0; padding:1px 3px; font-size:9.5px; height:24px; border-radius:4px;" title="Donanım / İş Parçacığı Seçimi">
+                        <option value="AUTO_SWARM" selected>⚡ Oto Sürü</option>
                         <option value="4">🚀 4 Çekirdek</option>
                         <option value="8">⚡ 8 Çekirdek</option>
                         <option value="12">🔥 12 Çekirdek</option>
@@ -1378,20 +1378,20 @@
                 </div>
 
                 <!-- ORTA: SÜRÜ & TUZAK ROZETLERİ (TAM ORTALI) -->
-                <div id="kangarooSwarmBadgesGroup" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; flex-shrink:0; margin:0 auto;">
-                    <span id="kangarooSwarmTrapCount" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; font-size:9.5px; padding:2px 6px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Sürü Tarafından Kaydedilen Distinguished Point (Tuzak) Sayısı — Ağ Durumunu Görmek İçin Tıklayın">📍 0</span>
-                    <span id="kangarooSwarmTabCountBadge" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #10b981; color:#34d399; font-size:9.5px; padding:2px 6px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın">🟢 1</span>
+                <div id="kangarooSwarmBadgesGroup" style="display:inline-flex; align-items:center; justify-content:center; gap:3px; flex-shrink:0; margin:0 auto;">
+                    <span id="kangarooSwarmTrapCount" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Sürü Tarafından Kaydedilen Distinguished Point (Tuzak) Sayısı — Ağ Durumunu Görmek İçin Tıklayın">📍 0</span>
+                    <span id="kangarooSwarmTabCountBadge" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #10b981; color:#34d399; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın">🟢 1</span>
                 </div>
 
                 <!-- SAĞ: ÖN EK / SON EK BLOĞU -->
-                <div style="display:inline-flex; align-items:center; justify-content:flex-end; flex:1 1 0; min-width:165px;">
-                    <div id="blockPrefix" style="display:inline-flex; align-items:center; gap:2px; width:205px; max-width:205px; min-width:165px; padding:1px 3px; border-radius:4px; border:1px solid #334155; background:#0f172a; transition:all 0.2s ease; opacity:0.85; box-sizing:border-box; height:24px;">
-                        <button type="button" id="btnFixModeToggle" onclick="event.stopPropagation(); toggleFixMode()" style="padding:1px 5px; height:22px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek (MSB Alt Aralık) ile Son Ek (LSB Modüler Kafes) Arasında Geçiş Yapın">
-                            📌 Ön Ek
+                <div style="display:inline-flex; align-items:center; justify-content:flex-end; flex:1 1 auto; min-width:0; max-width:175px;">
+                    <div id="blockPrefix" style="display:inline-flex; align-items:center; gap:2px; width:100%; max-width:175px; min-width:0; padding:1px 3px; border-radius:4px; border:1px solid #334155; background:#0f172a; transition:all 0.2s ease; opacity:0.85; box-sizing:border-box; height:24px;">
+                        <button type="button" id="btnFixModeToggle" onclick="event.stopPropagation(); toggleFixMode()" style="padding:1px 4px; height:22px; font-size:9.5px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7; display:inline-flex; align-items:center; gap:2px;" title="Ön Ek (MSB Alt Aralık) ile Son Ek (LSB Modüler Kafes) Arasında Geçiş Yapın">
+                            Ön Ek
                         </button>
-                        <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:11px; flex-shrink:0; opacity:0.8;" title="Hex Değeri">0x</span>
-                        <input type="text" id="prefixInput" class="prefix-input-box" value="" style="padding:1px 4px; height:22px; font-size:11px; font-family:monospace; flex:1; min-width:32px; border-radius:3px; color:#94a3b8; background:#1e293b; border:1px solid #334155; opacity:0.7;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="onPrefixInputFocus()" placeholder="Ön Ek Hex">
-                        <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 5px; height:22px; font-size:11px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#94a3b8; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Modüler Kafes / Otomatik Geçiş">
+                        <span id="badgePrefixState" style="color:#64748b; font-weight:bold; font-family:monospace; font-size:10px; flex-shrink:0; opacity:0.8;" title="Hex Değeri">0x</span>
+                        <input type="text" id="prefixInput" class="prefix-input-box" value="" style="padding:1px 3px; height:22px; font-size:10px; font-family:monospace; flex:1; min-width:24px; width:38px; border-radius:3px; color:#94a3b8; background:#1e293b; border:1px solid #334155; opacity:0.7;" oninput="onPrefixInput()" onclick="event.stopPropagation()" onfocus="onPrefixInputFocus()" placeholder="Hex">
+                        <button type="button" id="btnPrefixAuto" onclick="event.stopPropagation(); togglePrefixAutoJump()" style="padding:1px 4px; height:22px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; flex-shrink:0; white-space:nowrap; background:#0f172a; color:#94a3b8; border:1px solid #334155; display:inline-flex; align-items:center; gap:2px;" title="Modüler Kafes / Otomatik Geçiş">
                             🔄 Oto
                         </button>
                         <input type="checkbox" id="chkPrefixAutoJump" style="display:none;">
@@ -1404,8 +1404,8 @@
             <div id="rowAlgoStandard" style="display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; box-sizing:border-box; flex-wrap:nowrap; margin-top:2px;">
                 
                 <!-- SOL: STANDART ALGORİTMA SEÇİCİ (📐 Sembollü) -->
-                <div style="display:inline-flex; align-items:center; gap:3px; flex:1.2; min-width:0;" title="Arama Algoritması">
-                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:24px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
+                <div style="display:inline-flex; align-items:center; gap:3px; flex:1 1 auto; min-width:0;" title="Arama Algoritması">
+                    <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:9.5px; height:24px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
                         <option value="AUTO" selected>🔄 Oto (Dönüşümlü Hibrit)</option>
                         <option value="BSGS_NEGATION" style="color:#38bdf8; font-weight:bold;">🎯⚡ Negation BSGS (Deterministik Çözücü O(√W))</option>
                         <option value="ROBERTS_R_SEQUENCE" style="color:#f59e0b; font-weight:bold;">🌟📐 Plastik Oran (R_d Harmonikleri)</option>
@@ -1435,9 +1435,9 @@
 
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
-                <!-- SAĞ: 🎯 STANDART ALGORİTMA BAŞLANGIÇ VE OTO GEZGİN SEÇİCİ (Son Ek/Ön Ek'in Tam Altında) -->
-                <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 205px; max-width:205px; min-width:0;" title="Standart Algoritmalar İçin Başlangıç & Tohum Işınlama">
-                    <select id="stdBaseFocusSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:24px; border-radius:3px; border-color:#a855f7;" onchange="applyStdBaseStart(this.value)">
+                <!-- SAĞ: 🎯 STANDART ALGORİTMA BAŞLANGIÇ VE OTO GEZGİN SEÇİCİ (Kompakt Saf Konum / Başlangıç) -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 auto; width:135px; max-width:140px; min-width:0;" title="Standart Algoritmalar İçin Başlangıç & Tohum Işınlama">
+                    <select id="stdBaseFocusSelect" class="range-select" style="width:100%; min-width:0; padding:1px 2px; font-size:9.5px; height:24px; border-radius:3px; border-color:#a855f7;" onchange="applyStdBaseStart(this.value)">
                         <option value="AUTO_HOP">🔄 Oto Gezgin (Pusu)</option>
                         <option value="AUTO">🧠 Oto Kafes</option>
                         <option value="START_0" selected>🟢 Saf Konum (%0)</option>
@@ -1459,10 +1459,9 @@
             <!-- 2. SATIR (B): KANGURU SÜRÜ MOTORU (O(√N)) KONTROL GÖRÜNÜMÜ -->
             <div id="rowAlgoKangaroo" style="display:none; align-items:center; justify-content:space-between; gap:4px; width:100%; box-sizing:border-box; flex-wrap:nowrap; margin-top:2px;">
                 
-                <!-- KANGURU ALGORİTMA SEÇİCİ (🦘 Sembollü) -->
+                <!-- KANGURU ALGORİTMA SEÇİCİ -->
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.5; min-width:0;" title="Kanguru O(√N) Arama Algoritmaları">
-                    <span style="font-size:11px; color:#06b6d4; flex-shrink:0; line-height:1;" title="Kanguru Algoritması">🦘</span>
-                    <select id="kangarooAlgoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#06b6d4;" onchange="onAlgoSelectChange(this.value)">
+                    <select id="kangarooAlgoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:9.5px; height:23px; border-radius:3px; border-color:#06b6d4;" onchange="onAlgoSelectChange(this.value)">
                         <optgroup label="Klasik & Açık Anahtarlı Kanguru (O(√N))" style="background:#0f172a; color:#38bdf8;">
                             <option value="KANGAROO" selected>🦘 Pollard's Kangaroo</option>
                             <option value="KANGAROO_4WAY_GPR" style="color:#38bdf8; font-weight:bold;">🦘⚡ 4-Kanguru GPR Modeli (1.714√N + Negasyon)</option>
@@ -1486,8 +1485,7 @@
 
                 <!-- SÜRÜ ROLÜ SEÇİCİ (Sürüdeki Tame/Wild/Dual Rolü) -->
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1; min-width:0;" title="Kanguru Sürü Rolü: Karışık, Evcil, Vahşi veya Çiftli">
-                    <span style="font-size:11px; color:#10b981; flex-shrink:0; line-height:1;" title="Sürü Rolü">👥</span>
-                    <select id="kangarooRoleSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#10b981;" onchange="onKangarooRoleChange(this.value)">
+                    <select id="kangarooRoleSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:9.5px; height:23px; border-radius:3px; border-color:#10b981;" onchange="onKangarooRoleChange(this.value)">
                         <option value="DUAL" selected>✨ Çiftli Dilim (Dual: Tame+Wild)</option>
                         <option value="MIXED">🔀 Otomatik Sürü (Dual)</option>
                         <option value="TAME">🟢 Evcil (Sadece Tame)</option>
@@ -1497,10 +1495,9 @@
 
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
-                <!-- 🎯 BAŞLANGIÇ STRATEJİSİ SEÇİCİ & PUSU SÜRESİ -->
-                <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 205px; max-width:205px; min-width:0;" title="Evcil Kanguru Başlangıç / Pusu Stratejisi">
-                    <span style="font-size:11px; color:#f59e0b; flex-shrink:0; line-height:1;" title="Başlangıç Noktası">🎯</span>
-                    <select id="kangarooBaseStrategySelect" class="range-select" style="flex:1.2; min-width:0; padding:1px 2px; font-size:10px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onKangarooBaseStrategyChange(this.value)">
+                <!-- 🎯 BAŞLANGIÇ STRATEJİSİ SEÇİCİ & PUSU SÜRESİ (Kompakt) -->
+                <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 auto; width:125px; max-width:130px; min-width:0;" title="Evcil Kanguru Başlangıç / Pusu Stratejisi">
+                    <select id="kangarooBaseStrategySelect" class="range-select" style="width:100%; min-width:0; padding:1px 2px; font-size:9.5px; height:23px; border-radius:3px; border-color:#f59e0b;" onchange="onKangarooBaseStrategyChange(this.value)">
                         <option value="AUTO_HOP">🔄 Oto Pusu</option>
                         <option value="AUTO">🧠 Oto Kafes</option>
                         <option value="START_0" selected>🟢 Saf Konum (%0)</option>
@@ -1524,8 +1521,8 @@
                 <span style="color:#475569; font-size:10px; flex-shrink:0;">|</span>
 
                 <!-- AĞ & MESH BUTONU -->
-                <button type="button" onclick="showSwarmMeshModal()" style="display:inline-flex; align-items:center; justify-content:center; gap:3px; height:23px; padding:1px 6px; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; white-space:nowrap; flex-shrink:0;" title="Ağdaki sekmeler ve paylaşılan tuzak detaylarını inceleyin">
-                    🌐 Mesh Ağı
+                <button type="button" onclick="showSwarmMeshModal()" style="display:inline-flex; align-items:center; justify-content:center; gap:3px; height:23px; padding:1px 5px; font-size:9.5px; font-weight:bold; border-radius:3px; cursor:pointer; background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; white-space:nowrap; flex-shrink:0;" title="Ağdaki sekmeler ve paylaşılan tuzak detaylarını inceleyin">
+                    🌐 Mesh
                 </button>
             </div>
         </div>
@@ -3612,13 +3609,13 @@ function updateModeVisuals() {
 
     if (btnFix) {
         if (isSuffix) {
-            btnFix.innerHTML = '🎯 Son Ek';
+            btnFix.innerHTML = 'Son Ek';
             btnFix.style.background = '#2e1065';
             btnFix.style.color = '#c084fc';
             btnFix.style.borderColor = '#9333ea';
             btnFix.title = 'Son Ek (LSB / Modüler Kafes) Modu Aktif (Tıklayın: Ön Ek moduna geçer)';
         } else {
-            btnFix.innerHTML = '📌 Ön Ek';
+            btnFix.innerHTML = 'Ön Ek';
             btnFix.style.background = '#0c4a6e';
             btnFix.style.color = '#38bdf8';
             btnFix.style.borderColor = '#0284c7';
@@ -8597,7 +8594,7 @@ function huntBatch() {
                     if (isNarrowed) {
                         const bMinHex = lastBoundMin ? lastBoundMin.toString(16) : '';
                         const bMaxHex = lastBoundMax ? lastBoundMax.toString(16) : '';
-                        pParts.push(`🎚️ [0x${bMinHex.substring(0, 6)}..-0x${bMaxHex.substring(0, 6)}..]`);
+                        pParts.push(`🎚️ [0x${bMinHex.substring(0, 3)}..-0x${bMaxHex.substring(0, 3)}..]`);
                     }
                     if (isEffectivePrefix) {
                         pParts.push(isPrefixAutoJump 
@@ -11974,7 +11971,7 @@ const baseStart = (span * basePpm) / 1000000n;
             if (i === batchSize - 1) {
                 const pParts = [];
                 if (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd)) {
-                    pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 6) + '..-0x' + boundMax.toString(16).substring(0, 6) + '..]');
+                    pParts.push('🎚️ [0x' + boundMin.toString(16).substring(0, 3) + '..-0x' + boundMax.toString(16).substring(0, 3) + '..]');
                 }
                 if (isEffectivePrefix) {
                     if (cfg.userFixMode === 'SUFFIX') {
@@ -11987,7 +11984,7 @@ const baseStart = (span * basePpm) / 1000000n;
                 else if (f === 'DETERMINISTIC_CHAOS') pParts.push('♾️ Deterministik Kaos');
                 baseDesc = pParts.length > 0 ? pParts.join(' + ') : '🌐 Tam Aralık';
                 const puzzleBitLen = ((baseEnd.toString(16).length * 4) + 'b');
-                const puzzleLabel = '🎯 #' + activeTarget.id + ' (' + puzzleBitLen + ')';
+                const puzzleLabel = '#' + activeTarget.id;
                 if (cfg.isCircularMode) {
                     currentRangeText = puzzleLabel + ' | ' + baseDesc;
                 } else {
@@ -12574,7 +12571,7 @@ function syncSwarmThreadBalancing() {
 
     const autoOpt = Array.from(sel.options).find(o => o.value === 'AUTO_SWARM');
     if (autoOpt) {
-        autoOpt.innerText = `⚡ Oto Sürü (${effectiveThreads}T / ${swarmCount} Sekme)`;
+        autoOpt.innerText = (swarmCount > 1) ? `⚡ Oto (${effectiveThreads}T / ${swarmCount}S)` : `⚡ Oto Sürü (${effectiveThreads}T)`;
     }
 
     if (isAuto && isRunning) {
