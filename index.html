@@ -1476,7 +1476,7 @@
                             <option value="KANGAROO_KRONECKER" style="color:#f59e0b; font-weight:bold;">⚡ 🦘 Kronecker-Kangaroo (İrrasyonel Kafes + Tam Homojen Eşdağılım)</option>
                             <option value="KANGAROO_SOBOL">🦘📐 Sobol-Kangaroo Hibrit</option>
                             <option value="KANGAROO_GLV">⚡🦘 GLV-Kangaroo (Endomorfizma 4-Way)</option>
-                            <option value="KANGAROO_MONTGOMERY">🦘⚡ SIMD Montgomery Herd (32-Way)</option>
+                            <option value="KANGAROO_MONTGOMERY">🦘⚡ SIMD Montgomery Herd (64-Way)</option>
                                                         <option value="KANGAROO_ANCHOR">🦘⚓ Evrensel Çapa & Birikimli Tuzak</option>
                                                     </optgroup>
                         <optgroup label="PubKey Gerektirmeyen Adres Kanguru" style="background:#0f172a; color:#34d399;">
@@ -3841,7 +3841,7 @@ function applyFormulaPreset(formula, isRemoteSync = false, isSilent = false) {
                     (kangAlgo === 'GLV_LATTICE_2D') ? '🌐⚡ 2D Latis GLV Kafesi (Gaudry-Schost Voronoi O(√N))' :
                     (kangAlgo === 'KANGAROO_SOBOL') ? '🦘📐 Sobol-Kangaroo (Tuzak & Quasi-Herd Sürü)' :
                     (kangAlgo === 'KANGAROO_GLV') ? '⚡🦘 GLV-Kangaroo (4-Way GLV Sürü)' :
-                    (kangAlgo === 'KANGAROO_MONTGOMERY') ? '⚡🚀 SIMD Montgomery (16-Herd Sürü)' :
+                    (kangAlgo === 'KANGAROO_MONTGOMERY') ? '⚡🚀 SIMD Montgomery (64-Herd Sürü)' :
                     (kangAlgo === 'KANGAROO_ANCHOR') ? '🦘⚓ Evrensel Çapa & Birikimli Tuzak (Global Anchor)' :
                     '🦘 Pollard Kangaroo (Tuzak & Vahşi Sürü)';
                 logAlgo.style.color = (kangAlgo === 'KANGAROO_KRONECKER') ? '#f59e0b' :
@@ -6275,7 +6275,7 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'KANGAROO_KRONECKER': '⚡ 🦘 Kronecker-Kangaroo (8D İrrasyonel Kafes)',
             'KANGAROO_SOBOL': '🦘📐 Sobol-Kangaroo Hibrit',
             'KANGAROO_GLV': '⚡🦘 GLV-Kangaroo (Endomorfizma 4-Way)',
-            'KANGAROO_MONTGOMERY': '🦘⚡ SIMD Montgomery Herd (32-Way)',
+            'KANGAROO_MONTGOMERY': '🦘⚡ SIMD Montgomery Herd (64-Way)',
             'KANGAROO_ANCHOR': '🦘⚓ Evrensel Çapa & Birikimli Tuzak',
             'KANGAROO_ALIGNED': '🦘🧩 Hizalı Sürü Kangaroo',
             'ADDR_HOP_SWEEP': '🦘🧹 Sıçra & Süpür (Altın Sıçrama)',
@@ -8401,7 +8401,7 @@ function huntBatch() {
                     rangeText = '⚡🦘 GLV-Kangaroo Hibrit [4-Way Endomorfizma O(√N)]';
                     document.getElementById('logRange').innerText = rangeText;
                 } else if (!isCircularMode && activeAlgo === 'KANGAROO_MONTGOMERY') {
-                    rangeText = '🦘⚡ SIMD Montgomery Herd [32-Way Batch O(√N)]';
+                    rangeText = '🦘⚡ SIMD Montgomery Herd [64-Way Batch O(√N)]';
                     document.getElementById('logRange').innerText = rangeText;
                 } else if (!isCircularMode && activeAlgo === 'KANGAROO_ANCHOR') {
                     rangeText = '🦘⚓ Evrensel Çapa & Birikimli Tuzak Ağı [Kayıpsız Tuzaklar]';
@@ -11817,7 +11817,13 @@ const baseStart = (span * basePpm) / 1000000n;
             if (_cluElig && !_cluCont) {            // yeni seçim → yeni küme
                 _cluAlgo = workerActiveAlgo;
                 _cluNext = currentKey + SEQ_STRIDE;
-                _cluLeft = CLUSTER_N - 1;
+                // Küçük test aralıklarında tek kümenin aralığı kilitlememesi için dinamik boyut
+                const _rangeSpan = boundMax > boundMin ? (boundMax - boundMin) : 0n;
+                const _maxSpanBlocks = _rangeSpan > 0n ? Number(_rangeSpan / SEQ_STRIDE) : 0;
+                const _effClusterN = (_maxSpanBlocks > 0 && _maxSpanBlocks < 2000)
+                    ? Math.max(1, Math.min(CLUSTER_N, Math.floor(_maxSpanBlocks / 20)))
+                    : CLUSTER_N;
+                _cluLeft = _effClusterN - 1;
             } else if (!_cluElig) { _cluLeft = 0; }
 
             // 🚀 ULTRA-HIZLI ÇİFT YÖNLÜ (±iG) SİMETRİK MONTGOMERY BATCH ADIM MOTORU (Çapa Başına 511 Anahtar!)
@@ -12531,8 +12537,6 @@ function getCurrentWorkerConfig() {
         sliceEndPct: sliceEndPct,
         userHexStart: (userHexStart !== null && userHexStart !== undefined) ? userHexStart.toString(16) : null,
         userHexEnd: (userHexEnd !== null && userHexEnd !== undefined) ? userHexEnd.toString(16) : null,
-        activeFormula: activeFormula,
-        activeRangeMode: activeRangeMode,
         isPrefixFilterActive: isPrefixFilterActive,
         isGridFilterActive: isGridFilterActive,
         userFixMode: (typeof userFixMode === 'string' ? userFixMode : 'PREFIX'),

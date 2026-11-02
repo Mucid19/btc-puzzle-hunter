@@ -9,8 +9,8 @@
  *    Noktalar {P, -P, λP, -λP} simetrisine göre kanonik min(X, βX, β²X) temsilcisine indirgenir.
  *    Hem tuzaklar hem zıplama fonksiyonu kanonik temsilci üzerinden seçilir.
  *    Arama uzayı 4 kat küçülür, çarpışma olasılığı 4 kat artar.
- * 3. SIMD Montgomery Batched Herd (16-Kangaroo Lockstep):
- *    16 kanguru aynı anda tek bir modüler bölme (Montgomery Simultaneous Inversion) ile zıplatılır.
+ * 3. SIMD Montgomery Batched Herd (64-Kangaroo Lockstep):
+ *    64 kanguru aynı anda tek bir modüler bölme (Montgomery Simultaneous Inversion) ile zıplatılır.
  * 4. Dürüst Sayaç (Gerçek Adım Doğrulaması):
  *    Sıcak döngüde üretilen her adım eğri üzerindeki gerçek nokta toplamasıdır.
  */
