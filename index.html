@@ -39,7 +39,7 @@
 }).call(typeof window !== 'undefined' ? window : this);
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
-    <script src="kangaroo_engine.js?v=4xsimd-clean"></script>
+    <script src="kangaroo_engine.js?v=5-canonfix"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -8083,7 +8083,7 @@ function generateKangarooKey(rangeStart, rangeEnd) {
         if (kangarooRealEngine.newTrapsToBroadcast.length > 0) {
             kangarooRealEngine.newTrapsToBroadcast.forEach(t => {
                 if (typeof broadcastKangarooTrap === 'function') {
-                    broadcastKangarooTrap(t.pointXHex, t.herd, t.dist);
+                    broadcastKangarooTrap(t.pointXHex, t.herd, t.dist, t.branch);
                 }
             });
             kangarooRealEngine.newTrapsToBroadcast = [];

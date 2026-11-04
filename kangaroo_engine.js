@@ -1148,16 +1148,18 @@ class RealPollardKangaroo {
                 let curY = kangY[i];
                 const isW = kangIsWild[i] !== 0;
 
-                // Belirgin Nokta (DP) kontrolü — Kanonik GLV temsilcisi yalnızca DP yakalandığında hesaplanır!
-                if (((curX >> 6n) & dpMask) === 0n) {
-                    let canonX = curX;
-                    let pBranch = 0;
-                    if (isGlv) {
-                        const x2 = (curX * BETA) % P;
-                        const x3 = (curX * BETA2) % P;
-                        if (x2 < canonX) { canonX = x2; pBranch = 1; }
-                        if (x3 < canonX) { canonX = x3; pBranch = 2; }
-                    }
+                // Kanonik GLV koordinatı ve dal tespiti döngü başına hesaplanır (zıplama dizini de bunu kullanır; WASM yoluyla aynı mantık)
+                let canonX = curX;
+                let pBranch = 0;
+                if (isGlv) {
+                    const x2 = (curX * BETA) % P;
+                    const x3 = (curX * BETA2) % P;
+                    if (x2 < canonX) { canonX = x2; pBranch = 1; }
+                    if (x3 < canonX) { canonX = x3; pBranch = 2; }
+                }
+
+                // Belirgin Nokta (DP) kontrolü — kanonik GLV temsilcisi üzerinden (WASM yoluyla tutarlı)
+                if (((canonX >> 6n) & dpMask) === 0n) {
                     const pKey = canonX.toString(16).padStart(64, '0');
                     const pCell = Number(canonX & 15n);
                     const curDist = kangDist[i];
@@ -1202,6 +1204,14 @@ class RealPollardKangaroo {
                     }
                     kangX[i] = curX;
                     kangY[i] = curY;
+                    // Yeniden konuşlandırılan noktanın kanonik koordinatını güncelle
+                    canonX = curX;
+                    if (isGlv) {
+                        const x2r = (curX * BETA) % P;
+                        const x3r = (curX * BETA2) % P;
+                        if (x2r < canonX) canonX = x2r;
+                        if (x3r < canonX) canonX = x3r;
+                    }
                 }
 
                 // 📐 Zıplama dizini: GLV ve Kronecker modunda kanonik koordinattan seçilir (Quotient-Graph Tutarlılığı)

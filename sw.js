@@ -1,4 +1,4 @@
-const CACHE_NAME = 'btc-puzzle-v15';
+const CACHE_NAME = 'btc-puzzle-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -48,6 +48,6 @@ self.addEventListener('fetch', (e) => {
       .then((response) => {
         return response;
       })
-      .catch(() => caches.match(e.request).then((res) => res || (e.request.mode === 'navigate' ? caches.match('./index.html') : null)))
+      .catch(() => caches.match(e.request, { ignoreSearch: true }).then((res) => res || (e.request.mode === 'navigate' ? caches.match('./index.html') : null)))
   );
 });
