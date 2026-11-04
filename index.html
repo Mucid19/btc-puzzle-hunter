@@ -327,6 +327,26 @@
             border-color: #38bdf8;
         }
 
+        .mini-preset-pill {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 9.5px;
+            font-family: monospace;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1.2;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .mini-preset-pill:hover {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #38bdf8;
+        }
+
         .auto-speed-btn {
             display: inline-flex;
             align-items: center;
@@ -1350,6 +1370,44 @@
 
         <!-- Arşiv Açılır Menü Listesi -->
         <div id="popupSolved" class="popup-menu"></div>
+
+        <!-- 🎯 HASSAS KAYDIRAÇ ARALIĞI GİRİŞ POPOVER'I -->
+        <div id="popManualRange" onclick="event.stopPropagation()" style="display:none; position:fixed; z-index:999999; width:240px; background:#0b1320; border:1.5px solid #0284c7; box-shadow:0 12px 28px rgba(0,0,0,0.85), 0 0 16px rgba(2,132,199,0.35); border-radius:8px; padding:8px 10px; flex-direction:column; gap:6px; font-family:sans-serif; box-sizing:border-box;">
+            <!-- Başlık -->
+            <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1e293b; padding-bottom:5px;">
+                <span style="font-size:11px; font-weight:bold; color:#38bdf8; display:flex; align-items:center; gap:4px;">
+                    🎯 Kaydıraç Aralığı (% Girin)
+                </span>
+                <button type="button" onclick="closeManualRangePopover()" style="background:transparent; border:none; color:#94a3b8; font-size:13px; font-weight:bold; cursor:pointer; line-height:1; padding:0 3px;" title="Kapat">✕</button>
+            </div>
+
+            <!-- Giriş Alanları -->
+            <div style="display:flex; align-items:center; gap:4px;">
+                <div style="display:flex; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:4px; padding:2px 5px; flex:1;">
+                    <span style="font-size:10px; color:#34d399; font-weight:bold; margin-right:2px;">%</span>
+                    <input type="number" id="inpManualRangeMin" min="0" max="100" step="any" placeholder="Min" style="width:100%; background:transparent; border:none; outline:none; color:#fff; font-size:11px; font-family:monospace; font-weight:600; text-align:center;" onkeydown="if(event.key==='Enter') applyManualRangeInput();">
+                </div>
+                <span style="color:#64748b; font-size:12px; font-weight:bold;">—</span>
+                <div style="display:flex; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:4px; padding:2px 5px; flex:1;">
+                    <span style="font-size:10px; color:#f472b6; font-weight:bold; margin-right:2px;">%</span>
+                    <input type="number" id="inpManualRangeMax" min="0" max="100" step="any" placeholder="Maks" style="width:100%; background:transparent; border:none; outline:none; color:#fff; font-size:11px; font-family:monospace; font-weight:600; text-align:center;" onkeydown="if(event.key==='Enter') applyManualRangeInput();">
+                </div>
+                <button type="button" id="btnApplyManualRange" onclick="applyManualRangeInput()" style="background:#0284c7; hover:background:#0369a1; color:#fff; border:none; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:bold; cursor:pointer; flex-shrink:0;" title="Kaydıraç Aralığını Uygula">✓</button>
+            </div>
+
+            <!-- Hızlı Şablonlar -->
+            <div style="display:flex; flex-direction:column; gap:3px;">
+                <span style="font-size:9.5px; color:#94a3b8; font-weight:600;">⚡ Hızlı Şablonlar:</span>
+                <div style="display:flex; flex-wrap:wrap; gap:3px;">
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(60, 70)" title="En yoğun bulmaca kümesi (%60 - %70)">%60-70</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(64, 69.5)" title="2/3 fraktal çekim penceresi">%64-69.5</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(66.5, 66.8)" title="Matematiksel 2/3 Attractor">%66.6</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(25, 50)" title="2. Çeyrek Dilim">%25-50</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(50, 75)" title="3. Çeyrek Dilim">%50-75</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(0, 100)" title="Tam Uzay (%0 - %100)">%0-100</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ÇOKLU SEKME DİLİM MODU -->
@@ -1545,6 +1603,7 @@
                     </div>
                     <div class="crop-mini-group">
                         <button type="button" class="mini-crop-btn" id="btnCropSelection" onclick="cropSpaceToCurrentSelection()" style="background:transparent; color:#94a3b8; border:1px solid transparent;" title="Seçili aralığı yeni uzay olarak kırp & sabitle">✂️</button>
+                        <button type="button" class="mini-crop-btn" id="btnManualRangePrompt" onclick="toggleManualRangePopover(this, event)" style="background:transparent; color:#38bdf8; border:1px solid transparent;" title="🎯 Hassas Kaydıraç Aralığı Gir (% Min - % Maks)">🎯</button>
                         <button type="button" class="mini-crop-btn" id="btnResetCrop" onclick="resetSpaceCrop()" style="background:#991b1b; color:#fff; border-color:#ef4444; font-weight:bold; display:none;" title="Uzayı Sıfırla (Tam Uzay %0-%100)">↩️</button>
                     </div>
                     <span id="lblCropStatus" style="color:#f59e0b; font-size:11.5px; font-family:monospace; font-weight:bold; display:none; align-items:center; justify-content:center; height:26px; line-height:1; background:#1e1b4b; padding:0 8px; border-radius:4px; border:1px solid #6366f1; white-space:nowrap; flex-shrink:0; box-sizing:border-box;"></span>
@@ -1725,6 +1784,174 @@ const CryptoJS = (typeof window !== 'undefined' && window.CryptoJS) ? window.Cry
 const elliptic = (typeof window !== 'undefined' && window.elliptic) ? window.elliptic : ((typeof self !== 'undefined' && self.elliptic) ? self.elliptic : (typeof globalThis !== 'undefined' && globalThis.elliptic ? globalThis.elliptic : {}));
 
 const ALL_PUZZLES = [{"id": 1, "start": "1", "end": "1", "addr": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "status": "SOLVED", "reward": "0.1 BTC"}, {"id": 2, "start": "2", "end": "3", "addr": "1CUNEBjYrCn2y1SdiUMohaKUi4wpP326Lb", "status": "SOLVED", "reward": "0.2 BTC"}, {"id": 3, "start": "4", "end": "7", "addr": "19ZewH8Kk1PDbSNdJ97FP4EiCjTRaZMZQA", "status": "SOLVED", "reward": "0.3 BTC"}, {"id": 4, "start": "8", "end": "f", "addr": "1EhqbyUMvvs7BfL8goY6qcPbD6YKfPqb7e", "status": "SOLVED", "reward": "0.4 BTC"}, {"id": 5, "start": "10", "end": "1f", "addr": "1E6NuFjCi27W5zoXg8TRdcSRq84zJeBW3k", "status": "SOLVED", "reward": "0.5 BTC"}, {"id": 6, "start": "20", "end": "3f", "addr": "1PitScNLyp2HCygzadCh7FveTnfmpPbfp8", "status": "SOLVED", "reward": "0.6 BTC"}, {"id": 7, "start": "40", "end": "7f", "addr": "1McVt1vMtCC7yn5b9wgX1833yCcLXzueeC", "status": "SOLVED", "reward": "0.7 BTC"}, {"id": 8, "start": "80", "end": "ff", "addr": "1M92tSqNmQLYw33fuBvjmeadirh1ysMBxK", "status": "SOLVED", "reward": "0.8 BTC"}, {"id": 9, "start": "100", "end": "1ff", "addr": "1CQFwcjw1dwhtkVWBttNLDtqL7ivBonGPV", "status": "SOLVED", "reward": "0.9 BTC"}, {"id": 10, "start": "200", "end": "3ff", "addr": "1LeBZP5QCwwgXRtmVUvTVrraqPUokyLHqe", "status": "SOLVED", "reward": "1.0 BTC"}, {"id": 11, "start": "400", "end": "7ff", "addr": "1PgQVLmst3Z314JrQn5TNiys8Hc38TcXJu", "status": "SOLVED", "reward": "1.1 BTC"}, {"id": 12, "start": "800", "end": "fff", "addr": "1DBaumZxUkM4qMQRt2LVWyFJq5kDtSZQot", "status": "SOLVED", "reward": "1.2 BTC"}, {"id": 13, "start": "1000", "end": "1fff", "addr": "1Pie8JkxBT6MGPz9Nvi3fsPkr2D8q3GBc1", "status": "SOLVED", "reward": "1.3 BTC"}, {"id": 14, "start": "2000", "end": "3fff", "addr": "1ErZWg5cFCe4Vw5BzgfzB74VNLaXEiEkhk", "status": "SOLVED", "reward": "1.4 BTC"}, {"id": 15, "start": "4000", "end": "7fff", "addr": "1QCbW9HWnwQWiQqVo5exhAnmfqKRrCRsvW", "status": "SOLVED", "reward": "1.5 BTC"}, {"id": 16, "start": "8000", "end": "ffff", "addr": "1BDyrQ6WoF8VN3g9SAS1iKZcPzFfnDVieY", "status": "SOLVED", "reward": "1.6 BTC"}, {"id": 17, "start": "10000", "end": "1ffff", "addr": "1HduPEXZRdG26SUT5Yk83mLkPyjnZuJ7Bm", "status": "SOLVED", "reward": "1.7 BTC"}, {"id": 18, "start": "20000", "end": "3ffff", "addr": "1GnNTmTVLZiqQfLbAdp9DVdicEnB5GoERE", "status": "SOLVED", "reward": "1.8 BTC"}, {"id": 19, "start": "40000", "end": "7ffff", "addr": "1NWmZRpHH4XSPwsW6dsS3nrNWfL1yrJj4w", "status": "SOLVED", "reward": "1.9 BTC"}, {"id": 20, "start": "80000", "end": "fffff", "addr": "1HsMJxNiV7TLxmoF6uJNkydxPFDog4NQum", "status": "SOLVED", "reward": "2.0 BTC"}, {"id": 21, "start": "100000", "end": "1fffff", "addr": "14oFNXucftsHiUMY8uctg6N487riuyXs4h", "status": "SOLVED", "reward": "2.1 BTC"}, {"id": 22, "start": "200000", "end": "3fffff", "addr": "1CfZWK1QTQE3eS9qn61dQjV89KDjZzfNcv", "status": "SOLVED", "reward": "2.2 BTC"}, {"id": 23, "start": "400000", "end": "7fffff", "addr": "1L2GM8eE7mJWLdo3HZS6su1832NX2txaac", "status": "SOLVED", "reward": "2.3 BTC"}, {"id": 24, "start": "800000", "end": "ffffff", "addr": "1rSnXMr63jdCuegJFuidJqWxUPV7AtUf7", "status": "SOLVED", "reward": "2.4 BTC"}, {"id": 25, "start": "1000000", "end": "1ffffff", "addr": "15JhYXn6Mx3oF4Y7PcTAv2wVVAuCFFQNiP", "status": "SOLVED", "reward": "2.5 BTC"}, {"id": 26, "start": "2000000", "end": "3ffffff", "addr": "1JVnST957hGztonaWK6FougdtjxzHzRMMg", "status": "SOLVED", "reward": "2.6 BTC"}, {"id": 27, "start": "4000000", "end": "7ffffff", "addr": "128z5d7nN7PkCuX5qoA4Ys6pmxUYnEy86k", "status": "SOLVED", "reward": "2.7 BTC"}, {"id": 28, "start": "8000000", "end": "fffffff", "addr": "12jbtzBb54r97TCwW3G1gCFoumpckRAPdY", "status": "SOLVED", "reward": "2.8 BTC"}, {"id": 29, "start": "10000000", "end": "1fffffff", "addr": "19EEC52krRUK1RkUAEZmQdjTyHT7Gp1TYT", "status": "SOLVED", "reward": "2.9 BTC"}, {"id": 30, "start": "20000000", "end": "3fffffff", "addr": "1LHtnpd8nU5VHEMkG2TMYYNUjjLc992bps", "status": "SOLVED", "reward": "3.0 BTC"}, {"id": 31, "start": "40000000", "end": "7fffffff", "addr": "1LhE6sCTuGae42Axu1L1ZB7L96yi9irEBE", "status": "SOLVED", "reward": "3.1 BTC"}, {"id": 32, "start": "80000000", "end": "ffffffff", "addr": "1FRoHA9xewq7DjrZ1psWJVeTer8gHRqEvR", "status": "SOLVED", "reward": "3.2 BTC"}, {"id": 33, "start": "100000000", "end": "1ffffffff", "addr": "187swFMjz1G54ycVU56B7jZFHFTNVQFDiu", "status": "SOLVED", "reward": "3.3 BTC"}, {"id": 34, "start": "200000000", "end": "3ffffffff", "addr": "1PWABE7oUahG2AFFQhhvViQovnCr4rEv7Q", "status": "SOLVED", "reward": "3.4 BTC"}, {"id": 35, "start": "400000000", "end": "7ffffffff", "addr": "1PWCx5fovoEaoBowAvF5k91m2Xat9bMgwb", "status": "SOLVED", "reward": "3.5 BTC"}, {"id": 36, "start": "800000000", "end": "fffffffff", "addr": "1Be2UF9NLfyLFbtm3TCbmuocc9N1Kduci1", "status": "SOLVED", "reward": "3.6 BTC"}, {"id": 37, "start": "1000000000", "end": "1fffffffff", "addr": "14iXhn8bGajVWegZHJ18vJLHhntcpL4dex", "status": "SOLVED", "reward": "3.7 BTC"}, {"id": 38, "start": "2000000000", "end": "3fffffffff", "addr": "1HBtApAFA9B2YZw3G2YKSMCtb3dVnjuNe2", "status": "SOLVED", "reward": "3.8 BTC"}, {"id": 39, "start": "4000000000", "end": "7fffffffff", "addr": "122AJhKLEfkFBaGAd84pLp1kfE7xK3GdT8", "status": "SOLVED", "reward": "3.9 BTC"}, {"id": 40, "start": "8000000000", "end": "ffffffffff", "addr": "1EeAxcprB2PpCnr34VfZdFrkUWuxyiNEFv", "status": "SOLVED", "reward": "4.0 BTC"}, {"id": 41, "start": "10000000000", "end": "1ffffffffff", "addr": "1L5sU9qvJeuwQUdt4y1eiLmquFxKjtHr3E", "status": "SOLVED", "reward": "4.1 BTC"}, {"id": 42, "start": "20000000000", "end": "3ffffffffff", "addr": "1E32GPWgDyeyQac4aJxm9HVoLrrEYPnM4N", "status": "SOLVED", "reward": "4.2 BTC"}, {"id": 43, "start": "40000000000", "end": "7ffffffffff", "addr": "1PiFuqGpG8yGM5v6rNHWS3TjsG6awgEGA1", "status": "SOLVED", "reward": "4.3 BTC"}, {"id": 44, "start": "80000000000", "end": "fffffffffff", "addr": "1CkR2uS7LmFwc3T2jV8C1BhWb5mQaoxedF", "status": "SOLVED", "reward": "4.4 BTC"}, {"id": 45, "start": "100000000000", "end": "1fffffffffff", "addr": "1NtiLNGegHWE3Mp9g2JPkgx6wUg4TW7bbk", "status": "SOLVED", "reward": "4.5 BTC"}, {"id": 46, "start": "200000000000", "end": "3fffffffffff", "addr": "1F3JRMWudBaj48EhwcHDdpeuy2jwACNxjP", "status": "SOLVED", "reward": "4.6 BTC"}, {"id": 47, "start": "400000000000", "end": "7fffffffffff", "addr": "1Pd8VvT49sHKsmqrQiP61RsVwmXCZ6ay7Z", "status": "SOLVED", "reward": "4.7 BTC"}, {"id": 48, "start": "800000000000", "end": "ffffffffffff", "addr": "1DFYhaB2J9q1LLZJWKTnscPWos9VBqDHzv", "status": "SOLVED", "reward": "4.8 BTC"}, {"id": 49, "start": "1000000000000", "end": "1ffffffffffff", "addr": "12CiUhYVTTH33w3SPUBqcpMoqnApAV4WCF", "status": "SOLVED", "reward": "4.9 BTC"}, {"id": 50, "start": "2000000000000", "end": "3ffffffffffff", "addr": "1MEzite4ReNuWaL5Ds17ePKt2dCxWEofwk", "status": "SOLVED", "reward": "5.0 BTC"}, {"id": 51, "start": "4000000000000", "end": "7ffffffffffff", "addr": "1NpnQyZ7x24ud82b7WiRNvPm6N8bqGQnaS", "status": "SOLVED", "reward": "5.1 BTC"}, {"id": 52, "start": "8000000000000", "end": "fffffffffffff", "addr": "15z9c9sVpu6fwNiK7dMAFgMYSK4GqsGZim", "status": "SOLVED", "reward": "5.2 BTC"}, {"id": 53, "start": "10000000000000", "end": "1fffffffffffff", "addr": "15K1YKJMiJ4fpesTVUcByoz334rHmknxmT", "status": "SOLVED", "reward": "5.3 BTC"}, {"id": 54, "start": "20000000000000", "end": "3fffffffffffff", "addr": "1KYUv7nSvXx4642TKeuC2SNdTk326uUpFy", "status": "SOLVED", "reward": "5.4 BTC"}, {"id": 55, "start": "40000000000000", "end": "7fffffffffffff", "addr": "1LzhS3k3e9Ub8i2W1V8xQFdB8n2MYCHPCa", "status": "SOLVED", "reward": "5.5 BTC"}, {"id": 56, "start": "80000000000000", "end": "ffffffffffffff", "addr": "17aPYR1m6pVAacXg1PTDDU7XafvK1dxvhi", "status": "SOLVED", "reward": "5.6 BTC"}, {"id": 57, "start": "100000000000000", "end": "1ffffffffffffff", "addr": "15c9mPGLku1HuW9LRtBf4jcHVpBUt8txKz", "status": "SOLVED", "reward": "5.7 BTC"}, {"id": 58, "start": "200000000000000", "end": "3ffffffffffffff", "addr": "1Dn8NF8qDyyfHMktmuoQLGyjWmZXgvosXf", "status": "SOLVED", "reward": "5.8 BTC"}, {"id": 59, "start": "400000000000000", "end": "7ffffffffffffff", "addr": "1HAX2n9Uruu9YDt4cqRgYcvtGvZj1rbUyt", "status": "SOLVED", "reward": "5.9 BTC"}, {"id": 60, "start": "800000000000000", "end": "fffffffffffffff", "addr": "1Kn5h2qpgw9mWE5jKpk8PP4qvvJ1QVy8su", "status": "SOLVED", "reward": "6.0 BTC"}, {"id": 61, "start": "1000000000000000", "end": "1fffffffffffffff", "addr": "1AVJKwzs9AskraJLGHAZPiaZcrpDr1U6AB", "status": "SOLVED", "reward": "6.1 BTC"}, {"id": 62, "start": "2000000000000000", "end": "3fffffffffffffff", "addr": "1Me6EfpwZK5kQziBwBfvLiHjaPGxCKLoJi", "status": "SOLVED", "reward": "6.2 BTC"}, {"id": 63, "start": "4000000000000000", "end": "7fffffffffffffff", "addr": "1NpYjtLira16LfGbGwZJ5JbDPh3ai9bjf4", "status": "SOLVED", "reward": "6.3 BTC"}, {"id": 64, "start": "8000000000000000", "end": "ffffffffffffffff", "addr": "16jY7qLJnxb7CHZyqBP8qca9d51gAjyXQN", "status": "SOLVED", "reward": "6.4 BTC"}, {"id": 65, "start": "10000000000000000", "end": "1ffffffffffffffff", "addr": "18ZMbwUFLMHoZBbfpCjUJQTCMCbktshgpe", "status": "SOLVED", "reward": "6.5 BTC"}, {"id": 66, "start": "20000000000000000", "end": "3ffffffffffffffff", "addr": "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so", "status": "SOLVED", "reward": "6.6 BTC"}, {"id": 67, "start": "40000000000000000", "end": "7ffffffffffffffff", "addr": "1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9", "status": "SOLVED", "reward": "6.7 BTC"}, {"id": 68, "start": "80000000000000000", "end": "fffffffffffffffff", "addr": "1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ", "status": "SOLVED", "reward": "6.8 BTC"}, {"id": 69, "start": "100000000000000000", "end": "1fffffffffffffffff", "addr": "19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG", "status": "SOLVED", "reward": "6.9 BTC"}, {"id": 70, "start": "200000000000000000", "end": "3fffffffffffffffff", "addr": "19YZECXj3SxEZMoUeJ1yiPsw8xANe7M7QR", "status": "SOLVED", "reward": "7.0 BTC"}, {"id": 71, "start": "400000000000000000", "end": "7fffffffffffffffff", "addr": "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU", "status": "UNSOLVED", "reward": "7.1 BTC"}, {"id": 72, "start": "800000000000000000", "end": "ffffffffffffffffff", "addr": "1JTK7s9YVYywfm5XUH7RNhHJH1LshCaRFR", "status": "UNSOLVED", "reward": "7.2 BTC"}, {"id": 73, "start": "1000000000000000000", "end": "1ffffffffffffffffff", "addr": "12VVRNPi4SJqUTsp6FmqDqY5sGosDtysn4", "status": "UNSOLVED", "reward": "7.3 BTC"}, {"id": 74, "start": "2000000000000000000", "end": "3ffffffffffffffffff", "addr": "1FWGcVDK3JGzCC3WtkYetULPszMaK2Jksv", "status": "UNSOLVED", "reward": "7.4 BTC"}, {"id": 75, "start": "4000000000000000000", "end": "7ffffffffffffffffff", "addr": "1J36UjUByGroXcCvmj13U6uwaVv9caEeAt", "status": "SOLVED", "reward": "7.5 BTC"}, {"id": 76, "start": "8000000000000000000", "end": "fffffffffffffffffff", "addr": "1DJh2eHFYQfACPmrvpyWc8MSTYKh7w9eRF", "status": "UNSOLVED", "reward": "7.6 BTC"}, {"id": 77, "start": "10000000000000000000", "end": "1fffffffffffffffffff", "addr": "1Bxk4CQdqL9p22JEtDfdXMsng1XacifUtE", "status": "UNSOLVED", "reward": "7.7 BTC"}, {"id": 78, "start": "20000000000000000000", "end": "3fffffffffffffffffff", "addr": "15qF6X51huDjqTmF9BJgxXdt1xcj46Jmhb", "status": "UNSOLVED", "reward": "7.8 BTC"}, {"id": 79, "start": "40000000000000000000", "end": "7fffffffffffffffffff", "addr": "1ARk8HWJMn8js8tQmGUJeQHjSE7KRkn2t8", "status": "UNSOLVED", "reward": "7.9 BTC"}, {"id": 80, "start": "80000000000000000000", "end": "ffffffffffffffffffff", "addr": "1BCf6rHUW6m3iH2ptsvnjgLruAiPQQepLe", "status": "SOLVED", "reward": "8.0 BTC"}, {"id": 81, "start": "100000000000000000000", "end": "1ffffffffffffffffffff", "addr": "15qsCm78whspNQFydGJQk5rexzxTQopnHZ", "status": "UNSOLVED", "reward": "8.1 BTC"}, {"id": 82, "start": "200000000000000000000", "end": "3ffffffffffffffffffff", "addr": "13zYrYhhJxp6Ui1VV7pqa5WDhNWM45ARAC", "status": "UNSOLVED", "reward": "8.2 BTC"}, {"id": 83, "start": "400000000000000000000", "end": "7ffffffffffffffffffff", "addr": "14MdEb4eFcT3MVG5sPFG4jGLuHJSnt1Dk2", "status": "UNSOLVED", "reward": "8.3 BTC"}, {"id": 84, "start": "800000000000000000000", "end": "fffffffffffffffffffff", "addr": "1CMq3SvFcVEcpLMuuH8PUcNiqsK1oicG2D", "status": "UNSOLVED", "reward": "8.4 BTC"}, {"id": 85, "start": "1000000000000000000000", "end": "1fffffffffffffffffffff", "addr": "1Kh22PvXERd2xpTQk3ur6pPEqFeckCJfAr", "status": "SOLVED", "reward": "8.5 BTC"}, {"id": 86, "start": "2000000000000000000000", "end": "3fffffffffffffffffffff", "addr": "1K3x5L6G57Y494fDqBfrojD28UJv4s5JcK", "status": "UNSOLVED", "reward": "8.6 BTC"}, {"id": 87, "start": "4000000000000000000000", "end": "7fffffffffffffffffffff", "addr": "1PxH3K1Shdjb7gSEoTX7UPDZ6SH4qGPrvq", "status": "UNSOLVED", "reward": "8.7 BTC"}, {"id": 88, "start": "8000000000000000000000", "end": "ffffffffffffffffffffff", "addr": "16AbnZjZZipwHMkYKBSfswGWKDmXHjEpSf", "status": "UNSOLVED", "reward": "8.8 BTC"}, {"id": 89, "start": "10000000000000000000000", "end": "1ffffffffffffffffffffff", "addr": "19QciEHbGVNY4hrhfKXmcBBCrJSBZ6TaVt", "status": "UNSOLVED", "reward": "8.9 BTC"}, {"id": 90, "start": "20000000000000000000000", "end": "3ffffffffffffffffffffff", "addr": "1L12FHH2FHjvTviyanuiFVfmzCy46RRATU", "status": "SOLVED", "reward": "9.0 BTC"}, {"id": 91, "start": "40000000000000000000000", "end": "7ffffffffffffffffffffff", "addr": "1EzVHtmbN4fs4MiNk3ppEnKKhsmXYJ4s74", "status": "UNSOLVED", "reward": "9.1 BTC"}, {"id": 92, "start": "80000000000000000000000", "end": "fffffffffffffffffffffff", "addr": "1AE8NzzgKE7Yhz7BWtAcAAxiFMbPo82NB5", "status": "UNSOLVED", "reward": "9.2 BTC"}, {"id": 93, "start": "100000000000000000000000", "end": "1fffffffffffffffffffffff", "addr": "17Q7tuG2JwFFU9rXVj3uZqRtioH3mx2Jad", "status": "UNSOLVED", "reward": "9.3 BTC"}, {"id": 94, "start": "200000000000000000000000", "end": "3fffffffffffffffffffffff", "addr": "1K6xGMUbs6ZTXBnhw1pippqwK6wjBWtNpL", "status": "UNSOLVED", "reward": "9.4 BTC"}, {"id": 95, "start": "400000000000000000000000", "end": "7fffffffffffffffffffffff", "addr": "19eVSDuizydXxhohGh8Ki9WY9KsHdSwoQC", "status": "SOLVED", "reward": "9.5 BTC"}, {"id": 96, "start": "800000000000000000000000", "end": "ffffffffffffffffffffffff", "addr": "15ANYzzCp5BFHcCnVFzXqyibpzgPLWaD8b", "status": "UNSOLVED", "reward": "9.6 BTC"}, {"id": 97, "start": "1000000000000000000000000", "end": "1ffffffffffffffffffffffff", "addr": "18ywPwj39nGjqBrQJSzZVq2izR12MDpDr8", "status": "UNSOLVED", "reward": "9.7 BTC"}, {"id": 98, "start": "2000000000000000000000000", "end": "3ffffffffffffffffffffffff", "addr": "1CaBVPrwUxbQYYswu32w7Mj4HR4maNoJSX", "status": "UNSOLVED", "reward": "9.8 BTC"}, {"id": 99, "start": "4000000000000000000000000", "end": "7ffffffffffffffffffffffff", "addr": "1JWnE6p6UN7ZJBN7TtcbNDoRcjFtuDWoNL", "status": "UNSOLVED", "reward": "9.9 BTC"}, {"id": 100, "start": "8000000000000000000000000", "end": "fffffffffffffffffffffffff", "addr": "1KCgMv8fo2TPBpddVi9jqmMmcne9uSNJ5F", "status": "SOLVED", "reward": "10.0 BTC"}, {"id": 101, "start": "10000000000000000000000000", "end": "1fffffffffffffffffffffffff", "addr": "1CKCVdbDJasYmhswB6HKZHEAnNaDpK7W4n", "status": "UNSOLVED", "reward": "10.1 BTC"}, {"id": 102, "start": "20000000000000000000000000", "end": "3fffffffffffffffffffffffff", "addr": "1PXv28YxmYMaB8zxrKeZBW8dt2HK7RkRPX", "status": "UNSOLVED", "reward": "10.2 BTC"}, {"id": 103, "start": "40000000000000000000000000", "end": "7fffffffffffffffffffffffff", "addr": "1AcAmB6jmtU6AiEcXkmiNE9TNVPsj9DULf", "status": "UNSOLVED", "reward": "10.3 BTC"}, {"id": 104, "start": "80000000000000000000000000", "end": "ffffffffffffffffffffffffff", "addr": "1EQJvpsmhazYCcKX5Au6AZmZKRnzarMVZu", "status": "UNSOLVED", "reward": "10.4 BTC"}, {"id": 105, "start": "100000000000000000000000000", "end": "1ffffffffffffffffffffffffff", "addr": "1CMjscKB3QW7SDyQ4c3C3DEUHiHRhiZVib", "status": "SOLVED", "reward": "10.5 BTC"}, {"id": 106, "start": "200000000000000000000000000", "end": "3ffffffffffffffffffffffffff", "addr": "18KsfuHuzQaBTNLASyj15hy4LuqPUo1FNB", "status": "UNSOLVED", "reward": "10.6 BTC"}, {"id": 107, "start": "400000000000000000000000000", "end": "7ffffffffffffffffffffffffff", "addr": "15EJFC5ZTs9nhsdvSUeBXjLAuYq3SWaxTc", "status": "UNSOLVED", "reward": "10.7 BTC"}, {"id": 108, "start": "800000000000000000000000000", "end": "fffffffffffffffffffffffffff", "addr": "1HB1iKUqeffnVsvQsbpC6dNi1XKbyNuqao", "status": "UNSOLVED", "reward": "10.8 BTC"}, {"id": 109, "start": "1000000000000000000000000000", "end": "1fffffffffffffffffffffffffff", "addr": "1GvgAXVCbA8FBjXfWiAms4ytFeJcKsoyhL", "status": "UNSOLVED", "reward": "10.9 BTC"}, {"id": 110, "start": "2000000000000000000000000000", "end": "3fffffffffffffffffffffffffff", "addr": "12JzYkkN76xkwvcPT6AWKZtGX6w2LAgsJg", "status": "SOLVED", "reward": "11.0 BTC"}, {"id": 111, "start": "4000000000000000000000000000", "end": "7fffffffffffffffffffffffffff", "addr": "1824ZJQ7nKJ9QFTRBqn7z7dHV5EGpzUpH3", "status": "UNSOLVED", "reward": "11.1 BTC"}, {"id": 112, "start": "8000000000000000000000000000", "end": "ffffffffffffffffffffffffffff", "addr": "18A7NA9FTsnJxWgkoFfPAFbQzuQxpRtCos", "status": "UNSOLVED", "reward": "11.2 BTC"}, {"id": 113, "start": "10000000000000000000000000000", "end": "1ffffffffffffffffffffffffffff", "addr": "1NeGn21dUDDeqFQ63xb2SpgUuXuBLA4WT4", "status": "UNSOLVED", "reward": "11.3 BTC"}, {"id": 114, "start": "20000000000000000000000000000", "end": "3ffffffffffffffffffffffffffff", "addr": "174SNxfqpdMGYy5YQcfLbSTK3MRNZEePoy", "status": "UNSOLVED", "reward": "11.4 BTC"}, {"id": 115, "start": "40000000000000000000000000000", "end": "7ffffffffffffffffffffffffffff", "addr": "1NLbHuJebVwUZ1XqDjsAyfTRUPwDQbemfv", "status": "SOLVED", "reward": "11.5 BTC"}, {"id": 116, "start": "80000000000000000000000000000", "end": "fffffffffffffffffffffffffffff", "addr": "1MnJ6hdhvK37VLmqcdEwqC3iFxyWH2PHUV", "status": "UNSOLVED", "reward": "11.6 BTC"}, {"id": 117, "start": "100000000000000000000000000000", "end": "1fffffffffffffffffffffffffffff", "addr": "1KNRfGWw7Q9Rmwsc6NT5zsdvEb9M2Wkj5Z", "status": "UNSOLVED", "reward": "11.7 BTC"}, {"id": 118, "start": "200000000000000000000000000000", "end": "3fffffffffffffffffffffffffffff", "addr": "1PJZPzvGX19a7twf5HyD2VvNiPdHLzm9F6", "status": "UNSOLVED", "reward": "11.8 BTC"}, {"id": 119, "start": "400000000000000000000000000000", "end": "7fffffffffffffffffffffffffffff", "addr": "1GuBBhf61rnvRe4K8zu8vdQB3kHzwFqSy7", "status": "UNSOLVED", "reward": "11.9 BTC"}, {"id": 120, "start": "800000000000000000000000000000", "end": "ffffffffffffffffffffffffffffff", "addr": "17s2b9ksz5y7abUm92cHwG8jEPCzK3dLnT", "status": "SOLVED", "reward": "12.0 BTC"}, {"id": 121, "start": "1000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffff", "addr": "1GDSuiThEV64c166LUFC9uDcVdGjqkxKyh", "status": "UNSOLVED", "reward": "12.1 BTC"}, {"id": 122, "start": "2000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffff", "addr": "1Me3ASYt5JCTAK2XaC32RMeH34PdprrfDx", "status": "UNSOLVED", "reward": "12.2 BTC"}, {"id": 123, "start": "4000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffff", "addr": "1CdufMQL892A69KXgv6UNBD17ywWqYpKut", "status": "UNSOLVED", "reward": "12.3 BTC"}, {"id": 124, "start": "8000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffff", "addr": "1BkkGsX9ZM6iwL3zbqs7HWBV7SvosR6m8N", "status": "UNSOLVED", "reward": "12.4 BTC"}, {"id": 125, "start": "10000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffff", "addr": "1PXAyUB8ZoH3WD8n5zoAthYjN15yN5CVq5", "status": "SOLVED", "reward": "12.5 BTC"}, {"id": 126, "start": "20000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffff", "addr": "1AWCLZAjKbV1P7AHvaPNCKiB7ZWVDMxFiz", "status": "UNSOLVED", "reward": "12.6 BTC"}, {"id": 127, "start": "40000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffff", "addr": "1G6EFyBRU86sThN3SSt3GrHu1sA7w7nzi4", "status": "UNSOLVED", "reward": "12.7 BTC"}, {"id": 128, "start": "80000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffff", "addr": "1MZ2L1gFrCtkkn6DnTT2e4PFUTHw9gNwaj", "status": "UNSOLVED", "reward": "12.8 BTC"}, {"id": 129, "start": "100000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffff", "addr": "1Hz3uv3nNZzBVMXLGadCucgjiCs5W9vaGz", "status": "UNSOLVED", "reward": "12.9 BTC"}, {"id": 130, "start": "200000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffff", "addr": "1Fo65aKq8s8iquMt6weF1rku1moWVEd5Ua", "status": "SOLVED", "reward": "13.0 BTC"}, {"id": 131, "start": "400000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffff", "addr": "16zRPnT8znwq42q7XeMkZUhb1bKqgRogyy", "status": "UNSOLVED", "reward": "13.1 BTC"}, {"id": 132, "start": "800000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffff", "addr": "1KrU4dHE5WrW8rhWDsTRjR21r8t3dsrS3R", "status": "UNSOLVED", "reward": "13.2 BTC"}, {"id": 133, "start": "1000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffff", "addr": "17uDfp5r4n441xkgLFmhNoSW1KWp6xVLD", "status": "UNSOLVED", "reward": "13.3 BTC"}, {"id": 134, "start": "2000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffff", "addr": "13A3JrvXmvg5w9XGvyyR4JEJqiLz8ZySY3", "status": "UNSOLVED", "reward": "13.4 BTC"}, {"id": 135, "start": "4000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffff", "addr": "16RGFo6hjq9ym6Pj7N5H7L1NR1rVPJyw2v", "status": "SOLVED", "reward": "13.5 BTC"}, {"id": 136, "start": "8000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffff", "addr": "1UDHPdovvR985NrWSkdWQDEQ1xuRiTALq", "status": "UNSOLVED", "reward": "13.6 BTC"}, {"id": 137, "start": "10000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffff", "addr": "15nf31J46iLuK1ZkTnqHo7WgN5cARFK3RA", "status": "UNSOLVED", "reward": "13.7 BTC"}, {"id": 138, "start": "20000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffff", "addr": "1Ab4vzG6wEQBDNQM1B2bvUz4fqXXdFk2WT", "status": "UNSOLVED", "reward": "13.8 BTC"}, {"id": 139, "start": "40000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffff", "addr": "1Fz63c775VV9fNyj25d9Xfw3YHE6sKCxbt", "status": "UNSOLVED", "reward": "13.9 BTC"}, {"id": 140, "start": "80000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffff", "addr": "1QKBaU6WAeycb3DbKbLBkX7vJiaS8r42Xo", "status": "UNSOLVED", "reward": "14.0 BTC"}, {"id": 141, "start": "100000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffff", "addr": "1CD91Vm97mLQvXhrnoMChhJx4TP9MaQkJo", "status": "UNSOLVED", "reward": "14.1 BTC"}, {"id": 142, "start": "200000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffff", "addr": "15MnK2jXPqTMURX4xC3h4mAZxyCcaWWEDD", "status": "UNSOLVED", "reward": "14.2 BTC"}, {"id": 143, "start": "400000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffff", "addr": "13N66gCzWWHEZBxhVxG18P8wyjEWF9Yoi1", "status": "UNSOLVED", "reward": "14.3 BTC"}, {"id": 144, "start": "800000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffff", "addr": "1NevxKDYuDcCh1ZMMi6ftmWwGrZKC6j7Ux", "status": "UNSOLVED", "reward": "14.4 BTC"}, {"id": 145, "start": "1000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffff", "addr": "19GpszRNUej5yYqxXoLnbZWKew3KdVLkXg", "status": "UNSOLVED", "reward": "14.5 BTC"}, {"id": 146, "start": "2000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffff", "addr": "1M7ipcdYHey2Y5RZM34MBbpugghmjaV89P", "status": "UNSOLVED", "reward": "14.6 BTC"}, {"id": 147, "start": "4000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffff", "addr": "18aNhurEAJsw6BAgtANpexk5ob1aGTwSeL", "status": "UNSOLVED", "reward": "14.7 BTC"}, {"id": 148, "start": "8000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffff", "addr": "1FwZXt6EpRT7Fkndzv6K4b4DFoT4trbMrV", "status": "UNSOLVED", "reward": "14.8 BTC"}, {"id": 149, "start": "10000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffff", "addr": "1CXvTzR6qv8wJ7eprzUKeWxyGcHwDYP1i2", "status": "UNSOLVED", "reward": "14.9 BTC"}, {"id": 150, "start": "20000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffff", "addr": "1MUJSJYtGPVGkBCTqGspnxyHahpt5Te8jy", "status": "UNSOLVED", "reward": "15.0 BTC"}, {"id": 151, "start": "40000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffff", "addr": "13Q84TNNvgcL3HJiqQPvyBb9m4hxjS3jkV", "status": "UNSOLVED", "reward": "15.1 BTC"}, {"id": 152, "start": "80000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffff", "addr": "1LuUHyrQr8PKSvbcY1v1PiuGuqFjWpDumN", "status": "UNSOLVED", "reward": "15.2 BTC"}, {"id": 153, "start": "100000000000000000000000000000000000000", "end": "1ffffffffffffffffffffffffffffffffffffff", "addr": "18192XpzzdDi2K11QVHR7td2HcPS6Qs5vg", "status": "UNSOLVED", "reward": "15.3 BTC"}, {"id": 154, "start": "200000000000000000000000000000000000000", "end": "3ffffffffffffffffffffffffffffffffffffff", "addr": "1NgVmsCCJaKLzGyKLFJfVequnFW9ZvnMLN", "status": "UNSOLVED", "reward": "15.4 BTC"}, {"id": 155, "start": "400000000000000000000000000000000000000", "end": "7ffffffffffffffffffffffffffffffffffffff", "addr": "1AoeP37TmHdFh8uN72fu9AqgtLrUwcv2wJ", "status": "UNSOLVED", "reward": "15.5 BTC"}, {"id": 156, "start": "800000000000000000000000000000000000000", "end": "fffffffffffffffffffffffffffffffffffffff", "addr": "1FTpAbQa4h8trvhQXjXnmNhqdiGBd1oraE", "status": "UNSOLVED", "reward": "15.6 BTC"}, {"id": 157, "start": "1000000000000000000000000000000000000000", "end": "1fffffffffffffffffffffffffffffffffffffff", "addr": "14JHoRAdmJg3XR4RjMDh6Wed6ft6hzbQe9", "status": "UNSOLVED", "reward": "15.7 BTC"}, {"id": 158, "start": "2000000000000000000000000000000000000000", "end": "3fffffffffffffffffffffffffffffffffffffff", "addr": "19z6waranEf8CcP8FqNgdwUe1QRxvUNKBG", "status": "UNSOLVED", "reward": "15.8 BTC"}, {"id": 159, "start": "4000000000000000000000000000000000000000", "end": "7fffffffffffffffffffffffffffffffffffffff", "addr": "14u4nA5sugaswb6SZgn5av2vuChdMnD9E5", "status": "UNSOLVED", "reward": "15.9 BTC"}, {"id": 160, "start": "8000000000000000000000000000000000000000", "end": "ffffffffffffffffffffffffffffffffffffffff", "addr": "1NBC8uXJy1GiJ6drkiZa1WuKn51ps7EPTv", "status": "UNSOLVED", "reward": "16.0 BTC"}];
+
+// 🏆 GEÇMİŞTE ÇÖZÜLMÜŞ BULMACALARIN TAM ÖZEL ANAHTAR VE KONUM VERİTABANI (1 - 135)
+const HISTORICAL_SOLVED_KEYS = {
+    1: { key: '1', pct: 100.0 },
+    2: { key: '3', pct: 100.0 },
+    3: { key: '7', pct: 100.0 },
+    4: { key: '8', pct: 0.0 },
+    5: { key: '14', pct: 26.6667 },
+    6: { key: '35', pct: 67.7419 },
+    7: { key: '6f', pct: 74.6032 },
+    8: { key: 'b3', pct: 40.1575 },
+    9: { key: '14f', pct: 30.9804 },
+    10: { key: '3bf', pct: 87.4755 },
+    11: { key: '4bb', pct: 18.2796 },
+    12: { key: 'a03', pct: 25.1588 },
+    13: { key: '1a9f', pct: 66.398 },
+    14: { key: '2197', pct: 4.9689 },
+    15: { key: '53a2', pct: 30.6781 },
+    16: { key: 'e875', pct: 81.6095 },
+    17: { key: '17dc8', pct: 49.1341 },
+    18: { key: '20b8f', pct: 2.2576 },
+    19: { key: '57492', pct: 36.384 },
+    20: { key: 'b9418', pct: 44.7312 },
+    21: { key: '174a58', pct: 45.5651 },
+    22: { key: '3b1aa7', pct: 84.7004 },
+    23: { key: '556e69', pct: 33.4864 },
+    24: { key: 'cda08d', pct: 60.6462 },
+    25: { key: '1b48b78', pct: 70.5253 },
+    26: { key: '2276580', pct: 7.6946 },
+    27: { key: '57bfca2', pct: 37.1081 },
+    28: { key: '8c60c38', pct: 9.6703 },
+    29: { key: '17e2551e', pct: 49.2757 },
+    30: { key: '3d94cd64', pct: 92.4414 },
+    31: { key: '7d4fe747', pct: 95.8002 },
+    32: { key: 'b862a62e', pct: 44.0511 },
+    33: { key: '1a96ca8d8', pct: 66.1814 },
+    34: { key: '34a65911d', pct: 64.5306 },
+    35: { key: '4c8f5f3e2', pct: 19.6251 },
+    36: { key: '9de820a7c', pct: 23.3646 },
+    37: { key: '1757756a93', pct: 45.8852 },
+    38: { key: '22382facd0', pct: 6.9359 },
+    39: { key: '4b5f8303e9', pct: 17.7705 },
+    40: { key: 'e9ae4933d6', pct: 82.5631 },
+    41: { key: '153869acc5b', pct: 32.6273 },
+    42: { key: '2a221c58d8f', pct: 31.6664 },
+    43: { key: '6bd3b27c591', pct: 68.4796 },
+    44: { key: 'e02b35a358f', pct: 75.1319 },
+    45: { key: '122fca143c05', pct: 13.6667 },
+    46: { key: '2ec18388d544', pct: 46.1122 },
+    47: { key: '6cd610b53cba', pct: 70.0566 },
+    48: { key: 'ade6d7ce3b9b', pct: 35.8607 },
+    49: { key: '174176b015f4d', pct: 45.3482 },
+    50: { key: '22bd43c2e9354', pct: 8.5604 },
+    51: { key: '75070a1a009d4', pct: 82.8555 },
+    52: { key: 'efae164cb9e3c', pct: 87.25 },
+    53: { key: '180788e47e326c', pct: 50.184 },
+    54: { key: '236fb6d5ad1f43', pct: 10.7387 },
+    55: { key: '6abe1f9b67e114', pct: 66.7854 },
+    56: { key: '9d18b63ac4ffdf', pct: 22.7317 },
+    57: { key: '1eb25c90795d61c', pct: 91.8545 },
+    58: { key: '2c675b852189a21', pct: 38.7617 },
+    59: { key: '7496cbb87cab44f', pct: 82.1704 },
+    60: { key: 'fc07a1825367bbe', pct: 96.8983 },
+    61: { key: '13c96a3742f64906', pct: 23.6674 },
+    62: { key: '363d541eb611abee', pct: 69.4986 },
+    63: { key: '7cce5efdaccf6808', pct: 95.0096 },
+    64: { key: 'f7051f27b09112d4', pct: 92.9844 },
+    65: { key: '1a838b13505b26867', pct: 65.7115 },
+    66: { key: '2832ed74f2b5e35ee', pct: 25.6217 },
+    67: { key: '730fc235c1942c1ae', pct: 79.7837 },
+    68: { key: 'bebb3940cd0fc1491', pct: 49.0089 },
+    69: { key: '101d83275fb2bc7e0c', pct: 0.7205 },
+    70: { key: '349b84b6431a6c4ef1', pct: 64.3984 },
+    75: { key: '4c5ce114686a1336e07', pct: 19.3169 },
+    80: { key: 'ea1a5c66dcc11b5ad180', pct: 82.8929 },
+    85: { key: '11720c4f018d51b8cebba8', pct: 9.0344 },
+    90: { key: '2ce00bb2136a445c71e85bf', pct: 40.2349 },
+    95: { key: '527a792b183c7f64a0e8b1f4', pct: 28.8725 },
+    100: { key: 'af55fc59c335c8ec67ed24826', pct: 36.9812 },
+    105: { key: '16f14fc2054cd87ee6396b33df3', pct: 43.3914 },
+    110: { key: '35c0d7234df7deb0f20cf7062444', pct: 67.979 },
+    115: { key: '60f4d11574f5deee49961d9609ac6', pct: 51.4942 },
+    120: { key: 'b10f22572c497a836ea187f2e1fc23', pct: 38.3274 },
+    125: { key: '1c533b6bb7f0804e09960225e44877ac', pct: 77.032 },
+    130: { key: '33e7665705359f04f28b88cf897c603c9', pct: 62.1997 },
+    135: { key: '6d9392a16883f90903d5f78da57af07eb2', pct: 71.2132 },
+};
+
+// ============================================================
+// 🦘 POLLARD'S KANGAROO AÇIK ANAHTAR VERİTABANI
+// ============================================================
+const EXPOSED_KANGAROO_PUBKEYS = {
+    19:  '0385663c8b2f90659e1ccab201694f4f8ec24b3749cfe5030c7c3646a709408e19', // #19 Solved (19-bit, key 0x5749f)
+    23:  '03f82710361b8b81bdedb16994f30c80db522450a93e8e87eeb07f7903cf28d04b', // #23 Solved (23-bit, key 0x556e52)
+    38:  '03c060e1e3771cbeccb38e119c2414702f3f5181a89652538851d2e3886bdd70c6', // #38 Solved (38-bit, key 0x22382facd0)
+    30: '030d282cf2ff536d2c42f105d0b8588821a915dc3f9a05bd98bb23af67a2e92a5b', // #30 Solved
+    31: '0387dc70db1806cd9a9a76637412ec11dd998be666584849b3185f7f9313c8fd28', // #31 Solved
+    32: '0209c58240e50e3ba3f833c82655e8725c037a2294e14cf5d73a5df8d56159de69', // #32 Solved
+    33: '03a355aa5e2e09dd44bb46a4722e9336e9e3ee4ee4e7b7a0cf5785b283bf2ab579', // #33 Solved
+    34: '033cdd9d6d97cbfe7c26f902faf6a435780fe652e159ec953650ec7b1004082790', // #34 Solved
+    36: '02b3e772216695845fa9dda419fb5daca28154d8aa59ea302f05e916635e47b9f6', // #36 Solved
+    37: '027d2c03c3ef0aec70f2c7e1e75454a5dfdd0e1adea670c1b3a4643c48ad0f1255', // #37 Solved
+    39: '022d77cd1467019a6bf28f7375d0949ce30e6b5815c2758b98a74c2700bc006543', // #39 Solved
+    40: '03a2efa402fd5268400c77c20e574ba86409ededee7c4020e4b9f0edbee53de0d4', // #40 Solved
+    41: '03b357e68437da273dcf995a474a524439faad86fc9effc300183f714b0903468b', // #41 Solved
+    42: '03eec88385be9da803a0d6579798d977a5d0c7f80917dab49cb73c9e3927142cb6', // #42 Solved
+    43: '02a631f9ba0f28511614904df80d7f97a4f43f02249c8909dac92276ccf0bcdaed', // #43 Solved
+    44: '025e466e97ed0e7910d3d90ceb0332df48ddf67d456b9e7303b50a3d89de357336', // #44 Solved
+    45: '026ecabd2d22fdb737be21975ce9a694e108eb94f3649c586cc7461c8abf5da71a', // #45 Solved
+    46: '03fd5487722d2576cb6d7081426b66a3e2986c1ce8358d479063fb5f2bb6dd5849', // #46 Solved
+    47: '023a12bd3caf0b0f77bf4eea8e7a40dbe27932bf80b19ac72f5f5a64925a594196', // #47 Solved
+    48: '0291bee5cf4b14c291c650732faa166040e4c18a14731f9a930c1e87d3ec12debb', // #48 Solved
+    49: '02591d682c3da4a2a698633bf5751738b67c343285ebdc3492645cb44658911484', // #49 Solved
+    50: '03f46f41027bbf44fafd6b059091b900dad41e6845b2241dc3254c7cdd3c5a16c6', // #50 Solved
+    51: '028c6c67bef9e9eebe6a513272e50c230f0f91ed560c37bc9b033241ff6c3be78f', // #51 Solved
+    52: '0374c33bd548ef02667d61341892134fcf216640bc2201ae61928cd0874f6314a7', // #52 Solved
+    53: '020faaf5f3afe58300a335874c80681cf66933e2a7aeb28387c0d28bb048bc6349', // #53 Solved
+    54: '034af4b81f8c450c2c870ce1df184aff1297e5fcd54944d98d81e1a545ffb22596', // #54 Solved
+    55: '0385a30d8413af4f8f9e6312400f2d194fe14f02e719b24c3f83bf1fd233a8f963', // #55 Solved
+    56: '033f2db2074e3217b3e5ee305301eeebb1160c4fa1e993ee280112f6348637999a', // #56 Solved
+    57: '02a521a07e98f78b03fc1e039bc3a51408cd73119b5eb116e583fe57dc8db07aea', // #57 Solved
+    58: '0311569442e870326ceec0de24eb5478c19e146ecd9d15e4666440f2f638875f42', // #58 Solved
+    59: '0241267d2d7ee1a8e76f8d1546d0d30aefb2892d231cee0dde7776daf9f8021485', // #59 Solved
+    60: '0348e843dc5b1bd246e6309b4924b81543d02b16c8083df973a89ce2c7eb89a10d', // #60 Solved
+    61: '0249a43860d115143c35c09454863d6f82a95e47c1162fb9b2ebe0186eb26f453f', // #61 Solved
+    62: '03231a67e424caf7d01a00d5cd49b0464942255b8e48766f96602bdfa4ea14fea8', // #62 Solved
+    63: '0365ec2994b8cc0a20d40dd69edfe55ca32a54bcbbaa6b0ddcff36049301a54579', // #63 Solved
+    64: '03100611c54dfef604163b8358f7b7fac13ce478e02cb224ae16d45526b25d9d4d', // #64 Solved
+    65: '0230210c23b1a047bc9bdbb13448e67deddc108946de6de639bcc75d47c0216b1b', // #65 Solved
+    66: '024ee2be2d4e9f92d2f5a4a03058617dc45befe22938feed5b7a6b7282dd74cbdd', // #66 Solved
+    67: '0212209f5ec514a1580a2937bd833979d933199fc230e204c6cdc58872b7d46f75', // #67 Solved
+    68: '031fe02f1d740637a7127cdfe8a77a8a0cfc6435f85e7ec3282cb6243c0a93ba1b', // #68 Solved
+    69: '024babadccc6cfd5f0e5e7fd2a50aa7d677ce0aa16fdce26a0d0882eed03e7ba53', // #69 Solved
+    70: '0290e6900a58d33393bc1097b5aed31f2e4e7cbd3e5466af958665bc0121248483', // #70 Solved
+    75: '03726b574f193e374686d8e12bc6e4142adeb06770e0a2856f5e4ad89f66044755', // #75 Solved
+    80: '037e1238f7b1ce757df94faa9a2eb261bf0aeb9f84dbf81212104e78931c2a19dc', // #80 Solved
+    85: '0329c4574a4fd8c810b7e42a4b398882b381bcd85e40c6883712912d167c83e73a', // #85 Solved
+    90: '035c38bd9ae4b10e8a250857006f3cfd98ab15a6196d9f4dfd25bc7ecc77d788d5', // #90 Solved
+    95: '02967a5905d6f3b420959a02789f96ab4c3223a2c4d2762f817b7895c5bc88a045', // #95 Solved
+    100: '03d2063d40402f030d4cc71331468827aa41a8a09bd6fd801ba77fb64f8e67e617', // #100 Solved
+    105: '03bcf7ce887ffca5e62c9cabbdb7ffa71dc183c52c04ff4ee5ee82e0c55c39d77b', // #105 Solved
+    110: '0309976ba5570966bf889196b7fdf5a0f9a1e9ab340556ec29f8bb60599616167d', // #110 Solved
+    115: '0248d313b0398d4923cdca73b8cfa6532b91b96703902fc8b32fd438a3b7cd7f55', // #115 Solved
+    120: '02ceb6cbbcdbdf5ef7150682150f4ce2c6f4807b349827dcdbdd1f2efa885a2630', // #120 Solved
+    125: '0233709eb11e0d4439a729f21c2c443dedb727528229713f0065721ba8fa46f00e', // #125 Solved
+    130: '03633cbe3ec02b9401c5effa144c5b4d22f87940259634858fc7e59b1c09937852', // #130 Solved
+    135: '02145d2611c823a396ef6712ce0f712f09b9b4f3135e3e0aa3230fb9b6d08d1e16', // #135 Solved
+    140: '031f6a332d3c5c4f2de2378c012f429cd109ba07d69690c6c701b6bb87860d6640', // #140 (14.0 BTC)
+    145: '03afdda497369e219a2c1c369954a930e4d3740968e5e4352475bcffce3140dae5', // #145 (14.5 BTC)
+    150: '03137807790ea7dc6e97901c2bc87411f45ed74a5629315c4e4b03a0a102250c49', // #150 (15.0 BTC)
+    155: '035cd1854cae45391ca4ec428cc7e6c7d9984424b954209a8eea197b9e364c05f6', // #155 (15.5 BTC)
+    160: '02e0a8b039282faf6fe0fd769cfbc4b6b4cf8758ba68220eac420e32b91ddfa673'  // #160 (16.0 BTC)
+};
+
+
+// 🧠 Çözülmüş bulmacaların özel anahtarlarını doğrudan ALL_PUZZLES RAM hafızasına enjekte et
+if (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) {
+    ALL_PUZZLES.forEach(p => {
+        if (HISTORICAL_SOLVED_KEYS[p.id]) {
+            p.privateKey = '0x' + HISTORICAL_SOLVED_KEYS[p.id].key;
+            p.privKey = '0x' + HISTORICAL_SOLVED_KEYS[p.id].key;
+            p.solvedKey = '0x' + HISTORICAL_SOLVED_KEYS[p.id].key;
+            p.solvedPct = HISTORICAL_SOLVED_KEYS[p.id].pct;
+        }
+    });
+}
+window.HISTORICAL_SOLVED_KEYS = HISTORICAL_SOLVED_KEYS;
+
 
 let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'SOBOL', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'HALTON', 'SCRAMBLED_SOBOL', 'MCMC', 'SPHERICAL_ORBITAL', 'ADDR_HOP_SWEEP', 'LEVY_FLIGHT', 'CONTINUED_FRACTIONS', 'ULAM_SPIRAL'
 let autoAlgoList = [
@@ -1995,8 +2222,12 @@ function onHexSliderChange(type) {
         const partStart = (part && part.isPartitioned) ? part.partStart : tStart;
         const partEnd   = (part && part.isPartitioned) ? part.partEnd   : tEnd;
 
-        sliderMinHex = tStart + (total * BigInt(minStep) / 1000000000000n);
-        sliderMaxHex = tStart + (total * BigInt(maxStep) / 1000000000000n);
+        // Elle girilmiş tam hex değerleri, ilgili kaydıraç oynatılmadıkça 1e12 çözünürlüğüne yuvarlanmasın
+        const _stepOfHex = (h) => (total > 0n) ? Number(((h - tStart) * 1000000000000n) / total) : 0;
+        const _keepMin = (type !== 'MIN' && sliderMinHex !== null && Math.abs(_stepOfHex(sliderMinHex) - minStep) <= 1);
+        const _keepMax = (type !== 'MAX' && sliderMaxHex !== null && Math.abs(_stepOfHex(sliderMaxHex) - maxStep) <= 1);
+        if (!_keepMin) sliderMinHex = tStart + (total * BigInt(Math.round(minStep)) / 1000000000000n);
+        if (!_keepMax) sliderMaxHex = tStart + (total * BigInt(Math.round(maxStep)) / 1000000000000n);
 
         if (sliderMinHex < partStart) sliderMinHex = partStart;
         if (sliderMaxHex > partEnd)   sliderMaxHex = partEnd;
@@ -2042,6 +2273,8 @@ function onHexSliderInputChange(type) {
 
     isSliderSyncBusy = true;
     try {
+        if (sliderMinHex === null) sliderMinHex = limitStart;
+        if (sliderMaxHex === null) sliderMaxHex = limitEnd;
         if (type === 'MIN' && hexMinInp) {
             let raw = hexMinInp.value.trim().toLowerCase().replace(/^0x/, '').replace(/[^0-9a-f]/g, '');
             if (raw) {
@@ -3719,7 +3952,7 @@ function applyFormulaPreset(formula, isRemoteSync = false, isSilent = false) {
     const lblApi = null;
     const logAlgo = document.getElementById('logAlgo');
 
-    // Çalışma Modu Tabı: 🌀 Fizik
+    // Çalışma Modu Tabı: PERCENT (Doğrudan Kaydıraç & Tam Aralık Kontrolü)
     activeRangeMode = 'PHYSICS';
     const tPhys = document.getElementById('tabModePhysics'); if (tPhys) tPhys.classList.add('active');
     const pPhys = document.getElementById('panelPhysics'); if (pPhys) pPhys.style.display = 'flex';
@@ -3822,12 +4055,7 @@ function applyFormulaPreset(formula, isRemoteSync = false, isSilent = false) {
     } else if (formula === 'OMNI_CHAOS') {
         const isKangaroo = (typeof isKangarooModeActive === 'function' && isKangarooModeActive());
         if (isKangaroo) {
-            const kangAlgo = (selectedAlgorithm === 'KANGAROO_KRONECKER') ? 'KANGAROO_KRONECKER' :
-                (selectedAlgorithm === 'GLV_LATTICE_2D') ? 'GLV_LATTICE_2D' :
-                (selectedAlgorithm === 'KANGAROO_SOBOL') ? 'KANGAROO_SOBOL' :
-                (selectedAlgorithm === 'KANGAROO_GLV') ? 'KANGAROO_GLV' :
-                (selectedAlgorithm === 'KANGAROO_MONTGOMERY') ? 'KANGAROO_MONTGOMERY' :
-                (selectedAlgorithm === 'KANGAROO_ANCHOR') ? 'KANGAROO_ANCHOR' : 'KANGAROO';
+            const kangAlgo = ['KANGAROO_4WAY_GPR','KANGAROO_ALIGNED','KANGAROO_KRONECKER','GLV_LATTICE_2D','KANGAROO_SOBOL','KANGAROO_GLV','KANGAROO_MONTGOMERY','KANGAROO_ANCHOR'].includes(selectedAlgorithm) ? selectedAlgorithm : 'KANGAROO';
             selectedAlgorithm = kangAlgo;
             if (algoSel) algoSel.value = kangAlgo;
             const bKangId = kangAlgo === 'KANGAROO_SOBOL' ? 'btnAlgoKangarooSobol' :
@@ -3843,12 +4071,16 @@ function applyFormulaPreset(formula, isRemoteSync = false, isSilent = false) {
                     (kangAlgo === 'KANGAROO_GLV') ? '⚡🦘 GLV-Kangaroo (4-Way GLV Sürü)' :
                     (kangAlgo === 'KANGAROO_MONTGOMERY') ? '⚡🚀 SIMD Montgomery (64-Herd Sürü)' :
                     (kangAlgo === 'KANGAROO_ANCHOR') ? '🦘⚓ Evrensel Çapa & Birikimli Tuzak (Global Anchor)' :
+                    (kangAlgo === 'KANGAROO_4WAY_GPR') ? '🦘⚡ 4-Kanguru GPR Modeli (1.714√N + Negasyon)' :
+                    (kangAlgo === 'KANGAROO_ALIGNED') ? '🦘🧩 Hizalı Sürü Kangaroo (Weyl Dağılımlı Başlangıç)' :
                     '🦘 Pollard Kangaroo (Tuzak & Vahşi Sürü)';
                 logAlgo.style.color = (kangAlgo === 'KANGAROO_KRONECKER') ? '#f59e0b' :
                     (kangAlgo === 'GLV_LATTICE_2D') ? '#38bdf8' :
                     (kangAlgo === 'KANGAROO_SOBOL') ? '#10b981' :
                     (kangAlgo === 'KANGAROO_GLV') ? '#38bdf8' :
                     (kangAlgo === 'KANGAROO_MONTGOMERY') ? '#a855f7' :
+                    (kangAlgo === 'KANGAROO_4WAY_GPR') ? '#38bdf8' :
+                    (kangAlgo === 'KANGAROO_ALIGNED') ? '#a78bfa' :
                     (kangAlgo === 'KANGAROO_ANCHOR') ? '#06b6d4' : '#06b6d4';
             }
         } else {
@@ -4959,21 +5191,16 @@ function randomBigIntInRange(min, max) {
 // 🦘 POLLARD'S KANGAROO METADATA & DURUM DEĞİŞKENLERİ
 // 135 - 160 Arası Açık Anahtarlı Bitcoin Bulmacaları İçin Özel Motor
 // ============================================================
-const EXPOSED_KANGAROO_PUBKEYS = {
-    19:  '0385663c8b2f90659e1ccab201694f4f8ec24b3749cfe5030c7c3646a709408e19', // #19 Solved (19-bit, key 0x5749f)
-    23:  '03f82710361b8b81bdedb16994f30c80db522450a93e8e87eeb07f7903cf28d04b', // #23 Solved (23-bit, key 0x556e52)
-    38:  '03c060e1e3771cbeccb38e119c2414702f3f5181a89652538851d2e3886bdd70c6', // #38 Solved (38-bit, key 0x22382facd0)
-    57:  '02a521a07e98f78b03fc1e039bc3a51408cd73119b5eb116e583fe57dc8db07aea', // #57 Test (5.7 BTC - Solved)
-    66:  '024ee2be2d4e9f92d2f5a4a03058617dc45befe22938feed5b7a6b7282dd74cbdd', // #66 Solved (6.6 BTC, key 0x2832ed74f2b5e35ee)
-    67:  '0212209f5ec514a1580a2937bd833979d933199fc230e204c6cdc58872b7d46f75', // #67 Solved (6.7 BTC)
-    130: '03633cbe3ec02b9401c5effa144c5b4d22f87940259634858fc7e59b1c09937852', // #130 Solved (13.0 BTC, key 0x33e7665705359f04f28b88cf897c603c9)
-    135: '02145d2611c823a396ef6712ce0f712f09b9b4f3135e3e0aa3230fb9b6d08d1e16', // #135 (13.5 BTC)
-    140: '031f6a332d3c5c4f2de2378c012f429cd109ba07d69690c6c701b6bb87860d6640', // #140 (14.0 BTC)
-    145: '03afdda497369e219a2c1c369954a930e4d3740968e5e4352475bcffce3140dae5', // #145 (14.5 BTC)
-    150: '03137807790ea7dc6e97901c2bc87411f45ed74a5629315c4e4b03a0a102250c49', // #150 (15.0 BTC)
-    155: '035cd1854cae45391ca4ec428cc7e6c7d9984424b954209a8eea197b9e364c05f6', // #155 (15.5 BTC)
-    160: '02e0a8b039282faf6fe0fd769cfbc4b6b4cf8758ba68220eac420e32b91ddfa673'  // #160 (16.0 BTC)
-};
+
+// 🦘 Açık anahtarları doğrudan ALL_PUZZLES nesnelerine bağla
+if (typeof ALL_PUZZLES !== 'undefined' && Array.isArray(ALL_PUZZLES)) {
+    ALL_PUZZLES.forEach(p => {
+        if (EXPOSED_KANGAROO_PUBKEYS[p.id]) {
+            p.pubHex = EXPOSED_KANGAROO_PUBKEYS[p.id];
+            p.pubkeyHex = EXPOSED_KANGAROO_PUBKEYS[p.id];
+        }
+    });
+}
 
 
 function resolveCurrentTargetPubkey() {
@@ -5814,6 +6041,15 @@ function applySwarmPartitioning(myIndex, total) {
     const { tStart, tEnd, total: fullRange } = bounds;
     if (fullRange <= 0n) return;
 
+    // 🛑 EĞER KULLANICI VEYA ÇÖZÜLMÜŞ BULMACA KAYDIRAÇ ARALIĞINI DARALTMIŞSA EZME!
+    if (window._userAdjustedSwarmPartition) {
+        return;
+    }
+    const curP = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : null;
+    if (curP && typeof HISTORICAL_SOLVED_KEYS !== 'undefined' && HISTORICAL_SOLVED_KEYS[curP.id]) {
+        return;
+    }
+
     if (total <= 1 || myIndex < 0) {
         // Tek sekme kaldığında: Uzay bölümünü tam aralığa (%100) geri genişlet
         if (sliderMinHex !== tStart || sliderMaxHex !== tEnd) {
@@ -6359,8 +6595,129 @@ function togglePopup(popupId, event) {
 function closePopups() {
     const p1 = document.getElementById('popupUnsolved');
     const p2 = document.getElementById('popupSolved');
+    const p3 = document.getElementById('popManualRange');
     if (p1) p1.style.display = 'none';
     if (p2) p2.style.display = 'none';
+    if (p3) p3.style.display = 'none';
+}
+
+function closeManualRangePopover() {
+    const pop = document.getElementById('popManualRange');
+    if (pop) pop.style.display = 'none';
+}
+
+function toggleManualRangePopover(btn, event) {
+    if (event) {
+        event.stopPropagation();
+        if (event.preventDefault) event.preventDefault();
+    }
+    const pop = document.getElementById('popManualRange');
+    if (!pop) return;
+
+    if (pop.style.display === 'flex') {
+        pop.style.display = 'none';
+        return;
+    }
+
+    // Pozisyonu makas/hedef butonunun altına sabitle
+    const targetBtn = btn || document.getElementById('btnManualRangePrompt');
+    if (targetBtn) {
+        const rect = targetBtn.getBoundingClientRect();
+        const popWidth = 240;
+        let left = rect.right - popWidth;
+        if (left < 10) left = 10;
+        if (left + popWidth > window.innerWidth - 10) {
+            left = window.innerWidth - popWidth - 10;
+        }
+        pop.style.top = (rect.bottom + 6) + 'px';
+        pop.style.left = left + 'px';
+    }
+
+    // Mevcut kaydıraç yüzdelerini oku ve inputlara doldur
+    const bounds = getHexTargetBounds();
+    const minInp = document.getElementById('inpManualRangeMin');
+    const maxInp = document.getElementById('inpManualRangeMax');
+    if (bounds && bounds.total > 0n && sliderMinHex !== null && sliderMaxHex !== null) {
+        const curMinPct = Number(((sliderMinHex - bounds.tStart) * 10000000000n) / bounds.total) / 100000000;
+        const curMaxPct = Number(((sliderMaxHex - bounds.tStart) * 10000000000n) / bounds.total) / 100000000;
+        if (minInp) minInp.value = Number(curMinPct.toFixed(3));
+        if (maxInp) maxInp.value = Number(curMaxPct.toFixed(3));
+    } else {
+        if (minInp) minInp.value = "0";
+        if (maxInp) maxInp.value = "100";
+    }
+
+    pop.style.display = 'flex';
+    if (minInp) {
+        setTimeout(() => {
+            minInp.focus();
+            minInp.select();
+        }, 50);
+    }
+}
+
+function applyManualRangePercent(minPct, maxPct) {
+    let minP = parseFloat(minPct);
+    let maxP = parseFloat(maxPct);
+    if (isNaN(minP)) minP = 0;
+    if (isNaN(maxP)) maxP = 100;
+
+    // Sınır kontrolleri
+    if (minP < 0) minP = 0;
+    if (maxP > 100) maxP = 100;
+    if (minP >= maxP) {
+        if (maxP < 100) maxP = Math.min(100, minP + 0.1);
+        else minP = Math.max(0, maxP - 0.1);
+    }
+
+    const bounds = getHexTargetBounds();
+    if (!bounds || bounds.total <= 0n) return;
+    const { tStart, tEnd, total } = bounds;
+
+    const TOTAL_STEPS = 1000000000000n; // 1 Trilyon adım
+    const minStep = BigInt(Math.round((minP / 100) * 1000000000000));
+    const maxStep = BigInt(Math.round((maxP / 100) * 1000000000000));
+
+    // Hex sınırlarını hesapla
+    sliderMinHex = tStart + (total * minStep / TOTAL_STEPS);
+    sliderMaxHex = tStart + (total * maxStep / TOTAL_STEPS);
+    if (sliderMaxHex <= sliderMinHex) {
+        sliderMaxHex = sliderMinHex + 1n;
+    }
+
+    // Inputları güncelle
+    const minEl = document.getElementById('rangeSliderMin');
+    const maxEl = document.getElementById('rangeSliderMax');
+    if (minEl) minEl.value = Number(minStep);
+    if (maxEl) maxEl.value = Number(maxStep);
+
+    isDualSliderActive = true;
+    window._userAdjustedSwarmPartition = true;
+
+    updateSliderUI();
+    if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
+    if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
+
+    closeManualRangePopover();
+
+    if (typeof showToast === 'function') {
+        showToast(`🎯 Kaydıraç %${minP} - %${maxP} aralığına ayarlandı!`, 2500);
+    }
+}
+
+function applyManualRangeInput() {
+    const minInp = document.getElementById('inpManualRangeMin');
+    const maxInp = document.getElementById('inpManualRangeMax');
+    if (!minInp || !maxInp) return;
+    applyManualRangePercent(minInp.value, maxInp.value);
+}
+
+function applyManualRangePreset(minP, maxP) {
+    const minInp = document.getElementById('inpManualRangeMin');
+    const maxInp = document.getElementById('inpManualRangeMax');
+    if (minInp) minInp.value = minP;
+    if (maxInp) maxInp.value = maxP;
+    applyManualRangePercent(minP, maxP);
 }
 
 document.addEventListener('click', function() {
@@ -6736,6 +7093,8 @@ function buildCustomMenus() {
         const isChecked = selectedPuzzleIds.has(String(p.id));
         item.className = 'popup-item' + (isChecked ? ' selected-puzzle-row' : '');
         item.id = `puzzle_row_${p.id}`;
+        const solvedInfo = (typeof HISTORICAL_SOLVED_KEYS !== 'undefined') ? HISTORICAL_SOLVED_KEYS[p.id] : null;
+        const pctBadge = solvedInfo ? `<span style="font-size: 10.5px; font-family: monospace; font-weight: bold; padding: 1px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);" title="Çözülen Özel Anahtar: 0x${solvedInfo.key} (Konum: %${solvedInfo.pct.toFixed(4)})">%${solvedInfo.pct.toFixed(2)}</span>` : '';
         const testCfg = ARCHIVE_TEST_MAP[p.id];
         if (testCfg) {
             item.style.background = (p.id === 19) ? 'rgba(234, 179, 8, 0.08)' : (p.id === 23) ? 'rgba(56, 189, 248, 0.08)' : (p.id === 38) ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 182, 212, 0.08)';
@@ -6744,6 +7103,7 @@ function buildCustomMenus() {
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <input type="checkbox" class="puzzle-select-cb" data-id="${p.id}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #38bdf8; cursor: pointer;">
                     <span><strong>#${p.id}</strong> <span style="font-size: 11px; color: #94a3b8;">(${p.reward})</span></span>
+                    ${pctBadge}
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: #64748b; font-size: 11px;">${p.addr.substring(0, 10)}...</span>
@@ -6751,8 +7111,18 @@ function buildCustomMenus() {
                 </div>
             `;
             item.onclick = function(e) {
-                if (e.target && e.target.type === 'checkbox') return;
-                testPuzzleWithHex(p.id, testCfg.startHex, testCfg.endHex, testCfg.label);
+                if (e.target && (e.target.type === 'checkbox' || e.target.tagName === 'BUTTON')) return;
+                selectSinglePuzzle({
+                    id: p.id,
+                    start: BigInt('0x' + p.start),
+                    end: BigInt('0x' + p.end),
+                    addr: p.addr,
+                    targetHash160: addressToHash160(p.addr),
+                    reward: p.reward,
+                    startHex: p.start,
+                    endHex: p.end,
+                    status: 'SOLVED'
+                });
                 closePopups();
             };
         } else {
@@ -6760,6 +7130,7 @@ function buildCustomMenus() {
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <input type="checkbox" class="puzzle-select-cb" data-id="${p.id}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #38bdf8; cursor: pointer;">
                     <span><strong>#${p.id}</strong> (${p.reward})</span>
+                    ${pctBadge}
                 </div>
                 <span style="color: #64748b; font-size: 11px;">${p.addr.substring(0, 12)}...</span>
             `;
@@ -6847,7 +7218,7 @@ function enableCircularMode(isRemoteSync = false) {
     if (typeof updateCropUI === 'function') updateCropUI(0, 100);
 
     if (typeof switchRangeMode === 'function' && (activeRangeMode === 'PREFIX' || activeRangeMode === 'HEX')) {
-        switchRangeMode('PERCENT');
+        switchRangeMode('PHYSICS');
     }
 
     if (selectedPuzzleIds.size === 0 && !isRemoteSync && allUnsolvedPool && allUnsolvedPool.length > 0) {
@@ -6935,7 +7306,40 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
     const pEnd   = toBigIntSafe(p.origEnd   || p.end);
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
-    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof isRunning !== 'undefined' && isRunning) {
+
+    // 🏆 ÇÖZÜLMÜŞ BULMACA KONTROLÜ: Eğer seçilen bulmaca geçmişte çözülmüşse, kaydıraç konumunu tam çözülen anahtara odakla
+    const solvedInfo = (typeof HISTORICAL_SOLVED_KEYS !== 'undefined') ? HISTORICAL_SOLVED_KEYS[p.id] : null;
+    if (solvedInfo && solvedInfo.key) {
+        window._userAdjustedSwarmPartition = true;
+        const solvedVal = BigInt('0x' + solvedInfo.key);
+        const pTotal = pEnd > pStart ? (pEnd - pStart) : 1n;
+        const targetStep = ((solvedVal - pStart) * 1000000000000n) / pTotal;
+        
+        // Çözüm noktasını merkezleyen ±%0.5 odak penceresi (toplam %1 genişlik)
+        const halfSpan = 5000000000n; // %0.5
+        let minStep = targetStep > halfSpan ? (targetStep - halfSpan) : 0n;
+        let maxStep = (targetStep + halfSpan < 1000000000000n) ? (targetStep + halfSpan) : 1000000000000n;
+        
+        sliderMinHex = pStart + (pTotal * minStep / 1000000000000n);
+        sliderMaxHex = pStart + (pTotal * maxStep / 1000000000000n);
+        userHexStart = sliderMinHex;
+        userHexEnd   = sliderMaxHex;
+        if (maxEl) maxEl.value = Number(maxStep);
+        if (minEl) minEl.value = Number(minStep);
+        
+        isDualSliderActive = true;
+        const chkSlider = document.getElementById('chkEnableDualSlider');
+        if (chkSlider) chkSlider.checked = true;
+        if (typeof stopAutoSliderTimer === 'function') stopAutoSliderTimer();
+        isAutoSliderActive = false;
+
+        if (typeof showToast === 'function') {
+            const qStr = solvedInfo.pct < 25 ? 'Çeyrek 1 (%0-%25)' : (solvedInfo.pct < 50 ? 'Çeyrek 2 (%25-%50)' : (solvedInfo.pct < 75 ? 'Çeyrek 3 (%50-%75)' : 'Çeyrek 4 (%75-%100)'));
+            const sMinPct = (Number(minStep) / 10000000000).toFixed(2);
+            const sMaxPct = (Number(maxStep) / 10000000000).toFixed(2);
+            showToast(`🏆 <strong>Puzzle #${p.id} Çözüm Konumu</strong><br><span style="color:#38bdf8; font-weight:bold;">Konum: %${solvedInfo.pct.toFixed(4)} [${qStr}]</span><br><span style="font-size:10px; color:#e2e8f0; font-family:monospace;">🔑 Anahtar: 0x${solvedInfo.key}</span><br><span style="font-size:10.5px; color:#34d399;">Kaydıraç %${sMinPct} - %${sMaxPct} aralığına odaklandı!</span>`);
+        }
+    } else if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive && typeof isRunning !== 'undefined' && isRunning) {
         if (minEl) minEl.value = 0;
         if (maxEl) maxEl.value = 50000000000;
         sliderMinHex = pStart;
@@ -6969,7 +7373,7 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
         const isAlreadyKangarooVariant = typeof selectedAlgorithm === 'string' && (selectedAlgorithm.startsWith('KANGAROO') || selectedAlgorithm === 'GLV_LATTICE_2D');
         if (hasKangarooKey) {
             setAlgorithm(isAlreadyKangarooVariant ? selectedAlgorithm : 'KANGAROO');
-            if (typeof showToast === 'function') {
+            if (!solvedInfo && typeof showToast === 'function') {
                 const pubPreview = `<br><span style="font-size:10px; color:#38bdf8; font-family:monospace;">🔑 Açık Anahtar: ${pubHex.substring(0, 16)}...</span>`;
                 showToast(`🦘 <strong>Puzzle #${p.id} Seçildi</strong>: ${isAlreadyKangarooVariant ? selectedAlgorithm : "Pollard's Kangaroo"} Algoritması Aktif!${pubPreview}`);
             }
@@ -7006,13 +7410,15 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
         }
     }
 
-    if (typeof updateSliderUI === 'function') updateSliderUI(); broadcastWorkerConfig();
+    if (typeof updateSliderUI === 'function') updateSliderUI();
+    if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
+    broadcastWorkerConfig();
     if (typeof updatePrefixForTarget === 'function') updatePrefixForTarget(pStart, pEnd);
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function' && p && p.id) {
         clearTimeout(window._multiPuzzleBroadcastDebounce);
         broadcastSwarmSetting('PUZZLE', { puzzleId: p.id });
     }
-    if (typeof currentSwarmTotal !== 'undefined') {
+    if (!solvedInfo && typeof currentSwarmTotal !== 'undefined') {
         if (typeof applySwarmPartitioning === 'function') {
             applySwarmPartitioning(currentSwarmIndex, currentSwarmTotal);
         }
@@ -7604,7 +8010,7 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
                             ? 'MONTGOMERY_HERD'
                             : ((typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ANCHOR')
                                     ? 'GLOBAL_ANCHOR'
-                                    : 'STANDARD'))))));
+                                    : 'CLASSICAL'))))));
 
         const baseStrat = (typeof kangarooBaseStrategy !== 'undefined') ? kangarooBaseStrategy : 'START_0';
         const cleanTargetHex = kangarooTargetPubHex.trim().toLowerCase().replace(/^0x/i, '');
@@ -8192,26 +8598,47 @@ function huntBatch() {
                 const hMax = (userHexEnd !== null && userHexEnd !== undefined) ? userHexEnd : boundMax;
                 subMin = (hMin < boundMin) ? boundMin : (hMin > boundMax ? boundMin : hMin);
                 subMax = (hMax > boundMax) ? boundMax : (hMax < subMin ? boundMax : hMax);
-            } else if (activeRangeMode === 'PERCENT' && sliceModeActive) {
-                const totalR = boundMax - boundMin;
-                const startBig = BigInt(Math.round(sliceStartPct * 10000000000));
-                const endBig   = BigInt(Math.round(sliceEndPct * 10000000000));
-                subMin = boundMin + (totalR * startBig / 1000000000000n);
-                subMax = boundMin + (totalR * endBig   / 1000000000000n);
-            } else if (activeFormula === 'OMNI_CHAOS' || activeRangeMode === 'PHYSICS' || activeFormula === 'DETERMINISTIC_CHAOS' || activeFormula === 'QUANTUM_TUNNEL' || activeFormula === 'RIEMANN_ZETA' || activeFormula === 'GOLDEN_SINGULARITY' || activeFormula === 'WEYL_GOLDEN' || activeFormula === 'COPRIME_STRIDE' || activeFormula === 'SPHERICAL_ORBITAL' || activeAlgo === 'SPHERICAL_ORBITAL') {
-                physicsStepCounter++;
-                if (activeFormula === 'OMNI_CHAOS' || physicsStepCounter % 25 === 0) {
-                    const centerPct = getNextPhysicsPercent();
-                    const microWidth = 0.005;
-                    physicsSliceStartPct = Math.max(0.0, centerPct - microWidth);
-                    physicsSliceEndPct   = Math.min(100.0, centerPct + microWidth);
+            } else if (activeRangeMode === 'PERCENT') {
+                if (sliceModeActive) {
+                    const totalR = boundMax - boundMin;
+                    const startBig = BigInt(Math.round(sliceStartPct * 10000000000));
+                    const endBig   = BigInt(Math.round(sliceEndPct * 10000000000));
+                    subMin = boundMin + (totalR * startBig / 1000000000000n);
+                    subMax = boundMin + (totalR * endBig   / 1000000000000n);
+                } else {
+                    subMin = boundMin;
+                    subMax = boundMax;
                 }
-                const curSpan = (subMax > subMin) ? (subMax - subMin) : (boundMax - boundMin);
-                const baseMin = (subMax > subMin) ? subMin : boundMin;
-                const startBig = BigInt(Math.round(physicsSliceStartPct * 10000000000));
-                const endBig   = BigInt(Math.round(physicsSliceEndPct * 10000000000));
-                subMin = baseMin + (curSpan * startBig / 1000000000000n);
-                subMax = baseMin + (curSpan * endBig   / 1000000000000n);
+            } else if (activeRangeMode === 'PHYSICS') {
+                const isSliderNarrowed = isDualSliderActive && (
+                    (lastBoundMin && lastBoundMax && (lastBoundMin > baseStartKey || lastBoundMax < baseEndKey)) ||
+                    (sliderMinHex !== null && sliderMaxHex !== null && (sliderMinHex > baseStartKey || sliderMaxHex < baseEndKey)) ||
+                    (document.getElementById('rangeSliderMin') && (
+                        BigInt(document.getElementById('rangeSliderMin').value || 0) > 0n ||
+                        BigInt(document.getElementById('rangeSliderMax').value || 1000000000000) < 1000000000000n
+                    ))
+                );
+
+                if (isSliderNarrowed) {
+                    // 🎯 AKILLI HİBRİT: Kaydıraç daraltılmışsa Fizik modu otomatik susar, %100 seçilen aralığı tarar!
+                    subMin = boundMin;
+                    subMax = boundMax;
+                } else {
+                    // 🌀 TAM UZAY (%0 - %100): Fizik modu devrede, büyük uzayda fraktal/fizik formülleriyle zıplar
+                    physicsStepCounter++;
+                    if (activeFormula === 'OMNI_CHAOS' || physicsStepCounter % 25 === 0) {
+                        const centerPct = getNextPhysicsPercent();
+                        const microWidth = 0.005;
+                        physicsSliceStartPct = Math.max(0.0, centerPct - microWidth);
+                        physicsSliceEndPct   = Math.min(100.0, centerPct + microWidth);
+                    }
+                    const curSpan = (subMax > subMin) ? (subMax - subMin) : (boundMax - boundMin);
+                    const baseMin = (subMax > subMin) ? subMin : boundMin;
+                    const startBig = BigInt(Math.round(physicsSliceStartPct * 10000000000));
+                    const endBig   = BigInt(Math.round(physicsSliceEndPct * 10000000000));
+                    subMin = baseMin + (curSpan * startBig / 1000000000000n);
+                    subMax = baseMin + (curSpan * endBig   / 1000000000000n);
+                }
             }
             if (subMax <= subMin) subMax = subMin + 1n;
 
@@ -8426,12 +8853,18 @@ function huntBatch() {
                         pParts.push(`💥 Hibrit Kaos`);
                     } else if (activeFormula === 'DETERMINISTIC_CHAOS') {
                         pParts.push(`♾️ Deterministik Kaos %${physicsSliceStartPct.toFixed(2)}`);
+                    } else if (activeRangeMode === 'PHYSICS') {
+                        if (isNarrowed) {
+                            pParts.push('🎯 Kaydıraç Odaklı (%100 Kapsama)');
+                        } else {
+                            pParts.push(`🌀 Fizik [${activeFormula || 'Altın Oran'}] (Tam Uzay Zıplama)`);
+                        }
                     } else if (!isNarrowed && activeRangeMode === 'CHAOS') {
                         pParts.push(`⚡ Kaos [${chaosCurrentSubMode}]`);
                     } else if (activeRangeMode === 'HEX') {
                         const hMinStr = (userHexStart || toBigIntSafe(activeTarget.start)).toString(16);
                         pParts.push(`🔤 Hex: 0x${hMinStr.substring(0,8)}...`);
-                    } else if (activeRangeMode === 'PERCENT') {
+                    } else if (activeRangeMode === 'PERCENT' && sliceModeActive) {
                         pParts.push(`% Dilim: %${sliceStartPct.toFixed(2)}`);
                     }
                     baseRangeDesc = pParts.length > 0 ? pParts.join(' + ') : '🌐 Tam Aralık';
@@ -9100,6 +9533,7 @@ const FastH = (function () {
 
     // 🚀 SOTA SiriuS Native WebAssembly (WASM) Çekirdeği (Worker İçi 511-Nokta Montgomery + Hash160 + Bloom Hızlandırıcı)
     let workerWasmEx = null;
+    let workerWasmInitNote = '';
     let workerWasmMem64 = null;
     let workerWasmMem32 = null;
     let workerWasmMem8 = null;
@@ -9237,6 +9671,32 @@ const FastH = (function () {
             }
         }
         syncWorkerWasmBloomFilter();
+    }
+    // Sıkıştırılmış hedef isabeti için 'win' mesajı: özel Hash160 havuzu isabetleri CUSTOM_COMP olarak (matchedH160 ile) gider
+    function workerBuildCompWinMsg(matched, keyHex, h160) {
+        if (matched && matched.id === 'Custom') {
+            return {
+                type: 'win',
+                workerId: workerId,
+                keyHex: keyHex,
+                targetId: 'İlave',
+                targetAddr: 'İlave Adres Eşleşmesi',
+                reward: 'İlave Havuz',
+                isUncompressed: false,
+                matchType: 'CUSTOM_COMP',
+                matchedH160: h160
+            };
+        }
+        return {
+            type: 'win',
+            workerId: workerId,
+            keyHex: keyHex,
+            targetId: matched.id,
+            targetAddr: matched.addr,
+            reward: matched.reward,
+            isUncompressed: false,
+            matchType: 'TARGET_COMP'
+        };
     }
     let workerId = 0;
     let cfg = {};
@@ -9733,9 +10193,10 @@ const FastH = (function () {
             const mod = (typeof self !== 'undefined' && typeof self.getSiriuSWasmModule === 'function')
                 ? self.getSiriuSWasmModule(true)
                 : null;
-            if (!mod) return;
+            if (!mod) { workerWasmInitNote = 'WASM modülü bulunamadı (getSiriuSWasmModule yok; kangaroo_engine.js yüklenmemiş olabilir)'; return; }
             const inst = new WebAssembly.Instance(mod);
             workerWasmEx = inst.exports;
+            if (typeof workerWasmEx.normal_sweep_511 !== 'function') throw new Error('normal_sweep_511 dışa aktarımı yok');
             workerWasmMem64 = new BigUint64Array(workerWasmEx.memory.buffer);
             workerWasmMem32 = new Uint32Array(workerWasmEx.memory.buffer);
             workerWasmMem8  = new Uint8Array(workerWasmEx.memory.buffer);
@@ -9760,6 +10221,7 @@ const FastH = (function () {
             syncWorkerWasmBloomFilter();
         } catch (e) {
             workerWasmEx = null;
+            workerWasmInitNote = 'WASM başlatılamadı: ' + ((e && e.message) ? e.message : String(e));
         }
     })();
 
@@ -11360,7 +11822,7 @@ const baseStart = (span * basePpm) / 1000000n;
         }
         const r = Math.random();
         if (r < 0.25) return stepDeterministicChaos();
-        if (r < 0.50) return stepDeterministicChaos();
+        if (r < 0.50) return getSphericalOrbitalPercent();
         if (r < 0.75) return getQuantumTunnelPercent();
         return getRiemannHarmonicPercent();
     }
@@ -11400,8 +11862,13 @@ const baseStart = (span * basePpm) / 1000000n;
                             if (nMax > nMin) { s = nMin; e = nMax; }
                         }
                     } else if (sHex < eHex) {
-                        s = sHex;
-                        e = eHex;
+                        // Kaydıraç aralığını bulmaca sınırlarına kırp (eski/yanlış kaydıraç değeri aralık dışına taşmasın)
+                        const cMin = sHex < s ? s : sHex;
+                        const cMax = eHex > e ? e : eHex;
+                        if (cMax > cMin) {
+                            s = cMin;
+                            e = cMax;
+                        }
                     }
                 }
                 const span = e > s ? e - s : 1n;
@@ -11667,21 +12134,38 @@ const baseStart = (span * basePpm) / 1000000n;
                 } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'BSGS_NEGATION' || workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'KRONECKER_LATTICE' || workerActiveAlgo === 'KANGAROO_4WAY_GPR' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
                     subMin = boundMin;
                     subMax = boundMax;
-                } else if (mode === 'PERCENT' && cfg.sliceModeActive && effRange > 50000000n) {
-                    const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 10000000000));
-                    const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 10000000000));
-                    subMin = boundMin + (effRange * sBig / 1000000000000n);
-                    subMax = boundMin + (effRange * eBig / 1000000000000n);
-                } else if (effRange > 50000000n && (f === 'OMNI_CHAOS' || mode === 'PHYSICS' || f === 'QUANTUM_TUNNEL' || f === 'QUANTUM' || f === 'RIEMANN_ZETA' || f === 'RIEMANN' || f === 'GOLDEN_SINGULARITY' || f === 'DETERMINISTIC_CHAOS' || f === 'WEYL_GOLDEN' || f === 'COPRIME_STRIDE' || f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL')) {
-                    physicsStep++;
-                    const physFormula = (f === 'OMNI_CHAOS') ? 'GOLDEN_SINGULARITY' : ((f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL') ? 'SPHERICAL_ORBITAL' : f);
-                    const centerPct = getNextPhysicsPercent(physFormula);
-                    const curSpan = (subMax > subMin) ? (subMax - subMin) : effRange;
-                    const baseMin = (subMax > subMin) ? subMin : boundMin;
-                    const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 10000000000));
-                    const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 10000000000));
-                    subMin = baseMin + (curSpan * sBig / 1000000000000n);
-                    subMax = baseMin + (curSpan * eBig / 1000000000000n);
+                } else if (mode === 'PERCENT') {
+                    if (cfg.sliceModeActive && effRange > 50000000n) {
+                        const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 10000000000));
+                        const eBig = BigInt(Math.round((cfg.sliceEndPct || 100) * 10000000000));
+                        subMin = boundMin + (effRange * sBig / 1000000000000n);
+                        subMax = boundMin + (effRange * eBig / 1000000000000n);
+                    } else {
+                        subMin = boundMin;
+                        subMax = boundMax;
+                    }
+                } else if (mode === 'PHYSICS' && effRange > 50000000n) {
+                    const isSliderNarrowed = cfg.isDualSliderActive && (
+                        (typeof cfg.sliderMinStep === 'number' && typeof cfg.sliderMaxStep === 'number' && (cfg.sliderMinStep > 0 || cfg.sliderMaxStep < 1000000000000)) ||
+                        (cfg.sliderMinHex && cfg.sliderMaxHex && (boundMin > baseStart || boundMax < baseEnd))
+                    );
+
+                    if (isSliderNarrowed) {
+                        // 🎯 AKILLI HİBRİT: Kaydıraç daraltılmışsa Fizik modu otomatik susar, %100 seçilen aralığı tarar!
+                        subMin = boundMin;
+                        subMax = boundMax;
+                    } else {
+                        // 🌀 TAM UZAY (%0 - %100): Fizik modu devrede, büyük uzayda fraktal/fizik formülleriyle zıplar
+                        physicsStep++;
+                        const physFormula = (f === 'OMNI_CHAOS') ? 'GOLDEN_SINGULARITY' : ((f === 'SPHERICAL_ORBITAL' || workerActiveAlgo === 'SPHERICAL_ORBITAL') ? 'SPHERICAL_ORBITAL' : f);
+                        const centerPct = getNextPhysicsPercent(physFormula);
+                        const curSpan = (subMax > subMin) ? (subMax - subMin) : effRange;
+                        const baseMin = (subMax > subMin) ? subMin : boundMin;
+                        const sBig = BigInt(Math.round(Math.max(0.0, centerPct - 0.005) * 10000000000));
+                        const eBig = BigInt(Math.round(Math.min(100.0, centerPct + 0.005) * 10000000000));
+                        subMin = baseMin + (curSpan * sBig / 1000000000000n);
+                        subMax = baseMin + (curSpan * eBig / 1000000000000n);
+                    }
                 }
 
                 // 1B. Modüler Kafes (Coset Lattice Partitioning - Oto Modu)
@@ -11746,10 +12230,14 @@ const baseStart = (span * basePpm) / 1000000n;
             if (!_cluCont && effRange > 0n) {
                 if (isStdLattice) {
                     // 🧠 OTO KAFES (Latis Izgarası): Her çekirdek (workerId) arama uzayına homojen matematiksel kafes örgüsüyle yerleştirilir!
+                    // Not: SEQUENTIAL ve BSGS_NEGATION birden fazla worker varsa aralığı zaten ayrık dilimlere böler.
+                    // Üzerine ikinci kez workerId tabanlı kafes ofseti eklemek dilimleri üst üste bindirir; bu nedenle atlanır.
                     const numW = (cfg && cfg.totalWorkers && cfg.totalWorkers > 1) ? BigInt(cfg.totalWorkers) : 1n;
-                    const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-                    const latticeOffset = (effRange * ((wId * 1000000n / numW) + 100000n)) / 1000000n;
-                    currentKey = boundMin + ((currentKey - boundMin + latticeOffset) % (effRange + 1n));
+                    if (numW === 1n || (workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'BSGS_NEGATION')) {
+                        const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+                        const latticeOffset = (effRange * ((wId * 1000000n / numW) + 100000n)) / 1000000n;
+                        currentKey = boundMin + ((currentKey - boundMin + latticeOffset) % (effRange + 1n));
+                    }
                 } else if (stdRatio > 0.0) {
                     const stdStartOffset = (effRange * BigInt(Math.round(stdRatio * 1000000))) / 1000000n;
                     currentKey = boundMin + ((currentKey - boundMin + stdStartOffset) % (effRange + 1n));
@@ -11849,16 +12337,7 @@ const baseStart = (span * basePpm) / 1000000n;
                 const compH160 = privkeyToHash160(lastKeyHex);
                 const matched = compH160 ? workerTargetMap.get(compH160) : null;
                 if (matched) {
-                    self.postMessage({
-                        type: 'win',
-                        workerId: workerId,
-                        keyHex: lastKeyHex,
-                        targetId: matched.id,
-                        targetAddr: matched.addr,
-                        reward: matched.reward,
-                        isUncompressed: false,
-                        matchType: 'TARGET_COMP'
-                    });
+                    self.postMessage(workerBuildCompWinMsg(matched, lastKeyHex, compH160));
                     isWorking = false;
                     return;
                 }
@@ -11890,11 +12369,12 @@ const baseStart = (span * basePpm) / 1000000n;
                     }
                     if (_prepOk) {
                         {
-                            const maxPosS = (baseEnd >= currentKey)
-                                ? ((baseEnd - currentKey) >= BigInt(strideCount) * suffixStride ? strideCount : Number((baseEnd - currentKey) / suffixStride))
+                            // Sınırlar JS yoluyla aynı: kaydıraç / ön ek / worker dilimi (boundMin..boundMax)
+                            const maxPosS = (boundMax >= currentKey)
+                                ? ((boundMax - currentKey) >= BigInt(strideCount) * suffixStride ? strideCount : Number((boundMax - currentKey) / suffixStride))
                                 : 0;
-                            const maxNegS = (currentKey >= baseStart)
-                                ? ((currentKey - baseStart) >= BigInt(strideCount) * suffixStride ? strideCount : Number((currentKey - baseStart) / suffixStride))
+                            const maxNegS = (currentKey >= boundMin)
+                                ? ((currentKey - boundMin) >= BigInt(strideCount) * suffixStride ? strideCount : Number((currentKey - boundMin) / suffixStride))
                                 : 0;
                             const packedRes = workerWasmEx.normal_sweep_511(strideCount, maxPosS, maxNegS);
                             const checkedKeys = (packedRes >>> 16) & 0xFFFF;
@@ -11931,16 +12411,7 @@ const baseStart = (span * basePpm) / 1000000n;
                                     const matched = workerTargetMap.get(compH160Str);
                                     if (matched) {
                                         lastKeyHex = hitKey.toString(16).padStart(64, '0');
-                                        self.postMessage({
-                                            type: 'win',
-                                            workerId: workerId,
-                                            keyHex: lastKeyHex,
-                                            targetId: matched.id,
-                                            targetAddr: matched.addr,
-                                            reward: matched.reward,
-                                            isUncompressed: false,
-                                            matchType: 'TARGET_COMP'
-                                        });
+                                        self.postMessage(workerBuildCompWinMsg(matched, lastKeyHex, compH160Str));
                                         isWorking = false;
                                         return;
                                     }
@@ -12053,16 +12524,7 @@ const baseStart = (span * basePpm) / 1000000n;
                             const matched = workerTargetMap.get(compH160Str);
                             if (matched) {
                                 lastKeyHex = curKey.toString(16).padStart(64, '0');
-                                self.postMessage({
-                                    type: 'win',
-                                    workerId: workerId,
-                                    keyHex: lastKeyHex,
-                                    targetId: matched.id,
-                                    targetAddr: matched.addr,
-                                    reward: matched.reward,
-                                    isUncompressed: false,
-                                    matchType: 'TARGET_COMP'
-                                });
+                                self.postMessage(workerBuildCompWinMsg(matched, lastKeyHex, compH160Str));
                                 isWorking = false;
                                 return;
                             }
@@ -12180,6 +12642,14 @@ const baseStart = (span * basePpm) / 1000000n;
         const d = e.data;
         if (d.cmd === 'start') {
             workerId = d.workerId;
+            if (workerId === 0 && workerWasmInitNote) {
+                self.postMessage({
+                    type: 'warning',
+                    workerId: workerId,
+                    targetId: null,
+                    message: '[Worker WASM Uyarısı] ⚠️ ' + workerWasmInitNote + ' — Standart Arama çok daha yavaş BigInt yedek yoluna düştü.'
+                });
+            }
             brainCounter = workerId * 7919;
             circularIdx = workerId;
             circularStepCounter = workerId * 257;
@@ -12557,6 +13027,10 @@ function getCurrentWorkerConfig() {
         sliderMinStep: (function() {
             const minEl = document.getElementById('rangeSliderMin');
             return minEl ? parseFloat(minEl.value || 0) : 0;
+        })(),
+        sliderMaxStep: (function() {
+            const maxEl = document.getElementById('rangeSliderMax');
+            return maxEl ? parseFloat(maxEl.value || 1000000000000) : 1000000000000;
         })(),
         sliderMaxStep: (function() {
             const maxEl = document.getElementById('rangeSliderMax');
@@ -13276,7 +13750,9 @@ window.onload = function() {
     if (typeof updateKangarooSwarmUI === 'function') updateKangarooSwarmUI();
     switchRangeMode('PHYSICS');
     initFineSliderControls();
-    if (typeof updateSliderUI === 'function') updateSliderUI(); broadcastWorkerConfig();
+    if (typeof updateSliderUI === 'function') updateSliderUI();
+    if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
+    broadcastWorkerConfig();
     checkSavedWins();
     if (typeof applyFormulaPreset === 'function') applyFormulaPreset(activeFormula, false, true);
 
