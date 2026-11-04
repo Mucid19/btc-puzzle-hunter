@@ -5277,7 +5277,7 @@ function ensureCentralKangarooEngine() {
     }
 
     try {
-        kangarooRealEngine = new RealPollardKangaroo(cleanPub, s, e, { role: 'DUAL', herdMode: herdMode, baseStrategy: baseStrat, startLayout: (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY' });
+        kangarooRealEngine = new RealPollardKangaroo(cleanPub, s, e, { role: 'DUAL', herdMode: herdMode, baseStrategy: baseStrat, startLayout: 'ALIGNED' });
         kangarooRealEngine.trapCap = 1000000;
         return kangarooRealEngine;
     } catch(e) {
@@ -8031,7 +8031,7 @@ function resetKangarooWalk(rangeStart, rangeEnd, puzzleId) {
                 kangarooRealEngine.span = (e > s) ? (e - s) : 1n;
             }
         } else {
-            kangarooRealEngine = new RealPollardKangaroo(kangarooTargetPubHex, s, e, { role: herdRole, herdMode: herdMode, baseStrategy: baseStrat, startLayout: (typeof selectedAlgorithm !== 'undefined' && selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY' });
+            kangarooRealEngine = new RealPollardKangaroo(kangarooTargetPubHex, s, e, { role: herdRole, herdMode: herdMode, baseStrategy: baseStrat, startLayout: 'ALIGNED' });
         }
 
         kangarooTrapsCount = getCombinedKangarooTrapCount();
@@ -11615,7 +11615,7 @@ const baseStart = (span * basePpm) / 1000000n;
         if (KangarooClass && targetPub) {
             const cleanTargetHex = targetPub.trim().toLowerCase().replace(/^0x/i, '');
             const baseStrat = (cfg && cfg.kangarooBaseStrategy) ? cfg.kangarooBaseStrategy : 'START_0';
-            const startLayout = (cfg && cfg.selectedAlgorithm === 'KANGAROO_ALIGNED') ? 'ALIGNED' : 'LEGACY';
+            const startLayout = 'ALIGNED';
             // 🎯 EĞER AYNI HEDEFSE VE MOTOR MEVCUTSA: TUZAKLARI ASLA SİLME, SADECE ARALIĞI GÜNCELLE!
             if (workerKangarooEngine && workerKangarooEngine.targetPubHex && workerKangarooEngine.targetPubHex.toLowerCase() === cleanTargetHex) {
                 workerKangarooEngine.role = role;
