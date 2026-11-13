@@ -10774,14 +10774,15 @@ const FastH = (function () {
     let workerWasmMem32 = null;
     let workerWasmMem8 = null;
 
+    const _U64_MASK = 0xFFFFFFFFFFFFFFFFn;
     function writeWorkerWasmFe(byteOffset, val) {
         if (!workerWasmMem64) return;
         const idx = byteOffset >> 3;
         const v = val || 0n;
-        workerWasmMem64[idx]     = v & 0xFFFFFFFFFFFFFFFFn;
-        workerWasmMem64[idx + 1] = (v >> 64n) & 0xFFFFFFFFFFFFFFFFn;
-        workerWasmMem64[idx + 2] = (v >> 128n) & 0xFFFFFFFFFFFFFFFFn;
-        workerWasmMem64[idx + 3] = (v >> 192n) & 0xFFFFFFFFFFFFFFFFn;
+        workerWasmMem64[idx]     = v & _U64_MASK;
+        workerWasmMem64[idx + 1] = (v >> 64n) & _U64_MASK;
+        workerWasmMem64[idx + 2] = (v >> 128n) & _U64_MASK;
+        workerWasmMem64[idx + 3] = (v >> 192n) & _U64_MASK;
     }
 
     function readWorkerWasmFe(byteOffset) {
@@ -12541,7 +12542,10 @@ const baseStart = (span * basePpm) / 1000000n;
     let _cluLeft = 0, _cluNext = 0n, _cluAlgo = '';
     let _uFreqKey = null, _uFreqSig = '', _uFreqSubStep = 0, _uFreqStep = 0n;
     const CLUSTER_SKIP = { SEQUENTIAL: 1, ALIGNED_PERM: 1, ADDR_HOP_SWEEP: 1, HULL_DOBELL_LCG: 1, ROBERTS_R_SEQUENCE: 1, HEX_FREQ_DENSITY: 1, KRONECKER_LATTICE: 1 };
-    let _seqKey = null, _seqBoundSig = '', _seqSliceMin = 0n, _seqSliceMax = 0n;
+    let _seqKey = null, _seqSliceMin = 0n, _seqSliceMax = 0n;
+    let _seqLastBMin = null, _seqLastBMax = null, _seqLastNumW = -1, _seqLastWId = -1, _seqLastStdRatio = NaN;
+    let _seqActiveSig = '';
+    const _seqCursorMap = new Map();
     let _seqPt = null, _seqPtKey = null, _seqG511 = null, _seqWraps = 0, _seqCalls = 0, _seqBroken = false;
     const _seqTmpPt = [0n, 0n];
     const _seqAnchorPt = [0n, 0n];
@@ -12559,9 +12563,17 @@ const baseStart = (span * basePpm) / 1000000n;
     }
     function workerSequentialNextKey(bMin, bMax, numW, wId) {
         const stdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
-        const sig = bMin.toString(16) + ':' + bMax.toString(16) + ':' + numW + ':' + wId + ':' + stdRatio;
-        if (sig !== _seqBoundSig) {
-            _seqBoundSig = sig;
+        if (bMin !== _seqLastBMin || bMax !== _seqLastBMax || numW !== _seqLastNumW || wId !== _seqLastWId || stdRatio !== _seqLastStdRatio) {
+            if (_seqActiveSig && _seqKey !== null) {
+                if (_seqCursorMap.size >= 256) _seqCursorMap.clear();
+                _seqCursorMap.set(_seqActiveSig, {
+                    seqKey: _seqKey,
+                    pt: _seqPt ? [_seqPt[0], _seqPt[1]] : null,
+                    ptKey: _seqPtKey
+                });
+            }
+            _seqLastBMin = bMin; _seqLastBMax = bMax; _seqLastNumW = numW; _seqLastWId = wId; _seqLastStdRatio = stdRatio;
+            _seqActiveSig = bMin.toString(16) + ':' + bMax.toString(16) + ':' + numW + ':' + wId + ':' + stdRatio;
             const span = bMax - bMin;
             const n = BigInt(numW > 0 ? numW : 1);
             if (n > 1n && span >= n * 1024n) {
@@ -12573,9 +12585,17 @@ const baseStart = (span * basePpm) / 1000000n;
                 _seqSliceMin = bMin;
                 _seqSliceMax = bMax;
             }
-            // İmleç & _seqRefill Koruması: Mevcut _seqKey yeni dilim içindeyse imleci ve 256'lık çapa önbelleğini sıfırlama!
-            if (_seqKey !== null && (_seqKey < _seqSliceMin || _seqKey - 255n > _seqSliceMax)) {
+            const saved = _seqCursorMap.get(_seqActiveSig);
+            if (saved && saved.seqKey !== null && saved.seqKey >= _seqSliceMin && saved.seqKey - 255n <= _seqSliceMax) {
+                _seqKey = saved.seqKey;
+                _seqPt = saved.pt ? [saved.pt[0], saved.pt[1]] : null;
+                _seqPtKey = saved.ptKey;
+                _seqQHead = SEQ_BATCH;
+            } else if (_seqKey !== null && (_seqKey < _seqSliceMin || _seqKey - 255n > _seqSliceMax)) {
                 _seqKey = null;
+                _seqPt = null;
+                _seqPtKey = null;
+                _seqQHead = SEQ_BATCH;
             }
         }
         if (_seqKey === null || _seqKey - 255n > _seqSliceMax) {
@@ -13496,7 +13516,117 @@ const baseStart = (span * basePpm) / 1000000n;
         }
         ensureWorkerMontTable(targetStrideMode, suffixStride);
         const activeTable = workerActiveMontTable || MONT_TABLE_G;
+        const ecInst = getEc();
+        const strideCount = MONT_STRIDE - 1;
+        const hasCustomHashSet = Boolean(workerCustomHashSet && workerCustomHashSet.size > 0);
+        const needUncompTarget = Boolean(activeTarget && activeTarget.isUncompressed);
+        const wasmReady = Boolean(workerWasmEx && workerWasmMem64 && workerWasmMem32 && !needUncompTarget);
+        const hasPrepareInv = Boolean(wasmReady && typeof workerWasmEx.normal_prepare_inv === 'function');
 
+        function workerCheckWasmMatches(matchCount, anchorKey, sfxStride) {
+            for (let m = 0; m < matchCount; m++) {
+                const base32 = (0x15000 + m * 28) >> 2;
+                const s   = workerWasmMem32[base32];
+                const dir = workerWasmMem32[base32 + 1];
+                const w0  = workerWasmMem32[base32 + 2] >>> 0;
+                if (!workerTargetWords0.has(w0)) continue;
+
+                const w1 = workerWasmMem32[base32 + 3] >>> 0;
+                const w2 = workerWasmMem32[base32 + 4] >>> 0;
+                const w3 = workerWasmMem32[base32 + 5] >>> 0;
+                const w4 = workerWasmMem32[base32 + 6] >>> 0;
+                const compH160Str =
+                    w0.toString(16).padStart(8, '0') +
+                    w1.toString(16).padStart(8, '0') +
+                    w2.toString(16).padStart(8, '0') +
+                    w3.toString(16).padStart(8, '0') +
+                    w4.toString(16).padStart(8, '0');
+                const hitOffset = (s === 0) ? 0n : (BigInt(s) * sfxStride);
+                const hitKey = (s === 0) ? anchorKey : ((dir === 0) ? (anchorKey + hitOffset) : (anchorKey - hitOffset));
+
+                const matched = workerTargetMap.get(compH160Str);
+                if (matched) {
+                    const keyHex = hitKey.toString(16).padStart(64, '0');
+                    return { keyHex, msg: workerBuildCompWinMsg(matched, keyHex, compH160Str) };
+                }
+                if (hasCustomHashSet && workerCustomHashSet.has(compH160Str)) {
+                    const keyHex = hitKey.toString(16).padStart(64, '0');
+                    return {
+                        keyHex,
+                        msg: {
+                            type: 'win',
+                            workerId: workerId,
+                            keyHex: keyHex,
+                            targetId: 'İlave',
+                            targetAddr: 'İlave Adres Eşleşmesi',
+                            reward: 'İlave Havuz',
+                            isUncompressed: false,
+                            matchType: 'CUSTOM_COMP'
+                        }
+                    };
+                }
+            }
+            return null;
+        }
+
+        // 🚀 TURBO ARDIŞIK (SEQUENTIAL) + WASM SIKI DÖNGÜ HIZLI YOLU
+        // Her 511 anahtarda bir Aşama 1/2/3/4 dallanma, string tahsisi ve BigInt sınır bölme yükünü atlar.
+        const fastStdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
+        const fastNumW = cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1);
+        const fastIsGrid = (f === 'GRID' || mode === 'GRID' || (cfg.isGridFilterActive !== false && (cfg.userGridCell !== undefined && cfg.userGridCell !== null || cfg.isGridAutoJump)));
+        const fastIsHex = (mode === 'HEX' && cfg.userHexStart && cfg.userHexEnd);
+        const fastIsFreq = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || fastStdRatio === -3.0));
+        const fastIsStdLattice = (cfg && (cfg.stdBaseStrategy === 'AUTO' || fastStdRatio === -1.0));
+        const canUseSeqWasmFastPath = (
+            cfg.selectedAlgorithm === 'SEQUENTIAL' &&
+            wasmReady && hasPrepareInv && ecInst && !_seqBroken &&
+            !isEffectivePrefix && suffixStride === 1n && effRange >= 512n &&
+            !fastIsGrid && !fastIsHex && !fastIsFreq &&
+            (fastStdRatio === 0.0 || (fastIsStdLattice && fastNumW > 1))
+        );
+
+        if (canUseSeqWasmFastPath) {
+            const safeMin = boundMin + 255n;
+            const safeMax = boundMax - 255n;
+            let fastFallbackDone = false;
+            for (let i = 0; i < batchSize; i++) {
+                const currentKey = workerSequentialNextKey(boundMin, boundMax, fastNumW, workerId);
+                const anchorPt = workerSeqAnchor(ecInst, currentKey);
+                if (!anchorPt) { fastFallbackDone = true; break; }
+                writeWorkerWasmFe(0x00A0, anchorPt[0]);
+                writeWorkerWasmFe(0x00C0, anchorPt[1]);
+                if (workerWasmEx.normal_prepare_inv(strideCount) !== 1) { fastFallbackDone = true; break; }
+
+                const maxPosS = (currentKey <= safeMax) ? strideCount : (boundMax >= currentKey ? Number(boundMax - currentKey) : 0);
+                const maxNegS = (currentKey >= safeMin) ? strideCount : (currentKey >= boundMin ? Number(currentKey - boundMin) : 0);
+                const packedRes = workerWasmEx.normal_sweep_511(strideCount, maxPosS, maxNegS);
+                count += (packedRes >>> 16) & 0xFFFF;
+                const matchCount = packedRes & 0xFFFF;
+                if (matchCount > 0) {
+                    const wasmHit = workerCheckWasmMatches(matchCount, currentKey, 1n);
+                    if (wasmHit) {
+                        lastKeyHex = wasmHit.keyHex;
+                        self.postMessage(wasmHit.msg);
+                        isWorking = false;
+                        return;
+                    }
+                }
+                if (i === batchSize - 1) {
+                    const pDesc = (cfg.isDualSliderActive && (boundMin > baseStart || boundMax < baseEnd))
+                        ? ('[0x' + boundMin.toString(16).substring(0, 3) + '..-0x' + boundMax.toString(16).substring(0, 3) + '..]')
+                        : '🌐 Tam Aralık';
+                    currentRangeText = cfg.isCircularMode ? ('#' + activeTarget.id + ' | ' + pDesc) : pDesc;
+                    const dispKey = (maxPosS > 0) ? (currentKey + BigInt(maxPosS)) : ((maxNegS > 0) ? (currentKey - BigInt(maxNegS)) : currentKey);
+                    lastKeyHex = ((dispKey >= boundMin && dispKey <= boundMax) ? dispKey : currentKey).toString(16).padStart(64, '0');
+                    workerPersistentLastKey = lastKeyHex;
+                }
+            }
+            if (!fastFallbackDone) {
+                // Fast-path tamamlandı; genel döngüyü atla
+            } else {
+                // Nadir çapa/ters-alma istisnasında kalan adımlar için genel döngüye düşülmez, bir sonraki batch devam eder
+            }
+        } else {
         for (let i = 0; i < batchSize; i++) {
             let currentKey = 0n;
 
@@ -13878,48 +14008,12 @@ const baseStart = (span * basePpm) / 1000000n;
                             }
 
                             if (matchCount > 0) {
-                                for (let m = 0; m < matchCount; m++) {
-                                    const base32 = (0x15000 + m * 28) >> 2;
-                                    const s   = workerWasmMem32[base32];
-                                    const dir = workerWasmMem32[base32 + 1];
-                                    const w0  = workerWasmMem32[base32 + 2] >>> 0;
-                                    if (!workerTargetWords0.has(w0)) continue;
-
-                                    const w1 = workerWasmMem32[base32 + 3] >>> 0;
-                                    const w2 = workerWasmMem32[base32 + 4] >>> 0;
-                                    const w3 = workerWasmMem32[base32 + 5] >>> 0;
-                                    const w4 = workerWasmMem32[base32 + 6] >>> 0;
-                                    const compH160Str =
-                                        w0.toString(16).padStart(8, '0') +
-                                        w1.toString(16).padStart(8, '0') +
-                                        w2.toString(16).padStart(8, '0') +
-                                        w3.toString(16).padStart(8, '0') +
-                                        w4.toString(16).padStart(8, '0');
-                                    const hitOffset = (s === 0) ? 0n : (BigInt(s) * suffixStride);
-                                    const hitKey = (s === 0) ? currentKey : ((dir === 0) ? (currentKey + hitOffset) : (currentKey - hitOffset));
-
-                                    const matched = workerTargetMap.get(compH160Str);
-                                    if (matched) {
-                                        lastKeyHex = hitKey.toString(16).padStart(64, '0');
-                                        self.postMessage(workerBuildCompWinMsg(matched, lastKeyHex, compH160Str));
-                                        isWorking = false;
-                                        return;
-                                    }
-                                    if (hasCustomHashSet && workerCustomHashSet.has(compH160Str)) {
-                                        lastKeyHex = hitKey.toString(16).padStart(64, '0');
-                                        self.postMessage({
-                                            type: 'win',
-                                            workerId: workerId,
-                                            keyHex: lastKeyHex,
-                                            targetId: 'İlave',
-                                            targetAddr: 'İlave Adres Eşleşmesi',
-                                            reward: 'İlave Havuz',
-                                            isUncompressed: false,
-                                            matchType: 'CUSTOM_COMP'
-                                        });
-                                        isWorking = false;
-                                        return;
-                                    }
+                                const wasmHit = workerCheckWasmMatches(matchCount, currentKey, suffixStride);
+                                if (wasmHit) {
+                                    lastKeyHex = wasmHit.keyHex;
+                                    self.postMessage(wasmHit.msg);
+                                    isWorking = false;
+                                    return;
                                 }
                             }
                         }
@@ -14072,6 +14166,7 @@ const baseStart = (span * basePpm) / 1000000n;
                 }
             }
         }
+        }
         
         workerGeneralAccumulatedCount += count;
         const now = Date.now();
@@ -14106,8 +14201,8 @@ const baseStart = (span * basePpm) / 1000000n;
         if (workerBatchCalibCounter % 4 === 0) {
             if (batchDuration < 12) {
 
-                // CPU rahat, event-loop overhead'ini azaltmak için batch'i kademeli büyüt (maksimum 1024)
-                workerDynamicBatchSize = Math.min(1024, Math.round(workerDynamicBatchSize * 1.25) + 5);
+                // CPU rahat, event-loop overhead'ini azaltmak için batch'i kademeli büyüt (maksimum 4096)
+                workerDynamicBatchSize = Math.min(4096, Math.round(workerDynamicBatchSize * 1.25) + 5);
             } else if (batchDuration > 22) {
                 // İşlem süresi uzadı, yanıt verebilirliği korumak için batch'i küçült (minimum 30)
                 workerDynamicBatchSize = Math.max(30, Math.round(workerDynamicBatchSize * 0.8));
