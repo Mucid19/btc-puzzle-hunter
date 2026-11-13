@@ -12,11 +12,9 @@
             m.href = 'manifest.json';
             document.head.appendChild(m);
             if ('serviceWorker' in navigator) {
-                try {
-                    navigator.serviceWorker.getRegistrations().then(regs => {
-                        for (let r of regs) r.unregister();
-                    }).catch(() => {});
-                } catch(e) {}
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('[SW] kayıt başarısız:', err));
+                });
             }
         }
     </script>
@@ -39,7 +37,7 @@
 }).call(typeof window !== 'undefined' ? window : this);
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
-    <script src="kangaroo_engine.js?v=v38"></script>
+    <script src="kangaroo_engine.js?v=v40"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -1372,7 +1370,7 @@
         <div id="popupSolved" class="popup-menu"></div>
 
         <!-- 🎯 HASSAS KAYDIRAÇ ARALIĞI GİRİŞ POPOVER'I -->
-        <div id="popManualRange" onclick="event.stopPropagation()" style="display:none; position:fixed; z-index:999999; width:240px; background:#0b1320; border:1.5px solid #0284c7; box-shadow:0 12px 28px rgba(0,0,0,0.85), 0 0 16px rgba(2,132,199,0.35); border-radius:8px; padding:8px 10px; flex-direction:column; gap:6px; font-family:sans-serif; box-sizing:border-box;">
+        <div id="popManualRange" onclick="event.stopPropagation()" style="display:none; position:fixed; z-index:999999; width:286px; background:#0b1320; border:1.5px solid #0284c7; box-shadow:0 12px 28px rgba(0,0,0,0.85), 0 0 16px rgba(2,132,199,0.35); border-radius:8px; padding:8px 10px; flex-direction:column; gap:6px; font-family:sans-serif; box-sizing:border-box;">
             <!-- Başlık -->
             <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1e293b; padding-bottom:5px;">
                 <span style="font-size:11px; font-weight:bold; color:#38bdf8; display:flex; align-items:center; gap:4px;">
@@ -1395,16 +1393,99 @@
                 <button type="button" id="btnApplyManualRange" onclick="applyManualRangeInput()" style="background:#0284c7; hover:background:#0369a1; color:#fff; border:none; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:bold; cursor:pointer; flex-shrink:0;" title="Kaydıraç Aralığını Uygula">✓</button>
             </div>
 
-            <!-- Hızlı Şablonlar -->
+            <!-- ❄️ En Büyük 6 Boşluk (54 Çözülmüş Puzzle Analizi) -->
             <div style="display:flex; flex-direction:column; gap:3px;">
-                <span style="font-size:9.5px; color:#94a3b8; font-weight:600;">⚡ Hızlı Şablonlar:</span>
-                <div style="display:flex; flex-wrap:wrap; gap:3px;">
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(60, 70)" title="En yoğun bulmaca kümesi (%60 - %70)">%60-70</button>
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(64, 69.5)" title="2/3 fraktal çekim penceresi">%64-69.5</button>
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(66.5, 66.8)" title="Matematiksel 2/3 Attractor">%66.6</button>
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(25, 50)" title="2. Çeyrek Dilim">%25-50</button>
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(50, 75)" title="3. Çeyrek Dilim">%50-75</button>
-                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(0, 100)" title="Tam Uzay (%0 - %100)">%0-100</button>
+                <span style="font-size:9.5px; color:#38bdf8; font-weight:700;">❄️ Hiç Çözüm Olmayan 6 Boşluk (54 Puzzle):</span>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:3px;">
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(51.49, 62.20)" title="1. En Büyük Boşluk: %51.49 – %62.20 (Genişlik: %10.71 | #115 ile #130 arası)" style="color:#38bdf8; border-color:#0284c7; background:#0c4a6e; font-weight:bold;">#1 %51.5-62.2</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(0.72, 6.94)" title="2. Boşluk: %0.72 – %6.94 (Genişlik: %6.22)" style="color:#7dd3fc; border-color:#0369a1; background:#082f49;">#2 %0.72-6.94</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(87.25, 91.85)" title="3. Boşluk: %87.25 – %91.85 (Genişlik: %4.60)" style="color:#7dd3fc; border-color:#0369a1; background:#082f49;">#3 %87.3-91.9</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(82.89, 87.25)" title="4. Boşluk: %82.89 – %87.25 (Genişlik: %4.36)" style="color:#7dd3fc; border-color:#0369a1; background:#082f49;">#4 %82.9-87.3</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(13.67, 17.77)" title="5. Boşluk: %13.67 – %17.77 (Genişlik: %4.10)" style="color:#7dd3fc; border-color:#0369a1; background:#082f49;">#5 %13.7-17.8</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(71.21, 75.13)" title="6. Boşluk: %71.21 – %75.13 (Genişlik: %3.92)" style="color:#7dd3fc; border-color:#0369a1; background:#082f49;">#6 %71.2-75.1</button>
+                </div>
+            </div>
+
+            <!-- ⚡ Hızlı Şablonlar & Çeyrekler -->
+            <div style="display:flex; flex-direction:column; gap:3px;">
+                <span style="font-size:9.5px; color:#94a3b8; font-weight:600;">⚡ İstatistiksel Merkez & Çeyrekler:</span>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(49.60, 52.08)" title="İstatistiksel Merkez: Medyan (%49.60) – Ortalama (%52.08)" style="color:#fbbf24; border-color:#d97706; background:#451a03; font-weight:bold;">🎯 Merkez %49.6-52.1</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(0, 100)" title="Tam Uzay (%0 - %100)">🌐 Tam Uzay (%0-100)</button>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;">
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(0, 25)" title="Q1 (1. Çeyrek: 12 Çözüm / %22.2)">Q1 %0-25</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(25, 50)" title="Q2 (2. Çeyrek: 15 Çözüm / %27.8)">Q2 %25-50</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(50, 75)" title="Q3 (3. Çeyrek: 13 Çözüm / %24.1)">Q3 %50-75</button>
+                    <button type="button" class="mini-preset-pill" onclick="applyManualRangePreset(75, 100)" title="Q4 (4. Çeyrek: 14 Çözüm / %25.9)">Q4 %75-100</button>
+                </div>
+            </div>
+
+            <!-- 🎯 ATTRACTOR DÖNGÜ MODU (DİNAMİK SÜRE & HASSASİYET) -->
+            <div style="border-top:1px solid #1e293b; padding-top:5px; margin-top:2px; display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:10px; color:#f43f5e; font-weight:bold; display:flex; align-items:center; gap:4px;">
+                        🎯 Attractor Döngü Modu:
+                    </span>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <span id="lblAttractor19sActiveBadge" style="font-size:9px; padding:1px 5px; border-radius:3px; background:#1e293b; color:#94a3b8; font-family:monospace; font-weight:bold;">KAPALI</span>
+                        <button type="button" id="btnPopoverAttractorToggle" onclick="toggleAttractor19sMode()" style="background:#1e293b; color:#94a3b8; border:1px solid #334155; border-radius:3px; padding:1px 6px; font-size:9px; font-weight:bold; cursor:pointer;" title="Attractor Modunu Aç / Kapat">AÇ / KAPAT</button>
+                    </div>
+                </div>
+
+                <!-- Süre Ayarı (Dinamik Dwell Süresi + Hızlı Süre Butonları) -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:10px;">
+                    <div style="display:flex; align-items:center; gap:3px;">
+                        <span style="color:#94a3b8; font-size:9.5px;">Süre:</span>
+                        <input type="number" id="inpAttractorDurationSec" min="2" max="3600" value="19" style="width:40px; background:#1e293b; border:1px solid #334155; border-radius:3px; color:#f43f5e; font-size:10px; font-weight:bold; font-family:monospace; text-align:center; padding:1px 2px;" title="Her dilimde duraklanacak süre (saniye)" onchange="onAttractorDurationChange()">
+                        <span style="color:#64748b; font-size:9.5px;">sn</span>
+                    </div>
+                    <div style="display:flex; gap:2px;">
+                        <button type="button" class="mini-preset-pill" id="btnAttrDur5" onclick="setAttractorDwellSec(5)" style="padding:1px 4px; font-size:9px;" title="5 saniye">5s</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrDur10" onclick="setAttractorDwellSec(10)" style="padding:1px 4px; font-size:9px;" title="10 saniye">10s</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrDur19" onclick="setAttractorDwellSec(19)" style="padding:1px 4px; font-size:9px; color:#f43f5e; border-color:#e11d48;" title="19 saniye (Varsayılan Altın Oran)">19s</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrDur30" onclick="setAttractorDwellSec(30)" style="padding:1px 4px; font-size:9px;" title="30 saniye">30s</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrDur60" onclick="setAttractorDwellSec(60)" style="padding:1px 4px; font-size:9px;" title="60 saniye">60s</button>
+                    </div>
+                </div>
+
+                <!-- Hassasiyet Açılır Menüsü (Tüm Modlar) -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <span style="font-size:9.5px; color:#94a3b8; white-space:nowrap;">Dilim:</span>
+                    <select id="selAttractorPrecision" onchange="setAttractor19sPrecision(this.value)" style="flex:1; min-width:0; background:#1e293b; color:#f8fafc; border:1px solid #334155; border-radius:3px; font-size:9.5px; padding:2px 4px; font-family:monospace; outline:none; cursor:pointer;">
+                        <optgroup label="🔬 Nano & Mikro Modlar">
+                            <option value="7D" selected>🎯 7D (%0.0000001 · 1 Milyar Dilim - Nano Sniper)</option>
+                            <option value="100K">⚡ 100K (%0.0010 · 100K Dilim - Sniper)</option>
+                            <option value="10K">🔬 10K (%0.0100 · 10K Dilim - Ultra Mikro)</option>
+                            <option value="4K">🧱 4K (%0.0244 · 4096 Dilim - İkili Kafes)</option>
+                            <option value="512">📊 512 (%0.1953 · 512 Dilim - Standart)</option>
+                        </optgroup>
+                        <optgroup label="⚡ Hızlı Döngü Modları">
+                            <option value="64">⚡ 64 Dilim (%1.56 · ~20 dk Tam Döngü)</option>
+                            <option value="32">⚡ 32 Dilim (%3.13 · ~10 dk Tam Döngü)</option>
+                            <option value="16">⚡ 16 Dilim (%6.25 · ~5 dk Tam Döngü)</option>
+                            <option value="8">⚡ 8 Dilim (%12.5 · ~2.5 dk Tam Döngü)</option>
+                            <option value="4">⚡ 4 Dilim (%25.0 · ~1.3 dk Tam Döngü)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Hızlı Dilim Hapları (Düzenli 5x2 Grid) -->
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:2px;">
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec4" onclick="setAttractor19sPrecision('4')" title="4 Dilim (%25.0 Genişlik)" style="padding:2px 0; text-align:center; font-size:9px;">4</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec8" onclick="setAttractor19sPrecision('8')" title="8 Dilim (%12.5 Genişlik)" style="padding:2px 0; text-align:center; font-size:9px;">8</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec16" onclick="setAttractor19sPrecision('16')" title="16 Dilim (%6.25 Genişlik)" style="padding:2px 0; text-align:center; font-size:9px;">16</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec32" onclick="setAttractor19sPrecision('32')" title="32 Dilim (%3.13 Genişlik)" style="padding:2px 0; text-align:center; font-size:9px;">32</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec64" onclick="setAttractor19sPrecision('64')" title="64 Dilim (%1.56 Genişlik)" style="padding:2px 0; text-align:center; font-size:9px;">64</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:2px;">
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec512" onclick="setAttractor19sPrecision('512')" title="512 Dilim (%0.1953 Standart)" style="padding:2px 0; text-align:center; font-size:9px;">512</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec4K" onclick="setAttractor19sPrecision('4K')" title="4.096 Dilim (%0.0244 İkili Kafes)" style="padding:2px 0; text-align:center; font-size:9px;">4K</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec10K" onclick="setAttractor19sPrecision('10K')" title="10.000 Dilim (%0.0100 Ultra-Mikro)" style="padding:2px 0; text-align:center; font-size:9px;">10K</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec100K" onclick="setAttractor19sPrecision('100K')" title="100.000 Dilim (%0.0010 Sniper)" style="padding:2px 0; text-align:center; font-size:9px;">100K</button>
+                        <button type="button" class="mini-preset-pill" id="btnAttrPrec7D" onclick="setAttractor19sPrecision('7D')" title="1.000.000.000 Dilim (%0.0000001 Nano-Sniper)" style="padding:2px 0; text-align:center; font-size:9px;">7D</button>
+                    </div>
                 </div>
             </div>
 
@@ -1418,15 +1499,34 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:4px; font-size:10px;">
                     <span style="color:#94a3b8; font-size:9.5px;">Süre:</span>
-                    <input type="number" id="inpSlideWindowSec" min="2" max="3600" value="40" style="width:42px; background:#1e293b; border:1px solid #334155; border-radius:3px; color:#f8fafc; font-size:10px; text-align:center; padding:1px 3px;" title="Her dilimde taranacak süre (saniye)" onchange="onSlidingWindowConfigChange()">
+                    <input type="number" id="inpSlideWindowSec" min="2" max="3600" value="40" style="width:40px; background:#1e293b; border:1px solid #334155; border-radius:3px; color:#f8fafc; font-size:10px; text-align:center; padding:1px 2px;" title="Her dilimde taranacak süre (saniye)" onchange="onSlidingWindowConfigChange()">
                     <span style="color:#64748b; font-size:9.5px;">sn</span>
                     <span style="color:#475569; margin:0 2px;">|</span>
                     <span style="color:#94a3b8; font-size:9.5px;">Adım:</span>
-                    <input type="number" id="inpSlideWindowStep" min="0.001" max="50" step="any" value="0.1" style="width:48px; background:#1e293b; border:1px solid #334155; border-radius:3px; color:#f8fafc; font-size:10px; text-align:center; padding:1px 3px;" title="Pencere genişliği / adım boyu (% cinsinden)" onchange="onSlidingWindowConfigChange()">
+                    <input type="number" id="inpSlideWindowStep" min="0.001" max="50" step="any" value="0.1" style="width:44px; background:#1e293b; border:1px solid #334155; border-radius:3px; color:#f8fafc; font-size:10px; text-align:center; padding:1px 2px;" title="Pencere genişliği / adım boyu (% cinsinden)" onchange="onSlidingWindowConfigChange()">
                     <span style="color:#64748b; font-size:9.5px;">%</span>
                     <button type="button" onclick="stepSlidingWindow()" style="background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7; border-radius:3px; padding:1px 5px; font-size:9.5px; font-weight:bold; cursor:pointer; margin-left:auto;" title="Sonraki dilime hemen geç">⏭️</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- CANLI API DURUM ÇUBUĞU -->
+    <div id="apiStatusBar" style="display:flex; align-items:center; justify-content:space-between; gap:6px; background:#061325; border:1px solid #0284c7; border-radius:5px; padding:3px 8px; margin-top:4px; margin-bottom:6px; font-size:10.5px; font-family:monospace; box-sizing:border-box;">
+        <div id="apiStatusText" style="color:#10b981; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" title="Canlı API Sorgu Durumu (Test Etmek İçin Tıklayın)" onclick="testLiveAPI()">
+            🌐 Canlı API: Aktif [₿] (0 Sorgulandı)
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+            <!-- ₿ Bakiye Kontrolü Tıkı -->
+            <label style="display:inline-flex; align-items:center; gap:2px; color:#f59e0b; font-size:11px; font-weight:bold; cursor:pointer;" title="₿ Pozitif Bakiye Kontrolü (Bakiye > 0)">
+                <input type="checkbox" id="chkCheckBalance" checked onchange="onApiFilterOptionsChange()">
+                <span style="font-size:13px; font-weight:900; line-height:1; color:#f59e0b;">₿</span>
+            </label>
+            <!-- ⇄ Hareket / İşlem Geçmişi Kontrolü Tıkı -->
+            <label style="display:inline-flex; align-items:center; gap:2px; color:#38bdf8; font-size:11px; font-weight:bold; cursor:pointer;" title="⇄ Cüzdanda Hareket / İşlem Geçmişi Kontrolü (İşlem Sayısı > 0)">
+                <input type="checkbox" id="chkCheckActivity" onchange="onApiFilterOptionsChange()">
+                <span style="font-size:13px; font-weight:900; line-height:1; color:#38bdf8;">⇄</span>
+            </label>
         </div>
     </div>
 
@@ -1499,7 +1599,7 @@
                 <div style="display:inline-flex; align-items:center; gap:3px; flex:1 1 auto; min-width:0;" title="Arama Algoritması">
                     <select id="algoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:9.5px; height:24px; border-radius:3px;" onchange="onAlgoSelectChange(this.value)">
                         <option value="AUTO" selected>🔄 Oto (Dönüşümlü Hibrit)</option>
-                        <option value="BSGS_NEGATION" style="color:#38bdf8; font-weight:bold;">🎯⚡ Negation BSGS (Deterministik Çözücü O(√W))</option>
+                        <option value="HEX_FREQ_DENSITY" style="color:#10b981; font-weight:bold;">📊🔥 Yapısal CSPRNG Biijeksiyon Kafesi (Hamming + Runs + Shannon)</option>
                         <option value="ROBERTS_R_SEQUENCE" style="color:#f59e0b; font-weight:bold;">🌟📐 Plastik Oran (R_d Harmonikleri)</option>
                         <option value="HULL_DOBELL_LCG" style="color:#a78bfa; font-weight:bold;">🔢✨ Hull-Dobell Permütasyonu (Tam Çevrim)</option>
                         <option value="SEQUENTIAL">➡️ Ardışık Dilim (Örtüşmesiz, Hızlı Çapa)</option>
@@ -1531,6 +1631,7 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:0 0 auto; width:135px; max-width:140px; min-width:0;" title="Standart Algoritmalar İçin Başlangıç & Tohum Işınlama">
                     <select id="stdBaseFocusSelect" class="range-select" style="width:100%; min-width:0; padding:1px 2px; font-size:9.5px; height:24px; border-radius:3px; border-color:#a855f7;" onchange="applyStdBaseStart(this.value)">
                                                 <option value="AUTO">🔄 Oto Kafes</option>
+                        <option value="HEX_FREQ_FULL">🔤 Hex Frekans (%100 Uzay)</option>
                         <option value="START_0" selected>🟢 Saf Konum (%0)</option>
                         <option value="START_50">⚖️ Ortadan Başla (%50)</option>
                         <option value="START_382">🌟 Altın-1'den Başla (%38.2)</option>
@@ -1547,8 +1648,7 @@
                 <div style="display:inline-flex; align-items:center; gap:2px; flex:1.5; min-width:0;" title="Kanguru O(√N) Arama Algoritmaları">
                     <select id="kangarooAlgoSelect" class="range-select" style="flex:1; min-width:0; padding:1px 2px; font-size:9.5px; height:23px; border-radius:3px; border-color:#06b6d4;" onchange="onAlgoSelectChange(this.value)">
                         <optgroup label="Klasik & Açık Anahtarlı Kanguru (O(√N))" style="background:#0f172a; color:#38bdf8;">
-                            <option value="KANGAROO_ATTRACTOR_19S" style="color:#f43f5e; font-weight:bold;">🎯 19s Attractor-Küme Modeli (%100 Tam Kapsama & Soğuk Bölge Ağırlıklı)</option>
-                            <option value="KANGAROO" selected>🦘 Pollard's Kangaroo</option>
+                                                        <option value="KANGAROO" selected>🦘 Pollard's Kangaroo</option>
                             <option value="KANGAROO_4WAY_GPR" style="color:#38bdf8; font-weight:bold;">🦘⚡ 4-Kanguru GPR Modeli (1.714√N + Negasyon)</option>
                         <option value="KANGAROO_ALIGNED" style="color:#a78bfa; font-weight:bold;">🦘🧩 Hizalı Sürü Kangaroo (Weyl Dağılımlı Başlangıç, K≈2)</option>
                             <option value="GLV_LATTICE_2D">🌐⚡ 2D Latis GLV Kafesi (Gaudry-Schost)</option>
@@ -1609,24 +1709,24 @@
             <div class="sweep-sub-row">
                 <div class="auto-slider-buttons-wrapper">
                     <div id="groupAutoSliderSpeed" class="auto-slider-speed-group">
-                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn" onclick="toggleSpeedMode('AUTO')" title="🔄 Otomatik Hız (Bulmacaya göre dinamik hız)">🔄</button>
-                        <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="⚡ Hızlı (120 ms / %0.20 Adım)">⚡</button>
-                        <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="⏱️ Orta (200 ms / %0.10 Adım)">⏱️</button>
-                        <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="🐢 Yavaş (350 ms / %0.05 Adım)">🐢</button>
-                        <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="🔬 Mikro (600 ms / %0.02 Adım)">🔬</button>
+                        <button type="button" id="btnSpeedAuto" class="auto-speed-btn" onclick="toggleSpeedMode('AUTO')" title="🔄 Otomatik Derin Tarama (10-19 sn Duraklama)">🔄</button>
+                        <button type="button" id="btnSpeedFast" class="auto-speed-btn" onclick="toggleSpeedMode('FAST')" title="⚡ Hızlı (5.0 sn Duraklama)">⚡</button>
+                        <button type="button" id="btnSpeedMed" class="auto-speed-btn" onclick="toggleSpeedMode('MEDIUM')" title="⏱️ Orta (9.0 sn Duraklama)">⏱️</button>
+                        <button type="button" id="btnSpeedSlow" class="auto-speed-btn" onclick="toggleSpeedMode('SLOW')" title="🐢 Yavaş (14.0 sn Derin Duraklama)">🐢</button>
+                        <button type="button" id="btnSpeedMicro" class="auto-speed-btn" onclick="toggleSpeedMode('MICRO')" title="🔬 Mikro (19.0 sn Maksimum Derinlik)">🔬</button>
                     </div>
                     <div id="groupSliderRegime" class="auto-slider-speed-group">
                         <button type="button" id="btnRegimeAuto" class="auto-speed-btn" onclick="toggleRegimeAuto()" title="🔄 Akıllı Matematiksel Rejim (Dinamik Rezonans / Weyl / √N)">🔄</button>
-                        <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (O(√N) Kuadratik Sıçrama)">🦚</button>
-                        <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması (Ergodik)">🌀</button>
-                        <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (Doppler / Ayak İzi Koruma)">🦘</button>
-                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Tarama (Ping-Pong)">🏓</button>
+                        <button type="button" id="btnRegimeSqrt" class="auto-speed-btn" onclick="setSliderRegime('SQRT')" title="🦚 Karekök Rezonansı (19 sn O(√N) Kuadratik Sıçrama)">🦚</button>
+                        <button type="button" id="btnRegimeWeyl" class="auto-speed-btn" onclick="setSliderRegime('WEYL')" title="🌀 Weyl Altın Oran Fraktal Sıçraması (19 sn Ergodik Kafes)">🌀</button>
+                        <button type="button" id="btnRegimeResonance" class="auto-speed-btn" onclick="setSliderRegime('RESONANCE')" title="🦘 Harmonik Rezonans (19 sn Kangaroo Doppler Kilidi)">🦘</button>
+                        <button type="button" id="btnRegimeClassic" class="auto-speed-btn" onclick="setSliderRegime('CLASSIC')" title="🏓 Klasik Doğrusal Tarama (19 sn Kiremit Adımlama)">🏓</button>
                     </div>
                     <div class="crop-mini-group">
                         <button type="button" class="mini-crop-btn" id="btnCropSelection" onclick="cropSpaceToCurrentSelection()" style="background:transparent; color:#94a3b8; border:1px solid transparent;" title="Seçili aralığı yeni uzay olarak kırp & sabitle">✂️</button>
                         <button type="button" class="mini-crop-btn" id="btnManualRangePrompt" onclick="toggleManualRangePopover(this, event)" style="background:transparent; color:#38bdf8; border:1px solid transparent;" title="🎯 Hassas Kaydıraç Aralığı Gir (% Min - % Maks)">🎯</button>
                         <button type="button" id="btnToggleSlidingWindow" onclick="toggleAutoSlidingWindow()" style="display:none !important;"></button>
-                        <button type="button" class="mini-crop-btn" id="btnToggleAttractor19s" onclick="toggleAttractor19sMode()" style="background:transparent; color:#f43f5e; border:1px solid transparent; font-weight:bold; font-size:11px; padding:1px 4px; min-width:24px;" title="19s Attractor Modu: 54 çözümün en yoğun kümelerini 19'ar saniye aralıksız tara">19</button>
+                        <button type="button" class="mini-crop-btn" id="btnToggleAttractor19s" onclick="toggleAttractor19sMode()" oncontextmenu="toggleManualRangePopover(this, event); return false;" style="background:transparent; color:#f43f5e; border:1px solid transparent; font-weight:bold; font-size:11px; padding:1px 4px; min-width:24px;" title="Attractor Döngü Modu: Yoğun kümeleri aralıksız tara">19s</button>
                         <button type="button" class="mini-crop-btn" id="btnResetCrop" onclick="resetSpaceCrop()" style="background:#991b1b; color:#fff; border-color:#ef4444; font-weight:bold; display:none;" title="Uzayı Sıfırla (Tam Uzay %0-%100)">↩️</button>
                     </div>
                     <span id="lblCropStatus" onclick="toggleManualRangePopover(this, event)" title="🎯 Tıklayın: Hassas % Aralığı Girin" style="cursor:pointer; color:#f59e0b; font-size:11.5px; font-family:monospace; font-weight:bold; display:none; align-items:center; justify-content:center; height:26px; line-height:1; background:#1e1b4b; padding:0 8px; border-radius:4px; border:1px solid #6366f1; white-space:nowrap; flex-shrink:0; box-sizing:border-box;"></span>
@@ -1980,6 +2080,7 @@ window.HISTORICAL_SOLVED_KEYS = HISTORICAL_SOLVED_KEYS;
 
 let selectedAlgorithm = 'AUTO'; // 'AUTO', 'RANDOM', 'SOBOL', 'WEYL_GOLDEN', 'COPRIME_STRIDE', 'HILBERT', 'WEAK_ENTROPY', 'CHAOS', 'KANGAROO', 'HALTON', 'SCRAMBLED_SOBOL', 'MCMC', 'SPHERICAL_ORBITAL', 'ADDR_HOP_SWEEP', 'LEVY_FLIGHT', 'CONTINUED_FRACTIONS', 'ULAM_SPIRAL'
 let autoAlgoList = [
+    'HEX_FREQ_DENSITY',
     'SCRAMBLED_SOBOL',
     'SOBOL',
     'KRONECKER_LATTICE',
@@ -2068,6 +2169,8 @@ let spaceCropStart = null;
 let spaceCropEnd = null;
 let spaceCropMinPct = 0;
 let spaceCropMaxPct = 100;
+let attractorUserBaseMin = 0;
+let attractorUserBaseMax = 100;
 let spaceCropMode = null; // 'PERCENT' or 'SQRT_N'
 
 function getHexTargetBounds() {
@@ -2395,7 +2498,11 @@ function applySingleStdOffset(startMode) {
     let ratio = 0.0;
     let label = 'Saf Konum (%0)';
 
-    if (startMode === 'AUTO') {
+    if (startMode === 'HEX_FREQ_FULL') {
+        stdBaseStrategy = 'HEX_FREQ_FULL';
+        ratio = -3.0;
+        label = 'Hex Frekans (%100 Uzay)';
+    } else if (startMode === 'AUTO') {
         stdBaseStrategy = 'AUTO';
         ratio = -1.0;
         label = 'Oto Kafes (Latis Izgarası)';
@@ -2508,13 +2615,14 @@ let lastAutoSliderBroadcastTime = 0;
 let weylAccum = 0n;
 const WEYL_GOLDEN_STEP = 618033988749n; // (sqrt(5)-1)/2 * 10^12 (Steinhaus Low-Discrepancy)
 let resonanceDwellCounter = 0;
+let lastExecutedSliderRegime = null;
 
 const AUTO_SLIDER_SPEEDS = {
-    'AUTO':   { intervalMs: 250, stepPct: 0.15, label: '🔄 Oto Hız' },
-    'FAST':   { intervalMs: 120, stepPct: 0.20, label: '⚡ Hızlı' },
-    'MEDIUM': { intervalMs: 200, stepPct: 0.10, label: '⏱️ Orta' },
-    'SLOW':   { intervalMs: 350, stepPct: 0.05, label: '🐢 Yavaş' },
-    'MICRO':  { intervalMs: 600, stepPct: 0.02, label: '🔬 Mikro' }
+    'AUTO':   { intervalMs: 12000, stepPct: 0.10, label: '🔄 Oto Derin (10-19 sn)' },
+    'FAST':   { intervalMs: 5000,  stepPct: 0.15, label: '⚡ Hızlı (5.0 sn)' },
+    'MEDIUM': { intervalMs: 9000,  stepPct: 0.10, label: '⏱️ Orta (9.0 sn)' },
+    'SLOW':   { intervalMs: 14000, stepPct: 0.05, label: '🐢 Yavaş (14.0 sn)' },
+    'MICRO':  { intervalMs: 19000, stepPct: 0.02, label: '🔬 Mikro Derin (19.0 sn)' }
 };
 
 function getEffectiveSliderSpeed() {
@@ -2550,19 +2658,7 @@ function getEffectiveSliderSpeed() {
     return speedCycle[phase] || 'MEDIUM';
 }
 
-function getEffectiveSliderRegime() {
-    if (autoSliderRegime && autoSliderRegime !== 'AUTO') return autoSliderRegime;
-    if (!autoSliderRegime && !isAutoSliderActive) return null;
-
-    let actT = (typeof currentTarget !== 'undefined' && currentTarget) ? currentTarget : null;
-    if (!actT && typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && Array.isArray(unsolvedList) && unsolvedList.length > 0) {
-        const cIdx = (typeof circularIndex !== 'undefined' && circularIndex >= 0) ? (circularIndex % unsolvedList.length) : 0;
-        actT = unsolvedList[cIdx] || unsolvedList[0];
-    }
-    if (!actT && typeof getActiveTarget === 'function') {
-        actT = getActiveTarget();
-    }
-
+function getActiveRunningAlgorithm() {
     let curAlgo = (typeof selectedAlgorithm === 'string') ? selectedAlgorithm : 'AUTO';
     if (curAlgo === 'AUTO' && typeof autoAlgoList !== 'undefined' && autoAlgoList.length > 0) {
         if (typeof startTime !== 'undefined' && startTime && typeof isRunning !== 'undefined' && isRunning) {
@@ -2573,37 +2669,59 @@ function getEffectiveSliderRegime() {
             curAlgo = autoAlgoList[autoAlgoIndex % autoAlgoList.length] || 'AUTO';
         }
     }
+    return curAlgo;
+}
 
-    const isKang = (typeof curAlgo === 'string' && curAlgo.startsWith('KANGAROO')) ||
-                   curAlgo === 'BSGS_NEGATION' ||
-                   curAlgo === 'ADDR_HOP_SWEEP' ||
-                   curAlgo === 'SPHERICAL_ORBITAL' ||
-                   curAlgo === 'GLV_LATTICE_2D' ||
-                   curAlgo === 'BIP39_ENTROPY';
+function getAlgorithmKinematicFamily(curAlgo) {
+    const a = curAlgo || getActiveRunningAlgorithm();
+    // 1. Aile: Pollard Kangaroo & 2D GLV Sürüleri -> Tuzak-Koruyucu Adiabatik Kayma (%75-%80 Örtüşmeli)
+    if ((typeof a === 'string' && a.startsWith('KANGAROO')) || a === 'GLV_LATTICE_2D' || a === 'SPHERICAL_ORBITAL') {
+        return 'KANGAROO_ADIABATIC';
+    }
+    // 2. Aile: Deterministik Süpürücüler -> Kiremit Adımlama (Stepping-Stone Tiling, Sıfır Başa Sarma)
+    if (a === 'SEQUENTIAL' || a === 'ALIGNED_PERM' || a === 'COPRIME_STRIDE') {
+        return 'SWEEPER_TILING';
+    }
+    // 3. Aile: 511-Blok Biijeksiyon & Kuasi-Kafes -> Burst-Kilitli Coprime Sıçrama (Sıfır Örtüşme, Tam Periyot)
+    if (a === 'HEX_FREQ_DENSITY' || a === 'ROBERTS_R_SEQUENCE' || a === 'KRONECKER_LATTICE' || a === 'HULL_DOBELL_LCG' || a === 'ADDR_HOP_SWEEP' || a === 'WEYL_GOLDEN') {
+        return 'BIJECTION_COPRIME_HOP';
+    }
+    // 4. Aile: Fraktal & Q-RNG Örnekleyiciler -> Çok-Ölçekli Soluklanma (Multi-Scale Breathing & √N Rezonans)
+    return 'FRACTAL_BREATHING';
+}
 
-    let primaryRegime = 'WEYL';
-    if (isKang) {
-        primaryRegime = 'RESONANCE';
-    } else if (curAlgo === 'LEVY_FLIGHT' || curAlgo === 'ULAM_SPIRAL' || curAlgo === 'HILBERT' || curAlgo === 'CONTINUED_FRACTIONS' || curAlgo === 'COLLATZ_DRIFT' || curAlgo === 'SIERPINSKI_GASKET') {
-        primaryRegime = 'SQRT';
-    } else if (curAlgo === 'COPRIME_STRIDE' || curAlgo === 'ALIGNED_PERM' || curAlgo === 'SEQUENTIAL' || curAlgo === 'HULL_DOBELL_LCG' || curAlgo === 'MODULAR_GRID') {
-        primaryRegime = 'CLASSIC';
-    } else {
-        primaryRegime = 'WEYL';
+function getEffectiveSliderRegime() {
+    if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive && (!autoSliderRegime || autoSliderRegime !== 'AUTO')) {
+        return 'RESONANCE'; // 🎯 19s Attractor modu varsayılan olarak Kangaroo Harmonik Rezonanstır
+    }
+    if (autoSliderRegime && autoSliderRegime !== 'AUTO') return autoSliderRegime;
+
+    if (autoSliderRegime === 'AUTO') {
+        // 🔄 AKILLI OTO DÖNGÜ (4 Rejimli Dinamik Matematiksel Rotasyon):
+        // Her adımda sırayla: Karekök (🦚) ➔ Weyl Altın Oran (🌀) ➔ Kangaroo Rezonans (🦘) ➔ Klasik Doğrusal (🏓)
+        const AUTO_REGIMES = ['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'];
+        const cycleIdx = Math.abs(Number(autoRegimeStepCounter || 0)) % AUTO_REGIMES.length;
+        return AUTO_REGIMES[cycleIdx];
     }
 
-    // 🧠 Akıllı Rejim: Tekli veya çoklu algoritma fark etmeksizin tüm matematiksel rejimleri (√N, Weyl, Rzns, Clas)
-    // algoritmanın doğal rezonansından başlayarak periyodik ve akıllı şekilde dönüştürür, sabit seçenekte donmaz!
-    const regimeCycles = {
-        'RESONANCE': ['RESONANCE', 'WEYL', 'SQRT', 'CLASSIC'],
-        'WEYL':      ['WEYL', 'SQRT', 'RESONANCE', 'CLASSIC'],
-        'SQRT':      ['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'],
-        'CLASSIC':   ['CLASSIC', 'WEYL', 'SQRT', 'RESONANCE']
-    };
-    const cycle = regimeCycles[primaryRegime] || ['WEYL', 'SQRT', 'RESONANCE', 'CLASSIC'];
-    const stepIdx = (typeof autoRegimeStepCounter !== 'undefined') ? autoRegimeStepCounter : 0;
-    const phase = Math.floor(stepIdx / 20) % cycle.length;
-    return cycle[phase] || primaryRegime;
+    // Aktif algoritmaya göre rejim:
+    const curAlgo = (typeof selectedAlgorithm === 'string' && selectedAlgorithm !== 'AUTO')
+        ? selectedAlgorithm
+        : (typeof getActiveRunningAlgorithm === 'function' ? getActiveRunningAlgorithm() : 'SEQUENTIAL');
+    const family = (typeof getAlgorithmKinematicFamily === 'function')
+        ? getAlgorithmKinematicFamily(curAlgo)
+        : 'SWEEPER_TILING';
+
+    // 🧠 Algoritmaya Özel Kaydıraç Kinematiği:
+    if (family === 'KANGAROO_ADIABATIC') {
+        return 'RESONANCE'; // 🦘 Tuzak-Koruyucu Adiabatik Kayma (%75-%80 Örtüşme)
+    } else if (family === 'SWEEPER_TILING') {
+        return 'CLASSIC';   // 🧱 Kiremit Adımlama (Stepping-Stone Konveyör)
+    } else if (family === 'BIJECTION_COPRIME_HOP') {
+        return 'WEYL';      // 🌀 Burst-Kilitli Coprime / Weyl Tam Döngü Sıçrama
+    } else {
+        return 'SQRT';      // 🦚 Çok-Ölçekli Soluklanma (Multi-Scale Breathing √N)
+    }
 }
 
 function setSliderRegime(regime, isRemoteSync = false, forceState = null) {
@@ -2611,6 +2729,7 @@ function setSliderRegime(regime, isRemoteSync = false, forceState = null) {
     const shouldDeactivate = (forceState === false) || (forceState === null && autoSliderRegime === regime);
     if (shouldDeactivate) {
         autoSliderRegime = null;
+        lastExecutedSliderRegime = null;
         if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
             isAutoSliderActive = false;
             autoSliderSpeed = null;
@@ -2621,35 +2740,51 @@ function setSliderRegime(regime, isRemoteSync = false, forceState = null) {
         }
     } else {
         autoSliderRegime = regime;
+        lastExecutedSliderRegime = regime;
         if (!isAutoSliderActive) {
             isAutoSliderActive = true;
             if (!autoSliderSpeed) autoSliderSpeed = 'AUTO';
         }
     }
     resonanceDwellCounter = 0;
+    // Sürü (Swarm) Düğümlerine Canlı Senkronizasyon:
+    if (typeof kangarooPeers !== 'undefined' && typeof KANGAROO_TAB_ID !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
+        kangarooPeers[KANGAROO_TAB_ID].sliderRegime = autoSliderRegime;
+        kangarooPeers[KANGAROO_TAB_ID].isAutoSliderActive = isAutoSliderActive;
+        kangarooPeers[KANGAROO_TAB_ID].sliderSpeed = autoSliderSpeed;
+    }
     if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
         broadcastSwarmSetting('SLIDER_REGIME', { regime: autoSliderRegime, active: isAutoSliderActive, speed: autoSliderSpeed });
     }
     updateSpeedButtonStyles();
     updateRegimeButtonStyles();
     updateAutoSliderUI();
+    if (isAutoSliderActive) {
+        // 🌀 Altın Oran veya Rejim seçildiği an kaydıracı beklemeden o rejimin pozisyonuna sıçrat
+        try { stepAutoSlider(); } catch(e) {}
+    }
     if (typeof isRunning !== 'undefined' && isRunning && isAutoSliderActive) {
         startAutoSliderTimer();
         broadcastWorkerConfig();
     }
     if (!isRemoteSync && typeof showToast === 'function') {
         const labels = {
-            'AUTO': '🔄 Akıllı Rejim (Bulmaca & Algoritmaya Göre Dinamik: √N / Weyl / Rzns / Clas)',
-            'SQRT': '🦚 Karekök Rezonansı (O(√N) Dinamik Stride & Kuadratik Sıçrama)',
-            'WEYL': '🌀 Weyl Altın Oran Fraktal Sıçraması + Ortogonal Sürü (Ergodik)',
-            'RESONANCE': '🦘 Harmonik Rezonans (Kangaroo Doppler Kilidi & Ayak İzi Koruma)',
-            'CLASSIC': '🏓 Klasik Doğrusal Tarama (Ping-Pong)'
+            'AUTO': '🔄 Akıllı Rejim (19 sn Dinamik Derin Tarama)',
+            'SQRT': '🦚 Karekök Rezonansı (19 sn O(√N) Kuadratik Sıçrama)',
+            'WEYL': '🌀 Weyl Altın Oran Fraktal Sıçraması (19 sn Ergodik Kafes)',
+            'RESONANCE': '🦘 Harmonik Rezonans (19 sn Kangaroo Doppler Kilidi)',
+            'CLASSIC': '🏓 Klasik Doğrusal Tarama (19 sn Kiremit Adımlama)'
         };
         const timing = (typeof getAutoSliderIntervalAndStep === 'function') ? getAutoSliderIntervalAndStep() : null;
+        const dwellInfo = timing ? ` [⏱️ ${(timing.intervalMs / 1000).toFixed(1)} sn/adım]` : ' [⏱️ 19.0 sn/adım]';
         const multiNote = (autoSliderRegime && timing && timing.puzzleCount > 1)
             ? `<br><span style="font-size:10.5px; color:#38bdf8;">Çoklu Seçim Kalibrasyonu: ${timing.puzzleCount} bulmaca için ${(timing.intervalMs / 1000).toFixed(2)} sn/adım (${timing.baseIntervalMs} ms × ${timing.puzzleCount})</span>`
             : '';
-        showToast(`🎛️ <strong>Kaydıraç Rejimi:</strong> ${labels[autoSliderRegime] || 'Kapalı'}${multiNote}`);
+        if (autoSliderRegime) {
+            showToast(`⚙️ <strong>${labels[autoSliderRegime] || autoSliderRegime}</strong>${dwellInfo}${multiNote} aktif.`);
+        } else {
+            showToast('⏸️ <strong>Özel Kaydıraç Rejimi Devre Dışı</strong> (Varsayılan Hıza Dönüldü).');
+        }
     }
 }
 
@@ -2658,6 +2793,7 @@ function toggleRegimeAuto(isRemoteSync = false, forceState = null) {
     const shouldDeactivate = (forceState === false) || (forceState === null && autoSliderRegime === 'AUTO');
     if (shouldDeactivate) {
         autoSliderRegime = null;
+        lastExecutedSliderRegime = null;
         if (isAutoSliderActive && autoSliderSpeed === 'AUTO') {
             isAutoSliderActive = false;
             autoSliderSpeed = null;
@@ -2675,8 +2811,12 @@ function toggleRegimeAuto(isRemoteSync = false, forceState = null) {
             isAutoSliderActive = true;
             autoSliderSpeed = 'AUTO';
         }
+        lastExecutedSliderRegime = getEffectiveSliderRegime();
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
             broadcastSwarmSetting('SLIDER_SPEED', { speed: 'AUTO', active: true, regime: 'AUTO' });
+        }
+        if (isAutoSliderActive) {
+            try { stepAutoSlider(); } catch(e) {}
         }
         if (typeof isRunning !== 'undefined' && isRunning) {
             startAutoSliderTimer();
@@ -2688,25 +2828,39 @@ function toggleRegimeAuto(isRemoteSync = false, forceState = null) {
     updateAutoSliderUI();
     if (!isRemoteSync && typeof showToast === 'function') {
         if (autoSliderRegime === 'AUTO') {
-            const runNotice = (typeof isRunning !== 'undefined' && isRunning) ? 'Kaydıraç akıyor.' : 'Aramayı başlattığınızda otomatik akacaktır.';
-            showToast(`🔄 <strong>Akıllı Otomatik Mod Açıldı:</strong> ${runNotice}`);
+            const runNotice = (typeof isRunning !== 'undefined' && isRunning) ? 'Kaydıraç rejimler arası döngüyle akıyor.' : 'Aramayı başlattığınızda 4 rejim sırayla akacaktır.';
+            showToast(`🔄 <strong>Akıllı Otomatik Döngü Açıldı:</strong> 4 Rejim (🦚 Karekök ➔ 🌀 Weyl ➔ 🦘 Rezonans ➔ 🏓 Klasik) 19 sn aralıkla taranıyor. ${runNotice}`);
         } else {
-            showToast('⏸️ <strong>Akıllı Otomatik Mod Kapatıldı</strong>');
+            showToast('⏸️ <strong>Akıllı Otomatik Döngü Kapatıldı</strong>');
         }
     }
 }
 
 function updateRegimeButtonStyles() {
-    const effRegime = (typeof getEffectiveSliderRegime === 'function') ? getEffectiveSliderRegime() : 'WEYL';
-    const isAuto = autoSliderRegime === 'AUTO';
+    let activeRegime = null;
+    const isAutoMode = (autoSliderRegime === 'AUTO');
+
+    if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive && !isAutoMode) {
+        activeRegime = 'RESONANCE';
+    } else if (autoSliderRegime && autoSliderRegime !== 'AUTO') {
+        // Kullanıcı 🦚, 🌀, 🦘 veya 🏓 butonlarından birini manuel kilitledi:
+        activeRegime = autoSliderRegime;
+    } else if (isAutoMode || isAutoSliderActive) {
+        // Akıllı Rejim veya Kaydıraç Taraması devrede:
+        // Yalnızca kaydıracın fiilen icra ettiği son rejim yanar (asla keyfi değişmez):
+        activeRegime = lastExecutedSliderRegime || (typeof getEffectiveSliderRegime === 'function' ? getEffectiveSliderRegime() : 'CLASSIC');
+    } else {
+        // Kaydıraç ve rejim kapalı: Hiçbir buton aktif yanmaz
+        activeRegime = null;
+    }
 
     const btnAuto = document.getElementById('btnRegimeAuto');
     if (btnAuto) {
-        if (isAuto) {
-            btnAuto.style.background = '#059669';
-            btnAuto.style.borderColor = '#10b981';
+        if (isAutoMode) {
+            btnAuto.style.background = '#0284c7';
+            btnAuto.style.borderColor = '#38bdf8';
             btnAuto.style.color = '#ffffff';
-            btnAuto.style.boxShadow = '0 0 8px rgba(5,150,105,0.7)';
+            btnAuto.style.boxShadow = '0 0 10px rgba(56,189,248,0.85)';
             btnAuto.classList.add('active');
         } else {
             btnAuto.style.background = 'transparent';
@@ -2717,33 +2871,28 @@ function updateRegimeButtonStyles() {
         }
     }
 
+    const colors = {
+        'SQRT':      { solidBg: '#0284c7', border: '#38bdf8', text: '#ffffff', shadow: 'rgba(2,132,199,0.85)' },
+        'WEYL':      { solidBg: '#06b6d4', border: '#22d3ee', text: '#ffffff', shadow: 'rgba(6,182,212,0.85)' },
+        'RESONANCE': { solidBg: '#d97706', border: '#f59e0b', text: '#ffffff', shadow: 'rgba(217,119,6,0.85)' },
+        'CLASSIC':   { solidBg: '#db2777', border: '#f472b6', text: '#ffffff', shadow: 'rgba(219,39,119,0.85)' }
+    };
+
     ['SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].forEach(r => {
         const idMap = { 'SQRT': 'Sqrt', 'WEYL': 'Weyl', 'RESONANCE': 'Resonance', 'CLASSIC': 'Classic' };
         const b = document.getElementById('btnRegime' + idMap[r]);
         if (!b) return;
 
-        const colors = {
-            'SQRT':      { solidBg: '#0284c7', border: '#38bdf8', softBg: 'rgba(2,132,199,0.3)',  text: '#7dd3fc', shadow: 'rgba(2,132,199,0.7)' },
-            'WEYL':      { solidBg: '#06b6d4', border: '#22d3ee', softBg: 'rgba(6,182,212,0.3)',  text: '#67e8f9', shadow: 'rgba(6,182,212,0.7)' },
-            'RESONANCE': { solidBg: '#d97706', border: '#f59e0b', softBg: 'rgba(217,119,6,0.3)',  text: '#fde68a', shadow: 'rgba(217,119,6,0.7)' },
-            'CLASSIC':   { solidBg: '#475569', border: '#94a3b8', softBg: 'rgba(71,85,105,0.35)', text: '#e2e8f0', shadow: 'rgba(71,85,105,0.7)' }
-        };
         const c = colors[r] || colors['RESONANCE'];
+        const isThisActive = (activeRegime === r);
 
-        if (!isAuto && autoSliderRegime === r) {
+        if (isThisActive) {
             b.style.background = c.solidBg;
             b.style.borderColor = c.border;
-            b.style.color = '#ffffff';
-            b.style.boxShadow = '0 0 8px ' + c.shadow;
+            b.style.color = c.text;
+            b.style.boxShadow = '0 0 10px ' + c.shadow;
             b.classList.add('active');
             b.classList.remove('auto-active');
-        } else if (isAuto && r === effRegime) {
-            b.style.background = c.softBg;
-            b.style.borderColor = c.border;
-            b.style.color = '#ffffff';
-            b.style.boxShadow = '0 0 7px ' + c.shadow;
-            b.classList.add('auto-active');
-            b.classList.remove('active');
         } else {
             b.style.background = 'transparent';
             b.style.borderColor = '#334155';
@@ -2946,26 +3095,28 @@ function getAutoSliderIntervalAndStep() {
         baseIntervalMs = cfg.intervalMs;
         stepPct = cfg.stepPct;
     } else if (effRegime === 'RESONANCE') {
-        // 🧠 DİNAMİK AUTO HIZ KALİBRASYONU (Bulmaca Biti & Rejime Göre)
-        if (bits <= 28)      { baseIntervalMs = 200; stepPct = 0.8; }
-        else if (bits <= 35) { baseIntervalMs = 250; stepPct = 0.5; }
-        else if (bits <= 50) { baseIntervalMs = 300; stepPct = 0.3; }
-        else if (bits <= 70) { baseIntervalMs = 350; stepPct = 0.2; }
-        else                 { baseIntervalMs = 400; stepPct = 0.15; }
+        // 🧠 DİNAMİK DERİN TARAMA (Bulmaca Biti & Rejime Göre 10-19 sn Duraklama)
+        if (bits <= 28)      { baseIntervalMs = 6000;  stepPct = 0.5; }
+        else if (bits <= 35) { baseIntervalMs = 8000;  stepPct = 0.3; }
+        else if (bits <= 50) { baseIntervalMs = 11000; stepPct = 0.2; }
+        else if (bits <= 70) { baseIntervalMs = 15000; stepPct = 0.15; }
+        else                 { baseIntervalMs = 19000; stepPct = 0.10; }
     } else if (effRegime === 'SQRT') {
-        if (bits <= 28)      { baseIntervalMs = 160; stepPct = 0.40; }
-        else if (bits <= 45) { baseIntervalMs = 210; stepPct = 0.25; }
-        else if (bits <= 65) { baseIntervalMs = 260; stepPct = 0.15; }
-        else                 { baseIntervalMs = 320; stepPct = 0.10; }
+        if (bits <= 28)      { baseIntervalMs = 5000;  stepPct = 0.25; }
+        else if (bits <= 45) { baseIntervalMs = 8000;  stepPct = 0.18; }
+        else if (bits <= 65) { baseIntervalMs = 13000; stepPct = 0.12; }
+        else                 { baseIntervalMs = 19000; stepPct = 0.08; }
     } else if (effRegime === 'WEYL') {
-        if (bits <= 32)      { baseIntervalMs = 120; stepPct = 0.25; }
-        else if (bits <= 45) { baseIntervalMs = 180; stepPct = 0.15; }
-        else if (bits <= 65) { baseIntervalMs = 220; stepPct = 0.10; }
-        else                 { baseIntervalMs = 280; stepPct = 0.08; }
+        if (bits <= 32)      { baseIntervalMs = 5000;  stepPct = 0.20; }
+        else if (bits <= 45) { baseIntervalMs = 8000;  stepPct = 0.15; }
+        else if (bits <= 65) { baseIntervalMs = 13000; stepPct = 0.10; }
+        else                 { baseIntervalMs = 19000; stepPct = 0.06; }
     } else {
-        if (bits <= 32)      { baseIntervalMs = 150; stepPct = 0.20; }
-        else if (bits <= 50) { baseIntervalMs = 220; stepPct = 0.10; }
-        else                 { baseIntervalMs = 300; stepPct = 0.05; }
+        // CLASSIC / SEQUENTIAL (Kiremit Adımlama Derin Tarama — 19sn Ölçeği)
+        if (bits <= 32)      { baseIntervalMs = 6000;  stepPct = 0.15; }
+        else if (bits <= 50) { baseIntervalMs = 11000; stepPct = 0.10; }
+        else if (bits <= 70) { baseIntervalMs = 15000; stepPct = 0.07; }
+        else                 { baseIntervalMs = 19000; stepPct = 0.05; }
     }
 
     // 🎯 ÇOKLU BULMACA SEÇİMİ KALİBRASYONU:
@@ -2981,9 +3132,9 @@ function getAutoSliderIntervalAndStep() {
         }
     }
 
-    // Logaritmik çoklu bulmaca kalibrasyonu: 78 bulmaca seçilse bile kaydıraç donmaz, akıcı ilerler (maks 2x / 850 ms)
+    // Logaritmik çoklu bulmaca kalibrasyonu: her bulmacaya adil süre düşmesi için ölçeklenir (derin tarama için 850ms tavanı kaldırıldı)
     const multiFactor = (puzzleCount > 1) ? Math.min(1.0 + Math.log2(puzzleCount) * 0.18, 2.0) : 1.0;
-    const effectiveIntervalMs = Math.min(Math.round(baseIntervalMs * multiFactor), 850);
+    const effectiveIntervalMs = Math.round(baseIntervalMs * multiFactor);
 
     return { 
         intervalMs: effectiveIntervalMs, 
@@ -3002,9 +3153,8 @@ function startAutoSliderTimer() {
         return;
     }
 
-    // İlk adımda bekleme (dwell) takılmasını önle, anında hareket göster
-    resonanceDwellCounter = 999;
-    try { stepAutoSlider(); } catch(e) {}
+    // 19s Sakin Başlangıç: Tıklanır tıklanmaz ani sıçrama yapma, mevcut pozisyonda 19s derin tarama yap
+    resonanceDwellCounter = 0;
 
     const timing = getAutoSliderIntervalAndStep();
     currentAutoSliderIntervalMs = timing.intervalMs;
@@ -3027,15 +3177,16 @@ function stopAutoSliderTimer() {
 
 function stepAutoSlider() {
     if (typeof isRunning === 'undefined' || !isRunning) {
-        stopAutoSliderTimer();
-        return;
+        if (!isAutoSliderActive) {
+            stopAutoSliderTimer();
+            return;
+        }
     }
     if (isSliderSyncBusy) return;
     const part = getTabPartitionBounds();
     if (!part) return;
     const { tStart, tEnd, total, partMinStep, partMaxStep } = part;
     if (total <= 0n) return;
-    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) autoRegimeStepCounter++;
 
     const minEl = document.getElementById('rangeSliderMin');
     const maxEl = document.getElementById('rangeSliderMax');
@@ -3051,6 +3202,9 @@ function stepAutoSlider() {
     if (curMax > partMaxStep) curMax = partMaxStep;
 
     const effRegime = getEffectiveSliderRegime();
+    lastExecutedSliderRegime = effRegime;
+    const activeAlgo = (typeof getActiveRunningAlgorithm === 'function') ? getActiveRunningAlgorithm() : selectedAlgorithm;
+    const algoFamily = (typeof getAlgorithmKinematicFamily === 'function') ? getAlgorithmKinematicFamily(activeAlgo) : 'BIJECTION_COPRIME_HOP';
     let span = curMax - curMin;
     if (span <= 0n) span = 1n;
 
@@ -3066,7 +3220,7 @@ function stepAutoSlider() {
         } else if (effRegime === 'WEYL') {
             span = partSpan / 16n;
         } else {
-            span = (autoSliderSpeed === 'MICRO' ? (partSpan / 40n) : (partSpan / 10n));
+            span = (autoSliderSpeed === 'MICRO' ? (partSpan / 40n) : (partSpan / 16n));
         }
         if (span < 1n) span = 1n;
         if (span > partSpan) span = partSpan;
@@ -3099,10 +3253,12 @@ function stepAutoSlider() {
     let nextMin, nextMax;
 
     if (effRegime === 'SQRT') {
-        // 🦚 KAREKÖK REZONANSI (O(√N)): Hız butonları ve (+1 adım) mikro pencereyle tam kalibreli kuadratik adım
-        const speedRatioNum = (effSpeed === 'FAST') ? 65n : (effSpeed === 'SLOW' ? 28n : (effSpeed === 'MICRO' ? 14n : 45n));
+        // 🦚 AİLE 4 — ÇOK-ÖLÇEKLİ SOLUKLANMA (Multi-Scale Breathing) & KAREKÖK REZONANSI (19 sn O(√N)):
+        // Sobol, Hilbert, Halton ve Fraktal algoritmalarda ikili ızgara kilitlenmesini kırmak için
+        // kuadratik faz adımı + mikro soluklanma modülasyonu uygular (19s derin taramayla tam senkronize).
+        const speedRatioNum = (effSpeed === 'FAST') ? 35n : (effSpeed === 'SLOW' ? 15n : (effSpeed === 'MICRO' ? 8n : 20n));
         let stride = (span * speedRatioNum) / 100n;
-        const quadPhase = BigInt(((autoRegimeStepCounter % 4) + 1) * ((autoRegimeStepCounter % 4) + 1)); // 1x, 4x, 9x, 16x
+        const quadPhase = BigInt((autoRegimeStepCounter % 3) + 1); // 1x, 2x, 3x kontrollü salınım
         const minQuadStride = minVisibleStride * quadPhase;
         if (stride < minQuadStride) {
             stride = minQuadStride;
@@ -3128,29 +3284,29 @@ function stepAutoSlider() {
         }
         nextMax = nextMin + span;
     } else if (effRegime === 'WEYL') {
-        // 🌀 WEYL ALTIN ORAN ERGODİK SIÇRAMA: Kullanıcının daralttığı span'i (+1 adım dahil) tam korur
-        const weylStepScaled = (effSpeed === 'MICRO') ? (WEYL_GOLDEN_STEP / 4n) : (effSpeed === 'SLOW' ? (WEYL_GOLDEN_STEP / 2n) : WEYL_GOLDEN_STEP);
-        weylAccum = (weylAccum + weylStepScaled) % TOTAL_STEPS;
+        // 🌀 AİLE 3 — WEYL ALTIN ORAN FRAKTAL SIÇRAMASI (Steinhaus Düşük Ayrışımlı Altın Dizi):
+        // Her 19 saniyede bir kaydıraç arama uzayını Altın Oran adımıyla (×0.6180339887...) ergodik olarak sıçrar.
+        if (span >= (partSpan * 90n / 100n)) {
+            span = partSpan / 16n;
+            if (span < 1000n) span = 1000n;
+        }
         const availableSpan = partSpan > span ? (partSpan - span) : 1n;
+        weylAccum = (weylAccum + WEYL_GOLDEN_STEP) % TOTAL_STEPS;
         const offset = (weylAccum * availableSpan) / TOTAL_STEPS;
         nextMin = partMinStep + offset;
         nextMax = nextMin + span;
-    } else if (effRegime === 'RESONANCE') {
-        // 🦘 HARMONİK REZONANS: Mikro pencere (+1 adım) durumunda beklemeden her adımda harmonik ilerler
-        const isInitialShrink = (curMax - curMin >= (partSpan * 90n / 100n));
-        const isMicroNarrow = (span < 1000000n);
-        const baseDwell = (isMicroNarrow || effSpeed === 'FAST') ? 1 : (effSpeed === 'SLOW' ? 2 : (effSpeed === 'MICRO' ? 2 : 1));
-        const dwellLimit = (timing.puzzleCount > 1) ? 1 : baseDwell;
-        resonanceDwellCounter++;
-        if (!isInitialShrink && resonanceDwellCounter < dwellLimit) {
-            if (autoSliderRegime === 'AUTO') updateRegimeButtonStyles();
-            if (autoSliderSpeed === 'AUTO') updateSpeedButtonStyles();
-            return;
+        if (nextMax > partMaxStep) {
+            nextMax = partMaxStep;
+            nextMin = partMaxStep > span ? partMaxStep - span : partMinStep;
         }
+    } else if (effRegime === 'RESONANCE') {
+        // 🦘 AİLE 1 — TUZAK-KORUYUCU ADİABATİK KAYMA (19 sn Kangaroo Doppler Kilidi):
         resonanceDwellCounter = 0;
-        const overlapNum = (effSpeed === 'FAST') ? 60n : (effSpeed === 'SLOW' ? 30n : (effSpeed === 'MICRO' ? 15n : 45n));
+        const overlapNum = (algoFamily === 'KANGAROO_ADIABATIC')
+            ? ((effSpeed === 'FAST') ? 25n : (effSpeed === 'SLOW' ? 15n : (effSpeed === 'MICRO' ? 10n : 20n)))
+            : ((effSpeed === 'FAST') ? 60n : (effSpeed === 'SLOW' ? 30n : (effSpeed === 'MICRO' ? 15n : 45n)));
         let stride = (span * overlapNum) / 100n;
-        const harmFactor = BigInt((autoRegimeStepCounter % 3) + 1); // 1x, 2x, 3x harmonik adım
+        const harmFactor = (algoFamily === 'KANGAROO_ADIABATIC') ? 1n : BigInt((autoRegimeStepCounter % 3) + 1);
         if (stride < minVisibleStride * harmFactor) {
             stride = minVisibleStride * harmFactor;
         }
@@ -3172,14 +3328,23 @@ function stepAutoSlider() {
         }
         nextMax = nextMin + span;
     } else {
-        // 🏓 KLASİK DOĞRUSAL PİNG-PONG: (+1 adım) mikro pencerede bile 7. basamakta kesintisiz akıcı kayma
+        // 🧱 AİLE 2 — KİREMİT ADIMLAMA (Stepping-Stone Tiling — SEQUENTIAL, ALIGNED_PERM):
+        // Deterministik süpürücülerde pencereyi azar azar kaydırıp imleci başa sarmak yerine,
+        // pencere genişliğiyle orantılı kiremit adımlarıyla (conveyor) kesintisiz ilerler.
         let step;
-        if (span < partSpan / 20n) {
-            const glideRatio = (effSpeed === 'FAST') ? 0.35 : (effSpeed === 'SLOW' ? 0.10 : (effSpeed === 'MICRO' ? 0.05 : 0.20));
-            step = BigInt(Math.max(1, Math.round(Number(span) * glideRatio)));
+        if (algoFamily === 'SWEEPER_TILING' && span >= minVisibleStride * 2n && span <= partSpan / 2n) {
+            const tileRatio = (effSpeed === 'FAST') ? 40n : (effSpeed === 'MEDIUM' ? 25n : (effSpeed === 'SLOW' ? 15n : 10n));
+            step = (span * tileRatio) / 100n;
+            if (step < minVisibleStride) step = minVisibleStride;
+        } else if (span < partSpan / 20n) {
+            const glidePpm = (effSpeed === 'FAST') ? 2000n : (effSpeed === 'SLOW' ? 800n : (effSpeed === 'MICRO' ? 400n : 1200n));
+            step = (span * glidePpm) / 10000n;
+            if (step < 1n) step = 1n;
             if (step < minVisibleStride) step = minVisibleStride;
         } else {
-            step = BigInt(Math.max(1, Math.round(Number(partSpan) * (timing.stepPct / 100.0))));
+            const pctScaled = BigInt(Math.max(1, Math.round(timing.stepPct * 10000)));
+            step = (partSpan * pctScaled) / 1000000n;
+            if (step < 1n) step = 1n;
             if (step > span && span > minVisibleStride * 2n) step = span / 2n;
         }
         if (step < minVisibleStride) step = minVisibleStride;
@@ -3233,7 +3398,10 @@ function stepAutoSlider() {
     } finally {
         isSliderSyncBusy = false;
     }
-    if (autoSliderRegime === 'AUTO') updateRegimeButtonStyles();
+    if (typeof isAutoSliderActive !== 'undefined' && isAutoSliderActive) {
+        autoRegimeStepCounter++;
+    }
+    if (autoSliderRegime === 'AUTO' || isAutoSliderActive) updateRegimeButtonStyles();
     if (autoSliderSpeed === 'AUTO') updateSpeedButtonStyles();
     updateAutoSliderUI();
 }
@@ -3249,8 +3417,13 @@ function updateAutoSliderUI() {
         const vDiff = vMax - vMin;
         // 🔬 SABİT 7 BASAMAK HASSASİYET: Aralık genişlese de hassasiyet asla düşmez
         const decimals = 7;
-        let pMin = (vMin / 10000000000).toFixed(decimals);
-        let pMax = (vMax / 10000000000).toFixed(decimals);
+        const cBaseMin = (typeof isSpaceCropped !== 'undefined' && isSpaceCropped && typeof spaceCropMinPct === 'number') ? Number(spaceCropMinPct) : 0;
+        const cBaseMax = (typeof isSpaceCropped !== 'undefined' && isSpaceCropped && typeof spaceCropMaxPct === 'number' && spaceCropMaxPct > cBaseMin) ? Number(spaceCropMaxPct) : 100;
+        const cBaseSpan = cBaseMax - cBaseMin;
+        const effPMin = cBaseMin + (vMin / 1000000000000) * cBaseSpan;
+        const effPMax = cBaseMin + (vMax / 1000000000000) * cBaseSpan;
+        let pMin = effPMin.toFixed(decimals);
+        let pMax = effPMax.toFixed(decimals);
         
         const rangeDiff = (typeof sliderMinHex !== 'undefined' && typeof sliderMaxHex !== 'undefined' && sliderMinHex !== null && sliderMaxHex !== null) ? (sliderMaxHex - sliderMinHex) : 0n;
         let deltaText = '';
@@ -3289,6 +3462,20 @@ function updateAutoSliderUI() {
 // ============================================================
 // ✂️ UZAY KESME / KIRPMA (SPACE CROPPER) FONKSİYONLARI
 // ============================================================
+// 🔬 EVRENSEL 7 BASAMAK HASSASİYET FORMATLAYICI (Tüm Arayüz & 19s Attractor İçin)
+function formatFullPct(val) {
+    if (val === null || val === undefined || isNaN(val)) return '0';
+    let s = Number(val).toFixed(7);
+    if (s.includes('.')) {
+        s = s.replace(/0+$/, ''); // sondaki gereksiz sıfırları temizle
+        if (s.endsWith('.')) s = s.slice(0, -1);
+        const parts = s.split('.');
+        if (parts[1] && parts[1].length === 1) s += '0'; // en az 2 basamak
+    }
+    return s;
+}
+window.formatFullPct = formatFullPct;
+
 function updateCropUI(minPct, maxPct) {
     const btnReset = document.getElementById('btnResetCrop');
     const lblStatus = document.getElementById('lblCropStatus');
@@ -3312,25 +3499,23 @@ function updateCropUI(minPct, maxPct) {
             : '';
         const numMin = Number(minPct);
         const numMax = Number(maxPct);
-        let minStr, maxStr;
-        const diff = Math.abs(numMax - numMin);
-        if (diff < 0.005 && numMin !== numMax) {
-            minStr = numMin.toFixed(4);
-            maxStr = numMax.toFixed(4);
-        } else if (diff < 0.05 && numMin !== numMax) {
-            minStr = numMin.toFixed(3);
-            maxStr = numMax.toFixed(3);
-        } else if (diff < 1 && numMin !== numMax) {
-            minStr = numMin.toFixed(2);
-            maxStr = numMax.toFixed(2);
-        } else {
-            const hasDecimals = (numMin % 1 !== 0) || (numMax % 1 !== 0);
-            minStr = hasDecimals ? numMin.toFixed(1) : numMin.toFixed(0);
-            maxStr = hasDecimals ? numMax.toFixed(1) : numMax.toFixed(0);
-        }
+        // 🔬 TAM HASSASİYET (7 Basamağa Kadar): Kırpılan uzay asla 1-2 basamağa yuvarlanmaz
+        const formatFullPct = (val) => {
+            let s = val.toFixed(7);
+            if (s.includes('.')) {
+                s = s.replace(/0+$/, ''); // sondaki gereksiz sıfırları temizle
+                if (s.endsWith('.')) s = s.slice(0, -1);
+                // En az 2 ondalık basamak kalsın (ör. 63.90)
+                const parts = s.split('.');
+                if (parts[1] && parts[1].length === 1) s += '0';
+            }
+            return s;
+        };
+        let minStr = formatFullPct(numMin);
+        let maxStr = formatFullPct(numMax);
         if (minStr === maxStr && numMin !== numMax) {
-            minStr = numMin.toFixed(4);
-            maxStr = numMax.toFixed(4);
+            minStr = numMin.toFixed(7);
+            maxStr = numMax.toFixed(7);
         }
         lblStatus.innerText = `%${minStr}-%${maxStr}${countSuffix}`;
         if (typeof updateSlidingWindowUI === 'function') updateSlidingWindowUI();
@@ -3404,8 +3589,15 @@ function cropSpaceSqrtN() {
 
     spaceCropMinPct = minPct;
     spaceCropMaxPct = maxPct;
+    attractorUserBaseMin = minPct;
+    attractorUserBaseMax = maxPct;
 
     finalizeSpaceCrop(minPct, maxPct, false);
+    if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+        attractor19sIndex = (attractor19sIndex + 1) % (ATTRACTOR_19S_CONFIGS[attractor19sPrecision]?.M || 10000);
+        attractor19sRemainingSec = (typeof attractorDwellSec === 'number') ? attractorDwellSec : 19;
+        applyAttractorZone(attractor19sIndex);
+    }
 
     if (typeof showToast === 'function') {
         const countNote = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
@@ -3442,6 +3634,11 @@ function cycleQuarterCrop() {
 
     const q = quarters[nextIndex];
     applySpaceCrop(q.min, q.max, false);
+    if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+        attractor19sIndex = 1;
+        attractor19sRemainingSec = (typeof attractorDwellSec === 'number') ? attractorDwellSec : 19;
+        applyAttractorZone(attractor19sIndex);
+    }
 
     const btn = document.getElementById('btnCropQuarter');
     if (btn) {
@@ -3458,8 +3655,12 @@ function applySpaceCrop(minPct, maxPct, isRemoteSync = false) {
     if (origTotal <= 0n) return;
 
     spaceCropMode = 'PERCENT';
-    spaceCropMinPct = minPct;
-    spaceCropMaxPct = maxPct;
+    spaceCropMinPct = Number(minPct);
+    spaceCropMaxPct = Number(maxPct);
+    if (!isRemoteSync) {
+        attractorUserBaseMin = Number(minPct);
+        attractorUserBaseMax = Number(maxPct);
+    }
 
     const minRatio = BigInt(Math.round(minPct * 10000000000));
     const maxRatio = BigInt(Math.round(maxPct * 10000000000));
@@ -3473,26 +3674,53 @@ function applySpaceCrop(minPct, maxPct, isRemoteSync = false) {
 }
 
 function cropSpaceToCurrentSelection() {
-    const bounds = getHexTargetBounds();
-    if (!bounds) return;
-    if (!sliderMinHex || !sliderMaxHex || sliderMaxHex <= sliderMinHex) return;
-
-    spaceCropStart = sliderMinHex;
-    spaceCropEnd = sliderMaxHex;
-    isSpaceCropped = true;
-    spaceCropMode = 'PERCENT';
-
     const target = getActiveTarget();
+    if (!target) return;
     const origStart = toBigIntSafe(target.origStart || target.start);
     const origEnd = toBigIntSafe(target.origEnd || target.end);
     const origTotal = origEnd - origStart;
+    if (origTotal <= 0n) return;
 
-    const minPct = origTotal > 0n ? Number(((spaceCropStart - origStart) * 10000000000n) / origTotal) / 100000000 : 0;
-    const maxPct = origTotal > 0n ? Number(((spaceCropEnd - origStart) * 10000000000n) / origTotal) / 100000000 : 100;
+    let targetStartHex = null;
+    let targetEndHex = null;
+    let minPct = 0;
+    let maxPct = 100;
 
+    // 🎯 1. ÖNCELİK: Eğer sliderMinHex ve sliderMaxHex tanımlıysa doğrudan bit-perfect bu hex sınırlarını kes!
+    if (sliderMinHex !== null && sliderMaxHex !== null && sliderMaxHex > sliderMinHex) {
+        targetStartHex = sliderMinHex;
+        targetEndHex = sliderMaxHex;
+        minPct = Number(((targetStartHex - origStart) * 1000000000000n) / origTotal) / 10000000000;
+        maxPct = Number(((targetEndHex - origStart) * 1000000000000n) / origTotal) / 10000000000;
+    } else {
+        const minEl = document.getElementById('rangeSliderMin');
+        const maxEl = document.getElementById('rangeSliderMax');
+        const minStep = minEl ? BigInt(minEl.value || 0) : 0n;
+        const maxStep = maxEl ? BigInt(maxEl.value || 1000000000000) : 1000000000000n;
+        const curBaseMin = (typeof attractorUserBaseMin === 'number') ? attractorUserBaseMin : 0;
+        const curBaseMax = (typeof attractorUserBaseMax === 'number' && attractorUserBaseMax > curBaseMin) ? attractorUserBaseMax : 100;
+        const curBaseSpan = curBaseMax - curBaseMin;
+        minPct = curBaseMin + (Number(minStep) / 1000000000000) * curBaseSpan;
+        maxPct = curBaseMin + (Number(maxStep) / 1000000000000) * curBaseSpan;
+        const minRatio = BigInt(Math.max(0, Math.min(1000000000000, Math.round(minPct * 10000000000))));
+        const maxRatio = BigInt(Math.max(0, Math.min(1000000000000, Math.round(maxPct * 10000000000))));
+        targetStartHex = origStart + (origTotal * minRatio / 1000000000000n);
+        targetEndHex = origStart + (origTotal * maxRatio / 1000000000000n);
+    }
+
+    if (maxPct <= minPct) maxPct = Math.min(100, minPct + 0.0000001);
+    if (targetEndHex <= targetStartHex) targetEndHex = targetStartHex + 1n;
+
+    spaceCropStart = targetStartHex;
+    spaceCropEnd = targetEndHex;
+    isSpaceCropped = true;
     spaceCropMinPct = minPct;
     spaceCropMaxPct = maxPct;
+    attractorUserBaseMin = minPct;
+    attractorUserBaseMax = maxPct;
+    spaceCropMode = 'PERCENT';
 
+    // 🔒 Kesilen hassas alanı sabitle & UI'ı güncelle (19s bu kesilen alanı ASLA ezemez!)
     finalizeSpaceCrop(minPct, maxPct, false);
 }
 
@@ -3503,6 +3731,8 @@ function resetSpaceCrop(isRemoteSync = false) {
     spaceCropEnd = null;
     spaceCropMinPct = 0;
     spaceCropMaxPct = 100;
+    attractorUserBaseMin = 0;
+    attractorUserBaseMax = 100;
 
     const target = getActiveTarget();
     if (target) {
@@ -3581,7 +3811,7 @@ function finalizeSpaceCrop(minPct, maxPct, isRemoteSync = false) {
         const countNote = (typeof isCircularMode !== 'undefined' && isCircularMode && typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1)
             ? ` (${unsolvedList.length})`
             : '';
-        showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(1)} — %${Number(maxPct).toFixed(1)}${countNote}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
+        showToast(`✂️ <strong>Uzay Kesildi! Kalan Aralık: %${Number(minPct).toFixed(7).replace(/0+$/, '').replace(/\.$/, '')} — %${Number(maxPct).toFixed(7).replace(/0+$/, '').replace(/\.$/, '')}${countNote}</strong><br><span style="font-size:11px;">Kaydıraçlar kırpılan uzayın tam uçlarına (%0 - %100) yerleştirildi.</span>`, 3500);
     }
 }
 
@@ -3638,6 +3868,7 @@ function updateSlidingWindowUI() {
             btn.style.borderColor = 'transparent';
             btn.style.color = '#94a3b8';
             btn.style.boxShadow = 'none';
+
         }
         if (popBtn) {
             popBtn.innerText = 'KAPALI';
@@ -3662,6 +3893,9 @@ function toggleAutoSlidingWindow(forceState = null) {
     onSlidingWindowConfigChange();
 
     if (isSlidingWindowActive) {
+        if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+            toggleAttractor19sMode(false);
+        }
         slidingWindowRemainingSec = slidingWindowSec;
         if (!slidingWindowInterval) {
             slidingWindowInterval = setInterval(onSlidingWindowTick, 1000);
@@ -3703,8 +3937,13 @@ function stepSlidingWindow() {
     const bounds = getHexTargetBounds();
     if (!bounds || bounds.total <= 0n) return;
 
-    let curMin = 0;
-    let curMax = 100;
+    const part = (typeof getTabPartitionBounds === 'function') ? getTabPartitionBounds() : null;
+    const minBoundPct = (part && part.isPartitioned) ? (Number(part.partMinStep) / 10000000000) : 0;
+    const maxBoundPct = (part && part.isPartitioned) ? (Number(part.partMaxStep) / 10000000000) : 100;
+    const partWidthPct = Math.max(0.0000001, maxBoundPct - minBoundPct);
+
+    let curMin = minBoundPct;
+    let curMax = maxBoundPct;
 
     if (isSpaceCropped && spaceCropMinPct !== null && spaceCropMaxPct !== null) {
         curMin = Number(spaceCropMinPct);
@@ -3715,21 +3954,21 @@ function stepSlidingWindow() {
     }
 
     let width = curMax - curMin;
-    if (width <= 0.00001 || width > 50) {
-        width = slidingWindowStep || 0.1;
+    if (width <= 0.0000001 || width > Math.min(50, partWidthPct)) {
+        width = Math.min(slidingWindowStep || 0.1, partWidthPct);
     }
 
-    let nextMin = curMax;
-    let nextMax = nextMin + width;
-
-    // %100'ü aşarsa başa (%0'a) sar
-    if (nextMax > 100.000001) {
-        nextMin = 0;
-        nextMax = width;
+    let nextMin, nextMax;
+    if (curMax >= maxBoundPct - 0.0000001) {
+        nextMin = minBoundPct;
+        nextMax = Math.min(maxBoundPct, minBoundPct + width);
+    } else {
+        nextMin = Math.max(minBoundPct, curMax);
+        nextMax = Math.min(maxBoundPct, nextMin + width);
     }
 
-    nextMin = parseFloat(nextMin.toFixed(4));
-    nextMax = parseFloat(nextMax.toFixed(4));
+    nextMin = parseFloat(nextMin.toFixed(7));
+    nextMax = parseFloat(nextMax.toFixed(7));
 
     applySlidingWindowRange(nextMin, nextMax);
 }
@@ -3742,9 +3981,10 @@ function applySlidingWindowRange(minPct, maxPct) {
     const origTotal = origEnd - origStart;
     if (origTotal <= 0n) return;
 
-    const TOTAL_DIV = 10000000000n; // 100 * 100.000.000
-    const startBig = BigInt(Math.round(minPct * 100000000));
-    const endBig = BigInt(Math.round(maxPct * 100000000));
+    // 🔬 TAM 7 BASAMAK HASSASİYET (10^12 ölçeği):
+    const TOTAL_DIV = 1000000000000n; // 100 * 10.000.000.000
+    const startBig = BigInt(Math.round(minPct * 10000000000));
+    const endBig = BigInt(Math.round(maxPct * 10000000000));
 
     spaceCropStart = origStart + (origTotal * startBig / TOTAL_DIV);
     spaceCropEnd = origStart + (origTotal * endBig / TOTAL_DIV);
@@ -3755,7 +3995,7 @@ function applySlidingWindowRange(minPct, maxPct) {
     isSpaceCropped = true;
     spaceCropMode = 'PERCENT';
 
-    finalizeSpaceCrop(minPct, maxPct, false);
+    finalizeSpaceCrop(minPct, maxPct, true);
 
     const minInp = document.getElementById('inpManualRangeMin');
     const maxInp = document.getElementById('inpManualRangeMax');
@@ -3772,66 +4012,339 @@ function applySlidingWindowRange(minPct, maxPct) {
 // 54 Çözülen Bulmacanın Matematiksel Dağılımına Göre
 // ============================================================
 function formatAttractorPct(minP, maxP) {
-    let sMin = Number(minP).toFixed(4);
-    let sMax = Number(maxP).toFixed(4);
-    sMin = sMin.replace(/(\.\d\d[1-9]?)0+$/, '$1').replace(/(\.\d\d)00$/, '$1');
-    sMax = sMax.replace(/(\.\d\d[1-9]?)0+$/, '$1').replace(/(\.\d\d)00$/, '$1');
+    const sMin = (typeof formatFullPct === 'function') ? formatFullPct(minP) : Number(minP).toFixed(7);
+    const sMax = (typeof formatFullPct === 'function') ? formatFullPct(maxP) : Number(maxP).toFixed(7);
     return `%${sMin} - %${sMax}`;
 }
 
 // 🎯 %100 TAM UZAY KAPSAMASI & AĞIRLIKLI SNIPER ÇEVRİMİ
 // 54 Çözülen Bulmaca Dağılımı + Poisson Soğuk Bölge Ağırlığı + Harmonik Boşluk Doldurma
 // SIFIR ÖLÜ BÖLGE: Tüm uzay ([%0.00 - %100.00]) kesintisiz taranır!
-const ATTRACTOR_19S_ZONES = [
-    // ❄️ 1. AŞAMA: SOĞUK (HİÇ ÇIKMAYAN %50-%63) BÖLGE AĞIRLIĞI & EN YOĞUN ÇÖZÜM KÜMELERİ
-    { name: "❄️ Soğuk Bölge Poisson Boşluğu 1",    minPct: 52.0000, maxPct: 53.8000, note: "Hiç Çıkmayan Bölge (Yüksek Öncelik)" },
-    { name: "🔥 #70 & #34 Altın Kesişim Kümesi",    minPct: 64.2000, maxPct: 65.5000, note: "Çözüm Kümesi (#70, #34)" },
-    { name: "❄️ Soğuk Bölge Poisson Boşluğu 2",    minPct: 53.8000, maxPct: 55.6000, note: "Hiç Çıkmayan Bölge (Yüksek Öncelik)" },
-    { name: "🔥 #40, #51 & #80 Zirve Kümesi",      minPct: 82.2000, maxPct: 83.5000, note: "Çözüm Kümesi (#40, #51, #80)" },
-    { name: "❄️ Soğuk Bölge Merkez Boşluğu",       minPct: 55.6000, maxPct: 57.5000, note: "Hiç Çıkmayan Bölge (Yüksek Öncelik)" },
-    { name: "🎯 #105 Sniper Odak",                 minPct: 43.0000, maxPct: 44.5000, note: "Çözüm Kümesi (#105 %43.39)" },
-    { name: "❄️ Soğuk Bölge Ters Altın Oran (1-Φ)",minPct: 57.5000, maxPct: 59.4000, note: "Hiç Çıkmayan Bölge (Yüksek Öncelik)" },
-    { name: "🎯 #135 Son Çözülen Odak",            minPct: 70.0000, maxPct: 72.5000, note: "Çözüm Kümesi (#135 %71.21)" },
-    { name: "❄️ Soğuk Bölge Tepe Boşluğu",         minPct: 59.4000, maxPct: 61.2000, note: "Hiç Çıkmayan Bölge (Yüksek Öncelik)" },
-    { name: "🎯 #36 & #61 İkiz Küme",              minPct: 23.2000, maxPct: 24.2000, note: "Çözüm Kümesi (#36, #61)" },
-    { name: "❄️ Soğuk Bölge Giriş Eşiği",          minPct: 50.0000, maxPct: 52.0000, note: "Hiç Çıkmayan Bölge (Giriş Eşiği)" },
-    { name: "🎯 #55 & #33 İkiz Nokta",             minPct: 65.5000, maxPct: 67.5000, note: "Çözüm Kümesi (#55, #33)" },
-    { name: "❄️ Soğuk Bölge Çıkış Eşiği",          minPct: 61.2000, maxPct: 63.0000, note: "Hiç Çıkmayan Bölge (Çıkış Eşiği)" },
-    { name: "🎯 #120 & Altın Oran 38.2%",          minPct: 38.0000, maxPct: 39.5000, note: "Çözüm Kümesi (#120 %38.33)" },
-    { name: "❄️ Soğuk Bölge Boşluk Tekrar (Merkez)",minPct: 53.8000, maxPct: 57.5000, note: "Ağırlıklı Tarama (%53.8 - %57.5)" },
-    { name: "🎯 #63 & #31 Tepe Uç Kümeleri",        minPct: 94.5000, maxPct: 96.5000, note: "Çözüm Kümesi (#63, #31)" },
-    { name: "❄️ Soğuk Bölge Boşluk Tekrar (Üst)",  minPct: 57.5000, maxPct: 61.2000, note: "Ağırlıklı Tarama (%57.5 - %61.2)" },
-    { name: "🎯 #75 & #35 Alt Eksen",              minPct: 19.2000, maxPct: 20.0000, note: "Çözüm Kümesi (#75, #35)" },
-    { name: "🎯 #68 & #53 Merkez Denge",           minPct: 49.2000, maxPct: 50.0000, note: "Çözüm Kümesi (#68, #53)" },
+// ============================================================
+// 🎯 19s ATTRACTOR HASSASİYET MODELLERİ (%100 TAM UZAY KAPSAMASI)
+// 10K (%0.0100 Ultra-Mikro) | 4K (%0.0244 İkili Kafes) | 100K (%0.0010 Sniper) | 512 (%0.1953)
+// ============================================================
+const ATTRACTOR_19S_CONFIGS = {
+    // ⚡ Hızlı Döngü Modları (64 / 32 / 16 / 8 / 4 Dilim - Tam Döngü: 1.3 - 20 dk)
+    '64':   { name: '64 (%1.56 / ~20 dk)',        M: 64,       stride: 39,      coldMin: 32,      coldMax: 40,      width: 1.5625,        label: '64 Dilim (%1.56 / ~20 dk)' },
+    '32':   { name: '32 (%3.13 / ~10 dk)',        M: 32,       stride: 19,      coldMin: 16,      coldMax: 20,      width: 3.125,         label: '32 Dilim (%3.13 / ~10 dk)' },
+    '16':   { name: '16 (%6.25 / ~5 dk)',         M: 16,       stride: 11,      coldMin: 8,       coldMax: 10,      width: 6.25,          label: '16 Dilim (%6.25 / ~5 dk)' },
+    '8':    { name: '8 (%12.5 / ~2.5 dk)',        M: 8,        stride: 5,       coldMin: 4,       coldMax: 5,       width: 12.5,          label: '8 Dilim (%12.5 / ~2.5 dk)' },
+    '4':    { name: '4 (%25.0 / ~1.3 dk)',        M: 4,        stride: 3,       coldMin: 2,       coldMax: 3,       width: 25.0,          label: '4 Dilim (%25.0 / ~1.3 dk)' },
 
-    // 🌐 2. AŞAMA: TÜM UZAYIN (%0.00 - %100.00) EKSİKSİZ HASSAS DİLİMLERİ (TAM KAPSAMA)
-    { name: "📐 Alt Sınır & Taban Dilim",          minPct: 0.0000,  maxPct: 3.5000,  note: "Taban Başlangıç (%0 - %3.5)" },
-    { name: "📐 Harmonik Alt Dilim 1",             minPct: 3.5000,  maxPct: 7.0000,  note: "Alt Aralık (%3.5 - %7)" },
-    { name: "📐 Harmonik Alt Dilim 2",             minPct: 7.0000,  maxPct: 11.0000, note: "Alt Aralık (%7 - %11)" },
-    { name: "📐 Alt Geçiş Dilimi 3",              minPct: 11.0000, maxPct: 15.0000, note: "Alt Aralık (%11 - %15)" },
-    { name: "📐 #75 Öncesi Eşik Dilimi",           minPct: 15.0000, maxPct: 19.2000, note: "Geçiş Dilimi (%15 - %19.2)" },
-    { name: "📐 Çeyrek-1 Ara Geçiş",               minPct: 20.0000, maxPct: 23.2000, note: "Ara Bölge (%20 - %23.2)" },
-    { name: "📐 Çeyrek-1/2 Köprü Dilimi",          minPct: 24.2000, maxPct: 28.0000, note: "Ara Bölge (%24.2 - %28)" },
-    { name: "📐 1/3 Harmonik Dilim",               minPct: 28.0000, maxPct: 32.5000, note: "Harmonik (%28 - %32.5)" },
-    { name: "📐 #23 Altın Oran Yansıma",           minPct: 32.5000, maxPct: 35.0000, note: "Çözüm Yansıması (#23 %33.4)" },
-    { name: "📐 Altın Oran Öncesi Eşik",          minPct: 35.0000, maxPct: 38.0000, note: "Geçiş Eşiği (%35 - %38)" },
-    { name: "📐 Merkez Öncesi Dilim",              minPct: 39.5000, maxPct: 43.0000, note: "Ara Dilim (%39.5 - %43)" },
-    { name: "📐 #37 & #46 Merkez Çeyrek Kümeleri", minPct: 44.5000, maxPct: 46.5000, note: "Çözüm Kümesi (%44.5 - %46.5)" },
-    { name: "📐 Orta Hat Geçiş Dilimi",            minPct: 46.5000, maxPct: 49.2000, note: "Orta Hat (%46.5 - %49.2)" },
-    { name: "📐 Kesişim Öncesi Eşik",              minPct: 63.0000, maxPct: 64.2000, note: "Eşik Dilimi (%63 - %64.2)" },
-    { name: "📐 #110 Yoğun Odak Dilimi",           minPct: 67.5000, maxPct: 70.0000, note: "Yoğun Dilim (%67.5 - %70)" },
-    { name: "📐 3/4 Harmonik Geçiş Dilimi",        minPct: 72.5000, maxPct: 76.5000, note: "Harmonik (%72.5 - %76.5)" },
-    { name: "📐 #125 Sniper Odak Dilimi",          minPct: 76.5000, maxPct: 78.5000, note: "Çözüm Kümesi (#125 %77.03)" },
-    { name: "📐 Zirve Giriş Dilimi",               minPct: 78.5000, maxPct: 82.2000, note: "Zirve Ön Eşik (%78.5 - %82.2)" },
-    { name: "📐 Üst Harmonik Dilim 1",             minPct: 83.5000, maxPct: 87.5000, note: "Üst Dilim (%83.5 - %87.5)" },
-    { name: "📐 Üst Harmonik Dilim 2",             minPct: 87.5000, maxPct: 91.5000, note: "Üst Dilim (%87.5 - %91.5)" },
-    { name: "📐 Tepe Öncesi Eşik",                 minPct: 91.5000, maxPct: 94.5000, note: "Tepe Ön Eşik (%91.5 - %94.5)" },
-    { name: "📐 Tavan Bitiş Dilimi",               minPct: 96.5000, maxPct: 100.0000,note: "Tavan Bitiş (%96.5 - %100)" }
-];
+    // 🔬 Ultra-Mikro & Sniper Modları
+    '7D':   { name: '7D (%0.0000001 Nano-Sniper)', M: 1000000000, stride: 618033989, coldMin: 514900000, coldMax: 622000000, width: 0.0000001, label: '1.000.000.000 Dilim (%0.0000001 / 7D)' },
+    '10K':  { name: '10K (%0.0100 Ultra-Mikro)',   M: 10000,    stride: 6181,    coldMin: 5149,    coldMax: 6220,    width: 0.0100,        label: '10.000 Dilim (%0.0100)' },
+    '4K':   { name: '4K (%0.0244 İkili Kafes)',    M: 4096,     stride: 2531,    coldMin: 2109,    coldMax: 2548,    width: 0.0244140625,  label: '4.096 Dilim (%0.0244)' },
+    '100K': { name: '100K (%0.0010 Sniper)',       M: 100000,   stride: 61803,   coldMin: 51490,   coldMax: 62200,   width: 0.0010,        label: '100.000 Dilim (%0.0010)' },
+    '512':  { name: '512 (%0.1953 Standart)',     M: 512,      stride: 377,     coldMin: 264,     coldMax: 318,     width: 0.1953125,     label: '512 Dilim (%0.1953)' }
+};
+
+let attractor19sPrecision = '7D';
+try {
+    const savedPrec = localStorage.getItem('ATTRACTOR_19S_PRECISION');
+    if (savedPrec && ATTRACTOR_19S_CONFIGS[savedPrec]) {
+        attractor19sPrecision = savedPrec;
+    }
+} catch (e) {}
+
+let attractorDwellSec = 19;
+try {
+    const savedDwell = localStorage.getItem('ATTRACTOR_DWELL_SEC');
+    if (savedDwell) {
+        const parsed = parseInt(savedDwell, 10);
+        if (!isNaN(parsed) && parsed >= 2 && parsed <= 3600) {
+            attractorDwellSec = parsed;
+        }
+    }
+} catch (e) {}
+
+// 🔬 19s TAM DÖNGÜ BİİJEKSİYON + EVRENSEL CSPRNG YAPISAL FİLTRE MOTORU (Hamming + Wald-Wolfowitz + Shannon Tavanı)
+// Sıfır Ezberlenmiş Liste, Sıfır Tekrar, %100 Tam Uzay Kapsaması (0 Ölü Bölge)
+const _attractor19sPermCache = {};
+
+function _scoreAttractorSlicePct(midPct) {
+    const frac = Math.max(0, Math.min(0.999999999, midPct / 100.0));
+    const val16 = Math.floor(frac * 65536) & 0xFFFF;
+    const n0 = (val16 >> 12) & 15;
+    const n1 = (val16 >> 8) & 15;
+    const n2 = (val16 >> 4) & 15;
+    const n3 = val16 & 15;
+
+    let score = 100;
+
+    // 1. Shannon Tek-Karakter Tavanı (Dejenere 'aaaa' / '0000' / 'ffff' önek kümelerini dizinin sonuna it)
+    const c = new Uint8Array(16);
+    c[n0]++; c[n1]++; c[n2]++; c[n3]++;
+    const maxNib = Math.max(c[n0], c[n1], c[n2], c[n3]);
+    if (maxNib >= 4) score -= 40;
+    else if (maxNib === 3) score -= 15;
+
+    // 2. Hamming Ağırlığı (1-Bit Yoğunluğu) Dengesi: 16-bit önekte ideal merkez = 8 bit (%50)
+    let v = val16 - ((val16 >> 1) & 0x5555);
+    v = (v & 0x3333) + ((v >> 2) & 0x3333);
+    const pop16 = (((v + (v >> 4)) & 0x0F0F) * 0x0101 >> 8) & 0xFF;
+    score -= Math.abs(pop16 - 8) * 3;
+
+    // 3. Wald-Wolfowitz Bit-Geçiş (0<->1 Alternation) Dengesi: 15 geçişte ideal merkez = 7.5 geçiş
+    let tv = (val16 ^ (val16 >> 1)) & 0x7FFF;
+    tv = tv - ((tv >> 1) & 0x5555);
+    tv = (tv & 0x3333) + ((tv >> 2) & 0x3333);
+    const trans16 = (((tv + (tv >> 4)) & 0x0F0F) * 0x0101 >> 8) & 0xFF;
+    score -= Math.abs(trans16 - 7.5) * 2;
+
+    return score;
+}
+
+function _getAttractorPriorityPermutation(M, stride, baseMin, baseMax) {
+    const cacheKey = `${M}_${baseMin.toFixed(4)}_${baseMax.toFixed(4)}`;
+    if (_attractor19sPermCache[cacheKey]) return _attractor19sPermCache[cacheKey];
+
+    const span = baseMax - baseMin;
+    const effW = span / M;
+    const sliceList = [];
+
+    for (let k = 0; k < M; k++) {
+        // gcd(stride, M) = 1 sayesinde c tüm {0..M-1} uzayını sıfır tekrarla gezer (Tam Biijeksiyon)
+        const c = (k * stride) % M;
+        const midPct = baseMin + (c + 0.5) * effW;
+        const s = _scoreAttractorSlicePct(midPct);
+        sliceList.push({ c, score: s, tie: k });
+    }
+
+    // Evrensel CSPRNG yapısal dengesi yüksek dilimleri öne al, eşitlikte Weyl altın-oran sırasını koru
+    sliceList.sort((a, b) => (b.score - a.score) || (a.tie - b.tie));
+    const perm = sliceList.map(item => item.c);
+
+    _attractor19sPermCache[cacheKey] = perm;
+    return perm;
+}
+
+function getAttractorZone(stepIdx, precKey) {
+    const pKey = (precKey && ATTRACTOR_19S_CONFIGS[precKey]) ? precKey : (attractor19sPrecision || '10K');
+    const cfg = ATTRACTOR_19S_CONFIGS[pKey];
+    const M = cfg.M;
+    const stride = cfg.stride;
+
+    const baseMin = (typeof attractorUserBaseMin === 'number') ? attractorUserBaseMin : 0;
+    const baseMax = (typeof attractorUserBaseMax === 'number' && attractorUserBaseMax > baseMin) ? attractorUserBaseMax : 100;
+    const baseSpan = baseMax - baseMin;
+    const isCustomBase = (baseMin > 0.000001 || baseMax < 99.999999);
+
+    let cellIdx;
+    if (M <= 512) {
+        // ⚡ Hızlı & Standart Döngü Modları (M = 4, 8, 16, 32, 64, 512):
+        // %100 Tam Biijeksiyon (Sıfır Tekrar, 0 Ölü Bölge) + Evrensel CSPRNG Yapısal Filtre Sıralaması
+        const perm = _getAttractorPriorityPermutation(M, stride, baseMin, baseMax);
+        cellIdx = perm[((stepIdx % M) + M) % M];
+    } else {
+        // 🔬 Ultra-Mikro & Sniper Modları (4K, 10K, 100K, 7D):
+        // gcd(stride, M) = 1 ile %100 Tam Periyotlu Weyl/Hull-Dobell Koprim Biijeksiyonu (Sıfır Tekrar, Sıfır Ölü Bölge)
+        const bigStep = BigInt(((stepIdx % M) + M) % M);
+        cellIdx = Number((bigStep * BigInt(stride)) % BigInt(M));
+    }
+
+    const effWidth = (baseSpan / M);
+    // 🔬 TAM 7 BASAMAK HASSASİYET: Özel aralık ve tüm 19s dilimlerinde mikro hassasiyet (%63.8984180 gibi) asla yuvarlanmaz
+    const decDigits = 7;
+    const minStepUnit = 0.0000001;
+    let minPct = Number((baseMin + cellIdx * effWidth).toFixed(7));
+    let maxPct = Number((baseMin + (cellIdx + 1) * effWidth).toFixed(7));
+    if (maxPct <= minPct) {
+        maxPct = Number((minPct + minStepUnit).toFixed(7));
+    }
+    if (maxPct > baseMax) {
+        maxPct = Number(baseMax.toFixed(7));
+        if (minPct >= maxPct) {
+            minPct = Number(Math.max(baseMin, maxPct - minStepUnit).toFixed(7));
+        }
+    }
+
+    let name, note;
+    const fmtBaseMin = (typeof formatFullPct === 'function') ? formatFullPct(baseMin) : baseMin.toFixed(7);
+    const fmtBaseMax = (typeof formatFullPct === 'function') ? formatFullPct(baseMax) : baseMax.toFixed(7);
+    const fmtEffWidth = (typeof formatFullPct === 'function') ? formatFullPct(effWidth) : effWidth.toFixed(7);
+    if (isCustomBase) {
+        name = `🎯 Özel Alan [%${fmtBaseMin} - %${fmtBaseMax}] #${cellIdx}`;
+        note = `Tam Döngü Biijeksiyon | %${fmtEffWidth}`;
+    } else {
+        name = `🎯 Attractor Dilimi [${cfg.name}] #${cellIdx}`;
+        note = `Tam Uzay Biijeksiyon (%0-%100) | %${fmtEffWidth}`;
+    }
+
+    return { name, minPct, maxPct, note, cellIdx, totalSlices: M };
+}
+
+function setAttractorDwellSec(sec, isRemoteSync = false) {
+    const val = parseInt(sec, 10);
+    if (isNaN(val) || val < 2 || val > 3600) return;
+    attractorDwellSec = val;
+    try { localStorage.setItem('ATTRACTOR_DWELL_SEC', String(attractorDwellSec)); } catch (e) {}
+
+    const inp = document.getElementById('inpAttractorDurationSec');
+    if (inp && Number(inp.value) !== attractorDwellSec) {
+        inp.value = attractorDwellSec;
+    }
+
+    if (isAttractor19sActive) {
+        attractor19sRemainingSec = attractorDwellSec;
+        const btn = document.getElementById('btnToggleAttractor19s');
+        if (btn) btn.innerText = `${attractor19sRemainingSec}`;
+    }
+
+    updateAttractorPrecisionPillUI();
+
+    if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+        broadcastSwarmSetting('ATTRACTOR_19S', {
+            active: isAttractor19sActive,
+            precision: attractor19sPrecision,
+            index: attractor19sIndex,
+            remaining: attractor19sRemainingSec,
+            dwellSec: attractorDwellSec
+        });
+    }
+
+    if (!isRemoteSync && typeof showToast === 'function') {
+        showToast(`🎯 <strong>Attractor Süresi:</strong> ${attractorDwellSec} sn olarak güncellendi.`, 1800);
+    }
+}
+
+function onAttractorDurationChange() {
+    const inp = document.getElementById('inpAttractorDurationSec');
+    if (inp) {
+        setAttractorDwellSec(inp.value);
+    }
+}
+
+function setAttractor19sPrecision(precKey, isRemoteSync = false) {
+    if (!ATTRACTOR_19S_CONFIGS[precKey]) return;
+    attractor19sPrecision = precKey;
+    try { localStorage.setItem('ATTRACTOR_19S_PRECISION', precKey); } catch (e) {}
+
+    updateAttractorPrecisionPillUI();
+
+    const cfg = ATTRACTOR_19S_CONFIGS[precKey];
+    if (!isRemoteSync && typeof showToast === 'function') {
+        showToast(`🎯 <strong>Attractor Hassasiyeti:</strong><br><span style="font-size:11px; color:#38bdf8;">${cfg.label}</span>`, 2200);
+    }
+
+    if (isAttractor19sActive) {
+        attractor19sIndex = 0;
+        attractor19sRemainingSec = attractorDwellSec;
+        applyAttractorZone(attractor19sIndex);
+    }
+
+    if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
+        broadcastSwarmSetting('ATTRACTOR_19S', {
+            active: isAttractor19sActive,
+            precision: attractor19sPrecision,
+            index: attractor19sIndex,
+            remaining: attractor19sRemainingSec,
+            dwellSec: attractorDwellSec
+        });
+    }
+}
+
+function updateAttractorPrecisionPillUI() {
+    ['4', '8', '16', '32', '64', '512', '4K', '10K', '100K', '7D'].forEach(k => {
+        const btn = document.getElementById('btnAttrPrec' + k);
+        if (btn) {
+            if (k === attractor19sPrecision) {
+                btn.style.background = '#e11d48';
+                btn.style.borderColor = '#fb7185';
+                btn.style.color = '#ffffff';
+                btn.style.fontWeight = 'bold';
+                btn.style.boxShadow = '0 0 6px rgba(225, 29, 72, 0.6)';
+            } else {
+                btn.style.background = '#1e293b';
+                btn.style.borderColor = '#334155';
+                btn.style.color = '#94a3b8';
+                btn.style.fontWeight = 'normal';
+                btn.style.boxShadow = 'none';
+            }
+        }
+    });
+
+    const sel = document.getElementById('selAttractorPrecision');
+    if (sel && sel.value !== attractor19sPrecision) {
+        sel.value = attractor19sPrecision;
+    }
+
+    // Süre hızlı butonları (5s, 10s, 19s, 30s, 60s)
+    [5, 10, 19, 30, 60].forEach(s => {
+        const b = document.getElementById('btnAttrDur' + s);
+        if (b) {
+            if (s === attractorDwellSec) {
+                b.style.background = '#881337';
+                b.style.borderColor = '#e11d48';
+                b.style.color = '#fda4af';
+                b.style.fontWeight = 'bold';
+            } else {
+                b.style.background = '#1e293b';
+                b.style.borderColor = '#334155';
+                b.style.color = '#94a3b8';
+                b.style.fontWeight = 'normal';
+            }
+        }
+    });
+
+    const inpDur = document.getElementById('inpAttractorDurationSec');
+    if (inpDur && Number(inpDur.value) !== attractorDwellSec) {
+        inpDur.value = attractorDwellSec;
+    }
+
+    const badge = document.getElementById('lblAttractor19sActiveBadge');
+    if (badge) {
+        if (isAttractor19sActive) {
+            badge.innerText = 'AKTİF (' + attractorDwellSec + 's · ' + attractor19sPrecision + ')';
+            badge.style.background = '#881337';
+            badge.style.color = '#fda4af';
+        } else {
+            badge.innerText = 'KAPALI (' + attractor19sPrecision + ')';
+            badge.style.background = '#1e293b';
+            badge.style.color = '#94a3b8';
+        }
+    }
+
+    const btnPopToggle = document.getElementById('btnPopoverAttractorToggle');
+    if (btnPopToggle) {
+        if (isAttractor19sActive) {
+            btnPopToggle.innerText = 'DURDUR';
+            btnPopToggle.style.background = '#e11d48';
+            btnPopToggle.style.borderColor = '#fb7185';
+            btnPopToggle.style.color = '#ffffff';
+        } else {
+            btnPopToggle.innerText = 'BAŞLAT';
+            btnPopToggle.style.background = '#0284c7';
+            btnPopToggle.style.borderColor = '#38bdf8';
+            btnPopToggle.style.color = '#ffffff';
+        }
+    }
+
+    const mainBtn = document.getElementById('btnToggleAttractor19s');
+    if (mainBtn) {
+        mainBtn.title = `${attractorDwellSec}s Attractor Modu: 54 çözümün en yoğun kümelerini ${attractorDwellSec}'şer saniye aralıksız tara (Hassasiyet: ${attractor19sPrecision})`;
+        if (!isAttractor19sActive) {
+            mainBtn.innerText = `${attractorDwellSec}s`;
+            mainBtn.style.background = 'transparent';
+            mainBtn.style.borderColor = 'transparent';
+            mainBtn.style.color = '#f43f5e';
+            mainBtn.style.boxShadow = 'none';
+        }
+    }
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { try { updateAttractorPrecisionPillUI(); } catch (e) {} });
+    } else {
+        try { updateAttractorPrecisionPillUI(); } catch (e) {}
+    }
+}
 
 let isAttractor19sActive = false;
 let attractor19sIndex = 0;
-let attractor19sRemainingSec = 19;
+let attractor19sRemainingSec = (typeof attractorDwellSec === 'number') ? attractorDwellSec : 19;
 let attractor19sInterval = null;
 
 function toggleAttractor19sMode(forceState = null, isRemoteSync = false) {
@@ -3845,17 +4358,31 @@ function toggleAttractor19sMode(forceState = null, isRemoteSync = false) {
     const lbl = document.getElementById('lblAttractor19sTimer');
 
     if (isAttractor19sActive) {
-        // Eğer kayan pencere açıksa çakışmayı önlemek için durdur
         if (typeof isSlidingWindowActive !== 'undefined' && isSlidingWindowActive) {
             toggleAutoSlidingWindow(false);
         }
 
-        // KULLANICI İRADESİ KORUNUR: Algoritmayı veya sekmeyi ZORLA DEĞİŞTİRME!
-        // Kullanıcı hangi moddaysa (Standart/Kanguru) ve hangi algoritmadaysa o algoritma ile 19s aralık atlaması yapılır.
-        let activeAlgoLabel = selectedAlgorithm || 'Aktif Algoritma';
+        // 🔒 KULLANICININ KESTİĞİ VEYA SEÇTİĞİ ALANI YAKALA VE KİLİTLE:
+        // Eğer kullanıcı önceden ✂️, 🌀, 🦚, 🎯 ile bir alan kestiyse veya kaydıraçları daralttıysa, SADECE O ALANIN İÇİNİ TARAR!
+        if (attractorUserBaseMin <= 0.000001 && attractorUserBaseMax >= 99.999999) {
+            if (isSpaceCropped && (spaceCropMinPct > 0.000001 || spaceCropMaxPct < 99.999999)) {
+                attractorUserBaseMin = Number(spaceCropMinPct);
+                attractorUserBaseMax = Number(spaceCropMaxPct);
+            } else {
+                const minEl = document.getElementById('rangeSliderMin');
+                const maxEl = document.getElementById('rangeSliderMax');
+                const minStep = minEl ? Number(minEl.value || 0) : 0;
+                const maxStep = maxEl ? Number(maxEl.value || 1000000000000) : 1000000000000;
+                if (minStep > 100000 || maxStep < 999999900000) {
+                    attractorUserBaseMin = minStep / 10000000000;
+                    attractorUserBaseMax = maxStep / 10000000000;
+                }
+            }
+        }
 
-        attractor19sIndex = 0;
-        attractor19sRemainingSec = 19;
+        const cfg = ATTRACTOR_19S_CONFIGS[attractor19sPrecision] || ATTRACTOR_19S_CONFIGS['10K'];
+        attractor19sIndex = 1; // İlk adımda doğrudan altın oran iç diliminden başla
+        attractor19sRemainingSec = attractorDwellSec;
 
         if (btn) {
             btn.innerText = `${attractor19sRemainingSec}`;
@@ -3869,28 +4396,35 @@ function toggleAttractor19sMode(forceState = null, isRemoteSync = false) {
             lbl.innerText = '';
         }
 
-        // İlk hassas dilimi uygula (%100 tam uzay döngüsü)
         applyAttractorZone(attractor19sIndex);
 
         if (!attractor19sInterval) {
             attractor19sInterval = setInterval(onAttractor19sTick, 1000);
         }
 
-        // DİKKAT: Kullanıcı avı kendisi başlatmadıkça ZORLA OTOMATİK BAŞLATILMAZ!
-        // Av çalışıyorsa saniye saniye geri sayar ve atlar; duraklatılmışsa dilim hazır bekler.
-
-        // Çoklu sekme sürüsüne (Swarm) bildir
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
             broadcastSwarmSetting('ATTRACTOR_19S', {
                 active: true,
+                precision: attractor19sPrecision,
                 index: attractor19sIndex,
-                remaining: attractor19sRemainingSec
+                remaining: attractor19sRemainingSec,
+                dwellSec: attractorDwellSec
             });
         }
 
+        updateAttractorPrecisionPillUI();
+        if (typeof updateRegimeButtonStyles === 'function') updateRegimeButtonStyles();
+
         if (typeof showToast === 'function') {
-            const z = ATTRACTOR_19S_ZONES[0];
-            showToast(`🎯 <strong>19s Attractor Modu Devrede! [%100 Tam Uzay Kapsaması]</strong><br><span style="font-size:11px; color:#fda4af;">1. Hedef: ${z.name} (${formatAttractorPct(z.minPct, z.maxPct)}) [${z.note}]</span>`, 3500);
+            const z = getAttractorZone(attractor19sIndex, attractor19sPrecision);
+            const fmtBMin = (typeof formatFullPct === 'function') ? formatFullPct(attractorUserBaseMin) : attractorUserBaseMin.toFixed(7);
+            const fmtBMax = (typeof formatFullPct === 'function') ? formatFullPct(attractorUserBaseMax) : attractorUserBaseMax.toFixed(7);
+            const fmtZMin = (typeof formatFullPct === 'function') ? formatFullPct(z.minPct) : z.minPct.toFixed(7);
+            const fmtZMax = (typeof formatFullPct === 'function') ? formatFullPct(z.maxPct) : z.maxPct.toFixed(7);
+            const baseInfo = (attractorUserBaseMin > 0.0000001 || attractorUserBaseMax < 99.9999999)
+                ? `🔒 Kırpılan Alan İçi: %${fmtBMin} - %${fmtBMax}`
+                : `🌐 Tam Uzay (%0 - %100)`;
+            showToast(`🎯 <strong>${attractorDwellSec}s Attractor Devrede! [${baseInfo}]</strong><br><span style="font-size:11px; color:#fda4af;">Hedef: ${z.name} (%${fmtZMin} - %${fmtZMax})</span>`, 3500);
         }
     } else {
         if (attractor19sInterval) {
@@ -3898,38 +4432,39 @@ function toggleAttractor19sMode(forceState = null, isRemoteSync = false) {
             attractor19sInterval = null;
         }
 
-        // 🎯 Kapatıldığında uzayı TAM UZAY (%0 - %100) olarak geri yükle, dar pencerede asılı kalmayı önle!
-        if (typeof resetSpaceCrop === 'function') {
+        // Kapatıldığında kullanıcının kestiği ana alanı koru (sadece ↩️ butonuna basılırsa tam sıfırlanır)
+        if (attractorUserBaseMin > 0.0001 || attractorUserBaseMax < 99.9999) {
+            applySpaceCrop(attractorUserBaseMin, attractorUserBaseMax, true);
+        } else if (typeof resetSpaceCrop === 'function') {
             resetSpaceCrop();
-        } else {
-            isSpaceCropped = false;
-            spaceCropMinPct = 0;
-            spaceCropMaxPct = 100;
-            spaceCropStart = null;
-            spaceCropEnd = null;
-            if (typeof updateCropUI === 'function') updateCropUI(0, 100);
-            if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
         }
 
         if (btn) {
-            btn.innerText = '19';
+            btn.innerText = `${attractorDwellSec}s`;
             btn.style.background = 'transparent';
             btn.style.borderColor = 'transparent';
             btn.style.color = '#f43f5e';
             btn.style.boxShadow = 'none';
         }
+
         if (lbl) {
             lbl.style.display = 'none';
             lbl.innerText = '';
         }
 
-        // Çoklu sekme sürüsüne (Swarm) bildir
         if (!isRemoteSync && typeof broadcastSwarmSetting === 'function') {
-            broadcastSwarmSetting('ATTRACTOR_19S', { active: false });
+            broadcastSwarmSetting('ATTRACTOR_19S', {
+                active: false,
+                precision: attractor19sPrecision,
+                dwellSec: attractorDwellSec
+            });
         }
 
+        updateAttractorPrecisionPillUI();
+        if (typeof updateRegimeButtonStyles === 'function') updateRegimeButtonStyles();
+
         if (typeof showToast === 'function') {
-            showToast(`🎯 19s Attractor Kapatıldı (%100 Tam Uzay Geri Yüklendi).`, 2200);
+            showToast(`⏹️ <strong>${attractorDwellSec}s Attractor Modu Durduruldu.</strong>`, 2000);
         }
     }
 }
@@ -3949,27 +4484,39 @@ function onAttractor19sTick() {
     if (typeof broadcastSwarmSetting === 'function' && (attractor19sRemainingSec % 2 === 0 || attractor19sRemainingSec <= 1)) {
         broadcastSwarmSetting('ATTRACTOR_19S', {
             active: true,
+            precision: attractor19sPrecision,
             index: attractor19sIndex,
-            remaining: attractor19sRemainingSec
+            remaining: attractor19sRemainingSec,
+            dwellSec: attractorDwellSec
         });
     }
 
     if (attractor19sRemainingSec <= 0) {
-        attractor19sRemainingSec = 19;
-        attractor19sIndex = (attractor19sIndex + 1) % ATTRACTOR_19S_ZONES.length;
+        attractor19sRemainingSec = attractorDwellSec;
+        const cfg = ATTRACTOR_19S_CONFIGS[attractor19sPrecision] || ATTRACTOR_19S_CONFIGS['10K'];
+        attractor19sIndex = (attractor19sIndex + 1) % cfg.M;
         applyAttractorZone(attractor19sIndex);
     }
 }
 
 function applyAttractorZone(idx) {
-    const z = ATTRACTOR_19S_ZONES[idx];
+    const cfg = ATTRACTOR_19S_CONFIGS[attractor19sPrecision] || ATTRACTOR_19S_CONFIGS['10K'];
+    const swarmCount = (typeof currentSwarmTotal !== 'undefined' && currentSwarmTotal > 1) ? currentSwarmTotal : 1;
+    const swarmIdx = (typeof currentSwarmIndex !== 'undefined' && currentSwarmIndex >= 0) ? currentSwarmIndex : 0;
+
+    // 🌐 Model 3: Çoklu Sekme (Swarm) Kesişimsiz Modüler Ayrıştırma
+    const effIdx = (idx * swarmCount + swarmIdx) % cfg.M;
+    const z = getAttractorZone(effIdx, attractor19sPrecision);
     if (!z) return;
 
-    // Uzayı bu kümeye kırp
+    // Uzayı bu mikro kümeye kırp
     applySlidingWindowRange(z.minPct, z.maxPct);
 
     if (typeof showToast === 'function') {
-        showToast(`🎯 <strong>19s Atlama [${idx + 1}/${ATTRACTOR_19S_ZONES.length}]: ${z.name}</strong><br><span style="font-size:11px; color:#fb7185;">${formatAttractorPct(z.minPct, z.maxPct)} (${z.note})</span>`, 2200);
+        const swarmTag = swarmCount > 1 ? ` <span style="color:#10b981;">[Sekme ${swarmIdx + 1}/${swarmCount}]</span>` : '';
+        const fmtZMin = (typeof formatFullPct === 'function') ? formatFullPct(z.minPct) : z.minPct.toFixed(7);
+        const fmtZMax = (typeof formatFullPct === 'function') ? formatFullPct(z.maxPct) : z.maxPct.toFixed(7);
+        showToast(`🎯 <strong>${attractorDwellSec}s Atlama [${effIdx + 1}/${cfg.M}]: ${z.name}${swarmTag}</strong><br><span style="font-size:11px; color:#fb7185;">%${fmtZMin} - %${fmtZMax} (${z.note})</span>`, 2400);
     }
 }
 
@@ -4010,7 +4557,8 @@ function testPuzzleWithHex(puzzleId, startHex, endHex, label, isSwarmSync = fals
             targetHash160: addressToHash160(p.addr),
             reward: p.reward,
             startHex: p.start,
-            endHex: p.end
+            endHex: p.end,
+            status: 'SOLVED'
         });
     }
     setHexSliderBounds(startHex, endHex, label);
@@ -4528,7 +5076,7 @@ function applyFormulaPreset(formula, isRemoteSync = false, isSilent = false) {
             const bKang = document.getElementById(bKangId);
             if (bKang) bKang.classList.add('active');
             if (logAlgo) {
-                logAlgo.innerText = (kangAlgo === 'KANGAROO_ATTRACTOR_19S') ? '🎯 19s Attractor-Küme Modeli (%100 Tam Kapsama & Soğuk Bölge)' :
+                logAlgo.innerText = (kangAlgo === 'KANGAROO_ATTRACTOR_19S') ? '🎯 19s Attractor Modu (512 Ultra-Mikro Dilim & Swarm)' :
                     (kangAlgo === 'KANGAROO_KRONECKER') ? '⚡ 🦘 Kronecker-Kangaroo (İrrasyonel Kafes O(√N))' :
                     (kangAlgo === 'GLV_LATTICE_2D') ? '🌐⚡ 2D Latis GLV Kafesi (Gaudry-Schost Voronoi O(√N))' :
                     (kangAlgo === 'KANGAROO_SOBOL') ? '🦘📐 Sobol-Kangaroo (Tuzak & Quasi-Herd Sürü)' :
@@ -6015,6 +6563,12 @@ function handleRemoteSwarmSync(data) {
                 }
             }
         } else if (data.settingType === 'SPACE_CROP') {
+            const curTarget = getActiveTarget();
+            const myPuzId = curTarget ? String(curTarget.id || curTarget.puzzleId || '') : '';
+            if (data.puzzleId && myPuzId && String(data.puzzleId) !== myPuzId) {
+                // Farklı bulmaca çözülüyorsa (örn. Sekme 1: #16, Sekme 2: #77) uzay kırpmasını yoksay
+                return;
+            }
             if (data.isReset || !data.isCropped) {
                 if (isSpaceCropped) {
                     resetSpaceCrop(true);
@@ -6039,25 +6593,37 @@ function handleRemoteSwarmSync(data) {
                 }
             }
         } else if (data.settingType === 'ATTRACTOR_19S') {
+            if (data.precision && typeof setAttractor19sPrecision === 'function') {
+                setAttractor19sPrecision(data.precision, true);
+            }
+            if (typeof data.dwellSec === 'number' && typeof setAttractorDwellSec === 'function') {
+                setAttractorDwellSec(data.dwellSec, true);
+            }
             const btn = document.getElementById('btnToggleAttractor19s');
             const lbl = document.getElementById('lblAttractor19sTimer');
             if (lbl) lbl.style.display = 'none';
             if (data.active) {
+                isAttractor19sActive = true;
+                if (typeof data.remaining === 'number') attractor19sRemainingSec = data.remaining;
                 if (btn) {
-                    btn.innerText = `${data.remaining}`;
+                    btn.innerText = `${attractor19sRemainingSec}`;
                     btn.style.background = '#e11d48';
                     btn.style.borderColor = '#fb7185';
                     btn.style.color = '#ffffff';
                     btn.style.boxShadow = '0 0 10px rgba(225, 29, 72, 0.7)';
                 }
             } else {
+                isAttractor19sActive = false;
                 if (btn) {
-                    btn.innerText = '19';
+                    btn.innerText = `${attractorDwellSec}s`;
                     btn.style.background = 'transparent';
                     btn.style.borderColor = 'transparent';
                     btn.style.color = '#f43f5e';
                     btn.style.boxShadow = 'none';
                 }
+            }
+            if (typeof updateAttractorPrecisionPillUI === 'function') {
+                updateAttractorPrecisionPillUI();
             }
         } else if (data.settingType === 'MULTI_PUZZLES' && Array.isArray(data.puzzleIds)) {
             selectedPuzzleIds.clear();
@@ -6656,11 +7222,9 @@ function recalculateKangarooRoles() {
                 toggleSpeedMode(autoSliderSpeed || 'AUTO', true, false);
             }
             if (leader.sliderRegime && ['AUTO', 'SQRT', 'WEYL', 'RESONANCE', 'CLASSIC'].includes(leader.sliderRegime)) {
-                setSliderRegime(leader.sliderRegime, true, true);
-            } else if (!leader.sliderRegime && autoSliderRegime !== null) {
-                autoSliderRegime = null;
-                updateRegimeButtonStyles();
-                updateAutoSliderUI();
+                if (autoSliderRegime !== leader.sliderRegime) {
+                    setSliderRegime(leader.sliderRegime, true, true);
+                }
             }
         }
     }
@@ -6955,13 +7519,21 @@ function onKangarooBaseStrategyChange(strategy) {
 
 function onAlgoSelectChange(algo) {
     setAlgorithm(algo);
-    if (algo === 'KANGAROO_ATTRACTOR_19S') {
-        if (typeof isAttractor19sActive !== 'undefined' && !isAttractor19sActive) {
-            toggleAttractor19sMode(true);
-        }
-    } else {
+    // 🎯 19s Modu açıkken kullanıcı dilediği algoritmayı serbestçe seçebilir; 19s asla kapatılmaz!
+    if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+        if (typeof updateLogAlgoWith19sTag === 'function') updateLogAlgoWith19sTag();
+    }
+}
+
+function updateLogAlgoWith19sTag() {
+    const logAlgo = document.getElementById('logAlgo');
+    if (logAlgo && logAlgo.innerText) {
         if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
-            toggleAttractor19sMode(false);
+            if (!logAlgo.innerText.includes('[19s]')) {
+                logAlgo.innerText += ' [🎯 19s]';
+            }
+        } else {
+            logAlgo.innerText = logAlgo.innerText.replace(' [🎯 19s]', '');
         }
     }
 }
@@ -7002,9 +7574,9 @@ function setAlgorithm(algo, isRemoteSync = false) {
     const logAlgo = document.getElementById('logAlgo');
     if (logAlgo) {
         const algoNames = {
-            'KANGAROO_ATTRACTOR_19S': '🎯 19s Attractor Modu (%100 Tam Kapsama & Soğuk Bölge Ağırlıklı)',
+            'KANGAROO_ATTRACTOR_19S': '🎯 19s Attractor Modu (10K / 4K / 100K Ultra-Hassas)',
             'AUTO': '🔄 Oto Hibrit Sürü (17 Algoritma Dönüşümlü)',
-            'BSGS_NEGATION': '🎯⚡ Negation BSGS (Deterministik Çözücü O(√W))',
+            'HEX_FREQ_DENSITY': '📊🔥 Yapısal CSPRNG Biijeksiyon Kafesi (Hamming + Runs + Shannon)',
             'ROBERTS_R_SEQUENCE': '🌟📐 Plastik Oran (R_d Harmonikleri)',
             'HULL_DOBELL_LCG': '🔢✨ Hull-Dobell Permütasyonu (Tam Çevrim)',
             'KANGAROO_4WAY_GPR': '🦘⚡ 4-Kanguru GPR Modeli (1.714√N + Negasyon)',
@@ -7040,6 +7612,7 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'ULAM_SPIRAL': '🌀 Ulam-Sacks Parabolik Karekök Spirali'
         };
         logAlgo.innerText = algoNames[algo] || ('⚙️ ' + algo);
+        if (typeof updateLogAlgoWith19sTag === 'function') updateLogAlgoWith19sTag();
     }
 
     if (typeof broadcastWorkerConfig === 'function') {
@@ -7050,6 +7623,9 @@ function setAlgorithm(algo, isRemoteSync = false) {
         kangarooPeers[KANGAROO_TAB_ID].algo = algo;
     }
 
+    if (autoSliderRegime === 'AUTO' || (!autoSliderRegime && isAutoSliderActive)) {
+        lastExecutedSliderRegime = getEffectiveSliderRegime();
+    }
     if (typeof updateRegimeButtonStyles === 'function') {
         updateRegimeButtonStyles();
     }
@@ -7148,7 +7724,7 @@ function toggleManualRangePopover(btn, event) {
     const targetBtn = btn || document.getElementById('btnManualRangePrompt');
     if (targetBtn) {
         const rect = targetBtn.getBoundingClientRect();
-        const popWidth = 240;
+        const popWidth = 286;
         let left = rect.right - popWidth;
         if (left < 10) left = 10;
         if (left + popWidth > window.innerWidth - 10) {
@@ -7158,20 +7734,34 @@ function toggleManualRangePopover(btn, event) {
         pop.style.left = left + 'px';
     }
 
-    // Mevcut kaydıraç yüzdelerini oku ve inputlara doldur
-    const bounds = getHexTargetBounds();
+    // Mevcut kırpılmış taban alanı veya kaydıraç yüzdelerini oku ve inputlara doldur
     const minInp = document.getElementById('inpManualRangeMin');
     const maxInp = document.getElementById('inpManualRangeMax');
-    if (bounds && bounds.total > 0n && sliderMinHex !== null && sliderMaxHex !== null) {
-        const curMinPct = Number(((sliderMinHex - bounds.tStart) * 10000000000n) / bounds.total) / 100000000;
-        const curMaxPct = Number(((sliderMaxHex - bounds.tStart) * 10000000000n) / bounds.total) / 100000000;
-        if (minInp) minInp.value = Number(curMinPct.toFixed(3));
-        if (maxInp) maxInp.value = Number(curMaxPct.toFixed(3));
+    if (typeof attractorUserBaseMin === 'number' && typeof attractorUserBaseMax === 'number' && (attractorUserBaseMin > 0.0000001 || attractorUserBaseMax < 99.9999999)) {
+        if (minInp) minInp.value = (typeof formatFullPct === 'function') ? formatFullPct(attractorUserBaseMin) : attractorUserBaseMin;
+        if (maxInp) maxInp.value = (typeof formatFullPct === 'function') ? formatFullPct(attractorUserBaseMax) : attractorUserBaseMax;
+    } else if (isSpaceCropped && (spaceCropMinPct > 0.0000001 || spaceCropMaxPct < 99.9999999)) {
+        if (minInp) minInp.value = (typeof formatFullPct === 'function') ? formatFullPct(spaceCropMinPct) : spaceCropMinPct;
+        if (maxInp) maxInp.value = (typeof formatFullPct === 'function') ? formatFullPct(spaceCropMaxPct) : spaceCropMaxPct;
     } else {
-        if (minInp) minInp.value = "0";
-        if (maxInp) maxInp.value = "100";
+        const target = getActiveTarget();
+        if (target && sliderMinHex !== null && sliderMaxHex !== null) {
+            const origStart = toBigIntSafe(target.origStart || target.start);
+            const origEnd = toBigIntSafe(target.origEnd || target.end);
+            const origTotal = origEnd - origStart;
+            if (origTotal > 0n) {
+                const curMinPct = Number(((sliderMinHex - origStart) * 1000000000000n) / origTotal) / 10000000000;
+                const curMaxPct = Number(((sliderMaxHex - origStart) * 1000000000000n) / origTotal) / 10000000000;
+                if (minInp) minInp.value = curMinPct.toFixed(7).replace(/0+$/, '').replace(/\.$/, '');
+                if (maxInp) maxInp.value = curMaxPct.toFixed(7).replace(/0+$/, '').replace(/\.$/, '');
+            }
+        } else {
+            if (minInp) minInp.value = "0";
+            if (maxInp) maxInp.value = "100";
+        }
     }
 
+    updateAttractorPrecisionPillUI();
     pop.style.display = 'flex';
     if (minInp) {
         setTimeout(() => {
@@ -7195,39 +7785,34 @@ function applyManualRangePercent(minPct, maxPct) {
         else minP = Math.max(0, maxP - 0.1);
     }
 
-    const bounds = getHexTargetBounds();
-    if (!bounds || bounds.total <= 0n) return;
-    const { tStart, tEnd, total } = bounds;
-
-    const TOTAL_STEPS = 1000000000000n; // 1 Trilyon adım
-    const minStep = BigInt(Math.round((minP / 100) * 1000000000000));
-    const maxStep = BigInt(Math.round((maxP / 100) * 1000000000000));
-
-    // Hex sınırlarını hesapla
-    sliderMinHex = tStart + (total * minStep / TOTAL_STEPS);
-    sliderMaxHex = tStart + (total * maxStep / TOTAL_STEPS);
-    if (sliderMaxHex <= sliderMinHex) {
-        sliderMaxHex = sliderMinHex + 1n;
+    // 🔒 Eğer %0-%100 tam uzay seçildiyse kırpmayı sıfırla, aksi halde doğrudan seçilen alanı KES ve KİLİTLE!
+    if (minP <= 0.0001 && maxP >= 99.9999) {
+        attractorUserBaseMin = 0;
+        attractorUserBaseMax = 100;
+        if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+            attractor19sIndex = 1;
+            attractor19sRemainingSec = (typeof attractorDwellSec === 'number') ? attractorDwellSec : 19;
+            applyAttractorZone(attractor19sIndex);
+        } else {
+            resetSpaceCrop(false);
+        }
+    } else {
+        attractorUserBaseMin = minP;
+        attractorUserBaseMax = maxP;
+        // Alanı ana bulmaca uzayı üzerinden doğrudan kırp (✂️ aktifleşir, mor rozet güncellenir)
+        applySpaceCrop(minP, maxP, false);
+        // Eğer Attractor modu açıksa anında bu kesilen alanın içine gir!
+        if (typeof isAttractor19sActive !== 'undefined' && isAttractor19sActive) {
+            attractor19sIndex = 1;
+            attractor19sRemainingSec = (typeof attractorDwellSec === 'number') ? attractorDwellSec : 19;
+            applyAttractorZone(attractor19sIndex);
+        }
     }
-
-    // Inputları güncelle
-    const minEl = document.getElementById('rangeSliderMin');
-    const maxEl = document.getElementById('rangeSliderMax');
-    if (minEl) minEl.value = Number(minStep);
-    if (maxEl) maxEl.value = Number(maxStep);
 
     isDualSliderActive = true;
     window._userAdjustedSwarmPartition = true;
 
-    updateSliderUI();
-    if (typeof updateAutoSliderUI === 'function') updateAutoSliderUI();
-    if (typeof broadcastWorkerConfig === 'function') broadcastWorkerConfig();
-
     closeManualRangePopover();
-
-    if (typeof showToast === 'function') {
-        showToast(`🎯 Kaydıraç %${minP} - %${maxP} aralığına ayarlandı!`, 2500);
-    }
 }
 
 function applyManualRangeInput() {
@@ -7238,6 +7823,8 @@ function applyManualRangeInput() {
 }
 
 function applyManualRangePreset(minP, maxP) {
+    attractorUserBaseMin = Number(minP);
+    attractorUserBaseMax = Number(maxP);
     const minInp = document.getElementById('inpManualRangeMin');
     const maxInp = document.getElementById('inpManualRangeMax');
     if (minInp) minInp.value = minP;
@@ -7898,10 +8485,11 @@ function selectSinglePuzzle(p, isRemoteSync = false) {
     if (!isCircularMode && selectedPuzzleIds.size <= 1) {
         const isAlreadyKangarooVariant = typeof selectedAlgorithm === 'string' && (KANGAROO_ALGO_SET.has(selectedAlgorithm) || selectedAlgorithm.startsWith('KANGAROO') || selectedAlgorithm === 'GLV_LATTICE_2D');
         if (activeAlgoCategory === 'STANDARD') {
+            // Kullanıcı Standart/Normal modda: Asla zorla Kanguruya geçirme!
             const stdSel = document.getElementById('algoSelect');
             const targetAlgo = (stdSel && stdSel.value && !KANGAROO_ALGO_SET.has(stdSel.value)) ? stdSel.value : (selectedAlgorithm && !KANGAROO_ALGO_SET.has(selectedAlgorithm) ? selectedAlgorithm : 'AUTO');
             setAlgorithm(targetAlgo);
-        } else if (hasKangarooKey && !solvedInfo && p.status !== 'SOLVED') {
+        } else if (hasKangarooKey && !solvedInfo && p.status !== 'SOLVED' && activeAlgoCategory === 'KANGAROO') {
             setAlgorithm(isAlreadyKangarooVariant ? selectedAlgorithm : 'KANGAROO');
             if (typeof showToast === 'function') {
                 const pubPreview = `<br><span style="font-size:10px; color:#38bdf8; font-family:monospace;">🔑 Açık Anahtar: ${pubHex.substring(0, 16)}...</span>`;
@@ -8208,6 +8796,116 @@ function generateRobertsRKey(rangeStart, rangeEnd, workerIdx = 0) {
     return cand > e ? e : cand;
 }
 
+// 📊🔥 TAM DÖNGÜ BİİJEKSİYON + EVRENSEL CSPRNG YAPISAL FİLTRELİ HEX KAFESİ (Hamming + Wald-Wolfowitz + Shannon Tavanı)
+let mainHexFreqStep = 0n;
+function _swarPopcount64(x) {
+    let v = x & 0xFFFFFFFFFFFFFFFFn;
+    v = v - ((v >> 1n) & 0x5555555555555555n);
+    v = (v & 0x3333333333333333n) + ((v >> 2n) & 0x3333333333333333n);
+    v = (v + (v >> 4n)) & 0x0F0F0F0F0F0F0F0Fn;
+    return Number(((v * 0x0101010101010101n) & 0xFFFFFFFFFFFFFFFFn) >> 56n);
+}
+function _buildHexFreqWord64(seedStep, workerIdx) {
+    // Birleşik 3'lü CSPRNG Doğrulama Döngüsü (Sabit bit maskesiyle hane bozmak YOK; 3 kural aynı anda %0 ihlalle sağlanır)
+    let state = ((seedStep * 0x9E3779B97F4A7C15n) + (BigInt(workerIdx) * 0xBF58476D1CE4E5B9n)) & 0xFFFFFFFFFFFFFFFFn;
+    while (true) {
+        // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu
+        let z = state;
+        state = (state + 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
+        z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
+        const rawWord = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+
+        // 2. Katman 1: Shannon Tek-Karakter Tavanı (16 hanede bir hex karakteri en fazla 4 kez geçebilir — %0 ihlal)
+        let word = 0n;
+        let nibCounts = 0n;
+        for (let i = 0; i < 16; i++) {
+            const shift = BigInt((15 - i) * 4);
+            let nib = (rawWord >> shift) & 15n;
+            if (((nibCounts >> (nib * 4n)) & 15n) >= 4n) {
+                for (let step = 1n; step < 16n; step++) {
+                    const alt = (nib + step * 7n) & 15n; // gcd(7, 16) = 1 ile tüm 16 karakteri tarar
+                    if (((nibCounts >> (alt * 4n)) & 15n) < 4n) {
+                        nib = alt;
+                        break;
+                    }
+                }
+            }
+            nibCounts += (1n << (nib * 4n));
+            word |= (nib << shift);
+        }
+
+        // 3. Katman 2 & 3 Birleşik Doğrulama: Hamming [25..39] VE Wald-Wolfowitz Bit-Geçiş [25..39]
+        // Bitleri sonradan maskeyle bozmak yerine her 3 kuralı aynı anda sağlayan kelimeyi doğrudan kabul et (~1.11 ortalama adım)
+        const pop = _swarPopcount64(word);
+        if (pop >= 25 && pop <= 39) {
+            const transPop = _swarPopcount64(word ^ (word >> 1n));
+            if (transPop >= 25 && transPop <= 39) {
+                return word & 0xFFFFFFFFFFFFFFFFn;
+            }
+        }
+    }
+}
+let mainUFreqStep = 0n;
+const MAIN_W_HEX_NIB2_64 = [
+    12n,12n,12n,12n,12n,12n,12n,12n,12n, 7n,7n,7n,7n,7n,7n,7n,
+    13n,13n,13n,13n,13n,13n, 3n,3n,3n,3n,3n, 11n,11n,11n,11n,11n, 10n,10n,10n,10n,10n,
+    4n,4n,4n,4n, 5n,5n,5n,5n, 0n,0n,0n,0n, 2n,2n,2n,2n, 8n,8n,8n, 15n,15n, 1n,1n, 14n,14n, 9n, 6n
+];
+const MAIN_W_HEX_NIB3_64 = [
+    11n,11n,11n,11n,11n,11n,11n,11n, 9n,9n,9n,9n,9n,9n,
+    4n,4n,4n,4n,4n, 0n,0n,0n,0n,0n, 3n,3n,3n,3n, 10n,10n,10n,10n, 6n,6n,6n,6n, 14n,14n,14n,14n, 5n,5n,5n,5n,
+    15n,15n,15n, 7n,7n,7n, 1n,1n,1n, 12n,12n,12n, 13n,13n, 2n,2n, 8n,8n, 11n, 12n
+];
+const MAIN_W_HEX_FREE_64 = [
+    12n,12n,12n,12n,12n,12n,12n,12n, 1n,1n,1n,1n,1n,1n, 3n,3n,3n,3n,3n,3n,
+    4n,4n,4n,4n,4n, 5n,5n,5n,5n,5n, 6n,6n,6n,6n,6n,
+    8n,8n,8n,8n, 11n,11n,11n,11n, 14n,14n,14n,14n, 15n,15n,15n,15n, 7n,7n,7n,7n,
+    2n,2n,2n, 0n,0n,0n, 10n, 13n, 9n
+];
+const MAIN_W_HEX_HOT_PAIRS_32 = [
+    0x11n,0x11n,0x11n,0x11n, 0xbbn,0xbbn,0xbbn,0xbbn, 0x22n,0x22n,0x22n,0x22n,
+    0x33n,0x33n,0x33n, 0x44n,0x44n,0x44n, 0xeen,0xeen,0xeen, 0xccn,0xccn, 0x88n,0x88n,
+    0x55n, 0x77n, 0x00n, 0x66n, 0x99n, 0xaan, 0xffn
+];
+function _buildMainHexFreqWord64(seedStep, workerIdx) {
+    let h = ((seedStep * 0x9E3779B97F4A7C15n) ^ (BigInt(workerIdx) * 0xBF58476D1CE4E5B9n) ^ 0xC11BB4488CC33221n) & 0xFFFFFFFFFFFFFFFFn;
+    const nib0 = MAIN_W_HEX_NIB2_64[Number(h & 63n)];
+    const nib1 = MAIN_W_HEX_NIB3_64[Number((h >> 6n) & 63n)];
+    let word = (nib0 << 60n) | (nib1 << 56n);
+    const pairPos = Number((seedStep + BigInt(workerIdx)) % 6n);
+    const hotPair = MAIN_W_HEX_HOT_PAIRS_32[Number((h >> 12n) & 31n)];
+    for (let i = 0; i < 14; i++) {
+        const shift = BigInt((13 - i) * 4);
+        if (i === pairPos * 2 && i <= 12) {
+            word |= (hotPair << BigInt((12 - i) * 4));
+            i++;
+            continue;
+        }
+        h = ((h * 0xD1342543DE82EF95n) + 0x9E3779B97F4A7C15n + BigInt(i)) & 0xFFFFFFFFFFFFFFFFn;
+        const nib = MAIN_W_HEX_FREE_64[Number((h >> 58n) & 63n)];
+        word |= (nib << shift);
+    }
+    return word & 0xFFFFFFFFFFFFFFFFn;
+}
+function generateHexFreqDensityKey(rangeStart, rangeEnd, workerIdx = 0) {
+    mainHexFreqStep++;
+    const s = toBigIntSafe(rangeStart);
+    const e = toBigIntSafe(rangeEnd);
+    const totalRange = (e > s) ? (e - s) : 0n;
+    if (totalRange <= 0n) return s;
+    // Küçük veya daraltılmış uzaylarda (<= 16M anahtar) sıfır boşluklu tam periyot modüler biijeksiyon
+    if (totalRange <= 16777216n) {
+        return generateHullDobellKey(s, e, workerIdx, 1);
+    }
+    const frac1 = _buildHexFreqWord64(mainHexFreqStep, workerIdx);
+    const frac2 = _buildHexFreqWord64(mainHexFreqStep + 0x517CC1B727220A95n, workerIdx + 7);
+    const frac3 = _buildHexFreqWord64(mainHexFreqStep + 0x9E3779B97F4A7C15n, workerIdx + 13);
+    const fullFrac192 = (frac1 << 128n) | (frac2 << 64n) | frac3;
+    const offset = (fullFrac192 * (totalRange + 1n)) >> 192n;
+    const cand = s + offset;
+    return cand > e ? e : cand;
+}
 // 🔢✨ HULL-DOBELL TEOREMİ İLE TAM PERİYOTLU MODÜLER PERMÜTASYON (Sıfır Tekrar, Sıfır Boşluk)
 let mainHullDobellStep = 0n;
 let _mainHullDobellState = null;
@@ -9175,8 +9873,8 @@ function huntBatch() {
             // ----------------------------------------------------
             if (activeAlgo.startsWith('KANGAROO') || activeAlgo === 'GLV_LATTICE_2D') {
                 currentKey = generateKangarooKey(subMin, subMax);
-            } else if (activeAlgo === 'BSGS_NEGATION') {
-                currentKey = generateHullDobellKey(subMin, subMax);
+            } else if (activeAlgo === 'HEX_FREQ_DENSITY') {
+                currentKey = generateHexFreqDensityKey(subMin, subMax);
             } else if (activeAlgo === 'ROBERTS_R_SEQUENCE') {
                 currentKey = generateRobertsRKey(subMin, subMax);
             } else if (activeAlgo === 'HULL_DOBELL_LCG') {
@@ -9219,8 +9917,17 @@ function huntBatch() {
             // Tüm standart ve fizik arama algoritmalarında (Sequential, Sobol, Halton, Kronecker, Weyl, Kaos, Random vb.)
             // anahtarı seçilen başlangıç oranına göre uzayı daraltmadan modüler olarak odaklar!
             const mainStdRatio = (typeof stdAlgorithmStartOffsetRatio === 'number') ? stdAlgorithmStartOffsetRatio : 0.0;
+            const isMainHexFreqFull = (mainStdRatio === -3.0 || (typeof stdBaseStrategy !== 'undefined' && stdBaseStrategy === 'HEX_FREQ_FULL'));
             const isMainLattice = (mainStdRatio === -1.0 || (typeof stdBaseStrategy !== 'undefined' && stdBaseStrategy === 'AUTO'));
-            if (isMainLattice && boundMax > boundMin) {
+            if (isMainHexFreqFull && boundMax > boundMin) {
+                mainUFreqStep++;
+                const totalMainSpan = boundMax - boundMin;
+                const freq64 = _buildMainHexFreqWord64(mainUFreqStep, 0);
+                const hotPair = MAIN_W_HEX_HOT_PAIRS_32[Number(mainUFreqStep & 31n)];
+                const hexShapeMask = (freq64 & 0xFFFFFFFFFFFFF000n) | (hotPair << 12n);
+                const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
+                currentKey = boundMin + ((rawOff ^ (hexShapeMask % (totalMainSpan + 1n))) % (totalMainSpan + 1n));
+            } else if (isMainLattice && boundMax > boundMin) {
                 const totalMainSpan = boundMax - boundMin;
                 const stdStartOffset = (totalMainSpan * 100000n) / 1000000n; // %10 Latis başlangıç çapası
                 currentKey = boundMin + ((currentKey - boundMin + stdStartOffset) % (totalMainSpan + 1n));
@@ -9291,8 +9998,8 @@ function huntBatch() {
                 const baseEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
                 const isNarrowed = isDualSliderActive && (lastBoundMin && lastBoundMax && (lastBoundMin > baseStart || lastBoundMax < baseEnd));
                 let algoPrefix = '';
-                if (activeAlgo === 'BSGS_NEGATION') {
-                    algoPrefix = '🎯⚡ Negation BSGS + ';
+                if (activeAlgo === 'HEX_FREQ_DENSITY') {
+                    algoPrefix = '📊🔥 Frekans Hex Kafesi + ';
                 } else if (activeAlgo === 'ROBERTS_R_SEQUENCE') {
                     algoPrefix = '🌟 Plastik Oran (R_d) + ';
                 } else if (activeAlgo === 'HULL_DOBELL_LCG') {
@@ -10026,7 +10733,8 @@ const FastH = (function () {
         if (total <= 0n) return s;
         const totalBlocks = (total / 511n > 1n) ? (total / 511n) : 1n;
 
-        if (_kroneckerKey === null || _kroneckerSubStep >= KRONECKER_BLOCK_BURST || s !== _kroneckerLastS || e !== _kroneckerLastE || _kroneckerKey < s || _kroneckerKey + 511n > e) {
+        // Burst-Kilitli Koruma: Kaydıraç kaysa bile mevcut _kroneckerKey yeni [s, e] içindeyse 257'lik _seqRefill paketini kesmeden tamamlar!
+        if (_kroneckerKey === null || _kroneckerSubStep >= KRONECKER_BLOCK_BURST || _kroneckerKey < s || _kroneckerKey + 511n > e) {
             _kroneckerLastS = s;
             _kroneckerLastE = e;
             _kroneckerSubStep = 0;
@@ -11150,7 +11858,8 @@ const FastH = (function () {
             const total = (e > s) ? (e - s) : 0n;
             if (total <= 0n) return s;
             const totalBlocks = (total / 511n > 1n) ? (total / 511n) : 1n;
-            if (_robertsKey === null || _robertsSubStep >= R_BLOCK_BURST || s !== _robertsLastS || e !== _robertsLastE || _robertsKey < s || _robertsKey + 511n > e) {
+            // Burst-Kilitli Koruma: Kaydıraç kaysa bile mevcut _robertsKey yeni [s, e] içindeyse 257'lik _seqRefill paketini kesmeden tamamlar!
+            if (_robertsKey === null || _robertsSubStep >= R_BLOCK_BURST || _robertsKey < s || _robertsKey + 511n > e) {
                 _robertsLastS = s;
                 _robertsLastE = e;
                 _robertsSubStep = 0;
@@ -11170,11 +11879,194 @@ const FastH = (function () {
             return _robertsKey;
         }
 
+        // 📊🔥 TAM DÖNGÜ BİİJEKSİYON + EVRENSEL CSPRNG YAPISAL FİLTRELİ HEX KAFESİ (Hamming + Wald-Wolfowitz + Shannon Tavanı + 511 Burst)
+        let _hexFreqKey = null;
+        let _hexFreqSubStep = 0;
+        let _hexFreqLastS = -1n;
+        let _hexFreqLastE = -1n;
+        let workerHexFreqStep = 1n;
+        function _wSwarPop64(x) {
+            let v = x & 0xFFFFFFFFFFFFFFFFn;
+            v = v - ((v >> 1n) & 0x5555555555555555n);
+            v = (v & 0x3333333333333333n) + ((v >> 2n) & 0x3333333333333333n);
+            v = (v + (v >> 4n)) & 0x0F0F0F0F0F0F0F0Fn;
+            return Number(((v * 0x0101010101010101n) & 0xFFFFFFFFFFFFFFFFn) >> 56n);
+        }
+        function _workerBuildHexFreqWord64(seedStep, wId) {
+            // Birleşik 3'lü CSPRNG Doğrulama Döngüsü (Sabit bit maskesiyle hane bozmak YOK; 3 kural aynı anda %0 ihlalle sağlanır)
+            let state = ((seedStep * 0x9E3779B97F4A7C15n) + (wId * 0xBF58476D1CE4E5B9n)) & 0xFFFFFFFFFFFFFFFFn;
+            while (true) {
+                // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu
+                let z = state;
+                state = (state + 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+                z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
+                z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
+                const rawWord = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
+
+                // 2. Katman 1: Shannon Tek-Karakter Tavanı (16 hanede bir hex karakteri en fazla 4 kez geçebilir — %0 ihlal)
+                let word = 0n;
+                let nibCounts = 0n;
+                for (let i = 0; i < 16; i++) {
+                    const shift = BigInt((15 - i) * 4);
+                    let nib = (rawWord >> shift) & 15n;
+                    if (((nibCounts >> (nib * 4n)) & 15n) >= 4n) {
+                        for (let step = 1n; step < 16n; step++) {
+                            const alt = (nib + step * 7n) & 15n; // gcd(7, 16) = 1 ile tüm 16 karakteri tarar
+                            if (((nibCounts >> (alt * 4n)) & 15n) < 4n) {
+                                nib = alt;
+                                break;
+                            }
+                        }
+                    }
+                    nibCounts += (1n << (nib * 4n));
+                    word |= (nib << shift);
+                }
+
+                // 3. Katman 2 & 3 Birleşik Doğrulama: Hamming [25..39] VE Wald-Wolfowitz Bit-Geçiş [25..39]
+                // Bitleri sonradan maskeyle bozmak yerine her 3 kuralı aynı anda sağlayan kelimeyi doğrudan kabul et (~1.11 ortalama adım)
+                const pop = _wSwarPop64(word);
+                if (pop >= 25 && pop <= 39) {
+                    const transPop = _wSwarPop64(word ^ (word >> 1n));
+                    if (transPop >= 25 && transPop <= 39) {
+                        return word & 0xFFFFFFFFFFFFFFFFn;
+                    }
+                }
+            }
+        }
+        const W_HEX_NIB2_64 = [
+            12n,12n,12n,12n,12n,12n,12n,12n,12n, 7n,7n,7n,7n,7n,7n,7n,
+            13n,13n,13n,13n,13n,13n, 3n,3n,3n,3n,3n, 11n,11n,11n,11n,11n, 10n,10n,10n,10n,10n,
+            4n,4n,4n,4n, 5n,5n,5n,5n, 0n,0n,0n,0n, 2n,2n,2n,2n, 8n,8n,8n, 15n,15n, 1n,1n, 14n,14n, 9n, 6n
+        ];
+        const W_HEX_NIB3_64 = [
+            11n,11n,11n,11n,11n,11n,11n,11n, 9n,9n,9n,9n,9n,9n,
+            4n,4n,4n,4n,4n, 0n,0n,0n,0n,0n, 3n,3n,3n,3n, 10n,10n,10n,10n, 6n,6n,6n,6n, 14n,14n,14n,14n, 5n,5n,5n,5n,
+            15n,15n,15n, 7n,7n,7n, 1n,1n,1n, 12n,12n,12n, 13n,13n, 2n,2n, 8n,8n, 11n, 12n
+        ];
+        const W_HEX_FREE_64 = [
+            12n,12n,12n,12n,12n,12n,12n,12n, 1n,1n,1n,1n,1n,1n, 3n,3n,3n,3n,3n,3n,
+            4n,4n,4n,4n,4n, 5n,5n,5n,5n,5n, 6n,6n,6n,6n,6n,
+            8n,8n,8n,8n, 11n,11n,11n,11n, 14n,14n,14n,14n, 15n,15n,15n,15n, 7n,7n,7n,7n,
+            2n,2n,2n, 0n,0n,0n, 10n, 13n, 9n
+        ];
+        const W_HEX_HOT_PAIRS_32 = [
+            0x11n,0x11n,0x11n,0x11n, 0xbbn,0xbbn,0xbbn,0xbbn, 0x22n,0x22n,0x22n,0x22n,
+            0x33n,0x33n,0x33n, 0x44n,0x44n,0x44n, 0xeen,0xeen,0xeen, 0xccn,0xccn, 0x88n,0x88n,
+            0x55n, 0x77n, 0x00n, 0x66n, 0x99n, 0xaan, 0xffn
+        ];
+        function _workerBuildHexFreqWord64(seedStep, wId) {
+            let h = ((seedStep * 0x9E3779B97F4A7C15n) ^ (wId * 0xBF58476D1CE4E5B9n) ^ 0xC11BB4488CC33221n) & 0xFFFFFFFFFFFFFFFFn;
+            const nib0 = W_HEX_NIB2_64[Number(h & 63n)];
+            const nib1 = W_HEX_NIB3_64[Number((h >> 6n) & 63n)];
+            let word = (nib0 << 60n) | (nib1 << 56n);
+            const pairPos = Number((seedStep + wId) % 6n);
+            const hotPair = W_HEX_HOT_PAIRS_32[Number((h >> 12n) & 31n)];
+            for (let i = 0; i < 14; i++) {
+                const shift = BigInt((13 - i) * 4);
+                if (i === pairPos * 2 && i <= 12) {
+                    word |= (hotPair << BigInt((12 - i) * 4));
+                    i++;
+                    continue;
+                }
+                h = ((h * 0xD1342543DE82EF95n) + 0x9E3779B97F4A7C15n + BigInt(i)) & 0xFFFFFFFFFFFFFFFFn;
+                const nib = W_HEX_FREE_64[Number((h >> 58n) & 63n)];
+                word |= (nib << shift);
+            }
+            return word & 0xFFFFFFFFFFFFFFFFn;
+        }
+        const W_HEX_MARKOV_TABLE = [
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x5n,0x5n,0x6n,0x7n,0x7n,0x8n,0x9n,0x9n,0xan,0xbn,0xcn],
+            [0x0n,0x1n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x8n,0x9n,0xan,0xan,0xbn,0xcn],
+            [0x0n,0x1n,0x2n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0xan,0xbn,0xcn,0xdn,0xen,0xfn],
+            [0x0n,0x1n,0x2n,0x3n,0x3n,0x4n,0x5n,0x5n,0x6n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xcn],
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0x9n,0xan,0xbn,0xcn,0xcn],
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xcn,0xcn,0xdn,0xen],
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xcn,0xdn,0xen,0xfn],
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x4n,0x5n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xan,0xbn,0xcn],
+            [0x0n,0x2n,0x3n,0x3n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xbn,0xcn,0xdn,0xdn,0xen],
+            [0x0n,0x0n,0x1n,0x1n,0x2n,0x3n,0x3n,0x4n,0x5n,0x6n,0x6n,0x6n,0x7n,0x9n,0xan,0xan],
+            [0x0n,0x1n,0x1n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xbn,0xcn,0xcn,0xdn],
+            [0x0n,0x1n,0x2n,0x2n,0x3n,0x4n,0x5n,0x6n,0x6n,0x7n,0x8n,0x8n,0x9n,0xan,0xbn,0xbn],
+            [0x0n,0x1n,0x2n,0x3n,0x4n,0x5n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xcn,0xdn,0xen],
+            [0x0n,0x1n,0x1n,0x2n,0x3n,0x4n,0x4n,0x5n,0x5n,0x6n,0x6n,0x7n,0x8n,0x8n,0x9n,0x0n],
+            [0x0n,0x0n,0x1n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xbn,0xcn],
+            [0x0n,0x1n,0x2n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x9n,0xan,0xbn,0xcn,0xcn,0xdn]
+        ];
+        function _workerTemperMT32(x) {
+            let y1 = (x ^ (x >> 11n)) & 0xFFFFFFFFn;
+            let y2 = (y1 ^ ((y1 << 7n) & 0x9D2C5680n)) & 0xFFFFFFFFn;
+            let y3 = (y2 ^ ((y2 << 15n) & 0xEFC60000n)) & 0xFFFFFFFFn;
+            return (y3 ^ (y3 >> 18n)) & 0xFFFFFFFFn;
+        }
+        function _workerBuildMarkovHexWord64(seedStep, wId) {
+            let h = ((seedStep * 0x9E3779B97F4A7C15n) ^ (wId * 0xBF58476D1CE4E5B9n) ^ 0xC11BB4488CC33221n) & 0xFFFFFFFFFFFFFFFFn;
+            const w0 = _workerTemperMT32(h & 0xFFFFFFFFn);
+            let h2 = ((h * 0xD1342543DE82EF95n) + 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+            const w1 = _workerTemperMT32((h2 >> 32n) & 0xFFFFFFFFn);
+            const prngWord = (w1 << 32n) | w0;
+            let prev = Number((h >> 60n) & 15n);
+            let markovWord = BigInt(prev) << 60n;
+            for (let i = 1; i < 16; i++) {
+                const shift = BigInt((15 - i) * 4);
+                h = ((h * 0xD1342543DE82EF95n) + 0x9E3779B97F4A7C15n + BigInt(i)) & 0xFFFFFFFFFFFFFFFFn;
+                const branch = Number((h >> 58n) & 15n);
+                const nib = W_HEX_MARKOV_TABLE[prev][branch];
+                markovWord |= (nib << shift);
+                prev = Number(nib);
+            }
+            return (prngWord ^ markovWord) & 0xFFFFFFFFFFFFFFFFn;
+        }
+        function generateWorkerHexFreqDensityKey(rangeStart, rangeEnd) {
+            const s = (typeof rangeStart === 'bigint') ? rangeStart : BigInt(rangeStart);
+            const e = (typeof rangeEnd === 'bigint') ? rangeEnd : BigInt(rangeEnd);
+            const total = (e > s) ? (e - s) : 0n;
+            if (total <= 0n) return s;
+            const numW = (typeof cfg !== 'undefined' && cfg && cfg.isOrthogonalWorker) ? 1n : BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
+            const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+            const totalBlocks = (total / 511n > 1n) ? (total / 511n) : 1n;
+            // Küçük bulmacalar veya daraltılmış aralıklar (çekirdek başına <= 65.536 blok = ~33.5M, 16 çekirdekte ~536M anahtar):
+            // Her çekirdek kendi ayrık 1/numW dilimini %100 deterministik +511n ile süpürür (sıfır çakışma, 16x paralel hız!)
+            if (totalBlocks <= 65536n * numW) {
+                let sliceMin = s, sliceMax = e;
+                const span = total + 1n;
+                if (numW > 1n && span >= numW * 1024n) {
+                    const len = (span / numW / 511n) * 511n;
+                    sliceMin = s + len * (wId % numW);
+                    sliceMax = ((wId % numW) === numW - 1n) ? e : (sliceMin + len - 1n);
+                }
+                if (_hexFreqKey === null || _hexFreqKey < sliceMin || _hexFreqKey - 255n > sliceMax) {
+                    _hexFreqLastS = sliceMin;
+                    _hexFreqLastE = sliceMax;
+                    _hexFreqSubStep = 0;
+                    _hexFreqKey = (sliceMin + 255n <= sliceMax) ? (sliceMin + 255n) : sliceMin;
+                }
+                const k = (_hexFreqKey > sliceMax) ? sliceMax : _hexFreqKey;
+                _hexFreqKey += 511n;
+                _hexFreqSubStep++;
+                return k;
+            }
+            // Büyük uzaylar (#30-#160): R_BLOCK_BURST = 257 (%100 _seqRefill hızı) + Burst-Kilitli Koruma (yeni [s, e] içindeyse paketi bölmez!)
+            if (_hexFreqKey === null || _hexFreqSubStep >= R_BLOCK_BURST || _hexFreqKey < s || _hexFreqKey + 511n > e) {
+                _hexFreqLastS = s;
+                _hexFreqLastE = e;
+                _hexFreqSubStep = 0;
+                workerHexFreqStep++;
+                const w = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+                const frac1 = _workerBuildHexFreqWord64(workerHexFreqStep, w);
+                const frac2 = _workerBuildHexFreqWord64(workerHexFreqStep + 0x517CC1B727220A95n, w + 7n);
+                const frac3 = _workerBuildHexFreqWord64(workerHexFreqStep + 0x9E3779B97F4A7C15n, w + 13n);
+                const fullFrac = (frac1 << 128n) | (frac2 << 64n) | frac3;
+                const blockIdx = (fullFrac * totalBlocks) >> 192n;
+                _hexFreqKey = s + 255n + (blockIdx * 511n);
+            } else {
+                _hexFreqKey += 511n;
+            }
+            _hexFreqSubStep++;
+            if (_hexFreqKey > e) _hexFreqKey = (s + 255n <= e) ? (s + 255n) : s;
+            return _hexFreqKey;
+        }
         // 🔢✨ HULL-DOBELL 511-BLOK TAM PERİYOTLU MODÜLER PERMÜTASYON (Sıfır Tekrar, Sıfır Bellek Sızıntısı, 511x Hızlandırmalı)
         let _workerHdState = null;
-            _kroneckerKey = null;
-            _kroneckerSubStep = 0;
-            workerKroneckerStep = BigInt(workerId) * 10007n;
         let _hdKey = null;
         let _hdSubStep = 0;
         const HD_BLOCK_BURST = 257; // Her permütasyon durağında 257 x 511 = 131.327 anahtarlık (%100 _seqRefill uyumlu) kesintisiz 511 akışı
@@ -11184,21 +12076,23 @@ const FastH = (function () {
             const s = (typeof rangeStart === 'bigint') ? rangeStart : BigInt(rangeStart);
             const e = (typeof rangeEnd === 'bigint') ? rangeEnd : BigInt(rangeEnd);
             let st = _workerHdState;
-            if (!st || st.s !== s || st.e !== e) {
+            const inFlightValid = (_hdKey !== null && _hdSubStep < HD_BLOCK_BURST && _hdKey >= s && _hdKey + 511n <= e);
+            if (!st || ((st.s !== s || st.e !== e) && !inFlightValid)) {
                 const W = (e > s) ? (e - s + 1n) : 1n;
                 const totalBlocks = (W / 511n > 1n) ? (W / 511n) : 1n;
                 let c = (totalBlocks * 6180339887n) / 10000000000n;
                 if (c < 1n) c = 1n;
                 while (_hdGcd(c, totalBlocks) !== 1n) c++;
                 const w = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-                const totW = BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
-                const wBlock = (w * (totalBlocks / totW)) % totalBlocks;
-                st = { s: s, e: e, c: c, block: wBlock, totalBlocks: totalBlocks, W: W };
+                const totW = (typeof cfg !== 'undefined' && cfg && cfg.isOrthogonalWorker) ? 1n : BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
+                const prevSteps = st ? ((st.steps || 0n) + 1n) : 0n;
+                const wBlock = ((w * (totalBlocks / totW)) + prevSteps * c) % totalBlocks;
+                st = { s: s, e: e, c: c, block: wBlock, totalBlocks: totalBlocks, W: W, steps: prevSteps };
                 _workerHdState = st;
                 _hdKey = null;
                 _hdSubStep = 0;
             }
-            if (_hdKey === null || _hdSubStep >= HD_BLOCK_BURST) {
+            if (_hdKey === null || _hdSubStep >= HD_BLOCK_BURST || _hdKey < s || _hdKey + 511n > e) {
                 _hdSubStep = 0;
                 st.block = (st.block + st.c) % st.totalBlocks;
                 _hdKey = s + 255n + (st.block * 511n);
@@ -11210,37 +12104,6 @@ const FastH = (function () {
             return _hdKey;
         }
 
-        // 🎯⚡ INTERLEAVED NEGATION BSGS (511-Batch Montgomery Hızlandırmalı)
-        let _bsgsKey = null;
-        let _bsgsBoundSig = '';
-        let _bsgsSliceMin = 0n;
-        let _bsgsSliceMax = 0n;
-        function getWorkerBsgsKey(rangeStart, rangeEnd) {
-            const s = (typeof rangeStart === 'bigint') ? rangeStart : BigInt(rangeStart);
-            const e = (typeof rangeEnd === 'bigint') ? rangeEnd : BigInt(rangeEnd);
-            const numW = BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
-            const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-            const sig = s.toString(16) + ':' + e.toString(16) + ':' + numW + ':' + wId;
-            if (sig !== _bsgsBoundSig) {
-                _bsgsBoundSig = sig;
-                const span = (e > s) ? (e - s + 1n) : 1n;
-                if (numW > 1n && span >= numW * 1024n) {
-                    const len = (span / numW / 511n) * 511n;
-                    _bsgsSliceMin = s + len * wId;
-                    _bsgsSliceMax = (wId === numW - 1n) ? e : (_bsgsSliceMin + len - 1n);
-                } else {
-                    _bsgsSliceMin = s;
-                    _bsgsSliceMax = e;
-                }
-                _bsgsKey = null;
-            }
-            if (_bsgsKey === null || _bsgsKey + 255n > _bsgsSliceMax) {
-                _bsgsKey = _bsgsSliceMin + 255n;
-            }
-            const k = (_bsgsKey > e) ? e : _bsgsKey;
-            _bsgsKey += 511n;
-            return k;
-        }
     // Çoklu worker: deterministik dizilerde worker w, w+W, w+2W... indekslerini alır (W = toplam worker). Böylece worker'lar
     // aynı dizinin ayrık parçalarını tarar; eski "başlangıç ofseti + 1 adım" yaklaşımı ~0.1M anahtar sonra birbirinin üstünü örtüyordu.
     function workerStrideN() {
@@ -11676,7 +12539,8 @@ const baseStart = (span * basePpm) / 1000000n;
     // CLUSTER_N = 1 özelliği kapatır. Önek/ızgara filtreleri açıkken kullanılmaz.
     const CLUSTER_N = 257; // 1 başlangıç çapası + 256 _seqRefill çapası = %100 _seqRefill verimliliği!
     let _cluLeft = 0, _cluNext = 0n, _cluAlgo = '';
-    const CLUSTER_SKIP = { SEQUENTIAL: 1, ALIGNED_PERM: 1, ADDR_HOP_SWEEP: 1, BSGS_NEGATION: 1, HULL_DOBELL_LCG: 1, ROBERTS_R_SEQUENCE: 1, KRONECKER_LATTICE: 1 };
+    let _uFreqKey = null, _uFreqSig = '', _uFreqSubStep = 0, _uFreqStep = 0n;
+    const CLUSTER_SKIP = { SEQUENTIAL: 1, ALIGNED_PERM: 1, ADDR_HOP_SWEEP: 1, HULL_DOBELL_LCG: 1, ROBERTS_R_SEQUENCE: 1, HEX_FREQ_DENSITY: 1, KRONECKER_LATTICE: 1 };
     let _seqKey = null, _seqBoundSig = '', _seqSliceMin = 0n, _seqSliceMax = 0n;
     let _seqPt = null, _seqPtKey = null, _seqG511 = null, _seqWraps = 0, _seqCalls = 0, _seqBroken = false;
     const _seqTmpPt = [0n, 0n];
@@ -11709,11 +12573,14 @@ const baseStart = (span * basePpm) / 1000000n;
                 _seqSliceMin = bMin;
                 _seqSliceMax = bMax;
             }
-            _seqKey = null; _seqPt = null; _seqPtKey = null;
+            // İmleç & _seqRefill Koruması: Mevcut _seqKey yeni dilim içindeyse imleci ve 256'lık çapa önbelleğini sıfırlama!
+            if (_seqKey !== null && (_seqKey < _seqSliceMin || _seqKey - 255n > _seqSliceMax)) {
+                _seqKey = null;
+            }
         }
         if (_seqKey === null || _seqKey - 255n > _seqSliceMax) {
             if (_seqKey !== null) _seqWraps++;
-            _seqKey = _seqSliceMin + 255n;   // ilk çapa [dilimBaşı, dilimBaşı+510] aralığını kapsar
+            _seqKey = (_seqSliceMin + 255n <= _seqSliceMax) ? (_seqSliceMin + 255n) : _seqSliceMin;
         }
         const k = (_seqKey > bMax) ? bMax : _seqKey;
         _seqKey += SEQ_STRIDE;
@@ -11829,7 +12696,8 @@ const baseStart = (span * basePpm) / 1000000n;
         return pt;
     }
     const WORKER_AUTO_ALGO_LIST = [
-        'BSGS_NEGATION',
+        'SEQUENTIAL',
+        'HEX_FREQ_DENSITY',
         'ROBERTS_R_SEQUENCE',
         'HULL_DOBELL_LCG',
         'SCRAMBLED_SOBOL',
@@ -12672,9 +13540,19 @@ const baseStart = (span * basePpm) / 1000000n;
             let subMax = boundMax;
 
             const isEffectiveGrid   = (f === 'GRID'   || mode === 'GRID'   || (cfg.isGridFilterActive !== false && (cfg.userGridCell !== undefined && cfg.userGridCell !== null || cfg.isGridAutoJump)));
-            const _cluElig = (CLUSTER_N > 1 && !CLUSTER_SKIP[workerActiveAlgo] && !isEffectivePrefix && !isEffectiveGrid);
+            const _isFreqFocus = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || cfg.stdAlgorithmStartOffsetRatio === -3.0));
+            const _useFreqBurst = (_isFreqFocus && !isEffectivePrefix && !isEffectiveGrid && effRange > 1024n);
+            const _cluElig = (CLUSTER_N > 1 && !CLUSTER_SKIP[workerActiveAlgo] && !isEffectivePrefix && !isEffectiveGrid && !_useFreqBurst);
             let _cluCont = false;
-            if (_cluElig && _cluLeft > 0 && _cluAlgo === workerActiveAlgo && _cluNext >= boundMin && _cluNext <= boundMax) {
+            if (_useFreqBurst) {
+                const curFreqSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + workerActiveAlgo + ':' + (cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio);
+                if (_uFreqSubStep > 0 && _uFreqSubStep < 257 && _uFreqKey !== null && _uFreqSig === curFreqSig && _uFreqKey + SEQ_STRIDE <= boundMax && _uFreqKey >= boundMin) {
+                    _uFreqKey += SEQ_STRIDE;
+                    _uFreqSubStep++;
+                    currentKey = _uFreqKey;
+                    _cluCont = true;
+                }
+            } else if (_cluElig && _cluLeft > 0 && _cluAlgo === workerActiveAlgo && _cluNext >= boundMin && _cluNext <= boundMax) {
                 currentKey = _cluNext; _cluNext = _cluNext + SEQ_STRIDE; _cluLeft--; _cluCont = true;
             }
 
@@ -12707,7 +13585,7 @@ const baseStart = (span * basePpm) / 1000000n;
                     const hMax = toBigIntSafe(cfg.userHexEnd);
                     subMin = (hMin < boundMin) ? boundMin : (hMin > boundMax ? boundMin : hMin);
                     subMax = (hMax > boundMax) ? boundMax : (hMax < subMin ? boundMax : hMax);
-                } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'BSGS_NEGATION' || workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'KRONECKER_LATTICE' || workerActiveAlgo === 'KANGAROO_4WAY_GPR' || workerActiveAlgo === 'KANGAROO_ATTRACTOR_19S' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
+                } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'KRONECKER_LATTICE' || workerActiveAlgo === 'KANGAROO_4WAY_GPR' || workerActiveAlgo === 'KANGAROO_ATTRACTOR_19S' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
                     subMin = boundMin;
                     subMax = boundMax;
                 } else if (mode === 'PERCENT') {
@@ -12756,8 +13634,8 @@ const baseStart = (span * basePpm) / 1000000n;
             // ----------------------------------------------------
             if (_cluCont) {
                 // Küme devam adımı: currentKey yukarıda ayarlandı
-            } else if (workerActiveAlgo === 'BSGS_NEGATION') {
-                currentKey = getWorkerBsgsKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'HEX_FREQ_DENSITY') {
+                currentKey = generateWorkerHexFreqDensityKey(subMin, subMax);
             } else if (workerActiveAlgo === 'ROBERTS_R_SEQUENCE') {
                 currentKey = generateWorkerRobertsRKey(subMin, subMax);
             } else if (workerActiveAlgo === 'HULL_DOBELL_LCG') {
@@ -12803,13 +13681,28 @@ const baseStart = (span * basePpm) / 1000000n;
             //     anahtarı seçilen başlangıç oranına göre uzayı bozmadan modüler olarak odaklar!
             const stdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
             const isStdLattice = (cfg && (cfg.stdBaseStrategy === 'AUTO' || stdRatio === -1.0));
+            const isHexFreqFull = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || stdRatio === -3.0));
             if (!_cluCont && effRange > 0n) {
-                if (isStdLattice) {
+                if (isHexFreqFull) {
+                    _uFreqStep++;
+                    const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+                    const markov64 = _workerBuildMarkovHexWord64(_uFreqStep, wId);
+                    const freq64 = _workerBuildHexFreqWord64(_uFreqStep + 0x517CC1B727220A95n, wId);
+                    const hotPair = W_HEX_HOT_PAIRS_32[Number((_uFreqStep + wId) & 31n)];
+                    const hexShapeMask = ((markov64 ^ (freq64 >> 4n)) & 0xFFFFFFFFFFFFF000n) | (hotPair << 12n);
+                    const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
+                    currentKey = boundMin + ((rawOff ^ (hexShapeMask % (effRange + 1n))) % (effRange + 1n));
+                    if (_useFreqBurst) {
+                        _uFreqKey = currentKey;
+                        _uFreqSubStep = 1;
+                        _uFreqSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + workerActiveAlgo + ':' + (cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio);
+                    }
+                } else if (isStdLattice) {
                     // 🧠 OTO KAFES (Latis Izgarası): Her çekirdek (workerId) arama uzayına homojen matematiksel kafes örgüsüyle yerleştirilir!
-                    // Not: SEQUENTIAL ve BSGS_NEGATION birden fazla worker varsa aralığı zaten ayrık dilimlere böler.
+                    // Not: SEQUENTIAL birden fazla worker varsa aralığı zaten ayrık dilimlere böler.
                     // Üzerine ikinci kez workerId tabanlı kafes ofseti eklemek dilimleri üst üste bindirir; bu nedenle atlanır.
                     const numW = (cfg && cfg.totalWorkers && cfg.totalWorkers > 1) ? BigInt(cfg.totalWorkers) : 1n;
-                    if (numW === 1n || (workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'BSGS_NEGATION')) {
+                    if (numW === 1n || (workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'HEX_FREQ_DENSITY')) {
                         const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
                         const latticeOffset = (effRange * ((wId * 1000000n / numW) + 100000n)) / 1000000n;
                         currentKey = boundMin + ((currentKey - boundMin + latticeOffset) % (effRange + 1n));
@@ -12833,9 +13726,15 @@ const baseStart = (span * basePpm) / 1000000n;
                         const safeQMax = qMax - padSteps;
                         const safeSpan = (safeQMax - safeQMin) + 1n;
                         if (workerActiveAlgo === 'SEQUENTIAL') {
-                            const curSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + cleanSfx;
+                            const nWorkers = BigInt(cfg && cfg.totalWorkers && cfg.totalWorkers > 1 ? cfg.totalWorkers : 1);
+                            const wIdx = BigInt(typeof workerId !== 'undefined' ? workerId : 0) % nWorkers;
+                            const curSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + cleanSfx + ':' + nWorkers + ':' + wIdx;
+                            const wSliceLen = safeSpan > nWorkers ? (safeSpan / nWorkers) : 1n;
+                            const wQMin = safeQMin + wSliceLen * wIdx;
+                            const wQMax = (wIdx === nWorkers - 1n) ? safeQMax : (wQMin + wSliceLen - 1n);
+
                             if (curSig !== self._sfxSeqSig) { self._sfxSeqSig = curSig; self._sfxSeqQ = null; }
-                            if (self._sfxSeqQ === null || self._sfxSeqQ > safeQMax) self._sfxSeqQ = safeQMin;
+                            if (self._sfxSeqQ === null || self._sfxSeqQ > wQMax) self._sfxSeqQ = wQMin;
                             q = self._sfxSeqQ;
                             self._sfxSeqQ += 511n;
                         } else {
@@ -12910,7 +13809,7 @@ const baseStart = (span * basePpm) / 1000000n;
             let anchorPt = null;
             if (inst) {
                 try {
-                    if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'ADDR_HOP_SWEEP' || workerActiveAlgo === 'BSGS_NEGATION' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'KRONECKER_LATTICE' || _cluElig) anchorPt = workerSeqAnchor(inst, currentKey);
+                    if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'ADDR_HOP_SWEEP' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'KRONECKER_LATTICE' || _cluElig || _useFreqBurst) anchorPt = workerSeqAnchor(inst, currentKey);
                     if (!anchorPt) anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
                     if (!anchorPt) {
                         lastKeyHex = currentKey.toString(16).padStart(64, '0');
@@ -13167,7 +14066,8 @@ const baseStart = (span * basePpm) / 1000000n;
                 }
                 }
                 if (i === batchSize - 1) {
-                    lastKeyHex = curKey.toString(16).padStart(64, '0');
+                    const dispKey = (workerActiveAlgo === 'HEX_FREQ_DENSITY') ? currentKey : curKey;
+                    lastKeyHex = ((dispKey >= boundMin && dispKey <= boundMax) ? dispKey : currentKey).toString(16).padStart(64, '0');
                     workerPersistentLastKey = lastKeyHex;
                 }
             }
@@ -13266,6 +14166,9 @@ const baseStart = (span * basePpm) / 1000000n;
             _robertsKey = null;
             _robertsSubStep = 0;
             workerRobertsRStep = 1n + BigInt(workerId * 5003);
+            _hexFreqKey = null;
+            _hexFreqSubStep = 0;
+            workerHexFreqStep = 1n + BigInt(workerId * 6007);
             _bsgsKey = null;
             _bsgsBoundSig = '';
             workerKangarooStepCount = workerId * 31;
@@ -13623,10 +14526,6 @@ function getCurrentWorkerConfig() {
             const maxEl = document.getElementById('rangeSliderMax');
             return maxEl ? parseFloat(maxEl.value || 1000000000000) : 1000000000000;
         })(),
-        sliderMaxStep: (function() {
-            const maxEl = document.getElementById('rangeSliderMax');
-            return maxEl ? parseFloat(maxEl.value || 1000000000000) : 1000000000000;
-        })(),
         isSpaceCropped: (typeof isSpaceCropped !== 'undefined') ? isSpaceCropped : false,
         spaceCropMode: (typeof spaceCropMode !== 'undefined') ? spaceCropMode : null,
         spaceCropMinPct: (typeof spaceCropMinPct !== 'undefined') ? spaceCropMinPct : 0,
@@ -13774,6 +14673,266 @@ function stopWorkerPool() {
 // ============================================================
 // 🛡️ [4] BAKİYE VE VERİTABANI KONTROL SİSTEMİ
 // ============================================================
+
+// ============================================================
+// 🛡️ [4] CANLI API (LIVE API) BAKİYE / HAREKET SORGULAMA SİSTEMİ
+// ============================================================
+let isLiveApiActive = true;
+let isCheckBalanceActive = true;
+let isCheckActivityActive = false;
+let puzzleApiQueue = [];
+let puzzleLastApiQueryTime = 0;
+let puzzleLastApiSampleTime = 0;
+let puzzleTotalApiQueries = 0;
+let isApiBatchInFlight = false;
+
+function onApiFilterOptionsChange() {
+    const chkBal = document.getElementById('chkCheckBalance');
+    const chkAct = document.getElementById('chkCheckActivity');
+    isCheckBalanceActive = chkBal ? chkBal.checked : true;
+    isCheckActivityActive = chkAct ? chkAct.checked : false;
+    isLiveApiActive = isCheckBalanceActive || isCheckActivityActive;
+    updateLiveApiVisuals();
+    if (typeof showToast === 'function') {
+        const modes = [];
+        if (isCheckBalanceActive) modes.push('₿ Bakiye');
+        if (isCheckActivityActive) modes.push('⇄ Hareket');
+        if (modes.length > 0) {
+            showToast(`🌐 <strong>Canlı API Aktif</strong><br><span style="font-size:10.5px; color:#94a3b8;">Filtreler: ${modes.join(' + ')}</span>`);
+        } else {
+            showToast('🔒 <strong>Canlı API Kapatıldı</strong>');
+        }
+    }
+}
+
+function updateLiveApiVisuals() {
+    const lbl = document.getElementById('apiStatusText');
+    if (!lbl) return;
+    if (isLiveApiActive) {
+        const modes = [];
+        if (isCheckBalanceActive) modes.push('₿');
+        if (isCheckActivityActive) modes.push('⇄');
+        lbl.innerText = `🌐 Canlı API: Aktif [${modes.join('+')}] (${puzzleTotalApiQueries.toLocaleString('tr-TR')} Sorgulandı)`;
+        lbl.style.color = '#10b981';
+    } else {
+        lbl.innerText = '🔒 Canlı API: Kapalı';
+        lbl.style.color = '#94a3b8';
+    }
+}
+
+async function testLiveAPI() {
+    const lbl = document.getElementById('apiStatusText');
+    if (lbl) {
+        lbl.innerText = '⏳ Canlı API test ediliyor (Haskoin & Blockchain motorları)...';
+        lbl.style.color = '#38bdf8';
+    }
+    const testAddr = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'; // Satoshi Genesis adresi
+
+    // 1. Haskoin Store API (Toplu & En Hızlı)
+    try {
+        const resp = await fetch('https://api.blockchain.info/haskoin-store/btc/address/' + testAddr + '/balance', { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) {
+            const data = await resp.json();
+            const btc = (data.confirmed || 0) / 1e8;
+            if (lbl) {
+                lbl.innerText = '✅ Canlı API: Aktif [Haskoin Store] (Bakiye: ' + btc.toFixed(4) + ' BTC, Tx: ' + (data.txs || 0) + ')';
+                lbl.style.color = '#10b981';
+            }
+            alert('✅ Canlı API Testi Başarılı (Haskoin Motoru)!\nGenesis Bakiye: ' + btc.toFixed(4) + ' BTC\nİşlem Sayısı (Hareket): ' + (data.txs || 0));
+            return;
+        }
+    } catch(e) {}
+
+    // 2. Blockchain.info API
+    try {
+        const resp2 = await fetch('https://blockchain.info/q/addressbalance/' + testAddr + '?cors=true', { signal: AbortSignal.timeout(5000) });
+        if (resp2.ok) {
+            const sat = await resp2.text();
+            const btc = parseInt(sat, 10) / 1e8;
+            if (lbl) {
+                lbl.innerText = '✅ Canlı API: Aktif [Blockchain.info] (Bakiye: ' + btc.toFixed(4) + ' BTC)';
+                lbl.style.color = '#10b981';
+            }
+            alert('✅ Canlı API Testi Başarılı (Blockchain.info Motoru)!\nGenesis Bakiye: ' + btc.toFixed(4) + ' BTC');
+            return;
+        }
+    } catch(e) {}
+
+    // 3. Blockstream.info API
+    try {
+        const resp3 = await fetch('https://blockstream.info/api/address/' + testAddr, { signal: AbortSignal.timeout(5000) });
+        if (resp3.ok) {
+            const data = await resp3.json();
+            const funded = data.chain_stats ? data.chain_stats.funded_txo_sum : 0;
+            const spent = data.chain_stats ? data.chain_stats.spent_txo_sum : 0;
+            const txCount = data.chain_stats ? data.chain_stats.tx_count : 0;
+            const btc = (funded - spent) / 1e8;
+            if (lbl) {
+                lbl.innerText = '✅ Canlı API: Aktif [Blockstream.info] (Bakiye: ' + btc.toFixed(4) + ' BTC, Tx: ' + txCount + ')';
+                lbl.style.color = '#10b981';
+            }
+            alert('✅ Canlı API Testi Başarılı (Blockstream.info Motoru)!\nGenesis Bakiye: ' + btc.toFixed(4) + ' BTC\nİşlem Sayısı (Hareket): ' + txCount);
+            return;
+        }
+    } catch(e) {}
+
+    // 4. Mempool.space API
+    try {
+        const resp4 = await fetch('https://mempool.space/api/address/' + testAddr, { signal: AbortSignal.timeout(5000) });
+        if (resp4.ok) {
+            const data = await resp4.json();
+            const funded = data.chain_stats ? data.chain_stats.funded_txo_sum : 0;
+            const spent = data.chain_stats ? data.chain_stats.spent_txo_sum : 0;
+            const txCount = data.chain_stats ? data.chain_stats.tx_count : 0;
+            const btc = (funded - spent) / 1e8;
+            if (lbl) {
+                lbl.innerText = '✅ Canlı API: Aktif [Mempool.space] (Bakiye: ' + btc.toFixed(4) + ' BTC, Tx: ' + txCount + ')';
+                lbl.style.color = '#10b981';
+            }
+            alert('✅ Canlı API Testi Başarılı (Mempool.space Motoru)!\nGenesis Bakiye: ' + btc.toFixed(4) + ' BTC\nİşlem Sayısı (Hareket): ' + txCount);
+            return;
+        }
+    } catch(e) {}
+
+    if (lbl) {
+        lbl.innerText = '❌ Canlı API bağlantı hatası (İnternet bağlantınızı kontrol edin)';
+        lbl.style.color = '#ef4444';
+    }
+    alert('❌ Canlı API sunucularına ulaşılamadı. Lütfen internet bağlantınızı kontrol edin.');
+}
+
+async function checkBrowserApiBatch(items) {
+    if (!items || items.length === 0 || !isLiveApiActive || isApiBatchInFlight) return;
+    isApiBatchInFlight = true;
+    const lbl = document.getElementById('apiStatusText');
+    try {
+
+    // ── MOTOR 1: api.blockchain.info/haskoin-store (Toplu 50 Sorgu) ──
+    try {
+        const addrs = items.map(x => x.addr);
+        const haskoinUrl = 'https://api.blockchain.info/haskoin-store/btc/address/balances?addresses=' + addrs.join(',');
+        const resp = await fetch(haskoinUrl, { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) {
+            const balances = await resp.json();
+            puzzleTotalApiQueries += items.length;
+            if (lbl && isLiveApiActive) {
+                const modes = [];
+                if (isCheckBalanceActive) modes.push('₿');
+                if (isCheckActivityActive) modes.push('⇄');
+                lbl.innerText = `🌐 Canlı API: Aktif [${modes.join('+')}] (${puzzleTotalApiQueries.toLocaleString('tr-TR')} Sorgulandı - Haskoin)`;
+                lbl.style.color = '#10b981';
+            }
+            for (const b of balances) {
+                const totalBal = (b.confirmed || 0) + (b.unconfirmed || 0);
+                const txs = b.txs || 0;
+                const match = items.find(x => x.addr === b.address);
+                if (match) {
+                    // 1. Pozitif Bakiye Kontrolü (₿)
+                    if (isCheckBalanceActive && totalBal > 0) {
+                        triggerApiWin(match.addr, match.hex, totalBal / 1e8, 'Haskoin Store [Bakiye]');
+                        return;
+                    }
+                    // 2. Hareket / İşlem Görmüş Cüzdan Kontrolü (⇄)
+                    if (isCheckActivityActive && txs > 0) {
+                        triggerApiActivityWin(match.addr, match.hex, totalBal / 1e8, txs, 'Haskoin Store [Hareket]');
+                        return;
+                    }
+                }
+            }
+            return;
+        }
+    } catch(e) {}
+
+    // ── MOTOR 2 (Mempool.space Sıralı Kontrol) ──
+    try {
+        for (const it of items.slice(0, 3)) {
+            const resp = await fetch('https://mempool.space/api/address/' + it.addr, { signal: AbortSignal.timeout(4000) });
+            if (resp.ok) {
+                const data = await resp.json();
+                puzzleTotalApiQueries++;
+                if (lbl && isLiveApiActive) {
+                    const modes = [];
+                    if (isCheckBalanceActive) modes.push('₿');
+                    if (isCheckActivityActive) modes.push('⇄');
+                    lbl.innerText = `🌐 Canlı API: Aktif [${modes.join('+')}] (${puzzleTotalApiQueries.toLocaleString('tr-TR')} Sorgulandı - Mempool)`;
+                    lbl.style.color = '#10b981';
+                }
+                const funded = (data.chain_stats ? data.chain_stats.funded_txo_sum : 0) + (data.mempool_stats ? data.mempool_stats.funded_txo_sum : 0);
+                const spent = (data.chain_stats ? data.chain_stats.spent_txo_sum : 0) + (data.mempool_stats ? data.mempool_stats.spent_txo_sum : 0);
+                const bal = funded - spent;
+                const txCount = (data.chain_stats ? data.chain_stats.tx_count : 0) + (data.mempool_stats ? data.mempool_stats.tx_count : 0);
+
+                // 1. Pozitif Bakiye Kontrolü (₿)
+                if (isCheckBalanceActive && bal > 0) {
+                    triggerApiWin(it.addr, it.hex, bal / 1e8, 'Mempool.space [Bakiye]');
+                    return;
+                }
+                // 2. Hareket / İşlem Görmüş Cüzdan Kontrolü (⇄)
+                if (isCheckActivityActive && txCount > 0) {
+                    triggerApiActivityWin(it.addr, it.hex, bal / 1e8, txCount, 'Mempool.space [Hareket]');
+                    return;
+                }
+            }
+        }
+    } catch(e) {}
+    } finally {
+        isApiBatchInFlight = false;
+    }
+}
+
+function formatApiWinKeyHtml(privHex) {
+    const cleanHex = String(privHex || '').replace(/^0x/i, '').padStart(64, '0');
+    const wif = (typeof privkeyToWIF === 'function') ? privkeyToWIF(cleanHex, true) : '';
+    return `
+        <div><strong>Özel Anahtar (Hex):</strong> <code>0x${cleanHex}</code> <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('0x${cleanHex}'); if(typeof showToast==='function') showToast('📋 Hex anahtar kopyalandı');" style="background:#0284c7; color:#fff; border:none; border-radius:4px; padding:1px 6px; font-size:10px; cursor:pointer; margin-left:4px;">📋 Kopyala</button></div>
+        ${wif ? `<div><strong>WIF (Sıkıştırılmış):</strong> <code>${wif}</code> <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('${wif}'); if(typeof showToast==='function') showToast('📋 WIF anahtar kopyalandı');" style="background:#10b981; color:#fff; border:none; border-radius:4px; padding:1px 6px; font-size:10px; cursor:pointer; margin-left:4px;">📋 Kopyala</button></div>` : ''}
+    `;
+}
+
+function triggerApiWin(addr, privHex, btcBalance, source) {
+    if (typeof isRunning !== 'undefined' && isRunning) toggleHunter();
+    const winAlert = document.getElementById('winAlert');
+    const winDetails = document.getElementById('winDetails');
+    if (winAlert) winAlert.style.display = 'block';
+    if (winDetails) {
+        winDetails.style.display = 'block';
+        winDetails.innerHTML = `
+            <div style="font-size:14px; font-weight:bold; color:#10b981; margin-bottom:8px;">
+                🎉 CANLI API: BAKİYELİ CÜZDAN BULUNDU (₿)! 🎉
+            </div>
+            <div><strong>Adres:</strong> ${addr}</div>
+            <div><strong>Bakiye:</strong> <span style="color:#f59e0b; font-weight:bold;">${btcBalance} BTC</span></div>
+            <div><strong>Kaynak:</strong> ${source}</div>
+            ${formatApiWinKeyHtml(privHex)}
+        `;
+    }
+    if (typeof showToast === 'function') {
+        showToast(`🎉 <strong>CANLI BAKİYE BULUNDU!</strong><br>${addr} (${btcBalance} BTC)`);
+    }
+}
+
+function triggerApiActivityWin(addr, privHex, btcBalance, txCount, source) {
+    if (typeof isRunning !== 'undefined' && isRunning) toggleHunter();
+    const winAlert = document.getElementById('winAlert');
+    const winDetails = document.getElementById('winDetails');
+    if (winAlert) winAlert.style.display = 'block';
+    if (winDetails) {
+        winDetails.style.display = 'block';
+        winDetails.innerHTML = `
+            <div style="font-size:14px; font-weight:bold; color:#38bdf8; margin-bottom:8px;">
+                🔄 CANLI API: HAREKETLİ (İŞLEM GÖRMÜŞ) CÜZDAN BULUNDU (⇄)! 🔄
+            </div>
+            <div><strong>Adres:</strong> ${addr}</div>
+            <div><strong>İşlem Sayısı (Tx):</strong> <span style="color:#38bdf8; font-weight:bold;">${txCount} İşlem</span></div>
+            <div><strong>Mevcut Bakiye:</strong> ${btcBalance} BTC</div>
+            <div><strong>Kaynak:</strong> ${source}</div>
+            ${formatApiWinKeyHtml(privHex)}
+        `;
+    }
+    if (typeof showToast === 'function') {
+        showToast(`🔄 <strong>HAREKETLİ CÜZDAN BULUNDU!</strong><br>${addr} (${txCount} İşlem)`);
+    }
+}
 
 
 function broadcastWorkerConfig() {
@@ -14030,6 +15189,33 @@ function handleWorkerMessage(e) {
                         }
                     }
                 }
+
+                // 🌐 Canlı API kuyruk kontrolü: UI thread'i kilitlemeden hafif örnekleme ile 2 saniyede bir toplu sorgu gönder
+                if (typeof isLiveApiActive !== 'undefined' && isLiveApiActive) {
+                    const nowT = Date.now();
+                    if (puzzleApiQueue.length < 50 && (nowT - puzzleLastApiSampleTime >= 100)) {
+                        puzzleLastApiSampleTime = nowT;
+                        const cleanHex = (typeof rawFullHex !== 'undefined' && rawFullHex ? rawFullHex : fKey).replace(/^0x/i, '').padStart(64, '0');
+                        if (cleanHex.length === 64) {
+                            if (typeof privkeyToAddressesAll === 'function') {
+                                const allAddrs = privkeyToAddressesAll(cleanHex);
+                                if (allAddrs) {
+                                    if (allAddrs.legacyComp) puzzleApiQueue.push({ addr: allAddrs.legacyComp, hex: cleanHex });
+                                    if (allAddrs.p2sh) puzzleApiQueue.push({ addr: allAddrs.p2sh, hex: cleanHex });
+                                    if (allAddrs.bech32) puzzleApiQueue.push({ addr: allAddrs.bech32, hex: cleanHex });
+                                }
+                            } else if (typeof privkeyToAddress === 'function') {
+                                const addr = privkeyToAddress(cleanHex);
+                                if (addr) puzzleApiQueue.push({ addr: addr, hex: cleanHex });
+                            }
+                        }
+                    }
+                    if (nowT - puzzleLastApiQueryTime >= 2000 && puzzleApiQueue.length >= 5) {
+                        puzzleLastApiQueryTime = nowT;
+                        const chunk = puzzleApiQueue.splice(0, 50);
+                        checkBrowserApiBatch(chunk);
+                    }
+                }
             }
             if (data.rangeText) {
                 uiRenderState.rangeText = data.rangeText;
@@ -14229,7 +15415,7 @@ function toggleHunter(isRemoteSync = false) {
                 const logAlgo = domCache.logAlgo || document.getElementById('logAlgo');
                 if (logAlgo) {
                     const autoNamesShort = {
-                        'BSGS_NEGATION': '🎯⚡ Negation BSGS',
+                        'HEX_FREQ_DENSITY': '📊🔥 Frekans Hex Kafesi',
                         'ROBERTS_R_SEQUENCE': '🌟 Plastik Oran (R_d)',
                         'HULL_DOBELL_LCG': '🔢 Hull-Dobell Perm',
                         'SEQUENTIAL': '➡️ Ardışık Dilim',
@@ -14258,8 +15444,6 @@ function toggleHunter(isRemoteSync = false) {
                     if (algoSel && algoSel.value !== curAlgo) {
                         algoSel.value = curAlgo;
                     }
-                    if (typeof updateRegimeButtonStyles === 'function') updateRegimeButtonStyles();
-                    if (typeof updateSpeedButtonStyles === 'function') updateSpeedButtonStyles();
                 }
             }
 
@@ -14406,18 +15590,6 @@ window.onload = function() {
         broadcastWorkerConfig();
     } catch(e) {}
 
-    if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
-        try {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let reg of registrations) reg.unregister();
-            }).catch(() => {});
-        } catch(e) {}
-        if (window.caches) {
-            try {
-                caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
-            } catch(e) {}
-        }
-    }
 };
 
 if (typeof window !== 'undefined') {
@@ -14689,8 +15861,8 @@ window.clearSwarmMeshTraps = clearSwarmMeshTraps;
 // ============================================================
 const ALL_AUTO_ALGO_DEFS = [
     // ⚡ 511-Mega Hızlılar (Grup A)
-    { id: 'BSGS_NEGATION', name: 'Negation BSGS (O(√W))', icon: '🎯⚡', cat: '511', badge: '⚡ 2.0+ M/s', color: '#38bdf8', desc: 'Galbraith-Wang-Zhang simetrik deterministik çözücü (+511n)' },
     { id: 'HULL_DOBELL_LCG', name: 'Hull-Dobell Permütasyonu', icon: '🔢✨', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#a78bfa', desc: 'Tam periyot sıfır tekrar (32x511 burst süpürmesi)' },
+    { id: 'HEX_FREQ_DENSITY', name: 'Yapısal CSPRNG Biijeksiyon', icon: '📊🔥', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#10b981', desc: 'Tam döngü 192-bit biijeksiyon + Evrensel CSPRNG filtreleri (Hamming + Wald-Wolfowitz + Shannon Tavanı)' },
     { id: 'ROBERTS_R_SEQUENCE', name: 'Plastik Oran (R_d)', icon: '🌟📐', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#f59e0b', desc: 'Plastik sabit düşük sapmalı homojen dizi (32x511 burst)' },
     { id: 'KRONECKER_LATTICE', name: 'Kronecker Kafesi (4D)', icon: '🌟📐', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#ec4899', desc: '4D İrrasyonel cebirsel kafes (32x511 burst süpürmesi)' },
     { id: 'SEQUENTIAL', name: 'Ardışık Dilim (Sequential)', icon: '➡️', cat: '511', badge: '⚡ 2.0+ M/s', color: '#34d399', desc: 'Kesintisiz tek affin geçişli ardışık dilim taraması' },
@@ -14716,7 +15888,7 @@ const ALL_AUTO_ALGO_DEFS = [
 ];
 
 const DEFAULT_AUTO_ALGO_LIST = [
-    'BSGS_NEGATION',
+    'HEX_FREQ_DENSITY',
     'HULL_DOBELL_LCG',
     'ROBERTS_R_SEQUENCE',
     'KRONECKER_LATTICE',
@@ -14845,7 +16017,7 @@ function applyAutoAlgoPreset(type) {
     let targetSet = new Set();
 
     if (type === 'MEGA_511') {
-        targetSet = new Set(['BSGS_NEGATION', 'HULL_DOBELL_LCG', 'ROBERTS_R_SEQUENCE', 'KRONECKER_LATTICE', 'SEQUENTIAL', 'ALIGNED_PERM', 'ADDR_HOP_SWEEP']);
+        targetSet = new Set(['HEX_FREQ_DENSITY', 'HULL_DOBELL_LCG', 'ROBERTS_R_SEQUENCE', 'KRONECKER_LATTICE', 'SEQUENTIAL', 'ALIGNED_PERM', 'ADDR_HOP_SWEEP']);
     } else if (type === 'QUASI') {
         targetSet = new Set(['SOBOL', 'SCRAMBLED_SOBOL', 'HALTON', 'WEYL_GOLDEN', 'KRONECKER_LATTICE', 'ROBERTS_R_SEQUENCE', 'COPRIME_STRIDE']);
     } else if (type === 'CHAOS') {

@@ -1,53 +1,58 @@
-const CACHE_NAME = 'btc-puzzle-v38';
+const CACHE_NAME = 'btc-puzzle-v73';
 const ASSETS = [
   './',
   './index.html',
   './kangaroo_engine.js',
-  './all_160_puzzles.json',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/ripemd160.min.js'
+  './favicon.ico'
 ];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(
-        ASSETS.map((url) => {
-          return cache.add(url).catch((err) => {
-            console.warn('[SW] Önbelleğe alınamadı:', url, err);
-          });
-        })
-      );
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        ASSETS.map((url) =>
+          cache.add(url).catch((err) => console.warn('[SW] Önbelleğe alınamadı:', url, err))
+        )
+      )
+    )
   );
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// Ağ öncelikli: çevrimiçiyken hep en güncel dosya gelir ve önbelleğe yazılır;
+// çevrimdışıyken önbellekten servis edilir.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  
+  const req = e.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+  // Sadece kendi origin'imiz: blockchain/mempool API çağrıları ve CDN'lere dokunma
+  if (url.origin !== self.location.origin) return;
+
   e.respondWith(
-    fetch(e.request)
-      .then((response) => {
-        return response;
+    fetch(req)
+      .then((res) => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
+        }
+        return res;
       })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }).then((res) => res || (e.request.mode === 'navigate' ? caches.match('./index.html') : null)))
+      .catch(() =>
+        caches.match(req, { ignoreSearch: true }).then(
+          (hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())
+        )
+      )
   );
 });
