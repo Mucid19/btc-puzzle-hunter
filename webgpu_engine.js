@@ -6,8 +6,8 @@
     const GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n;
     const GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n;
 
-    const STEPS_PER_THREAD = 32;
-    const NUM_THREADS = 8192; // 8192 * 32 = 262,144 keys per dispatch (~55ms) for smooth UI compositor
+    const STEPS_PER_THREAD = 64;
+    const NUM_THREADS = 4096; // 4096 * 64 = 262,144 keys per dispatch (halves fe_inv cost, smooth UI)
     const KEYS_PER_DISPATCH = NUM_THREADS * STEPS_PER_THREAD;
     const BATCH_DISPATCHES = 1; // 1 dispatch per frame + yield keeps Windows WDDM UI 60fps smooth
 
@@ -103,23 +103,8 @@ fn mul32_64(a: u32, b: u32) -> vec2<u32> {
   return vec2<u32>(lo, hi);
 }
 
-fn fe_mul(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
-  var t: array<u32, 16>;
-  for (var k: u32 = 0u; k < 16u; k = k + 1u) { t[k] = 0u; }
-  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
-    var carry: u32 = 0u;
-    let ai = a[i];
-    for (var j: u32 = 0u; j < 8u; j = j + 1u) {
-      let p = mul32_64(ai, b[j]);
-      let s1 = t[i + j] + p.x;
-      let c1 = select(0u, 1u, s1 < t[i + j]);
-      let s2 = s1 + carry;
-      let c2 = select(0u, 1u, s2 < s1);
-      t[i + j] = s2;
-      carry = p.y + c1 + c2;
-    }
-    t[i + 8u] = t[i + 8u] + carry;
-  }
+fn fe_reduce_512(t_in: array<u32, 16>) -> array<u32, 8> {
+  var t = t_in;
   var r: array<u32, 8>;
   for (var i: u32 = 0u; i < 8u; i = i + 1u) { r[i] = t[i]; }
   var c977: u32 = 0u;
@@ -176,15 +161,93 @@ fn fe_mul(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
     let sn0 = r[0] + f2.x;
     var c2b = select(0u, 1u, sn0 < r[0]);
     r[0] = sn0;
-    let sn1 = r[1] + f2.y + cy2 + c2b;
-    r[1] = sn1;
+    let a1 = r[1] + f2.y;
+    var c1w = select(0u, 1u, a1 < r[1]);
+    let b1 = a1 + cy2;
+    c1w = c1w + select(0u, 1u, b1 < a1);
+    let d1 = b1 + c2b;
+    c1w = c1w + select(0u, 1u, d1 < b1);
+    r[1] = d1;
+    for (var i: u32 = 2u; i < 8u; i = i + 1u) {
+      if (c1w == 0u) { break; }
+      let sn = r[i] + c1w;
+      c1w = select(0u, 1u, sn < r[i]);
+      r[i] = sn;
+    }
   }
   if (fe_gte_p(&r)) { fe_sub_p(&r); }
   if (fe_gte_p(&r)) { fe_sub_p(&r); }
   return r;
 }
 
-fn fe_sqr(a: array<u32, 8>) -> array<u32, 8> { return fe_mul(a, a); }
+fn fe_mul(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
+  var t: array<u32, 16>;
+  for (var k: u32 = 0u; k < 16u; k = k + 1u) { t[k] = 0u; }
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    var carry: u32 = 0u;
+    let ai = a[i];
+    for (var j: u32 = 0u; j < 8u; j = j + 1u) {
+      let p = mul32_64(ai, b[j]);
+      let s1 = t[i + j] + p.x;
+      let c1 = select(0u, 1u, s1 < t[i + j]);
+      let s2 = s1 + carry;
+      let c2 = select(0u, 1u, s2 < s1);
+      t[i + j] = s2;
+      carry = p.y + c1 + c2;
+    }
+    t[i + 8u] = t[i + 8u] + carry;
+  }
+  return fe_reduce_512(t);
+}
+
+fn fe_sqr(a: array<u32, 8>) -> array<u32, 8> {
+  var t: array<u32, 16>;
+  for (var k: u32 = 0u; k < 16u; k = k + 1u) { t[k] = 0u; }
+  for (var i: u32 = 0u; i < 7u; i = i + 1u) {
+    var carry: u32 = 0u;
+    let ai = a[i];
+    for (var j: u32 = i + 1u; j < 8u; j = j + 1u) {
+      let p = mul32_64(ai, a[j]);
+      let s1 = t[i + j] + p.x;
+      let c1 = select(0u, 1u, s1 < t[i + j]);
+      let s2 = s1 + carry;
+      let c2 = select(0u, 1u, s2 < s1);
+      t[i + j] = s2;
+      carry = p.y + c1 + c2;
+    }
+    var k: u32 = i + 8u;
+    var hc: u32 = carry;
+    while (hc != 0u && k < 16u) {
+      let sk = t[k] + hc;
+      hc = select(0u, 1u, sk < t[k]);
+      t[k] = sk;
+      k = k + 1u;
+    }
+  }
+  var dbl_c: u32 = 0u;
+  for (var k: u32 = 1u; k < 16u; k = k + 1u) {
+    let tk = t[k];
+    t[k] = (tk << 1u) | dbl_c;
+    dbl_c = tk >> 31u;
+  }
+  var sq_c: u32 = 0u;
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    let p = mul32_64(a[i], a[i]);
+    let k0 = 2u * i;
+    let s0 = t[k0] + p.x;
+    let c0 = select(0u, 1u, s0 < t[k0]);
+    let s0b = s0 + sq_c;
+    let c0b = select(0u, 1u, s0b < s0);
+    t[k0] = s0b;
+    let s1 = t[k0 + 1u] + p.y;
+    let c1 = select(0u, 1u, s1 < t[k0 + 1u]);
+    let s1b = s1 + c0 + c0b;
+    let c1b = select(0u, 1u, s1b < s1);
+    t[k0 + 1u] = s1b;
+    sq_c = c1 + c1b;
+  }
+  return fe_reduce_512(t);
+}
 
 fn fe_inv(x: array<u32, 8>) -> array<u32, 8> {
   var x2 = fe_mul(fe_sqr(x), x);
@@ -460,15 +523,13 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   let S = params.stepsPerThread;
-  var dxArr: array<array<u32, 8>, 32>;
-  var cArr: array<array<u32, 8>, 32>;
+  var cArr: array<array<u32, 8>, 64>;
 
   for (var s: u32 = 0u; s < S; s = s + 1u) {
     let jb = s * 8u;
     var jx: array<u32, 8>;
     for (var i: u32 = 0u; i < 8u; i = i + 1u) { jx[i] = jumpX[jb + i]; }
     let dx = fe_sub(jx, cx);
-    dxArr[s] = dx;
     if (s == 0u) {
       cArr[0] = dx;
     } else {
@@ -482,19 +543,19 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   for (var idx: i32 = i32(S) - 1; idx >= 0; idx = idx - 1) {
     let s = u32(idx);
-    var invDx: array<u32, 8>;
-    if (s == 0u) {
-      invDx = invAll;
-    } else {
-      invDx = fe_mul(invAll, cArr[s - 1u]);
-      invAll = fe_mul(invAll, dxArr[s]);
-    }
     let jb = s * 8u;
     var jx: array<u32, 8>;
     var jy: array<u32, 8>;
     for (var i: u32 = 0u; i < 8u; i = i + 1u) {
       jx[i] = jumpX[jb + i];
       jy[i] = jumpY[jb + i];
+    }
+    var invDx: array<u32, 8>;
+    if (s == 0u) {
+      invDx = invAll;
+    } else {
+      invDx = fe_mul(invAll, cArr[s - 1u]);
+      invAll = fe_mul(invAll, fe_sub(jx, cx));
     }
     let dy = fe_sub(jy, cy);
     let lam = fe_mul(dy, invDx);
@@ -808,22 +869,47 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
             while (this.running && mySession === this._sessionId) {
                 const tgt = targets[targetIdx % targets.length];
-                const tStart = BigInt('0x' + (tgt.start || '1').replace(/^0x/i, ''));
-                const tEnd = BigInt('0x' + (tgt.end || '1').replace(/^0x/i, ''));
+                let tStart = BigInt('0x' + (tgt.start || '1').replace(/^0x/i, ''));
+                let tEnd = BigInt('0x' + (tgt.end || '1').replace(/^0x/i, ''));
+                if (!cfg.isCircularMode && targets.length === 1) {
+                    if (cfg.isDualSliderActive && cfg.sliderMinHex && cfg.sliderMaxHex) {
+                        const sMin = BigInt('0x' + String(cfg.sliderMinHex).replace(/^0x/i, ''));
+                        const sMax = BigInt('0x' + String(cfg.sliderMaxHex).replace(/^0x/i, ''));
+                        if (sMin > tStart) tStart = sMin;
+                        if (sMax < tEnd) tEnd = sMax;
+                    }
+                    if (cfg.activeRangeMode === 'HEX' && cfg.userHexStart && cfg.userHexEnd) {
+                        const hMin = BigInt('0x' + String(cfg.userHexStart).replace(/^0x/i, ''));
+                        const hMax = BigInt('0x' + String(cfg.userHexEnd).replace(/^0x/i, ''));
+                        if (hMin > tStart) tStart = hMin;
+                        if (hMax < tEnd) tEnd = hMax;
+                    }
+                }
                 const minK = tStart < 1n ? 1n : tStart;
-                const maxK = tEnd >= SECP_N ? (SECP_N - 1n) : tEnd;
+                const maxK = tEnd >= SECP_N ? (SECP_N - 1n) : (tEnd < minK ? minK : tEnd);
                 const rangeLen = maxK >= minK ? (maxK - minK + 1n) : 1n;
+                if (maxK <= BigInt(STEPS_PER_THREAD)) {
+                    // Tiny keys <= 64 (e.g. Puzzles #1-#6) are solved instantaneously on CPU and would hit dx==0 in batch jump table
+                    if (targets.length > 1) { targetIdx++; continue; }
+                    this.running = false;
+                    return;
+                }
                 const hWords = hash160HexToU32x5(tgt.targetHash160);
 
-                // For small/medium ranges (<= 2^28), scan sequentially from minK; for large ranges, hop to random anchor
+                // For tiny ranges (<= 1 dispatch), start at minK; for small/medium ranges (<= 2^28), start at midpoint and wrap to minK so GPU never overlaps CPU worker #0 at minK
                 const isSmallRange = rangeLen <= 268435456n;
-                let anchorBase = isSmallRange
-                    ? minK
-                    : randomBigIntInRange(minK, maxK > BigInt(KEYS_PER_DISPATCH) ? (maxK - BigInt(KEYS_PER_DISPATCH)) : minK);
+                const startAtMid = isSmallRange && rangeLen > BigInt(KEYS_PER_DISPATCH);
+                let anchorBase = !isSmallRange
+                    ? randomBigIntInRange(minK, maxK > BigInt(KEYS_PER_DISPATCH) ? (maxK - BigInt(KEYS_PER_DISPATCH)) : minK)
+                    : (startAtMid ? (minK + (rangeLen >> 1n)) : minK);
+                if (anchorBase <= BigInt(STEPS_PER_THREAD)) {
+                    anchorBase = BigInt(STEPS_PER_THREAD) + 1n;
+                }
+                let wrappedToStart = false;
 
                 this._fillAnchors(anchorBase);
                 let dispatchesSinceReanchor = 0;
-                const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? Math.ceil(Number(rangeLen) / KEYS_PER_DISPATCH) : 80;
+                const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? (Math.ceil(Number(rangeLen) / KEYS_PER_DISPATCH) + 2) : 400;
 
                 while (this.running && mySession === this._sessionId) {
                     const batchDispatches = isSmallRange
@@ -886,12 +972,16 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                     anchorBase += BigInt(batchKeys);
                     dispatchesSinceReanchor += batchDispatches;
 
-                    if (anchorBase > maxK || dispatchesSinceReanchor >= MAX_DISPATCHES_PER_ANCHOR) {
+                    if (isSmallRange && anchorBase > maxK && startAtMid && !wrappedToStart) {
+                        wrappedToStart = true;
+                        anchorBase = minK;
+                        this._fillAnchors(anchorBase);
+                    } else if (anchorBase > maxK || dispatchesSinceReanchor >= MAX_DISPATCHES_PER_ANCHOR) {
                         if (targets.length > 1) targetIdx++;
                         break; // Re-anchor (or switch puzzle in circular mode)
                     }
-                    // Yield 8ms to let browser UI compositor & WDDM stay smooth
-                    await new Promise(r => setTimeout(r, 8));
+                    // Yield a macrotask tick (mapAsync already yields during GPU work)
+                    await new Promise(r => setTimeout(r, 0));
                 }
             }
         }
