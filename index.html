@@ -37,7 +37,7 @@
 }).call(typeof window !== 'undefined' ? window : this);
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
-    <script src="kangaroo_engine.js?v=v40"></script>
+    <script src="kangaroo_engine.js?v=v41"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -1603,6 +1603,7 @@
                         <option value="ROBERTS_R_SEQUENCE" style="color:#f59e0b; font-weight:bold;">🌟📐 Plastik Oran (R_d Harmonikleri)</option>
                         <option value="HULL_DOBELL_LCG" style="color:#a78bfa; font-weight:bold;">🔢✨ Hull-Dobell Permütasyonu (Tam Çevrim)</option>
                         <option value="SEQUENTIAL">➡️ Ardışık Dilim (Örtüşmesiz, Hızlı Çapa)</option>
+                        <option value="SEQ_BLOCK_JUMP" style="color:#34d399; font-weight:bold;">🔀 Blok-Sıçramalı Ardışık (131k Blok + Asal Sıçrama)</option>
                         <option value="SCRAMBLED_SOBOL">🔀 Scrambled Sobol (Yüksek Entropi)</option>
                         <option value="SOBOL">📐 Sobol Quasi (Q-RNG Boşluksuz)</option>
                         <option value="KRONECKER_LATTICE" style="color:#ec4899; font-weight:bold;">🌟📐 Kronecker Kafesi (4D İrrasyonel)</option>
@@ -2535,7 +2536,7 @@ function applySeedToGenerators(ratio, label) {
         const origEnd = toBigIntSafe(target.origEnd || target.end);
         const total = origEnd - origStart;
         if (total > 0n) {
-            const effRatio = (ratio === -1.0) ? 0.10 : ratio;
+            const effRatio = (ratio < 0.0) ? 0.10 : ratio;
             const startKey = origStart + (total * BigInt(Math.round(effRatio * 1000000)) / 1000000n);
             const stepOffset = (total * BigInt(Math.round(effRatio * 1000000)) / 1000000n);
             mainCoprimeStep = stepOffset;
@@ -2679,7 +2680,7 @@ function getAlgorithmKinematicFamily(curAlgo) {
         return 'KANGAROO_ADIABATIC';
     }
     // 2. Aile: Deterministik Süpürücüler -> Kiremit Adımlama (Stepping-Stone Tiling, Sıfır Başa Sarma)
-    if (a === 'SEQUENTIAL' || a === 'ALIGNED_PERM' || a === 'COPRIME_STRIDE') {
+    if (a === 'SEQUENTIAL' || a === 'SEQ_BLOCK_JUMP' || a === 'ALIGNED_PERM' || a === 'COPRIME_STRIDE') {
         return 'SWEEPER_TILING';
     }
     // 3. Aile: 511-Blok Biijeksiyon & Kuasi-Kafes -> Burst-Kilitli Coprime Sıçrama (Sıfır Örtüşme, Tam Periyot)
@@ -6906,26 +6907,31 @@ function initKangarooSwarmChannel() {
                     break;
 
                 case 'TRAP':
-                    const ptKey = data.pointXHex || data.scalarHex;
-                    if (ptKey) {
-                        const centralEngine = (typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine)
-                            ? kangarooRealEngine
-                            : (typeof ensureCentralKangarooEngine === 'function' ? ensureCentralKangarooEngine() : null);
-
-                        if (centralEngine && data.dist) {
-                            centralEngine.addRemoteTrap(ptKey, data.herd, data.dist, data.branch);
+                case 'TRAP_BATCH': {
+                    const trapItems = (data.type === 'TRAP_BATCH' && Array.isArray(data.traps)) ? data.traps : [data];
+                    const centralEngine = (typeof ensureCentralKangarooEngine === 'function')
+                        ? ensureCentralKangarooEngine()
+                        : ((typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine) ? kangarooRealEngine : null);
+                    let trapsAdded = false;
+                    for (let ti = 0; ti < trapItems.length; ti++) {
+                        const tItem = trapItems[ti];
+                        const ptKey = tItem.pointKey || tItem.pointXHex || tItem.scalarHex;
+                        if (!ptKey) continue;
+                        if (centralEngine && tItem.dist) {
+                            centralEngine.addRemoteTrap(ptKey, tItem.herd, tItem.dist, tItem.branch);
                             if (centralEngine.isSolved && centralEngine.solvedKey) {
                                 const keyHex = centralEngine.solvedKey.toString(16).padStart(64, '0');
                                 const actT = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
                                 if (actT) {
-                                    if (typeof stopHunting === 'function') stopHunting();
+                                    if (typeof stopWorkerPool === 'function') stopWorkerPool();
                                     handleWin(actT.id, keyHex, privkeyToAddress(keyHex), actT.addr, '🦘 Sürü Çarpışması ile Çözüldü!');
                                 }
+                                break;
                             }
                         }
 
                         const existing = (kangarooSharedTraps instanceof Map) ? kangarooSharedTraps.get(ptKey) : kangarooSharedTraps[ptKey];
-                        if (existing && existing.herd !== data.herd) {
+                        if (existing && existing.herd !== tItem.herd) {
                             if (typeof addLogMsg === 'function') {
                                 addLogMsg(`🔥 [KANGAROO ÇARPIŞMA!] Sürüde Evcil ve Vahşi kanguru çarpıştı! Koordinat: 0x${ptKey}`, '#f59e0b');
                             }
@@ -6934,7 +6940,7 @@ function initKangarooSwarmChannel() {
                         if (!hasTrap) {
                             if (kangarooSharedTraps instanceof Map) {
                                 kangarooSharedTraps.set(ptKey, {
-                                    herd: data.herd,
+                                    herd: tItem.herd,
                                     tabId: data.senderId,
                                     time: now
                                 });
@@ -6949,15 +6955,19 @@ function initKangarooSwarmChannel() {
                             } else {
                                 kangarooSharedTraps = new Map();
                             }
-                            kangarooTrapsCount = getCombinedKangarooTrapCount();
-                            const trapK = (kangarooTrapsCount >= 1000) ? (kangarooTrapsCount / 1000).toFixed(1) + 'k' : kangarooTrapsCount;
-                            if (typeof uiRenderState !== 'undefined') {
-                                uiRenderState.trapText = `📍 ${trapK}`;
-                                uiRenderState.dirty = true;
-                            }
+                            trapsAdded = true;
+                        }
+                    }
+                    if (trapsAdded) {
+                        kangarooTrapsCount = getCombinedKangarooTrapCount();
+                        const trapK = (kangarooTrapsCount >= 1000) ? (kangarooTrapsCount / 1000).toFixed(1) + 'k' : kangarooTrapsCount;
+                        if (typeof uiRenderState !== 'undefined') {
+                            uiRenderState.trapText = `📍 ${trapK}`;
+                            uiRenderState.dirty = true;
                         }
                     }
                     break;
+                }
 
                 case 'WIN':
                     if (data.keyHex) {
@@ -7333,6 +7343,17 @@ function broadcastKangarooTrap(pointXHex, herd, dist, branch = 0) {
     } catch(e) {}
 }
 
+function broadcastKangarooTrapBatch(traps) {
+    if (!kangarooChannel || !Array.isArray(traps) || traps.length === 0) return;
+    try {
+        kangarooChannel.postMessage({
+            type: 'TRAP_BATCH',
+            senderId: KANGAROO_TAB_ID,
+            traps: traps
+        });
+    } catch(e) {}
+}
+
 function recordAndBroadcastKangarooTrap(scalarOrPoint, herd, dist, branch = 0) {
     if (!scalarOrPoint) return;
     const hex = scalarOrPoint.toString(16);
@@ -7426,6 +7447,12 @@ const KANGAROO_ALGO_SET = new Set([
 ]);
 
 function switchAlgoCategory(cat, skipAlgoSet) {
+    const isMultiOrCirc = (typeof isCircularMode !== 'undefined' && isCircularMode) || (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds && selectedPuzzleIds.size > 1);
+    if (cat === 'KANGAROO' && isMultiOrCirc) {
+        cat = 'STANDARD';
+        if (typeof showToast === 'function') showToast('🔁 Döngüsel / Çoklu Puzzle modunda yalnızca standart algoritmalar çalışır.', 3000);
+        if (typeof addLogMsg === 'function') addLogMsg('🔁 Döngüsel / Çoklu Puzzle modunda Kangaroo devre dışı — Standart algoritmalar aktif.', '#f59e0b');
+    }
     activeAlgoCategory = cat;
     const btnStd = document.getElementById('tabAlgoStandard');
     const btnKang = document.getElementById('tabAlgoKangaroo');
@@ -7539,6 +7566,14 @@ function updateLogAlgoWith19sTag() {
 }
 
 function setAlgorithm(algo, isRemoteSync = false) {
+    const isMultiOrCirc = (typeof isCircularMode !== 'undefined' && isCircularMode) || (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds && selectedPuzzleIds.size > 1);
+    if (isMultiOrCirc && typeof KANGAROO_ALGO_SET !== 'undefined' && KANGAROO_ALGO_SET.has(algo)) {
+        const stdSel = document.getElementById('algoSelect');
+        algo = (stdSel && stdSel.value && !KANGAROO_ALGO_SET.has(stdSel.value)) ? stdSel.value : 'AUTO';
+        if (!isRemoteSync && typeof showToast === 'function') {
+            showToast('🔁 Döngüsel / Çoklu Puzzle modunda yalnızca standart algoritmalar çalışır.', 3000);
+        }
+    }
     selectedAlgorithm = algo;
 
     // Kategori sekmesini otomatik senkronize et
@@ -7583,6 +7618,7 @@ function setAlgorithm(algo, isRemoteSync = false) {
             'RANDOM': '🎲 Kriptografik Rastgele (CSPRNG)',
             'SOBOL': '🧬 Sobol Kuasi-Rastgele (Boşluksuz)',
             'SEQUENTIAL': '➡️ Ardışık Dilim (Örtüşmesiz, Hızlı Çapa)',
+            'SEQ_BLOCK_JUMP': '🔀 Blok-Sıçramalı Ardışık (131k Blok + Asal Sıçrama)',
             'SCRAMBLED_SOBOL': '🔀 Scrambled Sobol (Yüksek Entropi)',
             'WEYL_GOLDEN': '✨ Weyl Altın Kafesi (Homojen)',
             'COPRIME_STRIDE': '🔢 Asal Modüler Adımlama',
@@ -8073,6 +8109,14 @@ function buildCustomMenus() {
     };
 
     function syncCircularStateIfActive() {
+        if (isCircularMode || (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds && selectedPuzzleIds.size > 1)) {
+            if (typeof activeAlgoCategory !== 'undefined' && activeAlgoCategory === 'KANGAROO' && typeof switchAlgoCategory === 'function') {
+                switchAlgoCategory('STANDARD');
+            } else if (typeof selectedAlgorithm === 'string' && (selectedAlgorithm.startsWith('KANGAROO') || selectedAlgorithm === 'GLV_LATTICE_2D') && typeof setAlgorithm === 'function') {
+                const stdSel = document.getElementById('algoSelect');
+                setAlgorithm((stdSel && stdSel.value && !stdSel.value.startsWith('KANGAROO') && stdSel.value !== 'GLV_LATTICE_2D') ? stdSel.value : 'AUTO');
+            }
+        }
         if (isCircularMode) {
             const selCount = selectedPuzzleIds.size;
             const count = selCount > 0 ? unsolvedList.length : 0;
@@ -8300,6 +8344,12 @@ function enableCircularMode(isRemoteSync = false) {
     isCircularMode = true;
     currentTarget = null;
     circularIndex = 0;
+    if (typeof activeAlgoCategory !== 'undefined' && activeAlgoCategory === 'KANGAROO' && typeof switchAlgoCategory === 'function') {
+        switchAlgoCategory('STANDARD');
+    } else if (typeof selectedAlgorithm === 'string' && (selectedAlgorithm.startsWith('KANGAROO') || selectedAlgorithm === 'GLV_LATTICE_2D') && typeof setAlgorithm === 'function') {
+        const stdSel = document.getElementById('algoSelect');
+        setAlgorithm((stdSel && stdSel.value && !stdSel.value.startsWith('KANGAROO') && stdSel.value !== 'GLV_LATTICE_2D') ? stdSel.value : 'AUTO');
+    }
     if (typeof kangarooPeers !== 'undefined' && typeof KANGAROO_TAB_ID !== 'undefined' && kangarooPeers[KANGAROO_TAB_ID]) {
         kangarooPeers[KANGAROO_TAB_ID].puzzleId = null;
         kangarooPeers[KANGAROO_TAB_ID].isCircularMode = true;
@@ -8809,9 +8859,9 @@ function _buildHexFreqWord64(seedStep, workerIdx) {
     // Birleşik 3'lü CSPRNG Doğrulama Döngüsü (Sabit bit maskesiyle hane bozmak YOK; 3 kural aynı anda %0 ihlalle sağlanır)
     let state = ((seedStep * 0x9E3779B97F4A7C15n) + (BigInt(workerIdx) * 0xBF58476D1CE4E5B9n)) & 0xFFFFFFFFFFFFFFFFn;
     while (true) {
-        // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu
+        // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu (yeniden denemede bağımsız tek sabit 0xD1B54A32D192ED03n ile seedStep çakışması %0)
         let z = state;
-        state = (state + 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+        state = (state + 0xD1B54A32D192ED03n) & 0xFFFFFFFFFFFFFFFFn;
         z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
         z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
         const rawWord = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
@@ -8847,6 +8897,7 @@ function _buildHexFreqWord64(seedStep, workerIdx) {
     }
 }
 let mainUFreqStep = 0n;
+let _mainUFreqShift = 0n, _mainUFreqShiftMin = null, _mainUFreqShiftMax = null;
 const MAIN_W_HEX_NIB2_64 = [
     12n,12n,12n,12n,12n,12n,12n,12n,12n, 7n,7n,7n,7n,7n,7n,7n,
     13n,13n,13n,13n,13n,13n, 3n,3n,3n,3n,3n, 11n,11n,11n,11n,11n, 10n,10n,10n,10n,10n,
@@ -9305,13 +9356,11 @@ function generateKangarooKey(rangeStart, rangeEnd) {
         const res = kangarooRealEngine.step(64);
         kangarooStepCount += (res && res.stepsDelta !== undefined) ? res.stepsDelta : 64;
 
-        // Yeni keşfedilen tuzakları sürü ağına (BroadcastChannel) yayınla
+        // Yeni keşfedilen tuzakları sürü ağına (BroadcastChannel) toplu olarak yayınla
         if (kangarooRealEngine.newTrapsToBroadcast.length > 0) {
-            kangarooRealEngine.newTrapsToBroadcast.forEach(t => {
-                if (typeof broadcastKangarooTrap === 'function') {
-                    broadcastKangarooTrap(t.pointXHex, t.herd, t.dist, t.branch);
-                }
-            });
+            if (typeof broadcastKangarooTrapBatch === 'function') {
+                broadcastKangarooTrapBatch(kangarooRealEngine.newTrapsToBroadcast);
+            }
             kangarooRealEngine.newTrapsToBroadcast = [];
             kangarooTrapsCount = getCombinedKangarooTrapCount();
             const trapK = (kangarooTrapsCount >= 1000) ? (kangarooTrapsCount / 1000).toFixed(1) + 'k' : kangarooTrapsCount;
@@ -9328,7 +9377,7 @@ function generateKangarooKey(rangeStart, rangeEnd) {
                 const derivedUncomp = privkeyToAddress(keyHex, false);
                 if (derivedComp === actT.addr || derivedUncomp === actT.addr) {
                     console.log('🎉 [REAL KANGAROO WIN!] Özel Anahtar Bulundu ve Doğrulandı:', keyHex);
-                    if (typeof stopHunting === 'function') stopHunting();
+                    if (typeof stopWorkerPool === 'function') stopWorkerPool();
                     handleWin(actT.id, keyHex, (derivedComp === actT.addr ? derivedComp : derivedUncomp), actT.addr, (selectedAlgorithm === 'KANGAROO_KRONECKER' ? '⚡ 🦘 Kronecker-Kangaroo Çarpışması O(√N)' : (selectedAlgorithm === 'KANGAROO_SOBOL' ? '🦘📐 Sobol-Kangaroo Çarpışması O(√N)' : (selectedAlgorithm === 'KANGAROO_GLV' ? '⚡🦘 GLV-Kangaroo Çarpışması O(√N)' : (selectedAlgorithm === 'KANGAROO_MONTGOMERY' ? '🦘⚡ SIMD Montgomery Herd Çarpışması O(√N)' : (selectedAlgorithm === 'KANGAROO_ANCHOR' ? '🦘⚓ Evrensel Çapa & Birikimli Tuzak Çarpışması' : '🦘 Gerçek Pollard Kangaroo Çarpışması O(√N)'))))));
                     return res.solvedKey;
                 } else {
@@ -9369,16 +9418,16 @@ let mainAddrHopSweepState = {
 function generateAddrHopSweepKey(rangeStart, rangeEnd) {
     const s = toBigIntSafe(rangeStart);
     const e = toBigIntSafe(rangeEnd);
+    const span = (e > s) ? (e - s + 1n) : 1n;
     if (mainAddrHopSweepState.rangeStart !== s || mainAddrHopSweepState.rangeEnd !== e || mainAddrHopSweepState.anchor === 0n) {
         mainAddrHopSweepState.rangeStart = s;
         mainAddrHopSweepState.rangeEnd = e;
         mainAddrHopSweepState.sweepIndex = 0;
         mainAddrHopSweepState.hopCount = 0n;
         const basePpm = (typeof kangarooBaseStrategy !== 'undefined' && (kangarooBaseStrategy === 'START_0' || kangarooBaseStrategy === 'PURE')) ? 0n : ((typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'CENTER') ? 500000n : ((typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'GOLDEN_LOW') ? 382000n : ((typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'GOLDEN_HIGH') ? 618000n : ((typeof kangarooBaseStrategy !== 'undefined' && kangarooBaseStrategy === 'HIGH_ROOF') ? 900000n : 100000n))));
-const baseStart = (span * basePpm) / 1000000n;
+        const baseStart = (span * basePpm) / 1000000n;
         mainAddrHopSweepState.anchor = s + (baseStart % span);
     }
-    const span = (e > s) ? (e - s + 1n) : 1n;
 
     if (mainAddrHopSweepState.sweepIndex === 0) {
         mainAddrHopSweepState.hopCount++;
@@ -9693,6 +9742,7 @@ function huntBatch() {
             // 🎚️ UZAY DARALTMA KAYDIRACI & ÖN EK ALT-UZAY ENTEGRASYONU (12 Basamak / 1 Trilyon Adım Pico-Hassasiyet)
             const pOrigStart = toBigIntSafe(activeTarget.origStart || activeTarget.start);
             const pOrigEnd   = toBigIntSafe(activeTarget.origEnd   || activeTarget.end);
+            const baseStartKey = pOrigStart;
             const baseEndKey = pOrigEnd;
             const pOrigRange = pOrigEnd - pOrigStart;
 
@@ -9774,10 +9824,15 @@ function huntBatch() {
 
             // Hangi algoritmanın çalışacağını belirle (kullanıcı ne seçtiyse o çalışır; AUTO ise sırayla döner)
             activeAlgo = selectedAlgorithm;
+            const _isMainMultiOrCirc = Boolean(isCircularMode || (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds && selectedPuzzleIds.size > 1) || (typeof unsolvedList !== 'undefined' && unsolvedList && unsolvedList.length > 1));
+            if (_isMainMultiOrCirc && typeof activeAlgo === 'string' && (activeAlgo.startsWith('KANGAROO') || activeAlgo === 'GLV_LATTICE_2D')) {
+                const stdSel = document.getElementById('algoSelect');
+                activeAlgo = (stdSel && stdSel.value && !stdSel.value.startsWith('KANGAROO') && stdSel.value !== 'GLV_LATTICE_2D') ? stdSel.value : 'AUTO';
+            }
             if (activeAlgo === 'WEAK_ENTROPY' && selectedEntropyBits === -1) {
                 activeAlgo = 'RANDOM';
             }
-            if (selectedAlgorithm === 'AUTO') {
+            if (activeAlgo === 'AUTO' || selectedAlgorithm === 'AUTO') {
                 autoAlgoStepCounter++;
                 // Her 25 denemede bir diğer algoritmaya dinamik geçiş yap
                 if (autoAlgoStepCounter % 25 === 0) {
@@ -9907,6 +9962,12 @@ function huntBatch() {
                 currentKey = generateContinuedFractionsKey(subMin, subMax);
             } else if (activeAlgo === 'ULAM_SPIRAL') {
                 currentKey = generateUlamSpiralKey(subMin, subMax);
+            } else if (activeAlgo === 'SPHERICAL_ORBITAL') {
+                const pct = (typeof getSphericalOrbitalPercent === 'function') ? getSphericalOrbitalPercent() : 50.0;
+                const span = subMax > subMin ? (subMax - subMin) : 1n;
+                const baseOff = (span * BigInt(Math.round(pct * 10000000000))) / 1000000000000n;
+                const micro = (BigInt(Math.round((typeof mainOrbitalPhase !== 'undefined' ? mainOrbitalPhase : pct) * 1000000000)) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFn;
+                currentKey = subMin + ((baseOff + micro) % (span + 1n));
             } else if (activeAlgo === 'RANDOM') {
                 currentKey = randomBigIntInRange(subMin, subMax);
             } else {
@@ -9920,13 +9981,20 @@ function huntBatch() {
             const isMainHexFreqFull = (mainStdRatio === -3.0 || (typeof stdBaseStrategy !== 'undefined' && stdBaseStrategy === 'HEX_FREQ_FULL'));
             const isMainLattice = (mainStdRatio === -1.0 || (typeof stdBaseStrategy !== 'undefined' && stdBaseStrategy === 'AUTO'));
             if (isMainHexFreqFull && boundMax > boundMin) {
-                mainUFreqStep++;
                 const totalMainSpan = boundMax - boundMin;
-                const freq64 = _buildMainHexFreqWord64(mainUFreqStep, 0);
-                const hotPair = MAIN_W_HEX_HOT_PAIRS_32[Number(mainUFreqStep & 31n)];
-                const hexShapeMask = (freq64 & 0xFFFFFFFFFFFFF000n) | (hotPair << 12n);
+                if (_mainUFreqShiftMin !== boundMin || _mainUFreqShiftMax !== boundMax) {
+                    _mainUFreqShiftMin = boundMin; _mainUFreqShiftMax = boundMax;
+                    mainUFreqStep++;
+                    const w0 = _buildMainHexFreqWord64(mainUFreqStep * 4n, 0);
+                    const w1 = _buildMainHexFreqWord64(mainUFreqStep * 4n + 1n, 0);
+                    const w2 = _buildMainHexFreqWord64(mainUFreqStep * 4n + 2n, 0);
+                    const w3 = _buildMainHexFreqWord64(mainUFreqStep * 4n + 3n, 0);
+                    const hotPair = MAIN_W_HEX_HOT_PAIRS_32[Number(mainUFreqStep & 31n)];
+                    const mask256 = (w0 << 192n) | (w1 << 128n) | (w2 << 64n) | ((w3 ^ (hotPair << 12n)) & 0xFFFFFFFFFFFFFFFFn);
+                    _mainUFreqShift = mask256 % (totalMainSpan + 1n);
+                }
                 const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
-                currentKey = boundMin + ((rawOff ^ (hexShapeMask % (totalMainSpan + 1n))) % (totalMainSpan + 1n));
+                currentKey = boundMin + ((rawOff + _mainUFreqShift) % (totalMainSpan + 1n));
             } else if (isMainLattice && boundMax > boundMin) {
                 const totalMainSpan = boundMax - boundMin;
                 const stdStartOffset = (totalMainSpan * 100000n) / 1000000n; // %10 Latis başlangıç çapası
@@ -10779,10 +10847,10 @@ const FastH = (function () {
         if (!workerWasmMem64) return;
         const idx = byteOffset >> 3;
         const v = val || 0n;
-        workerWasmMem64[idx]     = v & _U64_MASK;
-        workerWasmMem64[idx + 1] = (v >> 64n) & _U64_MASK;
-        workerWasmMem64[idx + 2] = (v >> 128n) & _U64_MASK;
-        workerWasmMem64[idx + 3] = (v >> 192n) & _U64_MASK;
+        workerWasmMem64[idx]     = v;
+        workerWasmMem64[idx + 1] = v >> 64n;
+        workerWasmMem64[idx + 2] = v >> 128n;
+        workerWasmMem64[idx + 3] = v >> 192n;
     }
 
     function readWorkerWasmFe(byteOffset) {
@@ -10849,7 +10917,19 @@ const FastH = (function () {
         }
     }
 
-    function rebuildWorkerTargetIndex(config) {
+    let _workerLastTargetIndexSig = '';
+    function rebuildWorkerTargetIndex(config, forceRebuild = false) {
+        const actId = (config && config.activeTarget) ? (config.activeTarget.id + ':' + (config.activeTarget.addr || '') + ':' + (config.activeTarget.targetHash160 || '')) : '';
+        const uLen = (config && Array.isArray(config.unsolvedList)) ? config.unsolvedList.length : 0;
+        const aLen = (config && Array.isArray(config.allPuzzlesList)) ? config.allPuzzlesList.length : 0;
+        const cList = (config && Array.isArray(config.customHash160List)) ? config.customHash160List : null;
+        const cLen = cList ? cList.length : 0;
+        const sig = actId + '|' + uLen + '|' + aLen + '|' + cLen + '|' + (cLen > 0 ? (cList[0] + ':' + cList[cLen - 1]) : '');
+        if (!forceRebuild && sig === _workerLastTargetIndexSig && workerTargetMap.size > 0) {
+            return;
+        }
+        _workerLastTargetIndexSig = sig;
+        if (cList) workerCustomHashSet = new Set(cList);
         workerTargetMap.clear();
         workerTargetWords0.clear();
 
@@ -11158,10 +11238,64 @@ const FastH = (function () {
             workerFbBases[w] = base;
             const row = new Array(256);
             row[0] = null;
-            let acc = null;
-            for (let d = 1; d < 256; d++) {
-                acc = acc ? acc.add(base) : base;
-                row[d] = [BigInt('0x' + acc.getX().toString('hex')), BigInt('0x' + acc.getY().toString('hex'))];
+            if (w === 0 && typeof MONT_TABLE_G !== 'undefined' && MONT_TABLE_G.length >= 255) {
+                // ⚡ Pencere 0 (1G..255G) zaten MONT_TABLE_G içinde hazır: 255 elliptic nokta toplaması %100 atlanır!
+                for (let d = 1; d < 256; d++) {
+                    const gPt = MONT_TABLE_G[d - 1];
+                    row[d] = [gPt[0], gPt[1]];
+                }
+            } else {
+                const P = SECP_P;
+                const bx = BigInt('0x' + base.getX().toString('hex'));
+                const by = BigInt('0x' + base.getY().toString('hex'));
+                row[1] = [bx, by];
+                // ⚡ 254 nokta (2·B .. 255·B) Jacobian koordinatlarda 0 ters-alma ile biriktirilir ve
+                //    TEK bir Montgomery Batch Inversion (fastInvModP) ile afin koordinatlara çevrilir (254× daha az ters-alma!)
+                const jX = new Array(254);
+                const jY = new Array(254);
+                const jZ = new Array(254);
+                const zPref = new Array(254);
+                const by2 = (by * by) % P;
+                const S2 = (4n * bx * by2) % P;
+                const M2 = (3n * ((bx * bx) % P)) % P;
+                let curX = (((M2 * M2 - 2n * S2) % P) + P) % P;
+                let curY = (((M2 * (S2 - curX + P) - 8n * ((by2 * by2) % P)) % P) + P) % P;
+                let curZ = (2n * by) % P;
+                let batchOk = (curZ !== 0n);
+                jX[0] = curX; jY[0] = curY; jZ[0] = curZ;
+                zPref[0] = curZ;
+                for (let d = 3; d < 256 && batchOk; d++) {
+                    const idx = d - 2;
+                    const nxtJ = workerFbMadd(curX, curY, curZ, bx, by);
+                    if (!nxtJ || nxtJ[2] === 0n) { batchOk = false; break; }
+                    curX = nxtJ[0]; curY = nxtJ[1]; curZ = nxtJ[2];
+                    jX[idx] = curX; jY[idx] = curY; jZ[idx] = curZ;
+                    zPref[idx] = (zPref[idx - 1] * curZ) % P;
+                }
+                let invAll = batchOk ? fastInvModP(zPref[253]) : 0n;
+                if (batchOk && invAll !== 0n) {
+                    for (let idx = 253; idx >= 0; idx--) {
+                        const zInv = (idx > 0) ? ((invAll * zPref[idx - 1]) % P) : invAll;
+                        if (idx > 0) invAll = (invAll * jZ[idx]) % P;
+                        const zInv2 = (zInv * zInv) % P;
+                        const zInv3 = (zInv2 * zInv) % P;
+                        row[idx + 2] = [(jX[idx] * zInv2) % P, (jY[idx] * zInv3) % P];
+                    }
+                } else {
+                    let cx = bx, cy = by;
+                    for (let d = 2; d < 256; d++) {
+                        const nxt = fastPointAdd(cx, cy, bx, by);
+                        if (nxt && (nxt[0] !== 0n || nxt[1] !== 0n)) {
+                            cx = nxt[0]; cy = nxt[1];
+                            row[d] = [cx, cy];
+                        } else {
+                            const acc = base.mul(d.toString(16));
+                            cx = BigInt('0x' + acc.getX().toString('hex'));
+                            cy = BigInt('0x' + acc.getY().toString('hex'));
+                            row[d] = [cx, cy];
+                        }
+                    }
+                }
             }
             workerFbRows[w] = row;
         }
@@ -11347,6 +11481,7 @@ const FastH = (function () {
                     writeWorkerWasmFe(0x7000 + (mIdx << 5), gi[1]);
                     writeWorkerWasmFe(0x9000 + (mIdx << 5), gi[2]);
                 }
+                if (workerWasmMem32) workerWasmMem32[106740 >> 2] = 0;
             }
             workerActiveMontMode = 'NORMAL';
             return;
@@ -11361,21 +11496,9 @@ const FastH = (function () {
                     writeWorkerWasmFe(0x7000 + (mIdx << 5), si[1]);
                     writeWorkerWasmFe(0x9000 + (mIdx << 5), si[2]);
                 }
+                if (workerWasmMem32) workerWasmMem32[106740 >> 2] = 0;
             }
             workerActiveMontMode = targetMode;
-            return;
-        }
-        if (targetMode === 'NORMAL') {
-            workerActiveMontTable = MONT_TABLE_G;
-            if (workerWasmEx && workerWasmMem8) {
-                for (let mIdx = 0; mIdx < MONT_STRIDE - 1; mIdx++) {
-                    const gi = MONT_TABLE_G[mIdx];
-                    writeWorkerWasmFe(0x5000 + (mIdx << 5), gi[0]);
-                    writeWorkerWasmFe(0x7000 + (mIdx << 5), gi[1]);
-                    writeWorkerWasmFe(0x9000 + (mIdx << 5), gi[2]);
-                }
-            }
-            workerActiveMontMode = 'NORMAL';
             return;
         }
 
@@ -11403,6 +11526,7 @@ const FastH = (function () {
                 writeWorkerWasmFe(0x7000 + (mIdx << 5), si[1]);
                 writeWorkerWasmFe(0x9000 + (mIdx << 5), si[2]);
             }
+            if (workerWasmMem32) workerWasmMem32[106740 >> 2] = 0;
         }
         workerActiveMontMode = targetMode;
     }
@@ -11897,9 +12021,9 @@ const FastH = (function () {
             // Birleşik 3'lü CSPRNG Doğrulama Döngüsü (Sabit bit maskesiyle hane bozmak YOK; 3 kural aynı anda %0 ihlalle sağlanır)
             let state = ((seedStep * 0x9E3779B97F4A7C15n) + (wId * 0xBF58476D1CE4E5B9n)) & 0xFFFFFFFFFFFFFFFFn;
             while (true) {
-                // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu
+                // 1. Tam Periyotlu 64-bit SplitMix64 Biijeksiyonu (yeniden denemede bağımsız tek sabit 0xD1B54A32D192ED03n ile seedStep çakışması %0)
                 let z = state;
-                state = (state + 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+                state = (state + 0xD1B54A32D192ED03n) & 0xFFFFFFFFFFFFFFFFn;
                 z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & 0xFFFFFFFFFFFFFFFFn;
                 z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & 0xFFFFFFFFFFFFFFFFn;
                 const rawWord = (z ^ (z >> 31n)) & 0xFFFFFFFFFFFFFFFFn;
@@ -11934,47 +12058,11 @@ const FastH = (function () {
                 }
             }
         }
-        const W_HEX_NIB2_64 = [
-            12n,12n,12n,12n,12n,12n,12n,12n,12n, 7n,7n,7n,7n,7n,7n,7n,
-            13n,13n,13n,13n,13n,13n, 3n,3n,3n,3n,3n, 11n,11n,11n,11n,11n, 10n,10n,10n,10n,10n,
-            4n,4n,4n,4n, 5n,5n,5n,5n, 0n,0n,0n,0n, 2n,2n,2n,2n, 8n,8n,8n, 15n,15n, 1n,1n, 14n,14n, 9n, 6n
-        ];
-        const W_HEX_NIB3_64 = [
-            11n,11n,11n,11n,11n,11n,11n,11n, 9n,9n,9n,9n,9n,9n,
-            4n,4n,4n,4n,4n, 0n,0n,0n,0n,0n, 3n,3n,3n,3n, 10n,10n,10n,10n, 6n,6n,6n,6n, 14n,14n,14n,14n, 5n,5n,5n,5n,
-            15n,15n,15n, 7n,7n,7n, 1n,1n,1n, 12n,12n,12n, 13n,13n, 2n,2n, 8n,8n, 11n, 12n
-        ];
-        const W_HEX_FREE_64 = [
-            12n,12n,12n,12n,12n,12n,12n,12n, 1n,1n,1n,1n,1n,1n, 3n,3n,3n,3n,3n,3n,
-            4n,4n,4n,4n,4n, 5n,5n,5n,5n,5n, 6n,6n,6n,6n,6n,
-            8n,8n,8n,8n, 11n,11n,11n,11n, 14n,14n,14n,14n, 15n,15n,15n,15n, 7n,7n,7n,7n,
-            2n,2n,2n, 0n,0n,0n, 10n, 13n, 9n
-        ];
         const W_HEX_HOT_PAIRS_32 = [
             0x11n,0x11n,0x11n,0x11n, 0xbbn,0xbbn,0xbbn,0xbbn, 0x22n,0x22n,0x22n,0x22n,
             0x33n,0x33n,0x33n, 0x44n,0x44n,0x44n, 0xeen,0xeen,0xeen, 0xccn,0xccn, 0x88n,0x88n,
             0x55n, 0x77n, 0x00n, 0x66n, 0x99n, 0xaan, 0xffn
         ];
-        function _workerBuildHexFreqWord64(seedStep, wId) {
-            let h = ((seedStep * 0x9E3779B97F4A7C15n) ^ (wId * 0xBF58476D1CE4E5B9n) ^ 0xC11BB4488CC33221n) & 0xFFFFFFFFFFFFFFFFn;
-            const nib0 = W_HEX_NIB2_64[Number(h & 63n)];
-            const nib1 = W_HEX_NIB3_64[Number((h >> 6n) & 63n)];
-            let word = (nib0 << 60n) | (nib1 << 56n);
-            const pairPos = Number((seedStep + wId) % 6n);
-            const hotPair = W_HEX_HOT_PAIRS_32[Number((h >> 12n) & 31n)];
-            for (let i = 0; i < 14; i++) {
-                const shift = BigInt((13 - i) * 4);
-                if (i === pairPos * 2 && i <= 12) {
-                    word |= (hotPair << BigInt((12 - i) * 4));
-                    i++;
-                    continue;
-                }
-                h = ((h * 0xD1342543DE82EF95n) + 0x9E3779B97F4A7C15n + BigInt(i)) & 0xFFFFFFFFFFFFFFFFn;
-                const nib = W_HEX_FREE_64[Number((h >> 58n) & 63n)];
-                word |= (nib << shift);
-            }
-            return word & 0xFFFFFFFFFFFFFFFFn;
-        }
         const W_HEX_MARKOV_TABLE = [
             [0x0n,0x1n,0x2n,0x3n,0x4n,0x5n,0x5n,0x6n,0x7n,0x7n,0x8n,0x9n,0x9n,0xan,0xbn,0xcn],
             [0x0n,0x1n,0x1n,0x2n,0x3n,0x4n,0x5n,0x6n,0x7n,0x8n,0x8n,0x9n,0xan,0xan,0xbn,0xcn],
@@ -12068,6 +12156,7 @@ const FastH = (function () {
         }
         // 🔢✨ HULL-DOBELL 511-BLOK TAM PERİYOTLU MODÜLER PERMÜTASYON (Sıfır Tekrar, Sıfır Bellek Sızıntısı, 511x Hızlandırmalı)
         let _workerHdState = null;
+        const _workerHdStateMap = new Map();
         let _hdKey = null;
         let _hdSubStep = 0;
         const HD_BLOCK_BURST = 257; // Her permütasyon durağında 257 x 511 = 131.327 anahtarlık (%100 _seqRefill uyumlu) kesintisiz 511 akışı
@@ -12079,16 +12168,22 @@ const FastH = (function () {
             let st = _workerHdState;
             const inFlightValid = (_hdKey !== null && _hdSubStep < HD_BLOCK_BURST && _hdKey >= s && _hdKey + 511n <= e);
             if (!st || ((st.s !== s || st.e !== e) && !inFlightValid)) {
-                const W = (e > s) ? (e - s + 1n) : 1n;
-                const totalBlocks = (W / 511n > 1n) ? (W / 511n) : 1n;
-                let c = (totalBlocks * 6180339887n) / 10000000000n;
-                if (c < 1n) c = 1n;
-                while (_hdGcd(c, totalBlocks) !== 1n) c++;
-                const w = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-                const totW = (typeof cfg !== 'undefined' && cfg && cfg.isOrthogonalWorker) ? 1n : BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
-                const prevSteps = st ? ((st.steps || 0n) + 1n) : 0n;
-                const wBlock = ((w * (totalBlocks / totW)) + prevSteps * c) % totalBlocks;
-                st = { s: s, e: e, c: c, block: wBlock, totalBlocks: totalBlocks, W: W, steps: prevSteps };
+                const hdSig = s.toString(16) + ':' + e.toString(16);
+                let savedSt = _workerHdStateMap.get(hdSig);
+                if (!savedSt) {
+                    const W = (e > s) ? (e - s + 1n) : 1n;
+                    const totalBlocks = (W / 511n > 1n) ? (W / 511n) : 1n;
+                    let c = (totalBlocks * 6180339887n) / 10000000000n;
+                    if (c < 1n) c = 1n;
+                    while (_hdGcd(c, totalBlocks) !== 1n) c++;
+                    const w = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+                    const totW = (typeof cfg !== 'undefined' && cfg && cfg.isOrthogonalWorker) ? 1n : BigInt(typeof cfg !== 'undefined' && cfg && cfg.totalWorkers ? cfg.totalWorkers : 16);
+                    const wBlock = (w * (totalBlocks / totW)) % totalBlocks;
+                    savedSt = { s: s, e: e, c: c, block: wBlock, totalBlocks: totalBlocks, W: W };
+                    if (_workerHdStateMap.size >= 256) _workerHdStateMap.clear();
+                    _workerHdStateMap.set(hdSig, savedSt);
+                }
+                st = savedSt;
                 _workerHdState = st;
                 _hdKey = null;
                 _hdSubStep = 0;
@@ -12262,7 +12357,7 @@ const FastH = (function () {
     //    İşçi w, i = w + K·j indekslerini alır -> işçiler arasında da sıfır tekrar (ortogonal işçi modunda alt aralıklar zaten ayrıktır, K=1).
     const _alignedWState = new Map();
     function _alignedWGcd(a, b) { while (b) { const t = a % b; a = b; b = t; } return a; }
-    function generateAlignedPermKey(rangeStart, rangeEnd) {
+    function generateAlignedPermKey(rangeStart, rangeEnd, forceNewCluster = false) {
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const WIN = BigInt(2 * (MONT_STRIDE - 1) + 1); // 511n
@@ -12288,6 +12383,7 @@ const FastH = (function () {
             if (_alignedWState.size >= 64) _alignedWState.clear();
             _alignedWState.set(key, st);
         }
+        if (forceNewCluster) st.cStep = 0n;
         if (st.cStep === 0n) {
             const i = st.wid + st.K * st.j;
             st.j = (st.j + 1n) % st.J;
@@ -12337,7 +12433,9 @@ const FastH = (function () {
             workerAddrHopSweepState.rangeEnd = e;
             workerAddrHopSweepState.sweepIndex = 0;
             const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-            workerAddrHopSweepState.hopCount = wId * 10007n;
+            if (!workerAddrHopSweepState.hopCount || workerAddrHopSweepState.hopCount < wId * 10007n) {
+                workerAddrHopSweepState.hopCount = wId * 10007n;
+            }
             const stdOffRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
             const baseStrat = (cfg && cfg.kangarooBaseStrategy) ? cfg.kangarooBaseStrategy : 'START_0';
             const basePpm = (stdOffRatio > 0.0) ? BigInt(Math.round(stdOffRatio * 1000000)) : ((baseStrat === 'START_0' || baseStrat === 'PURE') ? 0n : ((baseStrat === 'CENTER') ? 500000n : ((baseStrat === 'GOLDEN_LOW') ? 382000n : ((baseStrat === 'GOLDEN_HIGH') ? 618000n : ((baseStrat === 'HIGH_ROOF') ? 900000n : 100000n)))));
@@ -12540,8 +12638,11 @@ const baseStart = (span * basePpm) / 1000000n;
     // CLUSTER_N = 1 özelliği kapatır. Önek/ızgara filtreleri açıkken kullanılmaz.
     const CLUSTER_N = 257; // 1 başlangıç çapası + 256 _seqRefill çapası = %100 _seqRefill verimliliği!
     let _cluLeft = 0, _cluNext = 0n, _cluAlgo = '';
+    let _fastLastBoundMin = null, _fastLastBoundMax = null;
     let _uFreqKey = null, _uFreqSig = '', _uFreqSubStep = 0, _uFreqStep = 0n;
-    const CLUSTER_SKIP = { SEQUENTIAL: 1, ALIGNED_PERM: 1, ADDR_HOP_SWEEP: 1, HULL_DOBELL_LCG: 1, ROBERTS_R_SEQUENCE: 1, HEX_FREQ_DENSITY: 1, KRONECKER_LATTICE: 1 };
+    let _uFreqLastMin = null, _uFreqLastMax = null, _uFreqLastAlgo = '', _uFreqLastStrat = '';
+    let _uFreqWorkerShift = 0n, _uFreqShiftMin = null, _uFreqShiftMax = null, _uFreqShiftWId = -1n;
+    const CLUSTER_SKIP = { SEQUENTIAL: 1, SEQ_BLOCK_JUMP: 1, ALIGNED_PERM: 1, ADDR_HOP_SWEEP: 1, HULL_DOBELL_LCG: 1, ROBERTS_R_SEQUENCE: 1, HEX_FREQ_DENSITY: 1, KRONECKER_LATTICE: 1 };
     let _seqKey = null, _seqSliceMin = 0n, _seqSliceMax = 0n;
     let _seqLastBMin = null, _seqLastBMax = null, _seqLastNumW = -1, _seqLastWId = -1, _seqLastStdRatio = NaN;
     let _seqActiveSig = '';
@@ -12605,6 +12706,188 @@ const baseStart = (span * basePpm) / 1000000n;
         const k = (_seqKey > bMax) ? bMax : _seqKey;
         _seqKey += SEQ_STRIDE;
         return k;
+    }
+
+    // 🔀 BLOK-SIÇRAMALI ARDIŞIK (SEQ_BLOCK_JUMP):
+    // Her 257×511 = 131.327 anahtarlık blok içinde +511G tam WASM/Montgomery hızında (%100 _seqRefill uyumlu) ardışık ilerler;
+    // blok bitince dilimin başka bir bölgesine aralarında asal (coprime) altın oran sıçraması yapar (%0 tekrar!).
+    const SEQ_BLOCK_KEYS = 257n * 511n;
+    const _seqBlkCursorMap = new Map();
+    let _seqBlkLastBMin = null, _seqBlkLastBMax = null, _seqBlkLastNumW = -1, _seqBlkLastWId = -1, _seqBlkLastStdRatio = NaN;
+    let _seqBlkActiveSig = '', _seqBlkState = null;
+    function _seqBlkGcd(a, b) {
+        while (b !== 0n) { const t = a % b; a = b; b = t; }
+        return a;
+    }
+    function _seqBlkHexMask(stepN, wIdBig) {
+        const markov64 = _workerBuildMarkovHexWord64(stepN, wIdBig);
+        const freq64 = _workerBuildHexFreqWord64(stepN + 0x517CC1B727220A95n, wIdBig);
+        const hotPair = W_HEX_HOT_PAIRS_32[Number((stepN + wIdBig) & 31n)];
+        return (markov64 ^ (freq64 >> 4n) ^ (hotPair << 12n)) & 0xFFFFFFFFFFFFFFFFn;
+    }
+    function _seqBlkHexMask256(stepN, wIdBig) {
+        const b = stepN * 4n;
+        return (_seqBlkHexMask(b, wIdBig) << 192n)
+             | (_seqBlkHexMask(b + 1n, wIdBig) << 128n)
+             | (_seqBlkHexMask(b + 2n, wIdBig) << 64n)
+             | _seqBlkHexMask(b + 3n, wIdBig);
+    }
+    function workerSeqBlockJumpNextKey(bMin, bMax, numW, wId, useHexFreqSeed = false) {
+        const stdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
+        const hfFlag = useHexFreqSeed ? 1 : 0;
+        if (bMin !== _seqBlkLastBMin || bMax !== _seqBlkLastBMax || numW !== _seqBlkLastNumW || wId !== _seqBlkLastWId || stdRatio !== _seqBlkLastStdRatio || hfFlag !== (_seqBlkState ? _seqBlkState.hfFlag : -1)) {
+            if (_seqBlkActiveSig && _seqBlkState) {
+                if (_seqBlkCursorMap.size >= 256) _seqBlkCursorMap.clear();
+                _seqBlkCursorMap.set(_seqBlkActiveSig, _seqBlkState);
+            }
+            _seqBlkLastBMin = bMin; _seqBlkLastBMax = bMax; _seqBlkLastNumW = numW; _seqBlkLastWId = wId; _seqBlkLastStdRatio = stdRatio;
+            _seqBlkActiveSig = bMin.toString(16) + ':' + bMax.toString(16) + ':' + numW + ':' + wId + ':' + stdRatio + ':' + hfFlag;
+            let saved = _seqBlkCursorMap.get(_seqBlkActiveSig);
+            if (!saved) {
+                const span = bMax - bMin;
+                const n = BigInt(numW > 0 ? numW : 1);
+                let sMin = bMin, sMax = bMax;
+                if (n > 1n && span >= n * 1024n) {
+                    const len = span / n;
+                    const id = BigInt(wId) % n;
+                    sMin = bMin + len * id;
+                    sMax = (id === n - 1n) ? bMax : (sMin + len - 1n);
+                }
+                const sliceLen = (sMax >= sMin) ? (sMax - sMin + 1n) : 1n;
+                const totalBlocks = (sliceLen + SEQ_BLOCK_KEYS - 1n) / SEQ_BLOCK_KEYS;
+                let coprimeStep = 1n;
+                let startBlock = 0n;
+                if (totalBlocks >= 2n) {
+                    const wIdBig = BigInt(typeof wId === 'number' ? wId : 0);
+                    if (useHexFreqSeed) {
+                        // Seçenek 1 + 2 (256-bit): 2^64 üzeri aralıklarda da tam uzaya yayılan Hex-Frekans başlangıç bloğu + asal blok permütasyonu (%0 tekrar)
+                        startBlock = _seqBlkHexMask256(0n, wIdBig) % totalBlocks;
+                        coprimeStep = (_seqBlkHexMask256(1n, wIdBig) % totalBlocks) | 1n;
+                    } else {
+                        coprimeStep = (totalBlocks * 6180339887n) / 10000000000n;
+                    }
+                    if (coprimeStep < 1n) coprimeStep = 1n;
+                    while (_seqBlkGcd(coprimeStep, totalBlocks) !== 1n) {
+                        coprimeStep += 1n;
+                        if (coprimeStep >= totalBlocks) coprimeStep = 1n;
+                    }
+                }
+                saved = { sMin, sMax, totalBlocks, coprimeStep, blockIdx: startBlock, anchorInBlock: 0, hfFlag };
+            }
+            _seqBlkState = saved;
+        }
+        const st = _seqBlkState;
+        if (!st || st.totalBlocks < 2n) {
+            return workerSequentialNextKey(bMin, bMax, numW, wId);
+        }
+        const blockStart = st.sMin + st.blockIdx * SEQ_BLOCK_KEYS;
+        const blockMaxKey = (blockStart + SEQ_BLOCK_KEYS - 1n < st.sMax) ? (blockStart + SEQ_BLOCK_KEYS - 1n) : st.sMax;
+        let k = blockStart + 255n + BigInt(st.anchorInBlock) * SEQ_STRIDE;
+        let blockDone = false;
+        if (k + 255n >= blockMaxKey) {
+            k = (blockMaxKey >= st.sMin + 255n) ? (blockMaxKey - 255n) : st.sMin;
+            blockDone = true;
+        }
+        if (k > bMax) k = bMax;
+        st.anchorInBlock++;
+        if (blockDone || st.anchorInBlock >= 257) {
+            st.anchorInBlock = 0;
+            st.blockIdx = (st.blockIdx + st.coprimeStep) % st.totalBlocks;
+        }
+        return k;
+    }
+
+    // 🧠 ÇOKLU PUZZLE ALGORİTMA SAYAÇ HAFIZASI (AUTO modunda bulmaca geçişinde kaldığı adımı ve algoritmayı %0 tekrarla korur)
+    const _workerPuzzleAlgoStateMap = new Map();
+    let _workerLastPuzzleStateId = null;
+    function syncWorkerPuzzleAlgoState(targetId) {
+        const key = (targetId !== undefined && targetId !== null) ? String(targetId) : '';
+        if (!key || key === _workerLastPuzzleStateId) return;
+        const activeAutoList = (cfg && Array.isArray(cfg.autoAlgoList) && cfg.autoAlgoList.length > 0) ? cfg.autoAlgoList : WORKER_AUTO_ALGO_LIST;
+        if (_workerLastPuzzleStateId !== null) {
+            if (_workerPuzzleAlgoStateMap.size >= 256) _workerPuzzleAlgoStateMap.clear();
+            const nextAutoIdx = (workerAutoStepCounter % 257 !== 0)
+                ? ((workerAutoIndex + 1) % activeAutoList.length)
+                : workerAutoIndex;
+            _workerPuzzleAlgoStateMap.set(_workerLastPuzzleStateId, {
+                kronecker: workerKroneckerStep,
+                roberts: workerRobertsRStep,
+                hexFreq: workerHexFreqStep,
+                hexFreqKey: _hexFreqKey,
+                sobol: workerSobolStep,
+                sSobol: workerScrambledSobolStep,
+                halton: workerHaltonStep,
+                weyl: workerWeylStep,
+                coprime: workerCoprimeStep,
+                contFrac: workerContFracStep,
+                ulam: workerUlamStep,
+                chaosX: workerChaosX,
+                chaosY: workerChaosY,
+                chaosStep: workerChaosStep,
+                hilbert: hilbertStep,
+                weak: workerWeakCounter,
+                levyStep: workerLevyState.stepCount,
+                hopCount: workerAddrHopSweepState.hopCount,
+                orbPhase: workerOrbitalPhase,
+                orbRad: workerOrbitalRadius,
+                uFreqStep: _uFreqStep,
+                autoIdx: nextAutoIdx
+            });
+        }
+        _workerLastPuzzleStateId = key;
+        const saved = _workerPuzzleAlgoStateMap.get(key);
+        if (saved) {
+            workerKroneckerStep = saved.kronecker;
+            workerRobertsRStep = saved.roberts;
+            workerHexFreqStep = saved.hexFreq;
+            _hexFreqKey = saved.hexFreqKey;
+            _hexFreqSubStep = R_BLOCK_BURST;
+            workerSobolStep = saved.sobol;
+            workerScrambledSobolStep = saved.sSobol;
+            workerHaltonStep = saved.halton;
+            workerWeylStep = saved.weyl;
+            workerCoprimeStep = saved.coprime;
+            workerContFracStep = saved.contFrac;
+            workerUlamStep = saved.ulam;
+            workerChaosX = saved.chaosX;
+            workerChaosY = saved.chaosY;
+            workerChaosStep = saved.chaosStep;
+            hilbertStep = saved.hilbert;
+            workerWeakCounter = saved.weak;
+            workerLevyState.stepCount = saved.levyStep;
+            workerAddrHopSweepState.hopCount = saved.hopCount;
+            workerOrbitalPhase = saved.orbPhase;
+            workerOrbitalRadius = saved.orbRad;
+            _uFreqStep = saved.uFreqStep;
+            workerAutoIndex = saved.autoIdx;
+        } else {
+            const pSalt = parseInt(key.replace(/[^\d]/g, ''), 10) || 1;
+            workerKroneckerStep = BigInt(workerId) * 10007n + BigInt(pSalt * 13);
+            workerRobertsRStep = 1n + BigInt(workerId * 5003 + pSalt * 17);
+            workerHexFreqStep = 1n + BigInt(workerId * 6007 + pSalt * 19);
+            _hexFreqKey = null;
+            _hexFreqSubStep = 0;
+            workerSobolStep = 1 + workerId + pSalt * 23 * Number(workerStrideN());
+            workerScrambledSobolStep = 1 + workerId + pSalt * 29 * Number(workerStrideN());
+            workerHaltonStep = 1n + BigInt(workerId) + BigInt(pSalt * 31) * BigInt(workerStrideN());
+            workerWeylStep = 1n + BigInt(workerId) + BigInt(pSalt * 37) * BigInt(workerStrideN());
+            workerCoprimeStep = 1n + BigInt(workerId) + BigInt(pSalt * 41) * BigInt(workerStrideN());
+            workerContFracStep = 1n + BigInt(workerId) + BigInt(pSalt * 43) * BigInt(workerStrideN());
+            workerUlamStep = 1n + BigInt(workerId) + BigInt(pSalt * 47) * BigInt(workerStrideN());
+            workerChaosX = 0.14159265 + ((workerId * 0.053174 + pSalt * 0.0071) % 0.8);
+            workerChaosY = 0.27182818 + ((workerId * 0.031415 + pSalt * 0.0053) % 0.8);
+            workerChaosStep = workerId * 1013 + pSalt * 29;
+            hilbertStep = workerId + pSalt * 53 * Number(workerStrideN());
+            workerWeakCounter = workerId * 1009 + pSalt * 31;
+            workerLevyState.stepCount = BigInt(workerId) * 7919n + BigInt(pSalt * 37);
+            workerAddrHopSweepState.hopCount = BigInt(workerId) * 10007n + BigInt(pSalt * 41);
+            workerOrbitalPhase = ((workerId + pSalt) * 0.6180339887) % (Math.PI * 2);
+            workerOrbitalRadius = (0.1 + (workerId + pSalt) * 0.141421356) % 1.0;
+            _uFreqStep = BigInt(pSalt);
+            workerAutoIndex = (workerId + pSalt) % activeAutoList.length;
+        }
+        workerAutoStepCounter = 0;
+        _cluLeft = 0;
     }
     const SEQ_BATCH = 256;
     let _seqTabX = null, _seqTabY = null, _seqQHead = SEQ_BATCH, _seqQKey = null;
@@ -13278,7 +13561,8 @@ const baseStart = (span * basePpm) / 1000000n;
         const f = cfg.activeFormula || 'OMNI_CHAOS';
         const isEffectivePrefix = (f === 'PREFIX' || mode === 'PREFIX' || (cfg.isPrefixFilterActive !== false && (Boolean(cfg.userPrefix) || cfg.isPrefixAutoJump)));
         const curAlgo = (cfg && cfg.selectedAlgorithm) ? cfg.selectedAlgorithm : (f || 'KANGAROO');
-        const isKangaroo = !cfg.isCircularMode && (f.startsWith('KANGAROO') || f === 'GLV_LATTICE_2D' || (cfg && cfg.selectedAlgorithm && (cfg.selectedAlgorithm.startsWith('KANGAROO') || cfg.selectedAlgorithm === 'GLV_LATTICE_2D')));
+        const isMultiOrCircular = Boolean(cfg.isCircularMode || (cfg.unsolvedList && cfg.unsolvedList.length > 1));
+        const isKangaroo = !isMultiOrCircular && (f.startsWith('KANGAROO') || f === 'GLV_LATTICE_2D' || (cfg && cfg.selectedAlgorithm && (cfg.selectedAlgorithm.startsWith('KANGAROO') || cfg.selectedAlgorithm === 'GLV_LATTICE_2D')));
 
         if (isKangaroo) {
             const actT = cfg.activeTarget;
@@ -13382,6 +13666,7 @@ const baseStart = (span * basePpm) / 1000000n;
             activeTarget = cfg.activeTarget;
         }
         if (!activeTarget) return;
+        if (cfg.isCircularMode) syncWorkerPuzzleAlgoState(activeTarget.id);
 
         const baseStart = toBigIntSafe(activeTarget.start || activeTarget.origStart || '1');
         const baseEnd   = toBigIntSafe(activeTarget.end   || activeTarget.origEnd   || '2');
@@ -13472,6 +13757,16 @@ const baseStart = (span * basePpm) / 1000000n;
             }
         }
         const effRange = boundMax - boundMin;
+        let autoSliceMin = boundMin;
+        let autoSliceMax = boundMax;
+        if (cfg.selectedAlgorithm === 'AUTO' && !cfg.isOrthogonalWorker && (cfg.totalWorkers || 1) > 1 && effRange >= BigInt(cfg.totalWorkers || 1) * 1024n) {
+            const aNumW = BigInt(cfg.totalWorkers || 1);
+            const aWId = BigInt(typeof workerId !== 'undefined' ? workerId : 0) % aNumW;
+            const aLen = effRange / aNumW;
+            autoSliceMin = boundMin + aLen * aWId;
+            autoSliceMax = (aWId === aNumW - 1n) ? boundMax : (autoSliceMin + aLen - 1n);
+        }
+        const hasAutoWorkerSlice = (cfg.selectedAlgorithm === 'AUTO' && autoSliceMax > autoSliceMin && (autoSliceMin > boundMin || autoSliceMax < boundMax));
 
         const isSuffixMode = Boolean(isEffectivePrefix && cfg.userFixMode === 'SUFFIX');
         let cleanSfx = '';
@@ -13569,28 +13864,170 @@ const baseStart = (span * basePpm) / 1000000n;
             return null;
         }
 
-        // 🚀 TURBO ARDIŞIK (SEQUENTIAL) + WASM SIKI DÖNGÜ HIZLI YOLU
+        // 🚀 TURBO STANDART (TÜM KANGURU-DIŞI ALGORİTMALAR) + WASM SIKI DÖNGÜ HIZLI YOLU
         // Her 511 anahtarda bir Aşama 1/2/3/4 dallanma, string tahsisi ve BigInt sınır bölme yükünü atlar.
         const fastStdRatio = (cfg && typeof cfg.stdAlgorithmStartOffsetRatio === 'number') ? cfg.stdAlgorithmStartOffsetRatio : 0.0;
         const fastNumW = cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1);
         const fastIsGrid = (f === 'GRID' || mode === 'GRID' || (cfg.isGridFilterActive !== false && (cfg.userGridCell !== undefined && cfg.userGridCell !== null || cfg.isGridAutoJump)));
         const fastIsHex = (mode === 'HEX' && cfg.userHexStart && cfg.userHexEnd);
+        const fastIsSlice = (mode === 'PERCENT' && cfg.sliceModeActive && effRange > 50000000n);
         const fastIsFreq = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || fastStdRatio === -3.0));
         const fastIsStdLattice = (cfg && (cfg.stdBaseStrategy === 'AUTO' || fastStdRatio === -1.0));
         const canUseSeqWasmFastPath = (
-            cfg.selectedAlgorithm === 'SEQUENTIAL' &&
             wasmReady && hasPrepareInv && ecInst && !_seqBroken &&
             !isEffectivePrefix && suffixStride === 1n && effRange >= 512n &&
-            !fastIsGrid && !fastIsHex && !fastIsFreq &&
-            (fastStdRatio === 0.0 || (fastIsStdLattice && fastNumW > 1))
+            !fastIsGrid && !fastIsHex && !fastIsSlice
         );
 
         if (canUseSeqWasmFastPath) {
+            if (boundMin !== _fastLastBoundMin || boundMax !== _fastLastBoundMax) {
+                _fastLastBoundMin = boundMin;
+                _fastLastBoundMax = boundMax;
+                _cluLeft = 0;
+                if (cfg.selectedAlgorithm === 'AUTO') {
+                    workerAutoStepCounter = 0;
+                }
+            }
             const safeMin = boundMin + 255n;
             const safeMax = boundMax - 255n;
+            const effMod = effRange + 1n;
+            const wIdBig = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+            const totalWBig = (cfg && cfg.totalWorkers && cfg.totalWorkers > 1) ? BigInt(cfg.totalWorkers) : 1n;
+            const preLatticeOffset = (fastIsStdLattice && !hasAutoWorkerSlice && totalWBig > 1n)
+                ? ((effRange * ((wIdBig * 1000000n / totalWBig) + 100000n)) / 1000000n)
+                : ((fastStdRatio > 0.0) ? ((effRange * BigInt(Math.round(fastStdRatio * 1000000))) / 1000000n) : 0n);
+            // Ardışık/Blok-Sıçramalı için başlangıç oranı (Ortadan, Altın vb.): yavaş yoldaki modüler kaydırma ile aynı sonuç
+            const _fastSeqStartOffset = (fastStdRatio > 0.0)
+                ? ((effRange * BigInt(Math.round(fastStdRatio * 1000000))) / 1000000n)
+                : ((fastIsStdLattice && !hasAutoWorkerSlice && totalWBig === 1n) ? ((effRange * 100000n) / 1000000n) : 0n);
+            if (fastIsFreq && (_uFreqShiftMin !== boundMin || _uFreqShiftMax !== boundMax || _uFreqShiftWId !== wIdBig)) {
+                _uFreqShiftMin = boundMin; _uFreqShiftMax = boundMax; _uFreqShiftWId = wIdBig;
+                _uFreqStep++;
+                _uFreqWorkerShift = _seqBlkHexMask256(_uFreqStep, wIdBig) % effMod;
+            }
+            const activeAutoList = (cfg && Array.isArray(cfg.autoAlgoList) && cfg.autoAlgoList.length > 0) ? cfg.autoAlgoList : WORKER_AUTO_ALGO_LIST;
+            const _maxSpanBlocks = Number(effRange / SEQ_STRIDE);
+            const _effClusterN = (_maxSpanBlocks > 0 && _maxSpanBlocks < 2000)
+                ? Math.max(1, Math.min(CLUSTER_N, Math.floor(_maxSpanBlocks / 20)))
+                : CLUSTER_N;
+
             let fastFallbackDone = false;
             for (let i = 0; i < batchSize; i++) {
-                const currentKey = workerSequentialNextKey(boundMin, boundMax, fastNumW, workerId);
+                let workerActiveAlgo = cfg.selectedAlgorithm;
+                if (workerActiveAlgo && (workerActiveAlgo.startsWith('KANGAROO') || workerActiveAlgo === 'GLV_LATTICE_2D')) {
+                    workerActiveAlgo = 'AUTO';
+                }
+                if (workerActiveAlgo === 'AUTO') {
+                    if (workerAutoStepCounter > 0 && workerAutoStepCounter % 257 === 0) {
+                        workerAutoIndex = (workerAutoIndex + 1) % activeAutoList.length;
+                        _cluLeft = 0;
+                    }
+                    workerAutoStepCounter++;
+                    workerActiveAlgo = activeAutoList[workerAutoIndex % activeAutoList.length];
+                }
+                if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
+                    workerActiveAlgo = 'RANDOM';
+                }
+
+                let currentKey = 0n;
+                if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'SEQ_BLOCK_JUMP') {
+                    const useBlkJump = (workerActiveAlgo === 'SEQ_BLOCK_JUMP' || fastIsFreq);
+                    currentKey = useBlkJump
+                        ? workerSeqBlockJumpNextKey(boundMin, boundMax, fastNumW, workerId, fastIsFreq)
+                        : workerSequentialNextKey(boundMin, boundMax, fastNumW, workerId);
+                    if (!fastIsFreq && _fastSeqStartOffset > 0n) {
+                        currentKey = boundMin + ((((currentKey - boundMin + _fastSeqStartOffset) % effMod) + effMod) % effMod);
+                    }
+                } else {
+                    const subMin = hasAutoWorkerSlice ? autoSliceMin : boundMin;
+                    const subMax = hasAutoWorkerSlice ? autoSliceMax : boundMax;
+                    if (_cluLeft > 0 && _cluAlgo === workerActiveAlgo && _cluNext >= boundMin && _cluNext <= boundMax) {
+                        currentKey = _cluNext;
+                        _cluNext += SEQ_STRIDE;
+                        _cluLeft--;
+                    } else {
+                        const isNativeBurst = Boolean(CLUSTER_SKIP[workerActiveAlgo]);
+                        if (workerActiveAlgo === 'HEX_FREQ_DENSITY') {
+                            _hexFreqSubStep = R_BLOCK_BURST;
+                            currentKey = generateWorkerHexFreqDensityKey(subMin, subMax);
+                            const _hfTotBlk = ((subMax > subMin) ? ((subMax - subMin) / 511n) : 1n);
+                            const _hfNumW = cfg.isOrthogonalWorker ? 1n : totalWBig;
+                            if (_hfTotBlk <= 65536n * _hfNumW && _hexFreqKey !== null) {
+                                _hexFreqKey += BigInt(_effClusterN - 1) * SEQ_STRIDE;
+                            }
+                        } else if (workerActiveAlgo === 'ROBERTS_R_SEQUENCE') {
+                            _robertsSubStep = R_BLOCK_BURST;
+                            currentKey = generateWorkerRobertsRKey(subMin, subMax);
+                        } else if (workerActiveAlgo === 'HULL_DOBELL_LCG') {
+                            _hdSubStep = HD_BLOCK_BURST;
+                            currentKey = generateWorkerHullDobellKey(subMin, subMax);
+                        } else if (workerActiveAlgo === 'ALIGNED_PERM') {
+                            currentKey = generateAlignedPermKey(subMin, subMax, true);
+                        } else if (workerActiveAlgo === 'ADDR_HOP_SWEEP') {
+                            workerAddrHopSweepState.sweepIndex = 0;
+                            currentKey = generateWorkerAddrHopSweepKey(subMin, subMax);
+                        } else if (workerActiveAlgo === 'KRONECKER_LATTICE') {
+                            _kroneckerSubStep = KRONECKER_BLOCK_BURST;
+                            currentKey = generateWorkerKroneckerKey(subMin, subMax);
+                        } else if (workerActiveAlgo === 'SCRAMBLED_SOBOL') currentKey = generateScrambledSobolKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'SOBOL') currentKey = generateSobolKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'HALTON') currentKey = generateHaltonKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'WEYL_GOLDEN') currentKey = generateWeylGoldenKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'COPRIME_STRIDE') currentKey = generateCoprimeStrideKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'CHAOS') currentKey = generateDeterministicChaosKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'HILBERT') currentKey = generateHilbertKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'WEAK_ENTROPY') currentKey = generateWeakEntropyKey(subMin, subMax, (cfg && typeof cfg.selectedEntropyBits !== 'undefined' ? cfg.selectedEntropyBits : 0));
+                        else if (workerActiveAlgo === 'LEVY_FLIGHT') currentKey = generateWorkerLevyFlightKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'CONTINUED_FRACTIONS') currentKey = generateWorkerContinuedFractionsKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'ULAM_SPIRAL') currentKey = generateWorkerUlamSpiralKey(subMin, subMax);
+                        else if (workerActiveAlgo === 'SPHERICAL_ORBITAL') {
+                            const pct = getSphericalOrbitalPercent();
+                            const span = subMax > subMin ? (subMax - subMin) : 1n;
+                            const baseOff = (span * BigInt(Math.round(pct * 10000000000))) / 1000000000000n;
+                            const micro = (BigInt(Math.round(workerOrbitalPhase * 1000000000)) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFn;
+                            currentKey = subMin + ((baseOff + micro) % (span + 1n));
+                        } else if (workerActiveAlgo === 'RANDOM') currentKey = randomBigIntInRange(subMin, subMax);
+                        else currentKey = generateSobolKey(subMin, subMax);
+
+                        if (fastIsFreq) {
+                            const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
+                            currentKey = boundMin + ((rawOff + _uFreqWorkerShift) % effMod);
+                        } else if (preLatticeOffset > 0n && workerActiveAlgo !== 'HEX_FREQ_DENSITY') {
+                            currentKey = boundMin + (((currentKey - boundMin + preLatticeOffset) % effMod + effMod) % effMod);
+                        } else if (currentKey < boundMin || currentKey > boundMax) {
+                            currentKey = boundMin + (((currentKey - boundMin) % effMod + effMod) % effMod);
+                        }
+
+                        if (CLUSTER_N > 1) {
+                            _cluAlgo = workerActiveAlgo;
+                            const _blkBase = (subMax > subMin && currentKey >= subMin && currentKey <= subMax) ? subMin : boundMin;
+                            const _blkTop  = (subMax > subMin && currentKey >= subMin && currentKey <= subMax) ? subMax : boundMax;
+                            if (!isNativeBurst && _effClusterN === CLUSTER_N && (_blkTop - _blkBase) >= SEQ_BLOCK_KEYS * 2n) {
+                                const _blkIdx = (currentKey - _blkBase) / SEQ_BLOCK_KEYS;
+                                const _maxBlkIdx = (_blkTop - _blkBase + 1n - SEQ_BLOCK_KEYS) / SEQ_BLOCK_KEYS;
+                                const _safeBlkIdx = (_blkIdx > _maxBlkIdx) ? _maxBlkIdx : _blkIdx;
+                                currentKey = _blkBase + (_safeBlkIdx * SEQ_BLOCK_KEYS) + 255n;
+                                _cluNext = currentKey + SEQ_STRIDE;
+                                _cluLeft = 256;
+                            } else if (workerActiveAlgo === 'ALIGNED_PERM') {
+                                // Her çağrı yeni bir 257 hücrelik küme başlatır (forceNewCluster): kümenin kalan 256 hücresi de
+                                // taranmalı; aksi halde her kümenin yalnızca ilk _effClusterN hücresi taranıp gerisi hiç görülmezdi.
+                                _cluNext = currentKey + SEQ_STRIDE;
+                                _cluLeft = 256;
+                            } else {
+                                const _burstSpan = BigInt(_effClusterN - 1) * SEQ_STRIDE;
+                                if (currentKey + _burstSpan > _blkTop && (_blkTop - _blkBase) >= _burstSpan + 255n) {
+                                    currentKey = _blkBase + 255n;
+                                }
+                                _cluNext = currentKey + SEQ_STRIDE;
+                                _cluLeft = _effClusterN - 1;
+                            }
+                        } else {
+                            _cluLeft = 0;
+                        }
+                    }
+                }
+
                 const anchorPt = workerSeqAnchor(ecInst, currentKey);
                 if (!anchorPt) { fastFallbackDone = true; break; }
                 writeWorkerWasmFe(0x00A0, anchorPt[0]);
@@ -13616,7 +14053,9 @@ const baseStart = (span * basePpm) / 1000000n;
                         ? ('[0x' + boundMin.toString(16).substring(0, 3) + '..-0x' + boundMax.toString(16).substring(0, 3) + '..]')
                         : '🌐 Tam Aralık';
                     currentRangeText = cfg.isCircularMode ? ('#' + activeTarget.id + ' | ' + pDesc) : pDesc;
-                    const dispKey = (maxPosS > 0) ? (currentKey + BigInt(maxPosS)) : ((maxNegS > 0) ? (currentKey - BigInt(maxNegS)) : currentKey);
+                    const dispKey = (workerActiveAlgo === 'HEX_FREQ_DENSITY')
+                        ? currentKey
+                        : ((maxPosS > 0) ? (currentKey + BigInt(maxPosS)) : ((maxNegS > 0) ? (currentKey - BigInt(maxNegS)) : currentKey));
                     lastKeyHex = ((dispKey >= boundMin && dispKey <= boundMax) ? dispKey : currentKey).toString(16).padStart(64, '0');
                     workerPersistentLastKey = lastKeyHex;
                 }
@@ -13631,12 +14070,15 @@ const baseStart = (span * basePpm) / 1000000n;
             let currentKey = 0n;
 
             let workerActiveAlgo = cfg.selectedAlgorithm;
-            if (cfg.selectedAlgorithm === 'AUTO') {
-                workerAutoStepCounter++;
+            if (isMultiOrCircular && workerActiveAlgo && (workerActiveAlgo.startsWith('KANGAROO') || workerActiveAlgo === 'GLV_LATTICE_2D')) {
+                workerActiveAlgo = 'AUTO';
+            }
+            if (workerActiveAlgo === 'AUTO') {
                 const activeAutoList = (cfg && Array.isArray(cfg.autoAlgoList) && cfg.autoAlgoList.length > 0) ? cfg.autoAlgoList : WORKER_AUTO_ALGO_LIST;
-                if (workerAutoStepCounter % 257 === 0) {
+                if (workerAutoStepCounter > 0 && workerAutoStepCounter % 257 === 0) {
                     workerAutoIndex = (workerAutoIndex + 1) % activeAutoList.length;
                 }
+                workerAutoStepCounter++;
                 workerActiveAlgo = activeAutoList[workerAutoIndex % activeAutoList.length];
             }
             if (workerActiveAlgo === 'WEAK_ENTROPY' && cfg.selectedEntropyBits === -1) {
@@ -13666,17 +14108,20 @@ const baseStart = (span * basePpm) / 1000000n;
             // 🎯 AŞAMA 1: ARAMA UZAYI VE ALT-ARALIK [subMin, subMax] BELİRLEME
             // (Grid / Ön Ek / Hex / Dilim / Fizik / Kaos)
             // ----------------------------------------------------
-            let subMin = boundMin;
-            let subMax = boundMax;
+            let subMin = (hasAutoWorkerSlice && workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'SEQ_BLOCK_JUMP') ? autoSliceMin : boundMin;
+            let subMax = (hasAutoWorkerSlice && workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'SEQ_BLOCK_JUMP') ? autoSliceMax : boundMax;
 
             const isEffectiveGrid   = (f === 'GRID'   || mode === 'GRID'   || (cfg.isGridFilterActive !== false && (cfg.userGridCell !== undefined && cfg.userGridCell !== null || cfg.isGridAutoJump)));
             const _isFreqFocus = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || cfg.stdAlgorithmStartOffsetRatio === -3.0));
-            const _useFreqBurst = (_isFreqFocus && !isEffectivePrefix && !isEffectiveGrid && effRange > 1024n);
+            const _isSeqBijective = (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'SEQ_BLOCK_JUMP');
+            const _useFreqBurst = (_isFreqFocus && !_isSeqBijective && !CLUSTER_SKIP[workerActiveAlgo] && !isEffectivePrefix && !isEffectiveGrid && effRange > 1024n);
             const _cluElig = (CLUSTER_N > 1 && !CLUSTER_SKIP[workerActiveAlgo] && !isEffectivePrefix && !isEffectiveGrid && !_useFreqBurst);
             let _cluCont = false;
             if (_useFreqBurst) {
-                const curFreqSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + workerActiveAlgo + ':' + (cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio);
-                if (_uFreqSubStep > 0 && _uFreqSubStep < 257 && _uFreqKey !== null && _uFreqSig === curFreqSig && _uFreqKey + SEQ_STRIDE <= boundMax && _uFreqKey >= boundMin) {
+                const curStrat = cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio;
+                if (_uFreqSubStep > 0 && _uFreqSubStep < 257 && _uFreqKey !== null &&
+                    _uFreqLastMin === boundMin && _uFreqLastMax === boundMax && _uFreqLastAlgo === workerActiveAlgo && _uFreqLastStrat === curStrat &&
+                    _uFreqKey + SEQ_STRIDE <= boundMax && _uFreqKey >= boundMin) {
                     _uFreqKey += SEQ_STRIDE;
                     _uFreqSubStep++;
                     currentKey = _uFreqKey;
@@ -13715,9 +14160,8 @@ const baseStart = (span * basePpm) / 1000000n;
                     const hMax = toBigIntSafe(cfg.userHexEnd);
                     subMin = (hMin < boundMin) ? boundMin : (hMin > boundMax ? boundMin : hMin);
                     subMax = (hMax > boundMax) ? boundMax : (hMax < subMin ? boundMax : hMax);
-                } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'KRONECKER_LATTICE' || workerActiveAlgo === 'KANGAROO_4WAY_GPR' || workerActiveAlgo === 'KANGAROO_ATTRACTOR_19S' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
-                    subMin = boundMin;
-                    subMax = boundMax;
+                } else if (workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'SEQ_BLOCK_JUMP' || workerActiveAlgo === 'KRONECKER_LATTICE' || workerActiveAlgo === 'SCRAMBLED_SOBOL' || workerActiveAlgo === 'SOBOL' || workerActiveAlgo === 'HALTON' || workerActiveAlgo === 'WEYL_GOLDEN' || workerActiveAlgo === 'COPRIME_STRIDE' || workerActiveAlgo === 'CHAOS' || workerActiveAlgo === 'HILBERT' || workerActiveAlgo === 'WEAK_ENTROPY' || workerActiveAlgo === 'ADDR_HOP_SWEEP' || workerActiveAlgo === 'LEVY_FLIGHT' || workerActiveAlgo === 'CONTINUED_FRACTIONS' || workerActiveAlgo === 'ULAM_SPIRAL' || workerActiveAlgo === 'RANDOM' || workerActiveAlgo === 'KANGAROO_4WAY_GPR' || workerActiveAlgo === 'KANGAROO_ATTRACTOR_19S' || workerActiveAlgo === 'KANGAROO' || workerActiveAlgo === 'GLV_LATTICE_2D' || workerActiveAlgo === 'KANGAROO_KRONECKER' || workerActiveAlgo === 'KANGAROO_SOBOL' || workerActiveAlgo === 'KANGAROO_GLV' || workerActiveAlgo === 'KANGAROO_MONTGOMERY' || workerActiveAlgo === 'KANGAROO_ANCHOR' || workerActiveAlgo === 'KANGAROO_ALIGNED') {
+                    // subMin ve subMax zaten tam uzay veya autoSliceMin..autoSliceMax olarak ayarlandı; %0.01 fizik daraltmasına girmez
                 } else if (mode === 'PERCENT') {
                     if (cfg.sliceModeActive && effRange > 50000000n) {
                         const sBig = BigInt(Math.round((cfg.sliceStartPct || 0) * 10000000000));
@@ -13771,7 +14215,12 @@ const baseStart = (span * basePpm) / 1000000n;
             } else if (workerActiveAlgo === 'HULL_DOBELL_LCG') {
                 currentKey = generateWorkerHullDobellKey(subMin, subMax);
             } else if (workerActiveAlgo === 'SEQUENTIAL') {
-                currentKey = workerSequentialNextKey(boundMin, boundMax, (cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1)), workerId);
+                const nW = (cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1));
+                currentKey = _isFreqFocus
+                    ? workerSeqBlockJumpNextKey(boundMin, boundMax, nW, workerId, true)
+                    : workerSequentialNextKey(boundMin, boundMax, nW, workerId);
+            } else if (workerActiveAlgo === 'SEQ_BLOCK_JUMP') {
+                currentKey = workerSeqBlockJumpNextKey(boundMin, boundMax, (cfg.isOrthogonalWorker ? 1 : (cfg.totalWorkers || 1)), workerId, _isFreqFocus);
             } else if (workerActiveAlgo === 'SCRAMBLED_SOBOL') {
                 currentKey = generateScrambledSobolKey(subMin, subMax);
             } else if (workerActiveAlgo === 'SOBOL') {
@@ -13800,6 +14249,12 @@ const baseStart = (span * basePpm) / 1000000n;
                 currentKey = generateWorkerContinuedFractionsKey(subMin, subMax);
             } else if (workerActiveAlgo === 'ULAM_SPIRAL') {
                 currentKey = generateWorkerUlamSpiralKey(subMin, subMax);
+            } else if (workerActiveAlgo === 'SPHERICAL_ORBITAL') {
+                const pct = getSphericalOrbitalPercent();
+                const span = subMax > subMin ? (subMax - subMin) : 1n;
+                const baseOff = (span * BigInt(Math.round(pct * 10000000000))) / 1000000000000n;
+                const micro = (BigInt(Math.round(workerOrbitalPhase * 1000000000)) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFn;
+                currentKey = subMin + ((baseOff + micro) % (span + 1n));
             } else if (workerActiveAlgo === 'RANDOM') {
                 currentKey = randomBigIntInRange(subMin, subMax);
             } else {
@@ -13814,25 +14269,31 @@ const baseStart = (span * basePpm) / 1000000n;
             const isHexFreqFull = (cfg && (cfg.stdBaseStrategy === 'HEX_FREQ_FULL' || stdRatio === -3.0));
             if (!_cluCont && effRange > 0n) {
                 if (isHexFreqFull) {
-                    _uFreqStep++;
-                    const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
-                    const markov64 = _workerBuildMarkovHexWord64(_uFreqStep, wId);
-                    const freq64 = _workerBuildHexFreqWord64(_uFreqStep + 0x517CC1B727220A95n, wId);
-                    const hotPair = W_HEX_HOT_PAIRS_32[Number((_uFreqStep + wId) & 31n)];
-                    const hexShapeMask = ((markov64 ^ (freq64 >> 4n)) & 0xFFFFFFFFFFFFF000n) | (hotPair << 12n);
-                    const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
-                    currentKey = boundMin + ((rawOff ^ (hexShapeMask % (effRange + 1n))) % (effRange + 1n));
-                    if (_useFreqBurst) {
-                        _uFreqKey = currentKey;
-                        _uFreqSubStep = 1;
-                        _uFreqSig = boundMin.toString(16) + ':' + boundMax.toString(16) + ':' + workerActiveAlgo + ':' + (cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio);
+                    if (!_isSeqBijective) {
+                        const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
+                        if (_uFreqShiftMin !== boundMin || _uFreqShiftMax !== boundMax || _uFreqShiftWId !== wId) {
+                            _uFreqShiftMin = boundMin; _uFreqShiftMax = boundMax; _uFreqShiftWId = wId;
+                            _uFreqStep++;
+                            _uFreqWorkerShift = _seqBlkHexMask256(_uFreqStep, wId) % (effRange + 1n);
+                        }
+                        const rawOff = (currentKey >= boundMin) ? (currentKey - boundMin) : 0n;
+                        // Birebir (bijective) modüler kaydırma: temel algoritmanın tekrar-önleme yapısını bozmaz
+                        currentKey = boundMin + ((rawOff + _uFreqWorkerShift) % (effRange + 1n));
+                        if (_useFreqBurst) {
+                            _uFreqKey = currentKey;
+                            _uFreqSubStep = 1;
+                            _uFreqLastMin = boundMin;
+                            _uFreqLastMax = boundMax;
+                            _uFreqLastAlgo = workerActiveAlgo;
+                            _uFreqLastStrat = cfg.stdBaseStrategy || cfg.stdAlgorithmStartOffsetRatio;
+                        }
                     }
                 } else if (isStdLattice) {
                     // 🧠 OTO KAFES (Latis Izgarası): Her çekirdek (workerId) arama uzayına homojen matematiksel kafes örgüsüyle yerleştirilir!
                     // Not: SEQUENTIAL birden fazla worker varsa aralığı zaten ayrık dilimlere böler.
                     // Üzerine ikinci kez workerId tabanlı kafes ofseti eklemek dilimleri üst üste bindirir; bu nedenle atlanır.
                     const numW = (cfg && cfg.totalWorkers && cfg.totalWorkers > 1) ? BigInt(cfg.totalWorkers) : 1n;
-                    if (numW === 1n || (workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'HEX_FREQ_DENSITY')) {
+                    if (!hasAutoWorkerSlice && (numW === 1n || (workerActiveAlgo !== 'SEQUENTIAL' && workerActiveAlgo !== 'SEQ_BLOCK_JUMP' && workerActiveAlgo !== 'HEX_FREQ_DENSITY'))) {
                         const wId = BigInt(typeof workerId !== 'undefined' ? workerId : 0);
                         const latticeOffset = (effRange * ((wId * 1000000n / numW) + 100000n)) / 1000000n;
                         currentKey = boundMin + ((currentKey - boundMin + latticeOffset) % (effRange + 1n));
@@ -13924,14 +14385,25 @@ const baseStart = (span * basePpm) / 1000000n;
 
             if (_cluElig && !_cluCont) {            // yeni seçim → yeni küme
                 _cluAlgo = workerActiveAlgo;
-                _cluNext = currentKey + SEQ_STRIDE;
                 // Küçük test aralıklarında tek kümenin aralığı kilitlememesi için dinamik boyut
                 const _rangeSpan = boundMax > boundMin ? (boundMax - boundMin) : 0n;
                 const _maxSpanBlocks = _rangeSpan > 0n ? Number(_rangeSpan / SEQ_STRIDE) : 0;
                 const _effClusterN = (_maxSpanBlocks > 0 && _maxSpanBlocks < 2000)
                     ? Math.max(1, Math.min(CLUSTER_N, Math.floor(_maxSpanBlocks / 20)))
                     : CLUSTER_N;
-                _cluLeft = _effClusterN - 1;
+                const _blkBase = (subMax > subMin && currentKey >= subMin && currentKey <= subMax) ? subMin : boundMin;
+                const _blkTop  = (subMax > subMin && currentKey >= subMin && currentKey <= subMax) ? subMax : boundMax;
+                if (_effClusterN === CLUSTER_N && (_blkTop - _blkBase) >= SEQ_BLOCK_KEYS * 2n) {
+                    const _blkIdx = (currentKey - _blkBase) / SEQ_BLOCK_KEYS;
+                    const _maxBlkIdx = (_blkTop - _blkBase + 1n - SEQ_BLOCK_KEYS) / SEQ_BLOCK_KEYS;
+                    const _safeBlkIdx = (_blkIdx > _maxBlkIdx) ? _maxBlkIdx : _blkIdx;
+                    currentKey = _blkBase + (_safeBlkIdx * SEQ_BLOCK_KEYS) + 255n;
+                    _cluNext = currentKey + SEQ_STRIDE;
+                    _cluLeft = 255; // 256 çapa × 511 = tam 130.816 anahtarlık blok (kısmi örtüşme %0)
+                } else {
+                    _cluNext = currentKey + SEQ_STRIDE;
+                    _cluLeft = _effClusterN - 1;
+                }
             } else if (!_cluElig) { _cluLeft = 0; }
 
             // 🚀 ULTRA-HIZLI ÇİFT YÖNLÜ (±iG) SİMETRİK MONTGOMERY BATCH ADIM MOTORU (Çapa Başına 511 Anahtar!)
@@ -13939,7 +14411,7 @@ const baseStart = (span * basePpm) / 1000000n;
             let anchorPt = null;
             if (inst) {
                 try {
-                    if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'ADDR_HOP_SWEEP' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'KRONECKER_LATTICE' || _cluElig || _useFreqBurst) anchorPt = workerSeqAnchor(inst, currentKey);
+                    if (workerActiveAlgo === 'SEQUENTIAL' || workerActiveAlgo === 'SEQ_BLOCK_JUMP' || workerActiveAlgo === 'ALIGNED_PERM' || workerActiveAlgo === 'ADDR_HOP_SWEEP' || workerActiveAlgo === 'HULL_DOBELL_LCG' || workerActiveAlgo === 'HEX_FREQ_DENSITY' || workerActiveAlgo === 'ROBERTS_R_SEQUENCE' || workerActiveAlgo === 'KRONECKER_LATTICE' || _cluElig || _useFreqBurst) anchorPt = workerSeqAnchor(inst, currentKey);
                     if (!anchorPt) anchorPt = workerFixedBaseAnchor(inst, currentKey);   // sabit-tabanlı çapa (öz-denetimli)
                     if (!anchorPt) {
                         lastKeyHex = currentKey.toString(16).padStart(64, '0');
@@ -14195,17 +14667,14 @@ const baseStart = (span * basePpm) / 1000000n;
             workerGeneralAccumulatedCount = 0;
         }
         
-        // ⚡ OTO-KALİBRASYON: Batch süresini ölç ve dinamik olarak uyarla
+        // ⚡ OTO-KALİBRASYON: Batch süresini ölç ve dinamik olarak uyarla (Hedef: 14-24ms / batch — 200ms progress ve V8 L1/Nursery uyumlu)
         const batchDuration = ((typeof performance !== 'undefined') ? performance.now() : Date.now()) - batchStartTime;
         workerBatchCalibCounter++;
         if (workerBatchCalibCounter % 4 === 0) {
-            if (batchDuration < 12) {
-
-                // CPU rahat, event-loop overhead'ini azaltmak için batch'i kademeli büyüt (maksimum 4096)
+            if (batchDuration < 14) {
                 workerDynamicBatchSize = Math.min(4096, Math.round(workerDynamicBatchSize * 1.25) + 5);
-            } else if (batchDuration > 22) {
-                // İşlem süresi uzadı, yanıt verebilirliği korumak için batch'i küçült (minimum 30)
-                workerDynamicBatchSize = Math.max(30, Math.round(workerDynamicBatchSize * 0.8));
+            } else if (batchDuration > 24) {
+                workerDynamicBatchSize = Math.max(32, Math.round(workerDynamicBatchSize * 0.8));
             }
         }
 
@@ -14255,7 +14724,14 @@ const baseStart = (span * basePpm) / 1000000n;
             const activeAutoInitList = (cfg && Array.isArray(cfg.autoAlgoList) && cfg.autoAlgoList.length > 0) ? cfg.autoAlgoList : WORKER_AUTO_ALGO_LIST;
             workerAutoIndex = workerId % activeAutoInitList.length;
             workerAddrHopSweepState.anchor = 0n;
+            workerAddrHopSweepState.hopCount = BigInt(workerId) * 10007n;
             _workerHdState = null;
+            _workerHdStateMap.clear();
+            _workerPuzzleAlgoStateMap.clear();
+            _workerLastPuzzleStateId = null;
+            _seqCursorMap.clear();
+            _seqBlkCursorMap.clear();
+            _alignedWState.clear();
             _hdKey = null;
             _hdSubStep = 0;
             _robertsKey = null;
@@ -14277,8 +14753,10 @@ const baseStart = (span * basePpm) / 1000000n;
             workerOrbitalPhase = (workerId * 0.6180339887) % (Math.PI * 2);
             workerOrbitalRadius = (0.1 + workerId * 0.141421356) % 1.0;
             cfg = d.config || {};
-            rebuildWorkerTargetIndex(cfg);
-            if (cfg.customHash160List) workerCustomHashSet = new Set(cfg.customHash160List);
+            _fastLastBoundMin = null;
+            _fastLastBoundMax = null;
+            _cluLeft = 0;
+            rebuildWorkerTargetIndex(cfg, true);
             if (cfg.kangarooHerdType === 'TAME' || cfg.kangarooHerdType === 'WILD' || cfg.kangarooHerdType === 'DUAL') {
                 workerKangarooHerdType = cfg.kangarooHerdType;
             } else {
@@ -14290,8 +14768,7 @@ const baseStart = (span * basePpm) / 1000000n;
             workBatch();
         } else if (d.cmd === 'updateConfig') {
             cfg = Object.assign(cfg, d.config || {});
-            rebuildWorkerTargetIndex(cfg);
-            if (cfg.customHash160List) workerCustomHashSet = new Set(cfg.customHash160List);
+            rebuildWorkerTargetIndex(cfg, false);
             if (d.config && ((d.config.activeTarget && d.config.activeTarget.id !== workerKangarooTargetId) || (d.config.selectedAlgorithm && workerKangarooLastAlgo !== d.config.selectedAlgorithm))) {
                 workerKangarooJumps = [];
             }
@@ -14586,7 +15063,9 @@ function getCurrentWorkerConfig() {
         swarmIndex: (typeof currentSwarmIndex !== 'undefined') ? currentSwarmIndex : 0,
         swarmTotal: (typeof currentSwarmTotal !== 'undefined') ? currentSwarmTotal : 1,
         activeRangeMode: activeRangeMode,
-        selectedAlgorithm: selectedAlgorithm,
+        selectedAlgorithm: ((isCircularMode || (typeof selectedPuzzleIds !== 'undefined' && selectedPuzzleIds && selectedPuzzleIds.size > 1)) && typeof selectedAlgorithm === 'string' && (selectedAlgorithm.startsWith('KANGAROO') || selectedAlgorithm === 'GLV_LATTICE_2D'))
+            ? ((document.getElementById('algoSelect') && document.getElementById('algoSelect').value && !document.getElementById('algoSelect').value.startsWith('KANGAROO') && document.getElementById('algoSelect').value !== 'GLV_LATTICE_2D') ? document.getElementById('algoSelect').value : 'AUTO')
+            : selectedAlgorithm,
         autoAlgoList: (typeof autoAlgoList !== 'undefined' && Array.isArray(autoAlgoList) && autoAlgoList.length > 0) ? autoAlgoList : null,
         selectedEntropyBits: selectedEntropyBits,
         entropyBits: selectedEntropyBits,
@@ -15173,12 +15652,17 @@ function handleWorkerMessage(e) {
             return;
         }
         if (data.type === 'kangaroo_traps' && data.traps && Array.isArray(data.traps)) {
-            data.traps.forEach(t => {
+            const centralEngine = (typeof ensureCentralKangarooEngine === 'function')
+                ? ensureCentralKangarooEngine()
+                : ((typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine) ? kangarooRealEngine : null);
+            const nowMs = Date.now();
+            for (let ti = 0; ti < data.traps.length; ti++) {
+                const t = data.traps[ti];
                 const k = t.pointKey || t.pointXHex;
-                if (!k) return;
+                if (!k) continue;
                 if (typeof kangarooSharedTraps !== 'undefined') {
                     if (kangarooSharedTraps instanceof Map) {
-                        kangarooSharedTraps.set(k, { herd: t.herd, tabId: KANGAROO_TAB_ID, time: Date.now(), dist: t.dist });
+                        kangarooSharedTraps.set(k, { herd: t.herd, tabId: KANGAROO_TAB_ID, time: nowMs, dist: t.dist });
                         if (kangarooSharedTraps.size > 1000000) {
                             const it = kangarooSharedTraps.keys();
                             for (let i = 0; i < 100000; i++) {
@@ -15191,25 +15675,22 @@ function handleWorkerMessage(e) {
                         kangarooSharedTraps = new Map();
                     }
                 }
-                if (typeof broadcastKangarooTrap === 'function') {
-                    broadcastKangarooTrap(k, t.herd, t.dist, t.branch);
-                }
-                const centralEngine = (typeof kangarooRealEngine !== 'undefined' && kangarooRealEngine)
-                    ? kangarooRealEngine
-                    : (typeof ensureCentralKangarooEngine === 'function' ? ensureCentralKangarooEngine() : null);
-
                 if (centralEngine) {
                     centralEngine.addRemoteTrap(k, t.herd, t.dist, t.branch);
                     if (centralEngine.isSolved && centralEngine.solvedKey) {
                         const keyHex = centralEngine.solvedKey.toString(16).padStart(64, '0');
                         const actT = currentTarget || (typeof getActiveTarget === 'function' ? getActiveTarget() : null);
                         if (actT) {
-                            if (typeof stopHunting === 'function') stopHunting();
+                            if (typeof stopWorkerPool === 'function') stopWorkerPool();
                             handleWin(actT.id, keyHex, privkeyToAddress(keyHex), actT.addr, '🦘 Sürü Çarpışması ile Çözüldü!');
                         }
+                        break;
                     }
                 }
-            });
+            }
+            if (typeof broadcastKangarooTrapBatch === 'function') {
+                broadcastKangarooTrapBatch(data.traps);
+            }
             kangarooTrapsCount = getCombinedKangarooTrapCount();
             const trapK = (kangarooTrapsCount >= 1000) ? (kangarooTrapsCount / 1000).toFixed(1) + 'k' : kangarooTrapsCount;
             if (typeof uiRenderState !== 'undefined') {
@@ -15229,7 +15710,7 @@ function handleWorkerMessage(e) {
             } else if (data.count) {
                 attempts += data.count;
             }
-            if (sliceModeActive && data.count) {
+            if (activeRangeMode === 'PERCENT' && sliceModeActive && data.count) {
                 sliceAttempts += data.count;
                 if (typeof isRangeAuto !== 'undefined' && isRangeAuto && sliceAttempts >= 250000) {
                     sliceAttempts = 0;
@@ -15514,6 +15995,7 @@ function toggleHunter(isRemoteSync = false) {
                         'ROBERTS_R_SEQUENCE': '🌟 Plastik Oran (R_d)',
                         'HULL_DOBELL_LCG': '🔢 Hull-Dobell Perm',
                         'SEQUENTIAL': '➡️ Ardışık Dilim',
+                        'SEQ_BLOCK_JUMP': '🔀 Blok-Sıçramalı Ardışık',
                         'ALIGNED_PERM': '🧩 Hizalı Permütasyon',
                         'ADDR_HOP_SWEEP': '🦘🧹 Sıçra & Süpür',
                         'KRONECKER_LATTICE': '🌟 Kronecker Kafesi',
@@ -15961,6 +16443,7 @@ const ALL_AUTO_ALGO_DEFS = [
     { id: 'ROBERTS_R_SEQUENCE', name: 'Plastik Oran (R_d)', icon: '🌟📐', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#f59e0b', desc: 'Plastik sabit düşük sapmalı homojen dizi (32x511 burst)' },
     { id: 'KRONECKER_LATTICE', name: 'Kronecker Kafesi (4D)', icon: '🌟📐', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#ec4899', desc: '4D İrrasyonel cebirsel kafes (32x511 burst süpürmesi)' },
     { id: 'SEQUENTIAL', name: 'Ardışık Dilim (Sequential)', icon: '➡️', cat: '511', badge: '⚡ 2.0+ M/s', color: '#34d399', desc: 'Kesintisiz tek affin geçişli ardışık dilim taraması' },
+    { id: 'SEQ_BLOCK_JUMP', name: 'Blok-Sıçramalı Ardışık', icon: '🔀', cat: '511', badge: '⚡ 2.0+ M/s', color: '#10b981', desc: '130.816 anahtarlık blok içi ardışık + bloklar arası aralarında asal altın oran sıçraması (%0 tekrar)' },
     { id: 'ALIGNED_PERM', name: 'Hizalı Permütasyon', icon: '🧩', cat: '511', badge: '⚡ 1.8-2.0 M/s', color: '#38bdf8', desc: '511 hücreli modüler kafes permütasyonu (sıfır çakışma)' },
     { id: 'ADDR_HOP_SWEEP', name: 'Sıçra & Süpür (Sweep)', icon: '🦘🧹', cat: '511', badge: '⚡ 1.6-1.9 M/s', color: '#fb923c', desc: 'Weyl altın sıçraması sonrası 511-blok radar süpürmesi' },
 
