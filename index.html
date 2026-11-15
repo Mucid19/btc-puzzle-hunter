@@ -38,6 +38,7 @@
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
     <script src="kangaroo_engine.js?v=v41"></script>
+    <script src="webgpu_engine.js?v=v2"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -1573,6 +1574,7 @@
                 <div id="kangarooSwarmBadgesGroup" style="display:inline-flex; align-items:center; justify-content:center; gap:3px; flex-shrink:0; margin:0 auto;">
                     <span id="kangarooSwarmTrapCount" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #06b6d4; color:#38bdf8; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Sürü Tarafından Kaydedilen Distinguished Point (Tuzak) Sayısı — Ağ Durumunu Görmek İçin Tıklayın">📍 0</span>
                     <span id="kangarooSwarmTabCountBadge" onclick="showSwarmMeshModal()" style="background:#0f172a; border:1px solid #10b981; color:#34d399; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="Aynı Ağda/Cihazda Aktif Çalışan Sekme Sayısı — Ağ Durumunu Görmek İçin Tıklayın">🟢 1</span>
+                    <span id="webgpuBadge" onclick="toggleWebGpuMode()" style="background:#0f172a; border:1px solid #22c55e; color:#4ade80; font-size:9px; padding:2px 5px; border-radius:4px; font-family:monospace; font-weight:bold; white-space:nowrap; cursor:pointer;" title="WebGPU GPU Hızlandırma — Açmak/Kapatmak İçin Tıklayın">⚡ GPU</span>
                 </div>
 
                 <!-- SAĞ: ÖN EK / SON EK BLOĞU -->
@@ -15176,12 +15178,83 @@ function onThreadCountSelectChange(isRemoteSync = false) {
 let workerWatchdogTimer = null;
 let workerHasReceivedProgress = false;
 
+let isWebGpuEnabled = (typeof SiriusWebGpuScanner !== 'undefined' && SiriusWebGpuScanner.isSupported());
+
+function updateWebGpuBadge() {
+    const b = document.getElementById('webgpuBadge');
+    if (!b) return;
+    if (typeof SiriusWebGpuScanner === 'undefined' || !SiriusWebGpuScanner.isSupported() || (window.siriusWebGpu && window.siriusWebGpu.unavailable)) {
+        b.style.borderColor = '#475569';
+        b.style.color = '#64748b';
+        b.innerText = 'GPU Yok';
+        return;
+    }
+    if (!isWebGpuEnabled) {
+        b.style.borderColor = '#64748b';
+        b.style.color = '#94a3b8';
+        b.innerText = '⚡ GPU: Kapalı';
+    } else if (window.siriusWebGpu && window.siriusWebGpu.running) {
+        b.style.borderColor = '#22c55e';
+        b.style.color = '#4ade80';
+        const spd = window.siriusWebGpu.gpuSpeed || 0;
+        b.innerText = spd > 0 ? ('⚡ GPU: ' + (spd >= 1000000 ? (spd / 1000000).toFixed(2) + 'M/s' : Math.round(spd / 1000) + 'k/s')) : '⚡ GPU: Aktif';
+    } else {
+        b.style.borderColor = '#06b6d4';
+        b.style.color = '#38bdf8';
+        b.innerText = '⚡ GPU: Hazır';
+    }
+}
+
+function toggleWebGpuMode() {
+    if (typeof SiriusWebGpuScanner === 'undefined' || !SiriusWebGpuScanner.isSupported()) return;
+    isWebGpuEnabled = !isWebGpuEnabled;
+    if (!isWebGpuEnabled && window.siriusWebGpu) {
+        window.siriusWebGpu.stop();
+    } else if (isWebGpuEnabled && isRunning && !(typeof isKangarooModeActive === 'function' && isKangarooModeActive())) {
+        startWebGpuForCurrentConfig();
+    }
+    updateWebGpuBadge();
+}
+
+function startWebGpuForCurrentConfig() {
+    if (!isWebGpuEnabled || !window.siriusWebGpu) return;
+    if (typeof isKangarooModeActive === 'function' && isKangarooModeActive()) return;
+    const cfg = getCurrentWorkerConfig();
+    window.siriusWebGpu.start(cfg, {
+        onProgress: function(count, lastKey) {
+            if (!isRunning) return;
+            workerHasReceivedProgress = true;
+            attempts += count;
+            uiRenderState.attempts = attempts;
+            if (!document.hidden) {
+                const attEl = domCache.statAttempts || document.getElementById('statAttempts');
+                if (attEl) attEl.textContent = attempts.toLocaleString('tr-TR');
+            }
+            updateWebGpuBadge();
+        },
+        onWin: function(foundKeyBigInt, tgt) {
+            if (!isRunning) return;
+            const keyHex = foundKeyBigInt.toString(16).padStart(64, '0');
+            const winId = (tgt && tgt.id) ? tgt.id : (currentTarget ? currentTarget.id : 0);
+            const targetAddr = (tgt && tgt.addr) ? tgt.addr : (currentTarget ? currentTarget.addr : '');
+            const reward = ((tgt && tgt.reward) ? tgt.reward : (currentTarget ? currentTarget.reward : '')) + ' [⚡ WebGPU]';
+            const derivedAddr = typeof privkeyToAddress === 'function' ? privkeyToAddress(keyHex) : targetAddr;
+            if (typeof stopWorkerPool === 'function') stopWorkerPool();
+            handleWin(winId, keyHex, derivedAddr, targetAddr, reward);
+        }
+    });
+    updateWebGpuBadge();
+}
+
 function startWorkerPool(threadCount) {
     if (typeof requestTabKeepAlive === 'function') requestTabKeepAlive();
     stopWorkerPool();
     workerHasReceivedProgress = false;
     const url = getWorkerBlobUrl();
     const cfg = getCurrentWorkerConfig();
+    if (isWebGpuEnabled && !(typeof isKangarooModeActive === 'function' && isKangarooModeActive())) {
+        startWebGpuForCurrentConfig();
+    }
     
 
     console.log('[MULTI-THREAD] 🚀 ' + threadCount + ' adet gerçek Web Worker başlatılıyor...');
@@ -15230,6 +15303,10 @@ function startWorkerPool(threadCount) {
 }
 
 function stopWorkerPool() {
+    if (window.siriusWebGpu) {
+        window.siriusWebGpu.stop();
+        updateWebGpuBadge();
+    }
     if (workerWatchdogTimer) {
         clearTimeout(workerWatchdogTimer);
         workerWatchdogTimer = null;
