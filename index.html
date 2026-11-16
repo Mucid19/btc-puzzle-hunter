@@ -38,7 +38,7 @@
     </script>
     <!-- Pollard's Kangaroo Engine — gerçek eliptik eğri nokta çarpışma motoru O(√N) -->
     <script src="kangaroo_engine.js?v=v41"></script>
-    <script src="webgpu_engine.js?v=v4"></script>
+    <script src="webgpu_engine.js?v=v5"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -12549,19 +12549,21 @@ const baseStart = (span * basePpm) / 1000000n;
         const s = toBigIntSafe(rangeStart);
         const e = toBigIntSafe(rangeEnd);
         const span = (e > s) ? (e - s + 1n) : 1n;
-        const W = 511n;
+        const BURST_W = 131327n; // 257 * 511 (_seqRefill tam burst bloğu)
+        const W = (span >= BURST_W * 2n) ? BURST_W : (span >= 1022n ? 511n : 1n);
         const numBlocks = span / W;
         const st = workerLevyState;
-        if (!st._init) { st._init = true; st.stepCount = BigInt(typeof workerId !== 'undefined' ? workerId : 0) * 7919n; }
+        if (!st._init) { st._init = true; st.stepCount = BigInt(typeof workerId !== 'undefined' ? workerId : 0) * 7919n; st.anchorEpoch = 0n; }
         if (st.rangeStart !== s || st.rangeEnd !== e || st.pos === 0n) {
             st.rangeStart = s; st.rangeEnd = e; st.seen = null;
             if (typeof st.stepCount !== 'bigint') st.stepCount = 0n;
-            st.pos = numBlocks > 1n ? (s + (numBlocks / 2n) * W) : (s + (span / 2n));
+            st.anchorEpoch = (typeof st.anchorEpoch === 'bigint' ? st.anchorEpoch : 0n) + 1n;
         }
         st.stepCount++;
-        // Her 64 adımda bir Weyl kafes çapasına yeniden bağlan (511'lik WASM penceresine hizalı)
+        // Her 64 adımda bir veya bulmaca geçişinde yeni Weyl kafes çapasına bağlan (131.327'lik burst bloğuna hizalı)
         if (!st.seen || st.stepCount % 64n === 1n) {
-            const frac = ((st.stepCount >> 6n) * 0x9E3779B97F4A7C15n) & 0xFFFFFFFFFFFFFFFFn;
+            const seed = ((st.stepCount >> 6n) + (st.anchorEpoch || 0n)) * 0x9E3779B97F4A7C15n;
+            const frac = seed & 0xFFFFFFFFFFFFFFFFn;
             st.pos = numBlocks > 1n
                 ? (s + ((numBlocks * frac) >> 64n) * W)
                 : (s + ((span * frac) >> 64n));
@@ -12581,7 +12583,7 @@ const baseStart = (span * basePpm) / 1000000n;
         }
         const dir = ((st.stepCount * 0xBF58476D1CE4E5B9n) >> 17n & 1n) === 1n ? 1n : -1n;
         let p = st.pos + dir * jump;
-        const stepUnit = numBlocks > 1n ? W : 1n;
+        const stepUnit = W;
         for (let t = 0; t < 64; t++) {               // aynı çapa içinde tekrarı önle
             p = s + (((p - s) % span) + span) % span;
             if (!st.seen.has(p)) break;
@@ -15645,22 +15647,39 @@ function triggerApiActivityWin(addr, privHex, btcBalance, txCount, source) {
 
 function broadcastWorkerConfig() {
     const cfg = getCurrentWorkerConfig();
-    if (typeof isRunning !== 'undefined' && isRunning && typeof isWebGpuEnabled !== 'undefined' && isWebGpuEnabled && window.siriusWebGpu && !(typeof isKangarooModeActive === 'function' && isKangarooModeActive())) {
-        const gpuSig = [
-            cfg.activeTarget ? cfg.activeTarget.id : '',
-            cfg.activeTarget ? cfg.activeTarget.start : '',
-            cfg.activeTarget ? cfg.activeTarget.end : '',
-            cfg.isDualSliderActive ? '1' : '0',
-            cfg.sliderMinHex || '',
-            cfg.sliderMaxHex || '',
-            cfg.activeRangeMode || '',
-            cfg.userHexStart || '',
-            cfg.userHexEnd || '',
-            cfg.isCircularMode ? '1' : '0'
-        ].join('|');
-        if (window._lastWebGpuRangeSig !== gpuSig) {
-            window._lastWebGpuRangeSig = gpuSig;
-            if (typeof startWebGpuForCurrentConfig === 'function') startWebGpuForCurrentConfig();
+    if (typeof isRunning !== 'undefined' && isRunning && typeof isWebGpuEnabled !== 'undefined' && isWebGpuEnabled && window.siriusWebGpu) {
+        if (typeof isKangarooModeActive === 'function' && isKangarooModeActive()) {
+            if (window.siriusWebGpu.running) {
+                window.siriusWebGpu.stop();
+                if (typeof updateWebGpuBadge === 'function') updateWebGpuBadge();
+            }
+        } else {
+            const gpuSig = [
+                cfg.activeTarget ? cfg.activeTarget.id : '',
+                cfg.activeTarget ? cfg.activeTarget.start : '',
+                cfg.activeTarget ? cfg.activeTarget.end : '',
+                cfg.isDualSliderActive ? '1' : '0',
+                cfg.sliderMinHex || '',
+                cfg.sliderMaxHex || '',
+                cfg.activeRangeMode || '',
+                cfg.userHexStart || '',
+                cfg.userHexEnd || '',
+                cfg.isCircularMode ? '1' : '0'
+            ].join('|');
+            if (!window.siriusWebGpu.running || window._lastWebGpuRangeSig !== gpuSig) {
+                window._lastWebGpuRangeSig = gpuSig;
+                if (window._webGpuRestartTimer) clearTimeout(window._webGpuRestartTimer);
+                if (!window.siriusWebGpu.running) {
+                    if (typeof startWebGpuForCurrentConfig === 'function') startWebGpuForCurrentConfig();
+                } else {
+                    window._webGpuRestartTimer = setTimeout(() => {
+                        window._webGpuRestartTimer = null;
+                        if (typeof isRunning !== 'undefined' && isRunning && typeof isWebGpuEnabled !== 'undefined' && isWebGpuEnabled && !(typeof isKangarooModeActive === 'function' && isKangarooModeActive())) {
+                            if (typeof startWebGpuForCurrentConfig === 'function') startWebGpuForCurrentConfig();
+                        }
+                    }, 60);
+                }
+            }
         }
     }
 

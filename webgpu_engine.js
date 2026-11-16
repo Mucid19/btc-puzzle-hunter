@@ -677,6 +677,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             this.ready = false;
             this.unavailable = false;
             this._initPromise = null;
+            this._runPromise = null;
             this.running = false;
             this._sessionId = 0;
             this.statusText = 'Hazır';
@@ -844,146 +845,169 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             this.stop();
             const mySession = ++this._sessionId;
             this.running = true;
-
-            const ok = await this.init();
-            if (!ok || !this.running || mySession !== this._sessionId) return;
-
-            // Build target list (filter compressed targets with valid hash160)
-            let targets = [];
-            if (cfg && cfg.isCircularMode && Array.isArray(cfg.unsolvedList) && cfg.unsolvedList.length > 0) {
-                targets = cfg.unsolvedList.filter(p => !p.isUncompressed && p.targetHash160);
-            } else if (cfg && cfg.activeTarget && !cfg.activeTarget.isUncompressed && cfg.activeTarget.targetHash160) {
-                targets = [cfg.activeTarget];
-            }
-            if (targets.length === 0) {
-                this.running = false;
-                return;
-            }
-
-            let targetIdx = 0;
-            const paramArr = new Uint32Array(8);
-            const zeroHit = new Uint32Array([0, 0, 0, 0]);
-            const wgCount = Math.ceil(NUM_THREADS / 64);
-
             this.statusText = 'Aktif';
 
-            while (this.running && mySession === this._sessionId) {
-                const tgt = targets[targetIdx % targets.length];
-                let tStart = BigInt('0x' + (tgt.start || '1').replace(/^0x/i, ''));
-                let tEnd = BigInt('0x' + (tgt.end || '1').replace(/^0x/i, ''));
-                if (!cfg.isCircularMode && targets.length === 1) {
-                    if (cfg.isDualSliderActive && cfg.sliderMinHex && cfg.sliderMaxHex) {
-                        const sMin = BigInt('0x' + String(cfg.sliderMinHex).replace(/^0x/i, ''));
-                        const sMax = BigInt('0x' + String(cfg.sliderMaxHex).replace(/^0x/i, ''));
-                        if (sMin > tStart) tStart = sMin;
-                        if (sMax < tEnd) tEnd = sMax;
+            // Wait for any in-flight mapAsync/unmap from the previous session to settle
+            const prevRun = this._runPromise;
+            if (prevRun) {
+                try { await prevRun; } catch (_) {}
+            }
+            if (!this.running || mySession !== this._sessionId) return;
+
+            const runTask = (async () => {
+                try {
+                    const ok = await this.init();
+                    if (!ok || !this.running || mySession !== this._sessionId) return;
+
+                    // Build target list (filter compressed targets with valid hash160)
+                    let targets = [];
+                    if (cfg && cfg.isCircularMode && Array.isArray(cfg.unsolvedList) && cfg.unsolvedList.length > 0) {
+                        targets = cfg.unsolvedList.filter(p => !p.isUncompressed && p.targetHash160);
+                    } else if (cfg && cfg.activeTarget && !cfg.activeTarget.isUncompressed && cfg.activeTarget.targetHash160) {
+                        targets = [cfg.activeTarget];
                     }
-                    if (cfg.activeRangeMode === 'HEX' && cfg.userHexStart && cfg.userHexEnd) {
-                        const hMin = BigInt('0x' + String(cfg.userHexStart).replace(/^0x/i, ''));
-                        const hMax = BigInt('0x' + String(cfg.userHexEnd).replace(/^0x/i, ''));
-                        if (hMin > tStart) tStart = hMin;
-                        if (hMax < tEnd) tEnd = hMax;
-                    }
-                }
-                const minK = tStart < 1n ? 1n : tStart;
-                const maxK = tEnd >= SECP_N ? (SECP_N - 1n) : (tEnd < minK ? minK : tEnd);
-                const rangeLen = maxK >= minK ? (maxK - minK + 1n) : 1n;
-                if (maxK <= BigInt(STEPS_PER_THREAD)) {
-                    // Tiny keys <= 64 (e.g. Puzzles #1-#6) are solved instantaneously on CPU and would hit dx==0 in batch jump table
-                    if (targets.length > 1) { targetIdx++; continue; }
-                    this.running = false;
-                    return;
-                }
-                const hWords = hash160HexToU32x5(tgt.targetHash160);
-
-                // For tiny ranges (<= 1 dispatch), start at minK; for small/medium ranges (<= 2^28), start at midpoint and wrap to minK so GPU never overlaps CPU worker #0 at minK
-                const isSmallRange = rangeLen <= 268435456n;
-                const startAtMid = isSmallRange && rangeLen > BigInt(KEYS_PER_DISPATCH);
-                let anchorBase = !isSmallRange
-                    ? randomBigIntInRange(minK, maxK > BigInt(KEYS_PER_DISPATCH) ? (maxK - BigInt(KEYS_PER_DISPATCH)) : minK)
-                    : (startAtMid ? (minK + (rangeLen >> 1n)) : minK);
-                if (anchorBase <= BigInt(STEPS_PER_THREAD)) {
-                    anchorBase = BigInt(STEPS_PER_THREAD) + 1n;
-                }
-                let wrappedToStart = false;
-
-                this._fillAnchors(anchorBase);
-                let dispatchesSinceReanchor = 0;
-                const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? (Math.ceil(Number(rangeLen) / KEYS_PER_DISPATCH) + 2) : 400;
-
-                while (this.running && mySession === this._sessionId) {
-                    const batchDispatches = isSmallRange
-                        ? Math.min(BATCH_DISPATCHES, Math.max(1, Math.ceil(Number(maxK - anchorBase + 1n) / KEYS_PER_DISPATCH)))
-                        : BATCH_DISPATCHES;
-
-                    const t0 = performance.now();
-                    this.device.queue.writeBuffer(this.outBuf, 0, zeroHit);
-
-                    for (let d = 0; d < batchDispatches; d++) {
-                        paramArr[0] = hWords[0];
-                        paramArr[1] = hWords[1];
-                        paramArr[2] = hWords[2];
-                        paramArr[3] = hWords[3];
-                        paramArr[4] = hWords[4];
-                        paramArr[5] = STEPS_PER_THREAD;
-                        paramArr[6] = NUM_THREADS;
-                        paramArr[7] = d;
-                        this.device.queue.writeBuffer(this.pBuf, 0, paramArr);
-
-                        const enc = this.device.createCommandEncoder();
-                        const pass = enc.beginComputePass();
-                        pass.setPipeline(this.pipe);
-                        pass.setBindGroup(0, this.bg);
-                        pass.dispatchWorkgroups(wgCount);
-                        pass.end();
-                        if (d === batchDispatches - 1) {
-                            enc.copyBufferToBuffer(this.outBuf, 0, this.readBuf, 0, 16);
-                        }
-                        this.device.queue.submit([enc.finish()]);
-                    }
-
-                    await this.readBuf.mapAsync(GPUMapMode.READ);
-                    if (!this.running || mySession !== this._sessionId) {
-                        this.readBuf.unmap();
+                    if (targets.length === 0) {
                         return;
                     }
-                    const hit = new Uint32Array(this.readBuf.getMappedRange().slice(0));
-                    this.readBuf.unmap();
-                    const dt = performance.now() - t0;
-                    const batchKeys = batchDispatches * KEYS_PER_DISPATCH;
-                    if (dt > 0) this.gpuSpeed = Math.round(batchKeys / (dt / 1000));
 
-                    if (hit[0] === 1) {
-                        const foundKey = anchorBase + BigInt(hit[3]) * BigInt(KEYS_PER_DISPATCH) + BigInt(hit[1]) * BigInt(STEPS_PER_THREAD) + BigInt(hit[2]);
-                        if (foundKey >= 1n && foundKey < SECP_N && foundKey >= minK && foundKey <= maxK) {
-                            this.stop();
-                            if (callbacks && typeof callbacks.onWin === 'function') {
-                                callbacks.onWin(foundKey, tgt);
+                    let targetIdx = 0;
+                    const paramArr = new Uint32Array(8);
+                    const zeroHit = new Uint32Array([0, 0, 0, 0]);
+                    const wgCount = Math.ceil(NUM_THREADS / 64);
+
+                    this.statusText = 'Aktif';
+
+                    while (this.running && mySession === this._sessionId) {
+                        const tgt = targets[targetIdx % targets.length];
+                        let tStart = BigInt('0x' + (tgt.start || '1').replace(/^0x/i, ''));
+                        let tEnd = BigInt('0x' + (tgt.end || '1').replace(/^0x/i, ''));
+                        if (!cfg.isCircularMode && targets.length === 1) {
+                            if (cfg.isDualSliderActive && cfg.sliderMinHex && cfg.sliderMaxHex) {
+                                const sMin = BigInt('0x' + String(cfg.sliderMinHex).replace(/^0x/i, ''));
+                                const sMax = BigInt('0x' + String(cfg.sliderMaxHex).replace(/^0x/i, ''));
+                                if (sMin > tStart) tStart = sMin;
+                                if (sMax < tEnd) tEnd = sMax;
                             }
+                            if (cfg.activeRangeMode === 'HEX' && cfg.userHexStart && cfg.userHexEnd) {
+                                const hMin = BigInt('0x' + String(cfg.userHexStart).replace(/^0x/i, ''));
+                                const hMax = BigInt('0x' + String(cfg.userHexEnd).replace(/^0x/i, ''));
+                                if (hMin > tStart) tStart = hMin;
+                                if (hMax < tEnd) tEnd = hMax;
+                            }
+                        }
+                        const minK = tStart < 1n ? 1n : tStart;
+                        const maxK = tEnd >= SECP_N ? (SECP_N - 1n) : (tEnd < minK ? minK : tEnd);
+                        const rangeLen = maxK >= minK ? (maxK - minK + 1n) : 1n;
+                        if (maxK <= BigInt(STEPS_PER_THREAD)) {
+                            // Tiny keys <= 64 (e.g. Puzzles #1-#6) are solved instantaneously on CPU and would hit dx==0 in batch jump table
+                            if (targets.length > 1) { targetIdx++; continue; }
                             return;
                         }
-                    }
+                        const hWords = hash160HexToU32x5(tgt.targetHash160);
 
-                    const lastKey = anchorBase + BigInt(batchKeys - 1);
-                    if (callbacks && typeof callbacks.onProgress === 'function') {
-                        callbacks.onProgress(batchKeys, lastKey > maxK ? maxK : lastKey, this.gpuSpeed);
-                    }
+                        // For tiny ranges (<= 1 dispatch), start at minK; for small/medium ranges (<= 2^28), start at midpoint and wrap to minK so GPU never overlaps CPU worker #0 at minK
+                        const isSmallRange = rangeLen <= 268435456n;
+                        const startAtMid = isSmallRange && rangeLen > BigInt(KEYS_PER_DISPATCH);
+                        let anchorBase = !isSmallRange
+                            ? randomBigIntInRange(minK, maxK > BigInt(KEYS_PER_DISPATCH) ? (maxK - BigInt(KEYS_PER_DISPATCH)) : minK)
+                            : (startAtMid ? (minK + (rangeLen >> 1n)) : minK);
+                        if (anchorBase <= BigInt(STEPS_PER_THREAD)) {
+                            anchorBase = BigInt(STEPS_PER_THREAD) + 1n;
+                        }
+                        let wrappedToStart = false;
 
-                    anchorBase += BigInt(batchKeys);
-                    dispatchesSinceReanchor += batchDispatches;
-
-                    if (isSmallRange && anchorBase > maxK && startAtMid && !wrappedToStart) {
-                        wrappedToStart = true;
-                        anchorBase = minK;
                         this._fillAnchors(anchorBase);
-                    } else if (anchorBase > maxK || dispatchesSinceReanchor >= MAX_DISPATCHES_PER_ANCHOR) {
-                        if (targets.length > 1) targetIdx++;
-                        break; // Re-anchor (or switch puzzle in circular mode)
+                        let dispatchesSinceReanchor = 0;
+                        const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? (Math.ceil(Number(rangeLen) / KEYS_PER_DISPATCH) + 2) : 400;
+
+                        while (this.running && mySession === this._sessionId) {
+                            const batchDispatches = isSmallRange
+                                ? Math.min(BATCH_DISPATCHES, Math.max(1, Math.ceil(Number(maxK - anchorBase + 1n) / KEYS_PER_DISPATCH)))
+                                : BATCH_DISPATCHES;
+
+                            const t0 = performance.now();
+                            this.device.queue.writeBuffer(this.outBuf, 0, zeroHit);
+
+                            for (let d = 0; d < batchDispatches; d++) {
+                                paramArr[0] = hWords[0];
+                                paramArr[1] = hWords[1];
+                                paramArr[2] = hWords[2];
+                                paramArr[3] = hWords[3];
+                                paramArr[4] = hWords[4];
+                                paramArr[5] = STEPS_PER_THREAD;
+                                paramArr[6] = NUM_THREADS;
+                                paramArr[7] = d;
+                                this.device.queue.writeBuffer(this.pBuf, 0, paramArr);
+
+                                const enc = this.device.createCommandEncoder();
+                                const pass = enc.beginComputePass();
+                                pass.setPipeline(this.pipe);
+                                pass.setBindGroup(0, this.bg);
+                                pass.dispatchWorkgroups(wgCount);
+                                pass.end();
+                                if (d === batchDispatches - 1) {
+                                    enc.copyBufferToBuffer(this.outBuf, 0, this.readBuf, 0, 16);
+                                }
+                                this.device.queue.submit([enc.finish()]);
+                            }
+
+                            await this.readBuf.mapAsync(GPUMapMode.READ);
+                            if (!this.running || mySession !== this._sessionId) {
+                                try { this.readBuf.unmap(); } catch (_) {}
+                                return;
+                            }
+                            const hit = new Uint32Array(this.readBuf.getMappedRange().slice(0));
+                            this.readBuf.unmap();
+                            const dt = performance.now() - t0;
+                            const batchKeys = batchDispatches * KEYS_PER_DISPATCH;
+                            if (dt > 0) this.gpuSpeed = Math.round(batchKeys / (dt / 1000));
+
+                            if (hit[0] === 1) {
+                                const foundKey = anchorBase + BigInt(hit[3]) * BigInt(KEYS_PER_DISPATCH) + BigInt(hit[1]) * BigInt(STEPS_PER_THREAD) + BigInt(hit[2]);
+                                if (foundKey >= 1n && foundKey < SECP_N && foundKey >= minK && foundKey <= maxK) {
+                                    this.stop();
+                                    if (callbacks && typeof callbacks.onWin === 'function') {
+                                        callbacks.onWin(foundKey, tgt);
+                                    }
+                                    return;
+                                }
+                            }
+
+                            const lastKey = anchorBase + BigInt(batchKeys - 1);
+                            if (callbacks && typeof callbacks.onProgress === 'function') {
+                                callbacks.onProgress(batchKeys, lastKey > maxK ? maxK : lastKey, this.gpuSpeed);
+                            }
+
+                            anchorBase += BigInt(batchKeys);
+                            dispatchesSinceReanchor += batchDispatches;
+
+                            if (isSmallRange && anchorBase > maxK && startAtMid && !wrappedToStart) {
+                                wrappedToStart = true;
+                                anchorBase = minK;
+                                this._fillAnchors(anchorBase);
+                            } else if (anchorBase > maxK || dispatchesSinceReanchor >= MAX_DISPATCHES_PER_ANCHOR) {
+                                if (targets.length > 1) targetIdx++;
+                                break; // Re-anchor (or switch puzzle in circular mode)
+                            }
+                            // Yield a macrotask tick (mapAsync already yields during GPU work)
+                            await new Promise(r => setTimeout(r, 0));
+                        }
                     }
-                    // Yield a macrotask tick (mapAsync already yields during GPU work)
-                    await new Promise(r => setTimeout(r, 0));
+                } catch (err) {
+                    console.warn('[WebGPU] Run loop error:', err);
+                } finally {
+                    try {
+                        if (this.readBuf && this.readBuf.mapState === 'mapped') this.readBuf.unmap();
+                    } catch (_) {}
+                    if (mySession === this._sessionId) {
+                        this.running = false;
+                        this.gpuSpeed = 0;
+                        if (this.ready) this.statusText = 'Hazır';
+                    }
                 }
-            }
+            })();
+            this._runPromise = runTask;
+            await runTask;
         }
     }
 
