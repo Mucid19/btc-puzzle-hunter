@@ -1,4 +1,4 @@
-const CACHE_NAME = 'btc-puzzle-v79';
+const CACHE_NAME = 'btc-puzzle-v87';
 const ASSETS = [
   './',
   './index.html',

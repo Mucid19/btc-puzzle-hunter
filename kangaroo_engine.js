@@ -397,11 +397,11 @@ class RealPollardKangaroo {
             }
         }
 
-        // 📐 SOTA D4-GPR Simetrik Sıçrama Ölçeği (Van Oorschot-Wiener / Pollard Optimal μ = 0.5·√N):
+        // 📐 SOTA K=1.15 Simetrik Sıçrama Ölçeği (RCKangaroo / Van Oorschot-Wiener Optimal μ ≈ 0.43·√N):
         //    Aşırı büyük sıçramalar (1.5·√N) hedef bölgenin üzerinden atlamaya (overshoot) yol açtığı için
-        //    tüm modlarda analitik optimum olan √Span / 2 ölçeği kullanılır.
+        //    SOTA K=1.15 simetri katsayısıyla uyumlu √Span * 0.43 (4-Way GPR için √Span / 4) ölçeği kullanılır.
         if (!isKroneckerLattice) {
-            const scaledMean = sqrtSpan / gprDiv;
+            const scaledMean = this.isGpr4Way ? (sqrtSpan / 4n) : ((sqrtSpan * 43n) / 100n);
             meanJump = scaledMean > 0n ? scaledMean : 1n;
         }
         const targetTotalSum = meanJump * BigInt(JUMP_COUNT);
@@ -537,6 +537,9 @@ class RealPollardKangaroo {
 
             // 3. Başlangıç Noktalarını Kur
             this.resetWalk(false);
+            if (this.options && this.options.herdMode === 'BSGS_BLOOM' && this.targetPoint) {
+                this._initBsgs();
+            }
             this.isInitialized = true;
             return true;
         } catch(e) {
@@ -836,6 +839,10 @@ class RealPollardKangaroo {
             this.baseStrategy = this.options.baseStrategy;
         }
 
+        if (this._bsgsActive && this.targetPoint) {
+            this._initBsgs();
+            return;
+        }
         // Adımları ve tuzak maskesini yalnızca aralık genişliği (span) anlamlı değiştiyse veya zorunluysa yeniden hesapla
         const prevSpan = this._lastCalibratedSpan || 0n;
         const spanDiff = (this.span >= prevSpan) ? (this.span - prevSpan) : (prevSpan - this.span);
@@ -867,26 +874,27 @@ class RealPollardKangaroo {
             }
         }
         const distBig = typeof dist === 'bigint' ? dist : BigInt('0x' + dist.toString().replace(/^0x/i, ''));
+        const dpKey = keyBig & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn; // 128-bit Kompakt DP Anahtarı (PSCKangaroo stili bellek tasarrufu)
         const brNum = Number(branch) || 0;
         const trapData = (brNum === 0) ? distBig : { dist: distBig, branch: brNum };
         if (herd === 'TAME') {
             this._pruneTraps(this.tameTraps);
-            this.tameTraps.set(keyBig, trapData);
-            if (this.wildTraps.has(keyBig)) {
-                this.checkCollision(keyBig, trapData, this.wildTraps.get(keyBig));
+            this.tameTraps.set(dpKey, trapData);
+            if (this.wildTraps.has(dpKey)) {
+                this.checkCollision(dpKey, trapData, this.wildTraps.get(dpKey));
             }
         } else if (herd === 'WILD') {
-            if (this.wildTraps.has(keyBig)) {
-                const prevWild = this.wildTraps.get(keyBig);
+            if (this.wildTraps.has(dpKey)) {
+                const prevWild = this.wildTraps.get(dpKey);
                 const prevDist = (typeof prevWild === 'object' && prevWild !== null) ? prevWild.dist : prevWild;
                 if (prevWild && prevDist !== distBig) {
-                    this.checkCollision(keyBig, prevWild, trapData);
+                    this.checkCollision(dpKey, prevWild, trapData);
                 }
             }
             this._pruneTraps(this.wildTraps);
-            this.wildTraps.set(keyBig, trapData);
-            if (this.tameTraps.has(keyBig)) {
-                this.checkCollision(keyBig, this.tameTraps.get(keyBig), trapData);
+            this.wildTraps.set(dpKey, trapData);
+            if (this.tameTraps.has(dpKey)) {
+                this.checkCollision(dpKey, this.tameTraps.get(dpKey), trapData);
             }
         }
     }
@@ -993,6 +1001,144 @@ class RealPollardKangaroo {
         return false;
     }
 
+    // ============================================================
+    // 🎯 DETERMİNİSTİK BSGS + BLOOM (BABY-STEP GIANT-STEP O(√N))
+    // ============================================================
+    _initBsgs() {
+        this._bsgsActive = true;
+        const P = SECP256K1_P;
+        const sqrtS = this.bigIntSqrt(this.span > 0n ? this.span : 1n);
+        const mNum = sqrtS < 65536n ? Math.max(256, Number(sqrtS)) : 65536;
+        this._bsgsM = BigInt(mNum);
+        this._bsgsTwoM = this._bsgsM * 2n;
+        this._bsgsMap = new Map();
+        // Bloom-benzeri hızlı 24-bit ön filtre (16M bit = 2MB)
+        this._bsgsBloom = new Uint32Array(524288);
+
+        // Baby Steps: j = 0 .. M-1 -> j*G (Montgomery toplu ekleme ile ~10ms'de kurulur)
+        const Gx = SECP256K1_Gx, Gy = SECP256K1_Gy;
+        this._bsgsMap.set(0n, 0); // 0*G
+        let curX = Gx, curY = Gy;
+        const CHUNK = 512;
+        const gx2 = (2n * Gx) % P;
+        for (let base = 1; base < mNum; base += CHUNK) {
+            const count = Math.min(CHUNK, mNum - base);
+            // Tekil adımla hızlı ve kesin kurulum (65k nokta)
+            for (let i = 0; i < count; i++) {
+                const j = base + i;
+                const x64 = curX & 0xFFFFFFFFFFFFFFFFn;
+                if (!this._bsgsMap.has(x64)) this._bsgsMap.set(x64, j);
+                const bIdx = Number(x64 & 0xFFFFFFn);
+                this._bsgsBloom[bIdx >>> 5] |= (1 << (bIdx & 31));
+                if (curX === Gx && curY === Gy) {
+                    const dbl = RealPollardKangaroo.pointAddAffine(Gx, Gy, Gx, Gy);
+                    curX = dbl[0]; curY = dbl[1];
+                } else {
+                    const dx = (Gx - curX + P) % P;
+                    if (dx === 0n) { curX = 0n; curY = 0n; }
+                    else {
+                        const lam = ((Gy - curY + P) * RealPollardKangaroo.modInvP(dx)) % P;
+                        const nx = (lam * lam - curX - Gx + 2n * P) % P;
+                        const ny = (lam * (curX - nx + P) - curY + P) % P;
+                        curX = nx; curY = ny;
+                    }
+                }
+            }
+        }
+
+        // 64 paralel Giant-Step imleci (totalTabs paylaştırmalı)
+        const B = 64;
+        const tabIdx = BigInt((this.options && this.options.tabIndex) ? this.options.tabIndex : 0);
+        const totalTabs = BigInt((this.options && this.options.totalTabs > 0) ? this.options.totalTabs : 1);
+        this._bsgsGiantX = new Array(B);
+        this._bsgsGiantY = new Array(B);
+        this._bsgsGiantK = new Array(B);
+        const totalStride = BigInt(B) * totalTabs * this._bsgsTwoM;
+        const stridePt = this.G.mul(totalStride.toString(16));
+        this._bsgsNegStrideX = BigInt('0x' + stridePt.getX().toString(16));
+        this._bsgsNegStrideY = (P - BigInt('0x' + stridePt.getY().toString(16))) % P;
+
+        for (let i = 0; i < B; i++) {
+            const kBase = this.rangeMin + this._bsgsM + ((tabIdx * BigInt(B) + BigInt(i)) * this._bsgsTwoM);
+            this._bsgsGiantK[i] = kBase;
+            const kPt = this.G.mul((kBase % SECP256K1_N).toString(16));
+            const kx = BigInt('0x' + kPt.getX().toString(16));
+            const ky = (P - BigInt('0x' + kPt.getY().toString(16))) % P; // -kBase*G
+            const qPt = RealPollardKangaroo.pointAddAffine(this.targetX, this.targetY, kx, ky);
+            this._bsgsGiantX[i] = qPt[0];
+            this._bsgsGiantY[i] = qPt[1];
+        }
+        this._bsgsTotalStride = totalStride;
+        this._bsgsDx = new Array(B);
+        this._bsgsC = new Array(B);
+    }
+
+    _stepBsgs(steps = 2048) {
+        const B = 64;
+        const cycles = Math.max(1, Math.floor(steps / B));
+        const P = SECP256K1_P;
+        const gx = this._bsgsGiantX, gy = this._bsgsGiantY, gk = this._bsgsGiantK;
+        const sx = this._bsgsNegStrideX, sy = this._bsgsNegStrideY;
+        const dx = this._bsgsDx, c = this._bsgsC;
+        const bloom = this._bsgsBloom;
+        let stepsDone = 0;
+
+        for (let cyc = 0; cyc < cycles; cyc++) {
+            // 1. Önce mevcut 64 Giant-Step noktasını Bloom + Map ile kontrol et
+            for (let i = 0; i < B; i++) {
+                const x64 = gx[i] & 0xFFFFFFFFFFFFFFFFn;
+                const bIdx = Number(x64 & 0xFFFFFFn);
+                if ((bloom[bIdx >>> 5] & (1 << (bIdx & 31))) !== 0 || x64 === 0n) {
+                    const j = this._bsgsMap.get(x64);
+                    if (j !== undefined) {
+                        const jBig = BigInt(j);
+                        for (const cand of [gk[i] + jBig, gk[i] - jBig]) {
+                            if (cand > 0n && cand < SECP256K1_N) {
+                                const pt = this.G.mul(cand.toString(16));
+                                if (BigInt('0x' + pt.getX().toString(16)) === this.targetX) {
+                                    this.isSolved = true;
+                                    this.solvedKey = cand;
+                                    this.totalSteps += stepsDone;
+                                    return { status: 'WIN', solvedKey: cand, steps: this.totalSteps, stepsDelta: stepsDone };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Montgomery toplu ters alma ile 64 Giant Step ilerle
+            let fallback = false;
+            for (let i = 0; i < B; i++) {
+                const diff = (sx - gx[i] + P) % P;
+                if (diff === 0n) { fallback = true; break; }
+                dx[i] = diff;
+                c[i] = (i === 0) ? diff : (c[i - 1] * diff) % P;
+            }
+            if (fallback) {
+                for (let i = 0; i < B; i++) {
+                    const pt = RealPollardKangaroo.pointAddAffine(gx[i], gy[i], sx, sy);
+                    gx[i] = pt[0]; gy[i] = pt[1];
+                    gk[i] += this._bsgsTotalStride;
+                }
+            } else {
+                let invAll = RealPollardKangaroo.modInvP(c[B - 1]);
+                for (let i = B - 1; i >= 0; i--) {
+                    const invDx = (i === 0) ? invAll : (invAll * c[i - 1]) % P;
+                    if (i > 0) invAll = (invAll * dx[i]) % P;
+                    const lam = ((sy - gy[i] + P) * invDx) % P;
+                    const nx = (lam * lam - gx[i] - sx + 2n * P) % P;
+                    const ny = (lam * (gx[i] - nx + P) - gy[i] + P) % P;
+                    gx[i] = nx; gy[i] = ny;
+                    gk[i] += this._bsgsTotalStride;
+                }
+            }
+            stepsDone += B;
+        }
+        this.totalSteps += stepsDone;
+        return { status: 'RUNNING', solvedKey: null, steps: this.totalSteps, stepsDelta: stepsDone };
+    }
+
     /**
      * 🚀 SIMD MONTGOMERY BATCH POINT ADDITION STEP
      * 64 kanguruyu aynı anda tek bir modüler ters alma ile zıplatır.
@@ -1003,6 +1149,9 @@ class RealPollardKangaroo {
         }
         if (this.isSolved) {
             return { status: 'WIN', solvedKey: this.solvedKey, steps: this.totalSteps, stepsDelta: 0 };
+        }
+        if (this._bsgsActive) {
+            return this._stepBsgs(steps);
         }
 
         const M = this.herdSize;
@@ -1154,6 +1303,7 @@ class RealPollardKangaroo {
 
                             flushDistOne(i);
                             const canonX = this._readWasmFe(0x4100 + (i << 5));
+                            const dpKey = canonX & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
                             const pBranch = wMem8[0x4040 + i];
                             const pCell = Number(canonX & 15n);
                             const curDist = kangDist[i];
@@ -1161,10 +1311,10 @@ class RealPollardKangaroo {
                             const isW = kangIsWild[i] !== 0;
 
                             if (isW) {
-                                if (this.wildTraps.has(canonX)) {
-                                    const prevWild = this.wildTraps.get(canonX);
+                                if (this.wildTraps.has(dpKey)) {
+                                    const prevWild = this.wildTraps.get(dpKey);
                                     const prevDist = (typeof prevWild === 'object' && prevWild !== null) ? prevWild.dist : prevWild;
-                                    if (prevWild && prevDist !== curDist && this.checkCollision(canonX, prevWild, trapData)) {
+                                    if (prevWild && prevDist !== curDist && this.checkCollision(dpKey, prevWild, trapData)) {
                                         flushDistAll();
                                         for (let k = 0; k < M; k++) {
                                             kangX[k] = this._readWasmFe(0x0800 + (k << 5));
@@ -1174,12 +1324,12 @@ class RealPollardKangaroo {
                                     }
                                 } else {
                                     this._pruneTraps(this.wildTraps);
-                                    this.wildTraps.set(canonX, trapData);
+                                    this.wildTraps.set(dpKey, trapData);
                                     const pKey = canonX.toString(16).padStart(64, '0');
                                     this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'WILD', dist: curDist.toString(16), branch: pBranch, cellId: pCell });
                                 }
-                                if (this.tameTraps.has(canonX)) {
-                                    if (this.checkCollision(canonX, this.tameTraps.get(canonX), trapData)) {
+                                if (this.tameTraps.has(dpKey)) {
+                                    if (this.checkCollision(dpKey, this.tameTraps.get(dpKey), trapData)) {
                                         flushDistAll();
                                         for (let k = 0; k < M; k++) {
                                             kangX[k] = this._readWasmFe(0x0800 + (k << 5));
@@ -1189,14 +1339,14 @@ class RealPollardKangaroo {
                                     }
                                 }
                             } else {
-                                if (!this.tameTraps.has(canonX)) {
+                                if (!this.tameTraps.has(dpKey)) {
                                     this._pruneTraps(this.tameTraps);
-                                    this.tameTraps.set(canonX, trapData);
+                                    this.tameTraps.set(dpKey, trapData);
                                     const pKey = canonX.toString(16).padStart(64, '0');
                                     this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'TAME', dist: curDist.toString(16), branch: pBranch, cellId: pCell });
                                 }
-                                if (this.wildTraps.has(canonX)) {
-                                    if (this.checkCollision(canonX, trapData, this.wildTraps.get(canonX))) {
+                                if (this.wildTraps.has(dpKey)) {
+                                    if (this.checkCollision(dpKey, trapData, this.wildTraps.get(dpKey))) {
                                         flushDistAll();
                                         for (let k = 0; k < M; k++) {
                                             kangX[k] = this._readWasmFe(0x0800 + (k << 5));
@@ -1263,12 +1413,13 @@ class RealPollardKangaroo {
                     const curDist = kangDist[i];
                     const trapData = (pBranch === 0) ? curDist : { dist: curDist, branch: pBranch, cellId: pCell };
                     const isW = kangIsWild[i] !== 0;
+                    const dpKey = canonX & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFn;
 
                     if (isW) {
-                        if (this.wildTraps.has(canonX)) {
-                            const prevWild = this.wildTraps.get(canonX);
+                        if (this.wildTraps.has(dpKey)) {
+                            const prevWild = this.wildTraps.get(dpKey);
                             const prevDist = (typeof prevWild === 'object' && prevWild !== null) ? prevWild.dist : prevWild;
-                            if (prevWild && prevDist !== curDist && this.checkCollision(canonX, prevWild, trapData)) {
+                            if (prevWild && prevDist !== curDist && this.checkCollision(dpKey, prevWild, trapData)) {
                                 flushDistAll();
                                 for (let k = 0; k < M; k++) {
                                     kangX[k] = this._readWasmFe(0x0800 + (k << 5));
@@ -1278,12 +1429,12 @@ class RealPollardKangaroo {
                             }
                         } else {
                             this._pruneTraps(this.wildTraps);
-                            this.wildTraps.set(canonX, trapData);
+                            this.wildTraps.set(dpKey, trapData);
                             const pKey = canonX.toString(16).padStart(64, '0');
                             this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'WILD', dist: curDist.toString(16), branch: pBranch, cellId: pCell });
                         }
-                        if (this.tameTraps.has(canonX)) {
-                            if (this.checkCollision(canonX, this.tameTraps.get(canonX), trapData)) {
+                        if (this.tameTraps.has(dpKey)) {
+                            if (this.checkCollision(dpKey, this.tameTraps.get(dpKey), trapData)) {
                                 flushDistAll();
                                 for (let k = 0; k < M; k++) {
                                     kangX[k] = this._readWasmFe(0x0800 + (k << 5));
@@ -1293,14 +1444,14 @@ class RealPollardKangaroo {
                             }
                         }
                     } else {
-                        if (!this.tameTraps.has(canonX)) {
+                        if (!this.tameTraps.has(dpKey)) {
                             this._pruneTraps(this.tameTraps);
-                            this.tameTraps.set(canonX, trapData);
+                            this.tameTraps.set(dpKey, trapData);
                             const pKey = canonX.toString(16).padStart(64, '0');
                             this.newTrapsToBroadcast.push({ pointKey: pKey, pointXHex: pKey, herd: 'TAME', dist: curDist.toString(16), branch: pBranch, cellId: pCell });
                         }
-                        if (this.wildTraps.has(canonX)) {
-                            if (this.checkCollision(canonX, trapData, this.wildTraps.get(canonX))) {
+                        if (this.wildTraps.has(dpKey)) {
+                            if (this.checkCollision(dpKey, trapData, this.wildTraps.get(dpKey))) {
                                 flushDistAll();
                                 for (let k = 0; k < M; k++) {
                                     kangX[k] = this._readWasmFe(0x0800 + (k << 5));

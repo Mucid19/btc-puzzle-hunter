@@ -3,13 +3,20 @@
 
     const SECP_P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
     const SECP_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+    const SECP_LAMBDA = 0x5363AD4CC05C30E0A5261C028812645A122E22EA20816678DF02967C1B23BD72n;
     const GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n;
     const GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n;
 
     const STEPS_PER_THREAD = 64;
-    const NUM_THREADS = 4096; // 4096 * 64 = 262,144 keys per dispatch (halves fe_inv cost, smooth UI)
-    const KEYS_PER_DISPATCH = NUM_THREADS * STEPS_PER_THREAD;
-    const BATCH_DISPATCHES = 1; // 1 dispatch per frame + yield keeps Windows WDDM UI 60fps smooth
+    const MAX_THREADS = 16384;
+    const INTENSITY_MAP = { LOW: 2048, MEDIUM: 4096, HIGH: 8192, ULTRA: 16384 };
+    const DEFAULT_THREADS = 4096;
+    const MAX_BATCH_DISPATCHES = 16; // Adaptive up to 16 dispatches per readback targeting ~30-60ms per batch
+    const BLOOM_WORDS = 524288; // 524288 * 32 = 2^24 bits (2 MB)
+    const BLOOM_MASK = 0xFFFFFF;
+    const KANG_PER_THREAD = 4;
+    const KANG_STEPS_PER_DISPATCH = 16;
+    const MAX_DP_OUT = 256;
 
     const WGSL_KERNEL = `
 struct Params {
@@ -21,6 +28,10 @@ struct Params {
   stepsPerThread: u32,
   numThreads: u32,
   dispatchIdx: u32,
+  bloomMask: u32,
+  useGlvSym: u32,
+  pad0: u32,
+  pad1: u32,
 };
 
 @group(0) @binding(0) var<uniform> params: Params;
@@ -28,7 +39,8 @@ struct Params {
 @group(0) @binding(2) var<storage, read_write> ptY: array<u32>;
 @group(0) @binding(3) var<storage, read> jumpX: array<u32>;
 @group(0) @binding(4) var<storage, read> jumpY: array<u32>;
-@group(0) @binding(5) var<storage, read_write> outHit: array<u32>;
+@group(0) @binding(5) var<storage, read_write> outHit: array<atomic<u32>>;
+@group(0) @binding(6) var<storage, read> bloom: array<u32>;
 
 fn getP(i: u32) -> u32 {
   if (i == 0u) { return 0xFFFFFC2Fu; }
@@ -500,6 +512,55 @@ fn ripemd160_32(sha: array<u32, 8>) -> array<u32, 5> {
   return out;
 }
 
+fn getBeta() -> array<u32, 8> {
+  var b: array<u32, 8>;
+  b[0] = 0x719501EEu; b[1] = 0xC1396C28u; b[2] = 0x12F58995u; b[3] = 0x9CF04975u;
+  b[4] = 0xAC3434E9u; b[5] = 0x6E64479Eu; b[6] = 0x657C0710u; b[7] = 0x7AE96A2Bu;
+  return b;
+}
+
+fn check_h160(h160: array<u32, 5>, tid: u32, stepVal: u32, subKind: u32) {
+  if (h160[0] == params.target0 && h160[1] == params.target1 && h160[2] == params.target2 && h160[3] == params.target3 && h160[4] == params.target4) {
+    let res = atomicCompareExchangeWeak(&outHit[0], 0u, 1u);
+    if (res.exchanged) {
+      atomicStore(&outHit[1], tid);
+      atomicStore(&outHit[2], (subKind << 16u) | stepVal);
+      atomicStore(&outHit[3], params.dispatchIdx);
+    }
+    return;
+  }
+  if (params.bloomMask != 0u) {
+    let b0 = (h160[0] ^ (h160[3] * 0x9E3779B1u)) & params.bloomMask;
+    if ((bloom[b0 >> 5u] & (1u << (b0 & 31u))) != 0u) {
+      let b1 = (h160[1] ^ (h160[4] * 0x85EBCA77u)) & params.bloomMask;
+      if ((bloom[b1 >> 5u] & (1u << (b1 & 31u))) != 0u) {
+        let b2 = ((h160[2] ^ h160[0]) * 0xC2B2AE3Du) & params.bloomMask;
+        if ((bloom[b2 >> 5u] & (1u << (b2 & 31u))) != 0u) {
+          let b3 = ((h160[3] ^ h160[1] ^ h160[4]) * 0x27D4EB2Fu) & params.bloomMask;
+          if ((bloom[b3 >> 5u] & (1u << (b3 & 31u))) != 0u) {
+            let res = atomicCompareExchangeWeak(&outHit[4], 0u, 2u);
+            if (res.exchanged) {
+              atomicStore(&outHit[5], tid);
+              atomicStore(&outHit[6], (subKind << 16u) | stepVal);
+              atomicStore(&outHit[7], params.dispatchIdx);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+fn check_point(pfx: u32, px: array<u32, 8>, tid: u32, stepVal: u32) {
+  check_h160(ripemd160_32(sha256_33(pfx, px)), tid, stepVal, 0u);
+  if (params.useGlvSym != 0u) {
+    check_h160(ripemd160_32(sha256_33(pfx ^ 1u, px)), tid, stepVal, 1u);
+    let bx = fe_mul(px, getBeta());
+    check_h160(ripemd160_32(sha256_33(pfx, bx)), tid, stepVal, 2u);
+    check_h160(ripemd160_32(sha256_33(pfx ^ 1u, bx)), tid, stepVal, 3u);
+  }
+}
+
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let tid = gid.x;
@@ -513,14 +574,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     cy[i] = ptY[base + i];
   }
 
-  {
-    let pfx = select(2u, 3u, (cy[0] & 1u) == 1u);
-    let sha = sha256_33(pfx, cx);
-    let h160 = ripemd160_32(sha);
-    if (h160[0] == params.target0 && h160[1] == params.target1 && h160[2] == params.target2 && h160[3] == params.target3 && h160[4] == params.target4) {
-      outHit[0] = 1u; outHit[1] = tid; outHit[2] = 0u; outHit[3] = params.dispatchIdx;
-    }
-  }
+  check_point(select(2u, 3u, (cy[0] & 1u) == 1u), cx, tid, 0u);
 
   let S = params.stepsPerThread;
   var cArr: array<array<u32, 8>, 64>;
@@ -566,18 +620,237 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (s == S - 1u) {
       nextX = nx; nextY = ny;
     } else {
-      let pfx = select(2u, 3u, (ny[0] & 1u) == 1u);
-      let sha = sha256_33(pfx, nx);
-      let h160 = ripemd160_32(sha);
-      if (h160[0] == params.target0 && h160[1] == params.target1 && h160[2] == params.target2 && h160[3] == params.target3 && h160[4] == params.target4) {
-        outHit[0] = 1u; outHit[1] = tid; outHit[2] = s + 1u; outHit[3] = params.dispatchIdx;
-      }
+      check_point(select(2u, 3u, (ny[0] & 1u) == 1u), nx, tid, s + 1u);
     }
   }
 
   for (var i: u32 = 0u; i < 8u; i = i + 1u) {
     ptX[base + i] = nextX[i];
     ptY[base + i] = nextY[i];
+  }
+}
+`;
+
+    const WGSL_KANGAROO_KERNEL = `
+struct KangParams {
+  numThreads: u32,
+  stepsPerDispatch: u32,
+  dpMaskLo: u32,
+  dpMaskHi: u32,
+};
+
+@group(0) @binding(0) var<uniform> params: KangParams;
+@group(0) @binding(1) var<storage, read_write> kangX: array<u32>;
+@group(0) @binding(2) var<storage, read_write> kangY: array<u32>;
+@group(0) @binding(3) var<storage, read_write> kangDist: array<u32>;
+@group(0) @binding(4) var<storage, read> kangHerd: array<u32>;
+@group(0) @binding(5) var<storage, read> kJumpX: array<u32>;
+@group(0) @binding(6) var<storage, read> kJumpY: array<u32>;
+@group(0) @binding(7) var<storage, read> kJumpDist: array<u32>;
+@group(0) @binding(8) var<storage, read_write> dpOut: array<atomic<u32>>;
+
+fn getP(i: u32) -> u32 {
+  if (i == 0u) { return 0xFFFFFC2Fu; }
+  if (i == 1u) { return 0xFFFFFFFEu; }
+  return 0xFFFFFFFFu;
+}
+fn fe_gte_p(a: ptr<function, array<u32, 8>>) -> bool {
+  for (var idx: i32 = 7; idx >= 0; idx = idx - 1) {
+    let i = u32(idx); let pi = getP(i);
+    if ((*a)[i] > pi) { return true; }
+    if ((*a)[i] < pi) { return false; }
+  }
+  return true;
+}
+fn fe_sub_p(a: ptr<function, array<u32, 8>>) {
+  var borrow: u32 = 0u;
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    let ai = (*a)[i]; let pi = getP(i);
+    let sub1 = ai - pi; let b1 = select(0u, 1u, ai < pi);
+    let sub2 = sub1 - borrow; let b2 = select(0u, 1u, sub1 < borrow);
+    (*a)[i] = sub2; borrow = b1 + b2;
+  }
+}
+fn fe_sub(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
+  var r: array<u32, 8>; var borrow: u32 = 0u;
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    let s1 = a[i] - b[i]; let b1 = select(0u, 1u, a[i] < b[i]);
+    let s2 = s1 - borrow; let b2 = select(0u, 1u, s1 < borrow);
+    r[i] = s2; borrow = b1 + b2;
+  }
+  if (borrow != 0u) {
+    var carry: u32 = 0u;
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+      let pi = getP(i);
+      let s1 = r[i] + pi; let c1 = select(0u, 1u, s1 < r[i]);
+      let s2 = s1 + carry; let c2 = select(0u, 1u, s2 < s1);
+      r[i] = s2; carry = c1 + c2;
+    }
+  }
+  return r;
+}
+fn mul32_64(a: u32, b: u32) -> vec2<u32> {
+  let a0 = a & 0xFFFFu; let a1 = a >> 16u; let b0 = b & 0xFFFFu; let b1 = b >> 16u;
+  let p00 = a0 * b0; let p01 = a0 * b1; let p10 = a1 * b0; let p11 = a1 * b1;
+  let mid1 = p01 + (p00 >> 16u); let mid2 = mid1 + p10;
+  let c_mid = select(0u, 1u, mid2 < mid1);
+  return vec2<u32>((p00 & 0xFFFFu) | (mid2 << 16u), p11 + (mid2 >> 16u) + (c_mid << 16u));
+}
+fn fe_reduce_512(t_in: array<u32, 16>) -> array<u32, 8> {
+  var t = t_in; var r: array<u32, 8>;
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) { r[i] = t[i]; }
+  var c977: u32 = 0u;
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    let p = mul32_64(t[8u + i], 977u);
+    let s1 = r[i] + p.x; let c1 = select(0u, 1u, s1 < r[i]);
+    let s2 = s1 + c977; let c2 = select(0u, 1u, s2 < s1);
+    r[i] = s2; c977 = p.y + c1 + c2;
+  }
+  var csh: u32 = 0u;
+  for (var i: u32 = 1u; i < 8u; i = i + 1u) {
+    let v = t[7u + i];
+    let s1 = r[i] + v; let c1 = select(0u, 1u, s1 < r[i]);
+    let s2 = s1 + csh; let c2 = select(0u, 1u, s2 < s1);
+    r[i] = s2; csh = c1 + c2;
+  }
+  let top = c977 + csh; let ft = mul32_64(top, 977u); let f15 = mul32_64(t[15], 977u);
+  let s0 = r[0] + ft.x; var cy0 = select(0u, 1u, s0 < r[0]);
+  let s0b = s0 + f15.x; cy0 = cy0 + select(0u, 1u, s0b < s0); r[0] = s0b;
+  let add1 = ft.y + cy0; var cy1 = select(0u, 1u, add1 < ft.y);
+  let add1b = add1 + top; cy1 = cy1 + select(0u, 1u, add1b < add1);
+  let add1c = add1b + f15.y; cy1 = cy1 + select(0u, 1u, add1c < add1b);
+  let add1d = add1c + t[15]; cy1 = cy1 + select(0u, 1u, add1d < add1c);
+  let s1 = r[1] + add1d; cy1 = cy1 + select(0u, 1u, s1 < r[1]); r[1] = s1;
+  var cy2 = cy1;
+  for (var i: u32 = 2u; i < 8u; i = i + 1u) {
+    if (cy2 == 0u) { break; }
+    let sn = r[i] + cy2; cy2 = select(0u, 1u, sn < r[i]); r[i] = sn;
+  }
+  if (cy2 != 0u) {
+    let f2 = mul32_64(cy2, 977u); let sn0 = r[0] + f2.x; let c2b = select(0u, 1u, sn0 < r[0]); r[0] = sn0;
+    let a1 = r[1] + f2.y; var c1w = select(0u, 1u, a1 < r[1]);
+    let b1 = a1 + cy2; c1w = c1w + select(0u, 1u, b1 < a1);
+    let d1 = b1 + c2b; c1w = c1w + select(0u, 1u, d1 < b1); r[1] = d1;
+    for (var i: u32 = 2u; i < 8u; i = i + 1u) {
+      if (c1w == 0u) { break; }
+      let sn = r[i] + c1w; c1w = select(0u, 1u, sn < r[i]); r[i] = sn;
+    }
+  }
+  if (fe_gte_p(&r)) { fe_sub_p(&r); }
+  if (fe_gte_p(&r)) { fe_sub_p(&r); }
+  return r;
+}
+fn fe_mul(a: array<u32, 8>, b: array<u32, 8>) -> array<u32, 8> {
+  var t: array<u32, 16>;
+  for (var k: u32 = 0u; k < 16u; k = k + 1u) { t[k] = 0u; }
+  for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+    var carry: u32 = 0u; let ai = a[i];
+    for (var j: u32 = 0u; j < 8u; j = j + 1u) {
+      let p = mul32_64(ai, b[j]);
+      let s1 = t[i + j] + p.x; let c1 = select(0u, 1u, s1 < t[i + j]);
+      let s2 = s1 + carry; let c2 = select(0u, 1u, s2 < s1);
+      t[i + j] = s2; carry = p.y + c1 + c2;
+    }
+    t[i + 8u] = t[i + 8u] + carry;
+  }
+  return fe_reduce_512(t);
+}
+fn fe_sqr(a: array<u32, 8>) -> array<u32, 8> { return fe_mul(a, a); }
+fn fe_inv(x: array<u32, 8>) -> array<u32, 8> {
+  var x2 = fe_mul(fe_sqr(x), x); var x3 = fe_mul(fe_sqr(x2), x);
+  var x6 = x3; for (var i: u32 = 0u; i < 3u; i = i + 1u) { x6 = fe_sqr(x6); } x6 = fe_mul(x6, x3);
+  var x9 = x6; for (var i: u32 = 0u; i < 3u; i = i + 1u) { x9 = fe_sqr(x9); } x9 = fe_mul(x9, x3);
+  var x11 = x9; for (var i: u32 = 0u; i < 2u; i = i + 1u) { x11 = fe_sqr(x11); } x11 = fe_mul(x11, x2);
+  var x22 = x11; for (var i: u32 = 0u; i < 11u; i = i + 1u) { x22 = fe_sqr(x22); } x22 = fe_mul(x22, x11);
+  var x44 = x22; for (var i: u32 = 0u; i < 22u; i = i + 1u) { x44 = fe_sqr(x44); } x44 = fe_mul(x44, x22);
+  var x88 = x44; for (var i: u32 = 0u; i < 44u; i = i + 1u) { x88 = fe_sqr(x88); } x88 = fe_mul(x88, x44);
+  var x176 = x88; for (var i: u32 = 0u; i < 88u; i = i + 1u) { x176 = fe_sqr(x176); } x176 = fe_mul(x176, x88);
+  var x220 = x176; for (var i: u32 = 0u; i < 44u; i = i + 1u) { x220 = fe_sqr(x220); } x220 = fe_mul(x220, x44);
+  var x223 = x220; for (var i: u32 = 0u; i < 3u; i = i + 1u) { x223 = fe_sqr(x223); } x223 = fe_mul(x223, x3);
+  var t = x223;
+  for (var i: u32 = 0u; i < 23u; i = i + 1u) { t = fe_sqr(t); } t = fe_mul(t, x22);
+  for (var i: u32 = 0u; i < 5u; i = i + 1u) { t = fe_sqr(t); } t = fe_mul(t, x);
+  for (var i: u32 = 0u; i < 3u; i = i + 1u) { t = fe_sqr(t); } t = fe_mul(t, x2);
+  for (var i: u32 = 0u; i < 2u; i = i + 1u) { t = fe_sqr(t); } t = fe_mul(t, x);
+  return t;
+}
+
+@compute @workgroup_size(64)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let tid = gid.x;
+  if (tid >= params.numThreads) { return; }
+  var kx: array<array<u32, 8>, 4>;
+  var ky: array<array<u32, 8>, 4>;
+  var kd: array<array<u32, 8>, 4>;
+  var kh: array<u32, 4>;
+  for (var k: u32 = 0u; k < 4u; k = k + 1u) {
+    let kid = tid * 4u + k;
+    let base = kid * 8u;
+    kh[k] = kangHerd[kid];
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+      kx[k][i] = kangX[base + i];
+      ky[k][i] = kangY[base + i];
+      kd[k][i] = kangDist[base + i];
+    }
+  }
+  for (var step: u32 = 0u; step < params.stepsPerDispatch; step = step + 1u) {
+    var jIdx: array<u32, 4>;
+    var dxArr: array<array<u32, 8>, 4>;
+    var cArr: array<array<u32, 8>, 4>;
+    for (var k: u32 = 0u; k < 4u; k = k + 1u) {
+      let ji = kx[k][0] & 63u;
+      jIdx[k] = ji;
+      let jb = ji * 8u;
+      var jx: array<u32, 8>;
+      for (var i: u32 = 0u; i < 8u; i = i + 1u) { jx[i] = kJumpX[jb + i]; }
+      dxArr[k] = fe_sub(jx, kx[k]);
+      if (k == 0u) { cArr[0] = dxArr[0]; } else { cArr[k] = fe_mul(cArr[k - 1u], dxArr[k]); }
+    }
+    var invAll = fe_inv(cArr[3]);
+    for (var kk: i32 = 3; kk >= 0; kk = kk - 1) {
+      let k = u32(kk);
+      var invDx: array<u32, 8>;
+      if (k == 0u) {
+        invDx = invAll;
+      } else {
+        invDx = fe_mul(invAll, cArr[k - 1u]);
+        invAll = fe_mul(invAll, dxArr[k]);
+      }
+      let jb = jIdx[k] * 8u;
+      var jx: array<u32, 8>; var jy: array<u32, 8>;
+      for (var i: u32 = 0u; i < 8u; i = i + 1u) { jx[i] = kJumpX[jb + i]; jy[i] = kJumpY[jb + i]; }
+      let dy = fe_sub(jy, ky[k]);
+      let lam = fe_mul(dy, invDx);
+      let nx = fe_sub(fe_sub(fe_sqr(lam), kx[k]), jx);
+      let ny = fe_sub(fe_mul(lam, fe_sub(kx[k], nx)), ky[k]);
+      kx[k] = nx; ky[k] = ny;
+      var cy: u32 = 0u;
+      for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+        let jdi = kJumpDist[jb + i];
+        let s1 = kd[k][i] + jdi; let c1 = select(0u, 1u, s1 < kd[k][i]);
+        let s2 = s1 + cy; let c2 = select(0u, 1u, s2 < s1);
+        kd[k][i] = s2; cy = c1 + c2;
+      }
+      if ((nx[0] & params.dpMaskLo) == 0u && (nx[1] & params.dpMaskHi) == 0u) {
+        let slot = atomicAdd(&dpOut[0], 1u);
+        if (slot < 256u) {
+          let ob = 1u + slot * 17u;
+          atomicStore(&dpOut[ob], kh[k]);
+          for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+            atomicStore(&dpOut[ob + 1u + i], nx[i]);
+            atomicStore(&dpOut[ob + 9u + i], kd[k][i]);
+          }
+        }
+      }
+    }
+  }
+  for (var k: u32 = 0u; k < 4u; k = k + 1u) {
+    let base = (tid * 4u + k) * 8u;
+    for (var i: u32 = 0u; i < 8u; i = i + 1u) {
+      kangX[base + i] = kx[k][i];
+      kangY[base + i] = ky[k][i];
+      kangDist[base + i] = kd[k][i];
+    }
   }
 }
 `;
@@ -671,17 +944,55 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             this.jYBuf = null;
             this.outBuf = null;
             this.readBuf = null;
-            this.ptXArr = new Uint32Array(NUM_THREADS * 8);
-            this.ptYArr = new Uint32Array(NUM_THREADS * 8);
-            this.strideTable = null; // 128 precomputed multiples of (32 * G)
+            this.ptXArr = new Uint32Array(MAX_THREADS * 8);
+            this.ptYArr = new Uint32Array(MAX_THREADS * 8);
+            this.activeThreads = DEFAULT_THREADS;
+            this.intensity = 'MEDIUM';
+            this._lastKeysPerDisp = 0;
+            this.strideTable = null; // 128 precomputed multiples of (64 * G)
+            this.kangPipe = null;
+            this.kangBg = null;
+            this.kangPBuf = null;
+            this.kangXBuf = null;
+            this.kangYBuf = null;
+            this.kangDistBuf = null;
+            this.kangHerdBuf = null;
+            this.kJumpXBuf = null;
+            this.kJumpYBuf = null;
+            this.kJumpDistBuf = null;
+            this.dpOutBuf = null;
+            this.dpReadBuf = null;
             this.ready = false;
             this.unavailable = false;
             this._initPromise = null;
             this._runPromise = null;
             this.running = false;
             this._sessionId = 0;
+            this._adaptiveBatch = 2;
             this.statusText = 'Hazır';
             this.gpuSpeed = 0;
+        }
+
+        setIntensity(level) {
+            const key = String(level || 'MEDIUM').toUpperCase();
+            if (INTENSITY_MAP[key]) {
+                this.intensity = key;
+                this.activeThreads = INTENSITY_MAP[key];
+            }
+            return this.activeThreads;
+        }
+
+        _syncDispAdv() {
+            const kpd = this.activeThreads * STEPS_PER_THREAD;
+            if (!this.device || !this.jXBuf || !this.jYBuf || this._lastKeysPerDisp === kpd) return;
+            const dispAdv = scalarMul(GX, GY, BigInt(kpd));
+            const x8 = new Uint32Array(8);
+            const y8 = new Uint32Array(8);
+            bigIntToU32x8(dispAdv[0], x8, 0);
+            bigIntToU32x8(dispAdv[1], y8, 0);
+            this.device.queue.writeBuffer(this.jXBuf, (STEPS_PER_THREAD - 1) * 32, x8);
+            this.device.queue.writeBuffer(this.jYBuf, (STEPS_PER_THREAD - 1) * 32, y8);
+            this._lastKeysPerDisp = kpd;
         }
 
         static isSupported() {
@@ -715,7 +1026,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                     const info = await mod.getCompilationInfo();
                     const errs = info.messages.filter(m => m.type === 'error');
                     if (errs.length > 0) {
-                        console.error('[WebGPU] WGSL Compilation Error:', errs);
+                        console.error('[WebGPU] WGSL Compilation Error:', errs.map(m => `${m.lineNum}:${m.linePos} ${m.message}`).join(' | '));
                         this.unavailable = true;
                         this.statusText = 'Shader Hatası';
                         return false;
@@ -735,11 +1046,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                         bigIntToU32x8(cur[1], jumpYArr, s * 8);
                         cur = pointAddAffine(cur[0], cur[1], GX, GY);
                     }
-                    const dispAdv = scalarMul(GX, GY, BigInt(KEYS_PER_DISPATCH));
+                    const dispAdv = scalarMul(GX, GY, BigInt(this.activeThreads * STEPS_PER_THREAD));
                     bigIntToU32x8(dispAdv[0], jumpXArr, (STEPS_PER_THREAD - 1) * 8);
                     bigIntToU32x8(dispAdv[1], jumpYArr, (STEPS_PER_THREAD - 1) * 8);
+                    this._lastKeysPerDisp = this.activeThreads * STEPS_PER_THREAD;
 
-                    // Precompute strideTable[0..127] = (j+1) * (32 * G) for fast Montgomery batch anchor init
+                    // Precompute strideTable[0..127] = (j+1) * (64 * G) for fast Montgomery batch anchor init
                     const stride1 = scalarMul(GX, GY, BigInt(STEPS_PER_THREAD));
                     this.strideTable = new Array(128);
                     let sCur = stride1;
@@ -748,13 +1060,50 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                         if (j < 127) sCur = pointAddAffine(sCur[0], sCur[1], stride1[0], stride1[1]);
                     }
 
-                    this.pBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-                    this.ptXBuf = device.createBuffer({ size: NUM_THREADS * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-                    this.ptYBuf = device.createBuffer({ size: NUM_THREADS * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                    this.pBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+                    this.ptXBuf = device.createBuffer({ size: MAX_THREADS * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                    this.ptYBuf = device.createBuffer({ size: MAX_THREADS * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
                     this.jXBuf = device.createBuffer({ size: jumpXArr.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
                     this.jYBuf = device.createBuffer({ size: jumpYArr.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-                    this.outBuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
-                    this.readBuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+                    this.outBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+                    this.readBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+                    this.bloomBuf = device.createBuffer({ size: BLOOM_WORDS * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+
+                    // Kangaroo GPU Pipeline & Buffers
+                    const kMod = device.createShaderModule({ code: WGSL_KANGAROO_KERNEL });
+                    const kInfo = await kMod.getCompilationInfo();
+                    if (!kInfo.messages.some(m => m.type === 'error')) {
+                        this.kangPipe = await device.createComputePipelineAsync({
+                            layout: 'auto',
+                            compute: { module: kMod, entryPoint: 'main' }
+                        });
+                        const maxKangs = MAX_THREADS; // 4096 threads * 4 = 16384 max kangaroos
+                        this.kangPBuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+                        this.kangXBuf = device.createBuffer({ size: maxKangs * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kangYBuf = device.createBuffer({ size: maxKangs * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kangDistBuf = device.createBuffer({ size: maxKangs * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kangHerdBuf = device.createBuffer({ size: maxKangs * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kJumpXBuf = device.createBuffer({ size: 64 * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kJumpYBuf = device.createBuffer({ size: 64 * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        this.kJumpDistBuf = device.createBuffer({ size: 64 * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+                        const dpBytes = (1 + MAX_DP_OUT * 17) * 4;
+                        this.dpOutBuf = device.createBuffer({ size: dpBytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
+                        this.dpReadBuf = device.createBuffer({ size: dpBytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+                        this.kangBg = device.createBindGroup({
+                            layout: this.kangPipe.getBindGroupLayout(0),
+                            entries: [
+                                { binding: 0, resource: { buffer: this.kangPBuf } },
+                                { binding: 1, resource: { buffer: this.kangXBuf } },
+                                { binding: 2, resource: { buffer: this.kangYBuf } },
+                                { binding: 3, resource: { buffer: this.kangDistBuf } },
+                                { binding: 4, resource: { buffer: this.kangHerdBuf } },
+                                { binding: 5, resource: { buffer: this.kJumpXBuf } },
+                                { binding: 6, resource: { buffer: this.kJumpYBuf } },
+                                { binding: 7, resource: { buffer: this.kJumpDistBuf } },
+                                { binding: 8, resource: { buffer: this.dpOutBuf } }
+                            ]
+                        });
+                    }
 
                     device.queue.writeBuffer(this.jXBuf, 0, jumpXArr);
                     device.queue.writeBuffer(this.jYBuf, 0, jumpYArr);
@@ -767,7 +1116,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                             { binding: 2, resource: { buffer: this.ptYBuf } },
                             { binding: 3, resource: { buffer: this.jXBuf } },
                             { binding: 4, resource: { buffer: this.jYBuf } },
-                            { binding: 5, resource: { buffer: this.outBuf } }
+                            { binding: 5, resource: { buffer: this.outBuf } },
+                            { binding: 6, resource: { buffer: this.bloomBuf } }
                         ]
                     });
 
@@ -785,13 +1135,34 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             return this._initPromise;
         }
 
-        _fillAnchors(startKey) {
-            const CHUNK = 128; // NUM_THREADS = 64 * 128 = 8192
+        _uploadBloom(hash160List) {
+            if (!Array.isArray(hash160List) || hash160List.length === 0) return false;
+            const sig = hash160List.length + ':' + hash160List[0] + ':' + hash160List[hash160List.length - 1];
+            if (this._lastBloomSig === sig) return true;
+            const arr = new Uint32Array(BLOOM_WORDS);
+            for (let i = 0; i < hash160List.length; i++) {
+                const w = hash160HexToU32x5(hash160List[i]);
+                const b0 = (w[0] ^ Math.imul(w[3], 0x9E3779B1)) & BLOOM_MASK;
+                const b1 = (w[1] ^ Math.imul(w[4], 0x85EBCA77)) & BLOOM_MASK;
+                const b2 = Math.imul((w[2] ^ w[0]), 0xC2B2AE3D) & BLOOM_MASK;
+                const b3 = Math.imul((w[3] ^ w[1] ^ w[4]), 0x27D4EB2F) & BLOOM_MASK;
+                arr[b0 >>> 5] |= (1 << (b0 & 31));
+                arr[b1 >>> 5] |= (1 << (b1 & 31));
+                arr[b2 >>> 5] |= (1 << (b2 & 31));
+                arr[b3 >>> 5] |= (1 << (b3 & 31));
+            }
+            this.device.queue.writeBuffer(this.bloomBuf, 0, arr);
+            this._lastBloomSig = sig;
+            return true;
+        }
+
+        _fillAnchors(startKey, numThreads) {
+            const CHUNK = 128;
             const dx = new Array(CHUNK - 1);
             const c = new Array(CHUNK - 1);
             let basePt = scalarMul(GX, GY, startKey);
 
-            for (let ch = 0; ch < NUM_THREADS / CHUNK; ch++) {
+            for (let ch = 0; ch < numThreads / CHUNK; ch++) {
                 const tBase = ch * CHUNK;
                 bigIntToU32x8(basePt[0], this.ptXArr, tBase * 8);
                 bigIntToU32x8(basePt[1], this.ptYArr, tBase * 8);
@@ -830,8 +1201,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
 
-            this.device.queue.writeBuffer(this.ptXBuf, 0, this.ptXArr);
-            this.device.queue.writeBuffer(this.ptYBuf, 0, this.ptYArr);
+            this.device.queue.writeBuffer(this.ptXBuf, 0, this.ptXArr, 0, numThreads * 8);
+            this.device.queue.writeBuffer(this.ptYBuf, 0, this.ptYArr, 0, numThreads * 8);
         }
 
         stop() {
@@ -870,10 +1241,18 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                         return;
                     }
 
+                    const hasBloom = Boolean(cfg && Array.isArray(cfg.customHash160List) && cfg.customHash160List.length > 0 && this._uploadBloom(cfg.customHash160List));
+                    const bloomMaskVal = hasBloom ? BLOOM_MASK : 0;
+                    const useGlvSymVal = hasBloom ? 1 : 0;
+
+                    const numThreads = this.activeThreads || DEFAULT_THREADS;
+                    const keysPerDisp = numThreads * STEPS_PER_THREAD;
+                    this._syncDispAdv();
+
                     let targetIdx = 0;
-                    const paramArr = new Uint32Array(8);
-                    const zeroHit = new Uint32Array([0, 0, 0, 0]);
-                    const wgCount = Math.ceil(NUM_THREADS / 64);
+                    const paramArr = new Uint32Array(12);
+                    const zeroHit = new Uint32Array(8);
+                    const wgCount = Math.ceil(numThreads / 64);
 
                     this.statusText = 'Aktif';
 
@@ -907,23 +1286,26 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
                         // For tiny ranges (<= 1 dispatch), start at minK; for small/medium ranges (<= 2^28), start at midpoint and wrap to minK so GPU never overlaps CPU worker #0 at minK
                         const isSmallRange = rangeLen <= 268435456n;
-                        const startAtMid = isSmallRange && rangeLen > BigInt(KEYS_PER_DISPATCH);
+                        const startAtMid = isSmallRange && rangeLen > BigInt(keysPerDisp);
                         let anchorBase = !isSmallRange
-                            ? randomBigIntInRange(minK, maxK > BigInt(KEYS_PER_DISPATCH) ? (maxK - BigInt(KEYS_PER_DISPATCH)) : minK)
+                            ? randomBigIntInRange(minK, maxK > BigInt(keysPerDisp) ? (maxK - BigInt(keysPerDisp)) : minK)
                             : (startAtMid ? (minK + (rangeLen >> 1n)) : minK);
                         if (anchorBase <= BigInt(STEPS_PER_THREAD)) {
                             anchorBase = BigInt(STEPS_PER_THREAD) + 1n;
+                        } else if (anchorBase === BigInt(keysPerDisp)) {
+                            anchorBase = BigInt(keysPerDisp) + 1n;
                         }
                         let wrappedToStart = false;
 
-                        this._fillAnchors(anchorBase);
+                        this._fillAnchors(anchorBase, numThreads);
                         let dispatchesSinceReanchor = 0;
-                        const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? (Math.ceil(Number(rangeLen) / KEYS_PER_DISPATCH) + 2) : 400;
+                        const MAX_DISPATCHES_PER_ANCHOR = isSmallRange ? (Math.ceil(Number(rangeLen) / keysPerDisp) + 2) : 1600;
 
                         while (this.running && mySession === this._sessionId) {
+                            const targetBatch = Math.min(MAX_BATCH_DISPATCHES, Math.max(1, this._adaptiveBatch || 2));
                             const batchDispatches = isSmallRange
-                                ? Math.min(BATCH_DISPATCHES, Math.max(1, Math.ceil(Number(maxK - anchorBase + 1n) / KEYS_PER_DISPATCH)))
-                                : BATCH_DISPATCHES;
+                                ? Math.min(targetBatch, Math.max(1, Math.ceil(Number(maxK - anchorBase + 1n) / keysPerDisp)))
+                                : targetBatch;
 
                             const t0 = performance.now();
                             this.device.queue.writeBuffer(this.outBuf, 0, zeroHit);
@@ -935,8 +1317,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                                 paramArr[3] = hWords[3];
                                 paramArr[4] = hWords[4];
                                 paramArr[5] = STEPS_PER_THREAD;
-                                paramArr[6] = NUM_THREADS;
+                                paramArr[6] = numThreads;
                                 paramArr[7] = d;
+                                paramArr[8] = bloomMaskVal;
+                                paramArr[9] = useGlvSymVal;
+                                paramArr[10] = 0;
+                                paramArr[11] = 0;
                                 this.device.queue.writeBuffer(this.pBuf, 0, paramArr);
 
                                 const enc = this.device.createCommandEncoder();
@@ -946,7 +1332,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                                 pass.dispatchWorkgroups(wgCount);
                                 pass.end();
                                 if (d === batchDispatches - 1) {
-                                    enc.copyBufferToBuffer(this.outBuf, 0, this.readBuf, 0, 16);
+                                    enc.copyBufferToBuffer(this.outBuf, 0, this.readBuf, 0, 32);
                                 }
                                 this.device.queue.submit([enc.finish()]);
                             }
@@ -959,23 +1345,50 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                             const hit = new Uint32Array(this.readBuf.getMappedRange().slice(0));
                             this.readBuf.unmap();
                             const dt = performance.now() - t0;
-                            const batchKeys = batchDispatches * KEYS_PER_DISPATCH;
-                            if (dt > 0) this.gpuSpeed = Math.round(batchKeys / (dt / 1000));
+                            const batchKeys = batchDispatches * keysPerDisp;
+                            const effCheckedKeys = useGlvSymVal ? (batchKeys * 4) : batchKeys;
+                            if (dt > 0) {
+                                this.gpuSpeed = Math.round(effCheckedKeys / (dt / 1000));
+                                if (!isSmallRange) {
+                                    if (dt < 28 && this._adaptiveBatch < MAX_BATCH_DISPATCHES) {
+                                        this._adaptiveBatch = Math.min(MAX_BATCH_DISPATCHES, this._adaptiveBatch + 1);
+                                    } else if (dt > 85 && this._adaptiveBatch > 1) {
+                                        this._adaptiveBatch = Math.max(1, this._adaptiveBatch >> 1);
+                                    }
+                                }
+                            }
+
+                            const decodeHitKey = (hTid, hPacked, hDisp) => {
+                                const stepVal = hPacked & 0xFFFF;
+                                const subKind = (hPacked >>> 16) & 0xFFFF;
+                                const baseKey = anchorBase + BigInt(hDisp) * BigInt(keysPerDisp) + BigInt(hTid) * BigInt(STEPS_PER_THREAD) + BigInt(stepVal);
+                                let foundKey = baseKey;
+                                if (subKind === 1) foundKey = SECP_N - baseKey;
+                                else if (subKind === 2) foundKey = (SECP_LAMBDA * baseKey) % SECP_N;
+                                else if (subKind === 3) foundKey = SECP_N - ((SECP_LAMBDA * baseKey) % SECP_N);
+                                return { foundKey, subKind };
+                            };
 
                             if (hit[0] === 1) {
-                                const foundKey = anchorBase + BigInt(hit[3]) * BigInt(KEYS_PER_DISPATCH) + BigInt(hit[1]) * BigInt(STEPS_PER_THREAD) + BigInt(hit[2]);
-                                if (foundKey >= 1n && foundKey < SECP_N && foundKey >= minK && foundKey <= maxK) {
+                                const { foundKey, subKind } = decodeHitKey(hit[1], hit[2], hit[3]);
+                                if (foundKey >= 1n && foundKey < SECP_N && (subKind !== 0 || (foundKey >= minK && foundKey <= maxK))) {
                                     this.stop();
                                     if (callbacks && typeof callbacks.onWin === 'function') {
                                         callbacks.onWin(foundKey, tgt);
                                     }
                                     return;
                                 }
+                            } else if (hit[4] === 2 && callbacks && typeof callbacks.onBloomHit === 'function') {
+                                const { foundKey } = decodeHitKey(hit[5], hit[6], hit[7]);
+                                if (callbacks.onBloomHit(foundKey)) {
+                                    this.stop();
+                                    return;
+                                }
                             }
 
                             const lastKey = anchorBase + BigInt(batchKeys - 1);
                             if (callbacks && typeof callbacks.onProgress === 'function') {
-                                callbacks.onProgress(batchKeys, lastKey > maxK ? maxK : lastKey, this.gpuSpeed);
+                                callbacks.onProgress(effCheckedKeys, lastKey > maxK ? maxK : lastKey, this.gpuSpeed);
                             }
 
                             anchorBase += BigInt(batchKeys);
@@ -984,13 +1397,15 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                             if (isSmallRange && anchorBase > maxK && startAtMid && !wrappedToStart) {
                                 wrappedToStart = true;
                                 anchorBase = minK;
-                                this._fillAnchors(anchorBase);
+                                this._fillAnchors(anchorBase, numThreads);
                             } else if (anchorBase > maxK || dispatchesSinceReanchor >= MAX_DISPATCHES_PER_ANCHOR) {
                                 if (targets.length > 1) targetIdx++;
                                 break; // Re-anchor (or switch puzzle in circular mode)
                             }
-                            // Yield a macrotask tick (mapAsync already yields during GPU work)
-                            await new Promise(r => setTimeout(r, 0));
+                            // mapAsync already yields during GPU work; only yield extra tick if batch took >= 60ms
+                            if (dt >= 60) {
+                                await new Promise(r => setTimeout(r, 0));
+                            }
                         }
                     }
                 } catch (err) {
@@ -998,6 +1413,152 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
                 } finally {
                     try {
                         if (this.readBuf && this.readBuf.mapState === 'mapped') this.readBuf.unmap();
+                    } catch (_) {}
+                    if (mySession === this._sessionId) {
+                        this.running = false;
+                        this.gpuSpeed = 0;
+                        if (this.ready) this.statusText = 'Hazır';
+                    }
+                }
+            })();
+            this._runPromise = runTask;
+            await runTask;
+        }
+
+        async startKangaroo(kangEngine, callbacks) {
+            if (!kangEngine || !kangEngine.targetPoint || !kangEngine.jumps || kangEngine.jumps.length < 64) return;
+            this.stop();
+            const mySession = ++this._sessionId;
+            this.running = true;
+            this.statusText = 'Kangaroo Aktif';
+
+            const prevRun = this._runPromise;
+            if (prevRun) {
+                try { await prevRun; } catch (_) {}
+            }
+            if (!this.running || mySession !== this._sessionId) return;
+
+            const runTask = (async () => {
+                try {
+                    const ok = await this.init();
+                    if (!ok || !this.kangPipe || !this.running || mySession !== this._sessionId) return;
+
+                    const kThreads = Math.min(4096, Math.max(256, (this.activeThreads || DEFAULT_THREADS) >> 2));
+                    const totalKangs = kThreads * KANG_PER_THREAD;
+
+                    // Upload 64 jump points & distances from RealPollardKangaroo
+                    const jxArr = new Uint32Array(64 * 8);
+                    const jyArr = new Uint32Array(64 * 8);
+                    const jdArr = new Uint32Array(64 * 8);
+                    for (let i = 0; i < 64; i++) {
+                        bigIntToU32x8(kangEngine.jumpX[i], jxArr, i * 8);
+                        bigIntToU32x8(kangEngine.jumpY[i], jyArr, i * 8);
+                        bigIntToU32x8(kangEngine.jumps[i], jdArr, i * 8);
+                    }
+                    this.device.queue.writeBuffer(this.kJumpXBuf, 0, jxArr);
+                    this.device.queue.writeBuffer(this.kJumpYBuf, 0, jyArr);
+                    this.device.queue.writeBuffer(this.kJumpDistBuf, 0, jdArr);
+
+                    // Initialize Tame & Wild GPU kangaroos
+                    const kxArr = new Uint32Array(totalKangs * 8);
+                    const kyArr = new Uint32Array(totalKangs * 8);
+                    const kdArr = new Uint32Array(totalKangs * 8);
+                    const khArr = new Uint32Array(totalKangs);
+                    const tX = BigInt('0x' + kangEngine.targetPoint.getX().toString(16));
+                    const tY = BigInt('0x' + kangEngine.targetPoint.getY().toString(16));
+                    const span = kangEngine.span > 0n ? kangEngine.span : 1n;
+                    const halfSpan = span >> 1n;
+                    const midPt = kangEngine.rangeMin + halfSpan;
+
+                    for (let k = 0; k < totalKangs; k++) {
+                        const isWild = (k & 1) === 1;
+                        khArr[k] = isWild ? 1 : 0;
+                        const jitter = (BigInt(k + 1) * (span / BigInt(totalKangs + 2)));
+                        if (!isWild) {
+                            const d = (midPt + jitter) % SECP_N;
+                            const pt = scalarMul(GX, GY, d);
+                            bigIntToU32x8(pt[0], kxArr, k * 8);
+                            bigIntToU32x8(pt[1], kyArr, k * 8);
+                            bigIntToU32x8(d, kdArr, k * 8);
+                        } else {
+                            const off = jitter;
+                            const offPt = scalarMul(GX, GY, off > 0n ? off : 1n);
+                            const pt = pointAddAffine(tX, tY, offPt[0], offPt[1]);
+                            bigIntToU32x8(pt[0], kxArr, k * 8);
+                            bigIntToU32x8(pt[1], kyArr, k * 8);
+                            bigIntToU32x8(off > 0n ? off : 1n, kdArr, k * 8);
+                        }
+                    }
+                    this.device.queue.writeBuffer(this.kangXBuf, 0, kxArr);
+                    this.device.queue.writeBuffer(this.kangYBuf, 0, kyArr);
+                    this.device.queue.writeBuffer(this.kangDistBuf, 0, kdArr);
+                    this.device.queue.writeBuffer(this.kangHerdBuf, 0, khArr);
+
+                    const dpMask = kangEngine.dpMask || 0xFFn;
+                    const dpMaskLo = Number(dpMask & 0xFFFFFFFFn) >>> 0;
+                    const dpMaskHi = Number((dpMask >> 32n) & 0xFFFFFFFFn) >>> 0;
+                    const kParam = new Uint32Array([kThreads, KANG_STEPS_PER_DISPATCH, dpMaskLo, dpMaskHi]);
+                    this.device.queue.writeBuffer(this.kangPBuf, 0, kParam);
+
+                    const zeroCount = new Uint32Array([0]);
+                    const wgCount = Math.ceil(kThreads / 64);
+                    const dpBytes = (1 + MAX_DP_OUT * 17) * 4;
+                    const stepsPerDisp = totalKangs * KANG_STEPS_PER_DISPATCH;
+
+                    this.statusText = 'Kangaroo Aktif';
+
+                    while (this.running && mySession === this._sessionId && !kangEngine.isSolved) {
+                        const t0 = performance.now();
+                        this.device.queue.writeBuffer(this.dpOutBuf, 0, zeroCount);
+                        const enc = this.device.createCommandEncoder();
+                        const pass = enc.beginComputePass();
+                        pass.setPipeline(this.kangPipe);
+                        pass.setBindGroup(0, this.kangBg);
+                        pass.dispatchWorkgroups(wgCount);
+                        pass.end();
+                        enc.copyBufferToBuffer(this.dpOutBuf, 0, this.dpReadBuf, 0, dpBytes);
+                        this.device.queue.submit([enc.finish()]);
+
+                        await this.dpReadBuf.mapAsync(GPUMapMode.READ);
+                        if (!this.running || mySession !== this._sessionId) {
+                            try { this.dpReadBuf.unmap(); } catch (_) {}
+                            return;
+                        }
+                        const out = new Uint32Array(this.dpReadBuf.getMappedRange().slice(0));
+                        this.dpReadBuf.unmap();
+
+                        const dt = performance.now() - t0;
+                        if (dt > 0) this.gpuSpeed = Math.round(stepsPerDisp / (dt / 1000));
+
+                        const count = Math.min(MAX_DP_OUT, out[0]);
+                        for (let idx = 0; idx < count; idx++) {
+                            const ob = 1 + idx * 17;
+                            const herdStr = out[ob] === 1 ? 'WILD' : 'TAME';
+                            let xBig = 0n, dBig = 0n;
+                            for (let w = 7; w >= 0; w--) {
+                                xBig = (xBig << 32n) | BigInt(out[ob + 1 + w]);
+                                dBig = (dBig << 32n) | BigInt(out[ob + 9 + w]);
+                            }
+                            if (callbacks && typeof callbacks.onTrap === 'function') {
+                                callbacks.onTrap(xBig, herdStr, dBig);
+                            }
+                            if (kangEngine.isSolved) break;
+                        }
+
+                        if (callbacks && typeof callbacks.onProgress === 'function') {
+                            callbacks.onProgress(stepsPerDisp, this.gpuSpeed);
+                        }
+                        if (kangEngine.isSolved) {
+                            this.stop();
+                            return;
+                        }
+                        if (dt >= 50) await new Promise(r => setTimeout(r, 0));
+                    }
+                } catch (err) {
+                    console.warn('[WebGPU Kangaroo] Run loop error:', err);
+                } finally {
+                    try {
+                        if (this.dpReadBuf && this.dpReadBuf.mapState === 'mapped') this.dpReadBuf.unmap();
                     } catch (_) {}
                     if (mySession === this._sessionId) {
                         this.running = false;
